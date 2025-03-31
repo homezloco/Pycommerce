@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checkout - PyCommerce Demo</title>
+    <link href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
+        <div class="container">
+            <a class="navbar-brand" href="/">PyCommerce Demo</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/products">Products</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/cart">Cart</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <h1 class="mb-4">Checkout</h1>
+
+        <div class="row">
+            <div class="col-md-8">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">Shipping Information</h5>
+                    </div>
+                    <div class="card-body">
+                        <form action="{{ url_for('checkout') }}" method="post" id="checkout-form">
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="first_name" class="form-label">First Name</label>
+                                    <input type="text" class="form-control" id="first_name" name="first_name" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="last_name" class="form-label">Last Name</label>
+                                    <input type="text" class="form-control" id="last_name" name="last_name" required>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="address_line1" class="form-label">Address Line 1</label>
+                                <input type="text" class="form-control" id="address_line1" name="address_line1" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="address_line2" class="form-label">Address Line 2</label>
+                                <input type="text" class="form-control" id="address_line2" name="address_line2">
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="city" class="form-label">City</label>
+                                    <input type="text" class="form-control" id="city" name="city" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="state" class="form-label">State</label>
+                                    <input type="text" class="form-control" id="state" name="state" required>
+                                </div>
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="postal_code" class="form-label">Postal Code</label>
+                                    <input type="text" class="form-control" id="postal_code" name="postal_code" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="country" class="form-label">Country</label>
+                                    <select class="form-select" id="country" name="country" required>
+                                        <option value="US">United States</option>
+                                        <option value="CA">Canada</option>
+                                        <option value="MX">Mexico</option>
+                                        <option value="GB">United Kingdom</option>
+                                        <option value="AU">Australia</option>
+                                        <option value="DE">Germany</option>
+                                        <option value="FR">France</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="phone" class="form-label">Phone Number</label>
+                                <input type="tel" class="form-control" id="phone" name="phone" required>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">Shipping Method</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            {% for rate in shipping_rates %}
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="radio" name="shipping_option" id="shipping_{{ rate.id }}" value="{{ rate.id }}" {% if loop.first %}checked{% endif %}>
+                                    <label class="form-check-label" for="shipping_{{ rate.id }}">
+                                        <strong>{{ rate.name }}</strong> - ${{ rate.price|round(2) }}
+                                        <div class="text-muted">{{ rate.description }}</div>
+                                    </label>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">Payment Information</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="alert alert-info">
+                            <strong>Demo Mode:</strong> This is a demo application. No actual payment will be processed.
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="card_number" class="form-label">Card Number</label>
+                            <input type="text" class="form-control" id="card_number" value="4242 4242 4242 4242" disabled>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="expiry" class="form-label">Expiry Date</label>
+                                <input type="text" class="form-control" id="expiry" value="12/25" disabled>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="cvv" class="form-label">CVV</label>
+                                <input type="text" class="form-control" id="cvv" value="123" disabled>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">Order Summary</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            {% for item in items %}
+                                <div class="d-flex justify-content-between mb-2">
+                                    <div>
+                                        <span>{{ item.product.name }}</span>
+                                        <small class="d-block text-muted">Qty: {{ item.quantity }}</small>
+                                    </div>
+                                    <span>${{ item.total|round(2) }}</span>
+                                </div>
+                            {% endfor %}
+                        </div>
+                        <hr>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Subtotal:</span>
+                            <span>${{ totals.subtotal|round(2) }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Tax:</span>
+                            <span>${{ totals.tax|round(2) }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Shipping:</span>
+                            <span id="shipping-cost">${{ shipping_rates[0].price|round(2) }}</span>
+                        </div>
+                        <hr>
+                        <div class="d-flex justify-content-between mb-3">
+                            <span class="fw-bold">Total:</span>
+                            <span class="fw-bold" id="order-total">${{ (totals.total + shipping_rates[0].price)|round(2) }}</span>
+                        </div>
+                        <button type="submit" form="checkout-form" class="btn btn-success w-100">Place Order</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="bg-dark text-white mt-5 py-4">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5>PyCommerce SDK</h5>
+                    <p>A modular Python ecommerce SDK with plugin architecture and FastAPI integration.</p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <p>Version 0.1.0</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Update shipping cost and total when shipping option changes
+        document.addEventListener('DOMContentLoaded', function() {
+            const shippingOptions = document.querySelectorAll('input[name="shipping_option"]');
+            const shippingCostEl = document.getElementById('shipping-cost');
+            const orderTotalEl = document.getElementById('order-total');
+            const subtotal = {{ totals.total }};
+            
+            shippingOptions.forEach(option => {
+                option.addEventListener('change', function() {
+                    const rates = {{ shipping_rates|tojson }};
+                    const selectedRate = rates.find(rate => rate.id === this.value);
+                    
+                    if (selectedRate) {
+                        // Update shipping cost
+                        shippingCostEl.textContent = `$${selectedRate.price.toFixed(2)}`;
+                        
+                        // Update total
+                        const newTotal = subtotal + selectedRate.price;
+                        orderTotalEl.textContent = `$${newTotal.toFixed(2)}`;
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
