@@ -64,6 +64,9 @@ app = FastAPI(
 # Add session middleware for cart functionality
 app.add_middleware(SessionMiddleware, secret_key=os.environ.get("SESSION_SECRET", "supersecretkey"))
 
+# Mount static files directory
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
 # Setup user manager in the routes
 users_router.set_user_manager(user_manager)
 cart_router.set_cart_manager(cart_manager)
@@ -85,6 +88,9 @@ app.include_router(ai.router, prefix="/api/ai", tags=["ai"])
 # Set up templates
 templates = Jinja2Templates(directory="templates")
 
+# Get TinyMCE API key from environment
+tinymce_api_key = os.environ.get("TINYMCE_API_KEY", "")
+
 # Endpoints for HTML templates
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request):
@@ -103,7 +109,8 @@ async def index(request: Request):
         "index.html", 
         {
             "request": request,
-            "cart_item_count": cart_item_count
+            "cart_item_count": cart_item_count,
+            "tinymce_api_key": tinymce_api_key
         }
     )
 
@@ -141,7 +148,8 @@ async def stores(request: Request):
         {
             "request": request, 
             "tenants": tenants,
-            "cart_item_count": cart_item_count
+            "cart_item_count": cart_item_count,
+            "tinymce_api_key": tinymce_api_key
         }
     )
 
@@ -243,7 +251,8 @@ async def products(
             "tenants": tenants,
             "selected_tenant": tenant,
             "filters": filters,
-            "cart_item_count": cart_item_count
+            "cart_item_count": cart_item_count,
+            "tinymce_api_key": tinymce_api_key
         }
     )
 
@@ -331,7 +340,8 @@ async def store(
             "tenant": tenant_data,
             "products": products_list,
             "filters": filters,
-            "cart_item_count": cart_item_count
+            "cart_item_count": cart_item_count,
+            "tinymce_api_key": tinymce_api_key
         }
     )
 
@@ -471,7 +481,8 @@ async def admin_stores(request: Request, status_message: Optional[str] = None, s
             "tenants": tenants,
             "cart_item_count": cart_item_count,
             "status_message": status_message,
-            "status_type": status_type
+            "status_type": status_type,
+            "tinymce_api_key": tinymce_api_key
         }
     )
 
@@ -548,7 +559,8 @@ async def admin_edit_store(
                 "tenant": tenant,
                 "cart_item_count": cart_item_count,
                 "status_message": status_message,
-                "status_type": status_type
+                "status_type": status_type,
+                "tinymce_api_key": tinymce_api_key
             }
         )
         
@@ -905,7 +917,8 @@ async def admin_edit_product(
                 "tenants": tenants,
                 "cart_item_count": cart_item_count,
                 "status_message": status_message,
-                "status_type": status_type
+                "status_type": status_type,
+                "tinymce_api_key": tinymce_api_key
             }
         )
         
@@ -1072,7 +1085,8 @@ async def view_cart(request: Request):
             "request": request,
             "cart": cart_data,
             "cart_totals": cart_totals,
-            "cart_item_count": cart_data["total_quantity"]
+            "cart_item_count": cart_data["total_quantity"],
+            "tinymce_api_key": tinymce_api_key
         }
     )
 
@@ -1207,7 +1221,8 @@ async def checkout(request: Request):
             "request": request,
             "cart": cart_data,
             "cart_totals": cart_totals,
-            "cart_item_count": cart_data["total_quantity"]
+            "cart_item_count": cart_data["total_quantity"],
+            "tinymce_api_key": tinymce_api_key
         }
     )
 
@@ -1324,7 +1339,8 @@ async def order_confirmation(request: Request):
             "created_at": order.created_at,
             "payment_id": order.payment_id,
             "shipping_address": order.shipping_address,
-            "items": order.items
+            "items": order.items,
+            "tinymce_api_key": tinymce_api_key
         }
         
         return templates.TemplateResponse(
