@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+
+{% block title %}PyCommerce - Multi-tenant E-commerce Platform{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="text-center my-5">
+        <h1 class="display-4">Welcome to PyCommerce</h1>
+        <p class="lead">A modular, multi-tenant e-commerce platform built with Python and FastAPI</p>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h3 class="card-title">About PyCommerce</h3>
+                    <p>PyCommerce is a powerful, modular e-commerce SDK with a plugin architecture. It supports:</p>
+                    <ul>
+                        <li>Multi-tenant architecture for SaaS deployment</li>
+                        <li>Extensible plugin system for payments and shipping</li>
+                        <li>FastAPI and uvicorn for high performance</li>
+                        <li>PostgreSQL database for reliable data storage</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row my-5">
+        <div class="col-md-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-body text-center">
+                    <h3 class="card-title">Explore Stores</h3>
+                    <p class="card-text">Browse through our demo stores and see multi-tenancy in action.</p>
+                    <a href="/stores" class="btn btn-primary">View Stores</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-body text-center">
+                    <h3 class="card-title">Browse Products</h3>
+                    <p class="card-text">See products from all of our demo stores.</p>
+                    <a href="/products" class="btn btn-primary">View Products</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-body text-center">
+                    <h3 class="card-title">API Documentation</h3>
+                    <p class="card-text">Explore the API endpoints and learn how to integrate with PyCommerce.</p>
+                    <a href="/api/docs" class="btn btn-primary">API Docs</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="text-center mt-5">
+        <a href="/api/generate-sample-data" class="btn btn-info">Generate Demo Data</a>
+    </div>
+</div>
+{% endblock %}

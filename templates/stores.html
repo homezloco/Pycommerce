@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+
+{% block title %}PyCommerce - Available Stores{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="text-center my-5">
+        <h1 class="display-4">Available Stores</h1>
+        <p class="lead">Browse our demo stores and see multi-tenancy in action</p>
+    </div>
+
+    <div class="row row-cols-1 row-cols-md-2 g-4">
+        {% for tenant in tenants %}
+        <div class="col">
+            <div class="card shadow-sm h-100">
+                <div class="card-body">
+                    <h3 class="card-title">{{ tenant.name }}</h3>
+                    <p class="card-text">
+                        <strong>Slug:</strong> {{ tenant.slug }}<br>
+                        <strong>Domain:</strong> {{ tenant.domain if tenant.domain else 'None' }}<br>
+                        <strong>Status:</strong> 
+                        {% if tenant.active %}
+                        <span class="badge bg-success">Active</span>
+                        {% else %}
+                        <span class="badge bg-danger">Inactive</span>
+                        {% endif %}
+                    </p>
+                </div>
+                <div class="card-footer bg-transparent">
+                    <a href="/store/{{ tenant.slug }}" class="btn btn-primary">Visit Store</a>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="col-12 text-center">
+            <div class="alert alert-info">
+                <p>No stores found. Generate sample data first.</p>
+                <a href="/api/generate-sample-data" class="btn btn-info">Generate Demo Data</a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

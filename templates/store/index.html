@@ -1,0 +1,91 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ tenant.name }} - PyCommerce Store{% endblock %}
+
+{% block content %}
+<header class="store-header">
+    <div class="container text-center">
+        <h1 class="display-4">{{ tenant.name }}</h1>
+        <p class="lead">Welcome to our store</p>
+    </div>
+</header>
+
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-md-8 mx-auto">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Filter Products</h5>
+                    <form method="get" action="/store/{{ tenant.slug }}" class="row g-3">
+                        <div class="col-md-4">
+                            <label for="category" class="form-label">Category</label>
+                            <input type="text" class="form-control" id="category" name="category" value="{{ filters.category|default('') }}">
+                        </div>
+                        
+                        <div class="col-md-3">
+                            <label for="min_price" class="form-label">Min Price</label>
+                            <input type="number" class="form-control" id="min_price" name="min_price" min="0" step="0.01" value="{{ filters.min_price|default('') }}">
+                        </div>
+                        
+                        <div class="col-md-3">
+                            <label for="max_price" class="form-label">Max Price</label>
+                            <input type="number" class="form-control" id="max_price" name="max_price" min="0" step="0.01" value="{{ filters.max_price|default('') }}">
+                        </div>
+                        
+                        <div class="col-md-2 d-flex align-items-end">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="in_stock" name="in_stock" value="true" {% if filters.in_stock %}checked{% endif %}>
+                                <label class="form-check-label" for="in_stock">
+                                    In Stock
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="col-12 text-end">
+                            <button type="submit" class="btn btn-primary">Apply Filters</button>
+                            <a href="/store/{{ tenant.slug }}" class="btn btn-secondary">Clear Filters</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row row-cols-1 row-cols-md-3 g-4">
+        {% for product in products %}
+        <div class="col">
+            <div class="card product-card shadow-sm h-100">
+                <div class="card-body">
+                    <h5 class="card-title">{{ product.name }}</h5>
+                    <p class="card-text">{{ product.description }}</p>
+                    <p class="fw-bold text-primary">${{ "%.2f"|format(product.price) }}</p>
+                    <p>
+                        <small class="text-muted">SKU: {{ product.sku }}</small><br>
+                        <small class="text-muted">Stock: {{ product.stock }}</small>
+                    </p>
+                    {% if product.categories %}
+                    <div class="mb-2">
+                        {% for category in product.categories %}
+                        <span class="badge bg-secondary me-1">{{ category }}</span>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="card-footer bg-transparent">
+                    <button class="btn btn-outline-primary">Add to Cart</button>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="col-12 text-center">
+            <div class="alert alert-info">
+                <p>No products found for this store.</p>
+                {% if filters.category or filters.min_price or filters.max_price or filters.in_stock %}
+                <p>Try adjusting your filters or <a href="/store/{{ tenant.slug }}">clear all filters</a>.</p>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
