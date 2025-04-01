@@ -23,4 +23,5 @@ dependencies = [
     "pyjwt>=2.10.1",
     "python-jose>=3.4.0",
     "cryptography>=44.0.2",
+    "starlette>=0.46.1",
 ]

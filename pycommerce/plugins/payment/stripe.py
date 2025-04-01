@@ -9,9 +9,10 @@ import logging
 import os
 from typing import Dict, Any, Optional
 from uuid import UUID
+import json
 import httpx
-from fastapi import APIRouter, Depends, HTTPException
 
+from fastapi import APIRouter, HTTPException
 from pycommerce.plugins.payment.base import PaymentPlugin
 from pycommerce.core.exceptions import PaymentError
 
@@ -37,9 +38,14 @@ class StripePaymentPlugin(PaymentPlugin):
     
     def __init__(self):
         """Initialize the Stripe payment plugin."""
-        self.api_key = os.getenv("STRIPE_API_KEY", "")
+        self.api_key = os.getenv("STRIPE_SECRET_KEY", "")
+        self.is_test_mode = os.getenv("STRIPE_TEST_MODE", "true").lower() == "true"
+        self.webhook_secret = os.getenv("STRIPE_WEBHOOK_SECRET", "")
+        
         if not self.api_key:
-            logger.warning("STRIPE_API_KEY environment variable not set")
+            logger.warning("Stripe API key not properly configured")
+        
+        self.api_base_url = "https://api.stripe.com/v1"
     
     def initialize(self) -> None:
         """Initialize the plugin."""
@@ -78,58 +84,76 @@ class StripePaymentPlugin(PaymentPlugin):
         Args:
             order_id: The ID of the order being paid for
             payment_data: Dictionary containing payment information
-                - amount: Amount to charge (in the smallest currency unit, e.g., cents)
-                - currency: Three-letter currency code (e.g., 'usd')
-                - payment_method: Stripe payment method ID or token
-                - customer_email: Customer's email address
+                - amount: Amount to charge
+                - currency: Three-letter currency code (e.g., 'USD')
+                - payment_method: Stripe payment method ID or payment method type
                 
         Returns:
             Dictionary containing payment result information
-                - payment_id: Stripe payment ID
+                - payment_id: Stripe payment intent ID
                 - status: Payment status
-                - amount: Amount charged
-                - currency: Currency used
+                - client_secret: Client secret for frontend confirmation (if needed)
                 
         Raises:
             PaymentError: If payment processing fails
         """
         try:
-            if not self.api_key:
-                raise PaymentError("Stripe API key not configured")
-            
             # Validate required fields
             required_fields = ["amount", "currency", "payment_method"]
             for field in required_fields:
                 if field not in payment_data:
                     raise PaymentError(f"Missing required payment field: {field}")
             
+            # Convert amount to cents (Stripe requires integer in smallest currency unit)
+            amount_cents = int(float(payment_data["amount"]) * 100)
+            
             # Create payment intent
+            headers = {
+                "Authorization": f"Bearer {self.api_key}",
+                "Content-Type": "application/x-www-form-urlencoded"
+            }
+            
+            request_data = {
+                "amount": str(amount_cents),
+                "currency": payment_data["currency"].lower(),
+                "payment_method": payment_data["payment_method"],
+                "metadata[order_id]": str(order_id),
+                "confirm": "true",
+                "return_url": payment_data.get("return_url", "")
+            }
+            
+            # Add optional fields if provided
+            if "description" in payment_data:
+                request_data["description"] = payment_data["description"]
+            
             async with httpx.AsyncClient() as client:
                 response = await client.post(
-                    "https://api.stripe.com/v1/payment_intents",
-                    auth=(self.api_key, ""),
-                    data={
-                        "amount": payment_data["amount"],
-                        "currency": payment_data["currency"],
-                        "payment_method": payment_data["payment_method"],
-                        "confirm": True,
-                        "return_url": f"https://example.com/orders/{order_id}/confirmation",
-                        "metadata": {"order_id": str(order_id)}
-                    }
+                    f"{self.api_base_url}/payment_intents",
+                    headers=headers,
+                    data=request_data
                 )
             
             if response.status_code >= 400:
                 error_data = response.json()
                 logger.error(f"Stripe payment error: {error_data}")
-                raise PaymentError(f"Payment failed: {error_data.get('error', {}).get('message', 'Unknown error')}")
+                raise PaymentError(f"Payment failed: {json.dumps(error_data)}")
             
-            payment_data = response.json()
+            payment_intent = response.json()
+            
+            status = payment_intent.get("status", "unknown")
+            approval_url = None
+            
+            # If additional authentication is required, provide the URL
+            if status == "requires_action" and payment_intent.get("next_action"):
+                next_action = payment_intent["next_action"]
+                if next_action.get("type") == "redirect_to_url":
+                    approval_url = next_action.get("redirect_to_url", {}).get("url")
             
             return {
-                "payment_id": payment_data["id"],
-                "status": payment_data["status"],
-                "amount": payment_data["amount"],
-                "currency": payment_data["currency"]
+                "payment_id": payment_intent["id"],
+                "status": status,
+                "client_secret": payment_intent.get("client_secret"),
+                "approval_url": approval_url
             }
         
         except httpx.HTTPError as e:
@@ -145,7 +169,7 @@ class StripePaymentPlugin(PaymentPlugin):
         Refund a payment processed by Stripe.
         
         Args:
-            payment_id: The ID of the payment to refund
+            payment_id: The ID of the payment intent to refund
             amount: Optional amount to refund (if not provided, refunds the full amount)
             
         Returns:
@@ -158,33 +182,44 @@ class StripePaymentPlugin(PaymentPlugin):
             PaymentError: If refund processing fails
         """
         try:
-            if not self.api_key:
-                raise PaymentError("Stripe API key not configured")
-            
             # Prepare refund data
-            refund_data = {"payment_intent": payment_id}
+            headers = {
+                "Authorization": f"Bearer {self.api_key}",
+                "Content-Type": "application/x-www-form-urlencoded"
+            }
+            
+            request_data = {
+                "payment_intent": payment_id
+            }
+            
+            # Add amount if specified
             if amount is not None:
-                refund_data["amount"] = int(amount)
+                # Convert to cents
+                amount_cents = int(float(amount) * 100)
+                request_data["amount"] = str(amount_cents)
             
             # Process refund
             async with httpx.AsyncClient() as client:
                 response = await client.post(
-                    "https://api.stripe.com/v1/refunds",
-                    auth=(self.api_key, ""),
-                    data=refund_data
+                    f"{self.api_base_url}/refunds",
+                    headers=headers,
+                    data=request_data
                 )
             
             if response.status_code >= 400:
                 error_data = response.json()
                 logger.error(f"Stripe refund error: {error_data}")
-                raise PaymentError(f"Refund failed: {error_data.get('error', {}).get('message', 'Unknown error')}")
+                raise PaymentError(f"Refund failed: {json.dumps(error_data)}")
             
             refund_data = response.json()
             
+            # Convert amount from cents back to dollars
+            refund_amount = float(refund_data.get("amount", 0)) / 100
+            
             return {
-                "refund_id": refund_data["id"],
-                "status": refund_data["status"],
-                "amount": refund_data["amount"]
+                "refund_id": refund_data.get("id"),
+                "status": refund_data.get("status"),
+                "amount": refund_amount
             }
         
         except httpx.HTTPError as e:
@@ -200,41 +235,46 @@ class StripePaymentPlugin(PaymentPlugin):
         Get the status of a Stripe payment.
         
         Args:
-            payment_id: The ID of the payment to check
+            payment_id: The ID of the payment intent to check
             
         Returns:
             Dictionary containing payment status information
-                - payment_id: Stripe payment ID
+                - payment_id: Stripe payment intent ID
                 - status: Payment status
-                - amount: Amount charged
+                - amount: Amount charged (in dollars)
                 - currency: Currency used
                 
         Raises:
             PaymentError: If status retrieval fails
         """
         try:
-            if not self.api_key:
-                raise PaymentError("Stripe API key not configured")
+            # Get payment intent details
+            headers = {
+                "Authorization": f"Bearer {self.api_key}",
+                "Content-Type": "application/x-www-form-urlencoded"
+            }
             
-            # Retrieve payment intent
             async with httpx.AsyncClient() as client:
                 response = await client.get(
-                    f"https://api.stripe.com/v1/payment_intents/{payment_id}",
-                    auth=(self.api_key, "")
+                    f"{self.api_base_url}/payment_intents/{payment_id}",
+                    headers=headers
                 )
             
             if response.status_code >= 400:
                 error_data = response.json()
                 logger.error(f"Stripe payment status error: {error_data}")
-                raise PaymentError(f"Status check failed: {error_data.get('error', {}).get('message', 'Unknown error')}")
+                raise PaymentError(f"Status check failed: {json.dumps(error_data)}")
             
-            payment_data = response.json()
+            payment_intent = response.json()
+            
+            # Convert amount from cents to dollars
+            amount = float(payment_intent.get("amount", 0)) / 100
             
             return {
-                "payment_id": payment_data["id"],
-                "status": payment_data["status"],
-                "amount": payment_data["amount"],
-                "currency": payment_data["currency"]
+                "payment_id": payment_intent.get("id"),
+                "status": payment_intent.get("status"),
+                "amount": amount,
+                "currency": payment_intent.get("currency", "").upper()
             }
         
         except httpx.HTTPError as e:

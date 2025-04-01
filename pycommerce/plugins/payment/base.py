@@ -45,6 +45,26 @@ class PaymentPlugin(Plugin):
         """
         pass
     
+    async def capture_payment(self, payment_id: str) -> Dict[str, Any]:
+        """
+        Capture an authorized payment.
+        
+        Some payment providers (like PayPal) use a two-step process where a payment
+        is first authorized and then captured. This method captures the authorized payment.
+        
+        Args:
+            payment_id: The ID of the payment to capture
+            
+        Returns:
+            Dictionary containing capture result information
+            
+        Raises:
+            PaymentError: If capture fails
+        """
+        # Default implementation just returns payment status
+        # Providers that support capture should override this method
+        return await self.get_payment_status(payment_id)
+    
     @abstractmethod
     async def refund_payment(self, payment_id: str, amount: Optional[float] = None) -> Dict[str, Any]:
         """
