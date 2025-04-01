@@ -23,6 +23,11 @@ from pycommerce.core.db import init_db
 from pycommerce.core.migrations import init_migrations
 from pycommerce.models.tenant import TenantManager
 from pycommerce.models.product import ProductManager
+from pycommerce.models.user import UserManager
+from pycommerce.api.routes import products as products_router
+from pycommerce.api.routes import cart as cart_router
+from pycommerce.api.routes import checkout as checkout_router
+from pycommerce.api.routes import users as users_router
 
 # Initialize the database
 init_db()
@@ -36,6 +41,7 @@ except Exception as e:
 # Initialize managers
 tenant_manager = TenantManager()
 product_manager = ProductManager()
+user_manager = UserManager()
 
 # Create the FastAPI app
 app = FastAPI(
@@ -45,6 +51,15 @@ app = FastAPI(
     docs_url="/api/docs",
     redoc_url="/api/redoc"
 )
+
+# Setup user manager in the routes
+users_router.set_user_manager(user_manager)
+
+# Include API routes
+app.include_router(products_router.router, prefix="/api/products", tags=["products"])
+app.include_router(cart_router.router, prefix="/api/cart", tags=["cart"])
+app.include_router(checkout_router.router, prefix="/api/checkout", tags=["checkout"])
+app.include_router(users_router.router, prefix="/api/users", tags=["users"])
 
 # Set up templates
 templates = Jinja2Templates(directory="templates")

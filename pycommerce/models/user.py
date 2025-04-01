@@ -6,12 +6,31 @@ managing users in the PyCommerce SDK.
 """
 
 import logging
+import secrets
 from typing import Dict, List, Optional, Union, Any
 from uuid import UUID, uuid4
 from pydantic import BaseModel, Field, validator, EmailStr
-from datetime import datetime
+from datetime import datetime, timedelta
+import hashlib
+import base64
+import jwt
+from enum import Enum
 
 logger = logging.getLogger("pycommerce.models.user")
+
+# JWT settings
+JWT_SECRET = secrets.token_hex(32)  # Generate a random secret key
+JWT_ALGORITHM = "HS256"
+ACCESS_TOKEN_EXPIRE_MINUTES = 30
+
+
+class UserRole(str, Enum):
+    """
+    Possible roles for a user.
+    """
+    CUSTOMER = "customer"
+    ADMIN = "admin"
+    STAFF = "staff"
 
 
 class User(BaseModel):
@@ -22,10 +41,24 @@ class User(BaseModel):
     email: EmailStr
     first_name: str
     last_name: str
+    password_hash: Optional[str] = None
+    role: UserRole = UserRole.CUSTOMER
     is_active: bool = True
     metadata: Dict[str, Any] = Field(default_factory=dict)
     created_at: datetime = Field(default_factory=datetime.now)
     updated_at: datetime = Field(default_factory=datetime.now)
+    
+    @property
+    def full_name(self) -> str:
+        """Get the user's full name."""
+        return f"{self.first_name} {self.last_name}"
+        
+    def dict(self, *args, **kwargs):
+        """Convert the model to a dictionary with string ID."""
+        data = super().dict(*args, **kwargs)
+        if 'id' in data and isinstance(data['id'], UUID):
+            data['id'] = str(data['id'])
+        return data
 
 
 class UserManager:
@@ -38,12 +71,108 @@ class UserManager:
         self._users: Dict[UUID, User] = {}
         self._email_index: Dict[str, UUID] = {}
     
-    def create(self, user_data: dict) -> User:
+    def _hash_password(self, password: str) -> str:
+        """
+        Hash a password using SHA-256.
+        
+        Args:
+            password: The password to hash
+            
+        Returns:
+            The hashed password
+        """
+        # Generate a random salt
+        salt = secrets.token_hex(16)
+        
+        # Hash the password with the salt
+        pw_hash = hashlib.sha256((password + salt).encode()).hexdigest()
+        
+        # Return the salt and hash, separated by a colon
+        return f"{salt}:{pw_hash}"
+    
+    def _verify_password(self, stored_hash: str, password: str) -> bool:
+        """
+        Verify a password against a stored hash.
+        
+        Args:
+            stored_hash: The stored password hash
+            password: The password to verify
+            
+        Returns:
+            True if the password matches, False otherwise
+        """
+        # Split the stored hash into salt and hash
+        salt, pw_hash = stored_hash.split(':', 1)
+        
+        # Hash the password with the same salt
+        new_hash = hashlib.sha256((password + salt).encode()).hexdigest()
+        
+        # Compare the hashes
+        return new_hash == pw_hash
+    
+    def _create_access_token(self, user_id: UUID, expires_delta: Optional[timedelta] = None) -> str:
+        """
+        Create a JWT access token for a user.
+        
+        Args:
+            user_id: The ID of the user
+            expires_delta: Optional expiration time delta
+            
+        Returns:
+            The JWT access token
+        """
+        # Set the expiration time
+        if expires_delta:
+            expire = datetime.utcnow() + expires_delta
+        else:
+            expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+        
+        # Create the JWT payload
+        payload = {
+            "sub": str(user_id),
+            "exp": expire,
+            "iat": datetime.utcnow(),
+            "type": "access"
+        }
+        
+        # Encode and return the token
+        return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
+    
+    def verify_token(self, token: str) -> Optional[User]:
+        """
+        Verify a JWT token and return the associated user.
+        
+        Args:
+            token: The JWT token to verify
+            
+        Returns:
+            The user associated with the token, or None if the token is invalid
+        """
+        try:
+            # Decode the token
+            payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+            
+            # Get the user ID from the token
+            user_id = payload.get("sub")
+            if user_id is None:
+                return None
+            
+            # Get the user
+            user = self.get(user_id)
+            if not user.is_active:
+                return None
+            
+            return user
+        except jwt.PyJWTError:
+            return None
+    
+    def create(self, user_data: dict, password: Optional[str] = None) -> User:
         """
         Create a new user.
         
         Args:
             user_data: Dictionary containing user data
+            password: Optional password for the user
             
         Returns:
             The created user
@@ -57,6 +186,10 @@ class UserManager:
             # Check if email already exists
             if 'email' in user_data and user_data['email'].lower() in self._email_index:
                 raise PyCommerceError(f"User with email '{user_data['email']}' already exists")
+            
+            # Hash the password if provided
+            if password:
+                user_data['password_hash'] = self._hash_password(password)
             
             # Create and store the user
             user = User(**user_data)
@@ -117,13 +250,14 @@ class UserManager:
         
         return self.get(self._email_index[email])
     
-    def update(self, user_id: Union[UUID, str], user_data: dict) -> User:
+    def update(self, user_id: Union[UUID, str], user_data: dict, password: Optional[str] = None) -> User:
         """
         Update a user.
         
         Args:
             user_id: The ID of the user to update
             user_data: Dictionary containing updated user data
+            password: Optional new password for the user
             
         Returns:
             The updated user
@@ -144,6 +278,10 @@ class UserManager:
                 # Update email index
                 del self._email_index[user.email.lower()]
                 self._email_index[user_data['email'].lower()] = user.id
+            
+            # Hash the password if provided
+            if password:
+                user_data['password_hash'] = self._hash_password(password)
             
             # Update the user
             for key, value in user_data.items():
@@ -185,3 +323,31 @@ class UserManager:
             List of all users
         """
         return list(self._users.values())
+        
+    def authenticate(self, email: str, password: str) -> Optional[tuple]:
+        """
+        Authenticate a user with email and password.
+        
+        Args:
+            email: The user's email
+            password: The user's password
+            
+        Returns:
+            A tuple of (user, access_token) if authentication is successful, None otherwise
+        """
+        try:
+            # Get the user by email
+            user = self.get_by_email(email)
+            
+            # Verify the password
+            if not user.password_hash or not self._verify_password(user.password_hash, password):
+                return None
+            
+            # Create and return access token
+            access_token = self._create_access_token(user.id)
+            
+            return (user, access_token)
+            
+        except Exception as e:
+            logger.warning(f"Authentication failed: {str(e)}")
+            return None
