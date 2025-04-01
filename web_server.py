@@ -78,6 +78,10 @@ app.include_router(cart_router.router, prefix="/api/cart", tags=["cart"])
 app.include_router(checkout_router.router, prefix="/api/checkout", tags=["checkout"])
 app.include_router(users_router.router, prefix="/api/users", tags=["users"])
 
+# Import and include AI routes
+from pycommerce.api.routes import ai
+app.include_router(ai.router, prefix="/api/ai", tags=["ai"])
+
 # Set up templates
 templates = Jinja2Templates(directory="templates")
 
@@ -426,6 +430,577 @@ async def generate_sample_data():
     except Exception as e:
         logger.error(f"Error generating sample data: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
+
+# Admin routes for store management
+@app.get("/admin/stores", response_class=HTMLResponse)
+async def admin_stores(request: Request, status_message: Optional[str] = None, status_type: str = "info"):
+    """Admin page for managing stores (tenants)."""
+    tenants = []
+    try:
+        tenants_list = tenant_manager.list() or []
+        tenants = [
+            {
+                "id": str(t.id),
+                "name": t.name,
+                "slug": t.slug,
+                "domain": t.domain if hasattr(t, 'domain') else None,
+                "active": t.active if hasattr(t, 'active') else True
+            }
+            for t in tenants_list if t and hasattr(t, 'id')
+        ]
+    except Exception as e:
+        logger.error(f"Error fetching tenants: {str(e)}")
+        status_message = f"Error fetching stores: {str(e)}"
+        status_type = "danger"
+    
+    # Get cart data for navigation
+    cart_id = request.session.get("cart_id")
+    cart_item_count = 0
+    
+    if cart_id:
+        try:
+            cart = cart_manager.get(cart_id)
+            cart_item_count = sum(item.quantity for item in cart.items)
+        except Exception:
+            pass
+    
+    return templates.TemplateResponse(
+        "admin/stores.html", 
+        {
+            "request": request, 
+            "tenants": tenants,
+            "cart_item_count": cart_item_count,
+            "status_message": status_message,
+            "status_type": status_type
+        }
+    )
+
+@app.post("/admin/stores/add", response_class=RedirectResponse)
+async def admin_add_store(
+    request: Request,
+    name: str = Form(...),
+    slug: str = Form(...),
+    domain: Optional[str] = Form(None),
+    description: Optional[str] = Form(None)
+):
+    """Add a new store."""
+    try:
+        # Create new tenant
+        metadata = {}
+        if description:
+            metadata["description"] = description
+            
+        tenant = tenant_manager.create(
+            name=name,
+            slug=slug,
+            domain=domain,
+            metadata=metadata
+        )
+        logger.info(f"Created tenant: {tenant.name}")
+        
+        # Redirect to stores page with success message
+        return RedirectResponse(url="/admin/stores?status_message=Store+created+successfully&status_type=success", status_code=303)
+    
+    except Exception as e:
+        logger.error(f"Error creating tenant: {str(e)}")
+        # Redirect with error message
+        error_message = f"Error creating store: {str(e)}"
+        return RedirectResponse(
+            url=f"/admin/stores?status_message={error_message}&status_type=danger", 
+            status_code=303
+        )
+
+@app.get("/admin/stores/edit/{tenant_id}", response_class=HTMLResponse)
+async def admin_edit_store(
+    request: Request,
+    tenant_id: str,
+    status_message: Optional[str] = None, 
+    status_type: str = "info"
+):
+    """Edit store page."""
+    try:
+        tenant_obj = tenant_manager.get(tenant_id)
+        
+        tenant = {
+            "id": str(tenant_obj.id),
+            "name": tenant_obj.name,
+            "slug": tenant_obj.slug,
+            "domain": tenant_obj.domain if hasattr(tenant_obj, 'domain') else None,
+            "active": tenant_obj.active if hasattr(tenant_obj, 'active') else True,
+            "description": tenant_obj.metadata.get("description", "") if hasattr(tenant_obj, 'metadata') else ""
+        }
+        
+        # Get cart data for navigation
+        cart_id = request.session.get("cart_id")
+        cart_item_count = 0
+        
+        if cart_id:
+            try:
+                cart = cart_manager.get(cart_id)
+                cart_item_count = sum(item.quantity for item in cart.items)
+            except Exception:
+                pass
+        
+        return templates.TemplateResponse(
+            "admin/store_edit.html", 
+            {
+                "request": request, 
+                "tenant": tenant,
+                "cart_item_count": cart_item_count,
+                "status_message": status_message,
+                "status_type": status_type
+            }
+        )
+        
+    except Exception as e:
+        logger.error(f"Error fetching tenant: {str(e)}")
+        # Redirect with error message
+        error_message = f"Error fetching store: {str(e)}"
+        return RedirectResponse(
+            url=f"/admin/stores?status_message={error_message}&status_type=danger", 
+            status_code=303
+        )
+
+@app.post("/admin/stores/update/{tenant_id}", response_class=RedirectResponse)
+async def admin_update_store(
+    request: Request,
+    tenant_id: str,
+    name: str = Form(...),
+    slug: str = Form(...),
+    domain: Optional[str] = Form(None),
+    active: bool = Form(False),
+    description: Optional[str] = Form(None)
+):
+    """Update a store."""
+    try:
+        # Update tenant
+        update_data = {
+            "name": name,
+            "slug": slug,
+            "domain": domain,
+            "active": active
+        }
+        
+        # Update metadata if description exists
+        tenant_obj = tenant_manager.get(tenant_id)
+        metadata = getattr(tenant_obj, 'metadata', {}) or {}
+        
+        if description:
+            metadata["description"] = description
+            update_data["metadata"] = metadata
+        
+        tenant_manager.update(tenant_id, **update_data)
+        logger.info(f"Updated tenant: {name}")
+        
+        # Redirect to stores page with success message
+        return RedirectResponse(
+            url="/admin/stores?status_message=Store+updated+successfully&status_type=success", 
+            status_code=303
+        )
+    
+    except Exception as e:
+        logger.error(f"Error updating tenant: {str(e)}")
+        # Redirect with error message
+        error_message = f"Error updating store: {str(e)}"
+        return RedirectResponse(
+            url=f"/admin/stores?status_message={error_message}&status_type=danger", 
+            status_code=303
+        )
+
+@app.get("/admin/stores/toggle/{tenant_id}", response_class=RedirectResponse)
+async def admin_toggle_store(
+    request: Request,
+    tenant_id: str
+):
+    """Toggle store active status."""
+    try:
+        # Get current tenant
+        tenant_obj = tenant_manager.get(tenant_id)
+        
+        # Toggle active status
+        current_status = getattr(tenant_obj, 'active', True)
+        new_status = not current_status
+        
+        # Update tenant
+        tenant_manager.update(tenant_id, active=new_status)
+        logger.info(f"Toggled tenant {tenant_obj.name} active status to {new_status}")
+        
+        # Redirect to stores page with success message
+        status_action = "activated" if new_status else "deactivated"
+        return RedirectResponse(
+            url=f"/admin/stores?status_message=Store+{status_action}+successfully&status_type=success", 
+            status_code=303
+        )
+    
+    except Exception as e:
+        logger.error(f"Error toggling tenant status: {str(e)}")
+        # Redirect with error message
+        error_message = f"Error updating store status: {str(e)}"
+        return RedirectResponse(
+            url=f"/admin/stores?status_message={error_message}&status_type=danger", 
+            status_code=303
+        )
+
+@app.get("/admin/stores/delete/{tenant_id}", response_class=RedirectResponse)
+async def admin_delete_store(
+    request: Request,
+    tenant_id: str
+):
+    """Delete a store."""
+    try:
+        # Delete tenant
+        tenant_manager.delete(tenant_id)
+        logger.info(f"Deleted tenant with ID: {tenant_id}")
+        
+        # Redirect to stores page with success message
+        return RedirectResponse(
+            url="/admin/stores?status_message=Store+deleted+successfully&status_type=success", 
+            status_code=303
+        )
+    
+    except Exception as e:
+        logger.error(f"Error deleting tenant: {str(e)}")
+        # Redirect with error message
+        error_message = f"Error deleting store: {str(e)}"
+        return RedirectResponse(
+            url=f"/admin/stores?status_message={error_message}&status_type=danger", 
+            status_code=303
+        )
+
+# Admin routes for product management
+@app.get("/admin/products", response_class=HTMLResponse)
+async def admin_products(
+    request: Request,
+    tenant: Optional[str] = None,
+    category: Optional[str] = None,
+    min_price: Optional[float] = None,
+    max_price: Optional[float] = None,
+    status_message: Optional[str] = None,
+    status_type: str = "info"
+):
+    """Admin page for managing products."""
+    # Get all tenants for the dropdown
+    tenants = []
+    try:
+        tenants_list = tenant_manager.list() or []
+        tenants = [
+            {
+                "id": str(t.id),
+                "name": t.name,
+                "slug": t.slug
+            }
+            for t in tenants_list if t and hasattr(t, 'id')
+        ]
+    except Exception as e:
+        logger.error(f"Error fetching tenants: {str(e)}")
+    
+    # Get filtered products
+    products_list = []
+    tenant_obj = None
+    
+    if tenant:
+        # Try to get tenant by slug
+        try:
+            tenant_obj = tenant_manager.get_by_slug(tenant)
+        except Exception as e:
+            logger.warning(f"Tenant not found with slug '{tenant}': {str(e)}")
+    
+    try:
+        # Get all products with filters
+        all_products = product_manager.list(
+            category=category,
+            min_price=min_price,
+            max_price=max_price
+        )
+        
+        # Filter by tenant if specified
+        if tenant_obj and hasattr(tenant_obj, 'id'):
+            tenant_products = []
+            for p in all_products:
+                if hasattr(p, 'metadata') and p.metadata.get('tenant_id') == str(tenant_obj.id):
+                    tenant_products.append(p)
+            products_to_show = tenant_products
+        else:
+            products_to_show = all_products
+        
+        # Format products for template
+        if products_to_show:
+            products_list = []
+            for p in products_to_show:
+                if not p:
+                    continue
+                
+                # Get tenant name for the product
+                tenant_name = "Unknown"
+                tenant_id = p.metadata.get('tenant_id') if hasattr(p, 'metadata') else None
+                
+                if tenant_id:
+                    try:
+                        t = tenant_manager.get(tenant_id)
+                        tenant_name = t.name
+                    except Exception:
+                        pass
+                
+                products_list.append({
+                    "id": str(p.id) if hasattr(p, 'id') else None,
+                    "name": p.name if hasattr(p, 'name') else 'Unnamed Product',
+                    "description": p.description if hasattr(p, 'description') else None,
+                    "price": p.price if hasattr(p, 'price') else 0.0,
+                    "sku": p.sku if hasattr(p, 'sku') else None,
+                    "stock": p.stock if hasattr(p, 'stock') else 0,
+                    "categories": p.categories if hasattr(p, 'categories') else [],
+                    "image_url": p.metadata.get('image_url') if hasattr(p, 'metadata') else None,
+                    "tenant_id": tenant_id,
+                    "tenant_name": tenant_name
+                })
+                
+    except Exception as e:
+        logger.error(f"Error fetching products: {str(e)}")
+        status_message = f"Error fetching products: {str(e)}"
+        status_type = "danger"
+    
+    # Prepare filter values for the template
+    filters = {
+        "category": category,
+        "min_price": min_price,
+        "max_price": max_price
+    }
+    
+    # Get cart data for navigation
+    cart_id = request.session.get("cart_id")
+    cart_item_count = 0
+    
+    if cart_id:
+        try:
+            cart = cart_manager.get(cart_id)
+            cart_item_count = sum(item.quantity for item in cart.items)
+        except Exception:
+            pass
+    
+    return templates.TemplateResponse(
+        "admin/products.html", 
+        {
+            "request": request, 
+            "products": products_list,
+            "tenants": tenants,
+            "selected_tenant": tenant,
+            "filters": filters,
+            "cart_item_count": cart_item_count,
+            "status_message": status_message,
+            "status_type": status_type
+        }
+    )
+
+@app.post("/admin/products/add", response_class=RedirectResponse)
+async def admin_add_product(
+    request: Request,
+    tenant_id: str = Form(...),
+    name: str = Form(...),
+    sku: str = Form(...),
+    price: float = Form(...),
+    stock: int = Form(0),
+    categories: Optional[str] = Form(""),
+    image_url: Optional[str] = Form(None),
+    description: Optional[str] = Form(None)
+):
+    """Add a new product."""
+    try:
+        # Process categories string into list
+        category_list = []
+        if categories:
+            category_list = [cat.strip() for cat in categories.split(",") if cat.strip()]
+        
+        # Prepare metadata
+        metadata = {"tenant_id": tenant_id}
+        if image_url:
+            metadata["image_url"] = image_url
+        
+        # Create product
+        product_data = {
+            "name": name,
+            "sku": sku,
+            "price": price,
+            "stock": stock,
+            "categories": category_list,
+            "description": description,
+            "metadata": metadata
+        }
+        
+        product = product_manager.create(product_data)
+        logger.info(f"Created product: {product.name}")
+        
+        # Redirect to products page with success message
+        return RedirectResponse(
+            url="/admin/products?status_message=Product+created+successfully&status_type=success", 
+            status_code=303
+        )
+    
+    except Exception as e:
+        logger.error(f"Error creating product: {str(e)}")
+        # Redirect with error message
+        error_message = f"Error creating product: {str(e)}"
+        return RedirectResponse(
+            url=f"/admin/products?status_message={error_message}&status_type=danger", 
+            status_code=303
+        )
+
+@app.get("/admin/products/edit/{product_id}", response_class=HTMLResponse)
+async def admin_edit_product(
+    request: Request,
+    product_id: str,
+    status_message: Optional[str] = None, 
+    status_type: str = "info"
+):
+    """Edit product page."""
+    try:
+        # Get product
+        product_obj = product_manager.get(product_id)
+        
+        # Get tenant ID from metadata
+        tenant_id = product_obj.metadata.get('tenant_id') if hasattr(product_obj, 'metadata') else None
+        
+        # Format product for template
+        product = {
+            "id": str(product_obj.id),
+            "name": product_obj.name,
+            "sku": product_obj.sku,
+            "price": product_obj.price,
+            "stock": product_obj.stock,
+            "categories": product_obj.categories if hasattr(product_obj, 'categories') else [],
+            "description": product_obj.description if hasattr(product_obj, 'description') else "",
+            "image_url": product_obj.metadata.get('image_url') if hasattr(product_obj, 'metadata') else None,
+            "tenant_id": tenant_id
+        }
+        
+        # Get all tenants for the dropdown
+        tenants = []
+        try:
+            tenants_list = tenant_manager.list() or []
+            tenants = [
+                {
+                    "id": str(t.id),
+                    "name": t.name
+                }
+                for t in tenants_list if t and hasattr(t, 'id')
+            ]
+        except Exception as e:
+            logger.error(f"Error fetching tenants: {str(e)}")
+        
+        # Get cart data for navigation
+        cart_id = request.session.get("cart_id")
+        cart_item_count = 0
+        
+        if cart_id:
+            try:
+                cart = cart_manager.get(cart_id)
+                cart_item_count = sum(item.quantity for item in cart.items)
+            except Exception:
+                pass
+        
+        return templates.TemplateResponse(
+            "admin/product_edit.html", 
+            {
+                "request": request, 
+                "product": product,
+                "tenants": tenants,
+                "cart_item_count": cart_item_count,
+                "status_message": status_message,
+                "status_type": status_type
+            }
+        )
+        
+    except Exception as e:
+        logger.error(f"Error fetching product: {str(e)}")
+        # Redirect with error message
+        error_message = f"Error fetching product: {str(e)}"
+        return RedirectResponse(
+            url=f"/admin/products?status_message={error_message}&status_type=danger", 
+            status_code=303
+        )
+
+@app.post("/admin/products/update/{product_id}", response_class=RedirectResponse)
+async def admin_update_product(
+    request: Request,
+    product_id: str,
+    tenant_id: str = Form(...),
+    name: str = Form(...),
+    sku: str = Form(...),
+    price: float = Form(...),
+    stock: int = Form(0),
+    categories: Optional[str] = Form(""),
+    image_url: Optional[str] = Form(None),
+    description: Optional[str] = Form(None)
+):
+    """Update a product."""
+    try:
+        # Process categories string into list
+        category_list = []
+        if categories:
+            category_list = [cat.strip() for cat in categories.split(",") if cat.strip()]
+        
+        # Get existing product to preserve metadata
+        product_obj = product_manager.get(product_id)
+        metadata = getattr(product_obj, 'metadata', {}) or {}
+        
+        # Update metadata
+        metadata["tenant_id"] = tenant_id
+        if image_url:
+            metadata["image_url"] = image_url
+        
+        # Update product
+        update_data = {
+            "name": name,
+            "sku": sku,
+            "price": price,
+            "stock": stock,
+            "categories": category_list,
+            "description": description,
+            "metadata": metadata
+        }
+        
+        product_manager.update(product_id, **update_data)
+        logger.info(f"Updated product: {name}")
+        
+        # Redirect to products page with success message
+        return RedirectResponse(
+            url="/admin/products?status_message=Product+updated+successfully&status_type=success", 
+            status_code=303
+        )
+    
+    except Exception as e:
+        logger.error(f"Error updating product: {str(e)}")
+        # Redirect with error message
+        error_message = f"Error updating product: {str(e)}"
+        return RedirectResponse(
+            url=f"/admin/products?status_message={error_message}&status_type=danger", 
+            status_code=303
+        )
+
+@app.get("/admin/products/delete/{product_id}", response_class=RedirectResponse)
+async def admin_delete_product(
+    request: Request,
+    product_id: str
+):
+    """Delete a product."""
+    try:
+        # Delete product
+        product_manager.delete(product_id)
+        logger.info(f"Deleted product with ID: {product_id}")
+        
+        # Redirect to products page with success message
+        return RedirectResponse(
+            url="/admin/products?status_message=Product+deleted+successfully&status_type=success", 
+            status_code=303
+        )
+    
+    except Exception as e:
+        logger.error(f"Error deleting product: {str(e)}")
+        # Redirect with error message
+        error_message = f"Error deleting product: {str(e)}"
+        return RedirectResponse(
+            url=f"/admin/products?status_message={error_message}&status_type=danger", 
+            status_code=303
+        )
 
 # Helper function to get or create a cart from session
 def get_session_cart(request: Request):

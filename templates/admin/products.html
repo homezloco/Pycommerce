@@ -1,0 +1,250 @@
+{% extends 'base.html' %}
+
+{% block title %}PyCommerce - Product Management{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h2">Product Management</h1>
+        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addProductModal">
+            <i class="bi bi-plus-circle"></i> Add New Product
+        </button>
+    </div>
+    
+    {% if status_message %}
+    <div class="alert alert-{{ status_type }}">{{ status_message }}</div>
+    {% endif %}
+    
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <div class="mb-4">
+                <form action="/admin/products" method="get" class="row g-3">
+                    <div class="col-md-3">
+                        <label for="tenant" class="form-label">Store</label>
+                        <select class="form-select" id="tenant" name="tenant">
+                            <option value="">All Stores</option>
+                            {% for t in tenants %}
+                            <option value="{{ t.slug }}" {% if selected_tenant == t.slug %}selected{% endif %}>{{ t.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="category" class="form-label">Category</label>
+                        <input type="text" class="form-control" id="category" name="category" value="{{ filters.category or '' }}">
+                    </div>
+                    <div class="col-md-2">
+                        <label for="price_min" class="form-label">Min Price</label>
+                        <input type="number" class="form-control" id="price_min" name="min_price" min="0" step="0.01" value="{{ filters.min_price or '' }}">
+                    </div>
+                    <div class="col-md-2">
+                        <label for="price_max" class="form-label">Max Price</label>
+                        <input type="number" class="form-control" id="price_max" name="max_price" min="0" step="0.01" value="{{ filters.max_price or '' }}">
+                    </div>
+                    <div class="col-md-2 d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary w-100">Filter</button>
+                    </div>
+                </form>
+            </div>
+            
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Image</th>
+                            <th>Name</th>
+                            <th>Store</th>
+                            <th>Price</th>
+                            <th>Stock</th>
+                            <th>Categories</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for product in products %}
+                        <tr>
+                            <td>
+                                {% if product.image_url %}
+                                <img src="{{ product.image_url }}" alt="{{ product.name }}" class="img-thumbnail" width="50">
+                                {% else %}
+                                <div class="bg-secondary text-white d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                                    <span>No img</span>
+                                </div>
+                                {% endif %}
+                            </td>
+                            <td>{{ product.name }}</td>
+                            <td>{{ product.tenant_name }}</td>
+                            <td>${{ "%.2f"|format(product.price) }}</td>
+                            <td>{{ product.stock }}</td>
+                            <td>
+                                {% for category in product.categories %}
+                                <span class="badge bg-secondary">{{ category }}</span>
+                                {% endfor %}
+                            </td>
+                            <td>
+                                <div class="btn-group">
+                                    <a href="/admin/products/edit/{{ product.id }}" class="btn btn-sm btn-outline-primary">Edit</a>
+                                    <button type="button" class="btn btn-sm btn-outline-danger" 
+                                            onclick="confirmDelete('{{ product.id }}', '{{ product.name }}')">Delete</button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="7" class="text-center">No products found.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Product Modal -->
+<div class="modal fade" id="addProductModal" tabindex="-1" aria-labelledby="addProductModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addProductModalLabel">Add New Product</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="/admin/products/add" method="post">
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="tenant_id" class="form-label">Store</label>
+                                <select class="form-select" id="tenant_id" name="tenant_id" required>
+                                    <option value="">Select Store</option>
+                                    {% for t in tenants %}
+                                    <option value="{{ t.id }}">{{ t.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="name" class="form-label">Product Name</label>
+                                <input type="text" class="form-control" id="name" name="name" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="sku" class="form-label">SKU</label>
+                                <input type="text" class="form-control" id="sku" name="sku" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="price" class="form-label">Price</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">$</span>
+                                    <input type="number" class="form-control" id="price" name="price" min="0" step="0.01" required>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="stock" class="form-label">Stock</label>
+                                <input type="number" class="form-control" id="stock" name="stock" min="0" step="1" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="categories" class="form-label">Categories</label>
+                                <input type="text" class="form-control" id="categories" name="categories" 
+                                       placeholder="Comma-separated list (e.g., electronics, gadgets)">
+                                <div class="form-text">Separate multiple categories with commas</div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="image_url" class="form-label">Image URL (Optional)</label>
+                                <input type="url" class="form-control" id="image_url" name="image_url">
+                            </div>
+                            <div class="mb-3">
+                                <label for="description" class="form-label">Description</label>
+                                <textarea class="form-control wysiwyg-editor" id="description" name="description" rows="8"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Create Product</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Product Modal -->
+<div class="modal fade" id="editProductModal" tabindex="-1" aria-labelledby="editProductModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editProductModalLabel">Edit Product</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="editProductForm" action="/admin/products/edit/" method="post">
+                <div class="modal-body">
+                    <!-- Form fields will be dynamically populated -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteConfirmModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirm Delete</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete the product "<span id="productNameToDelete"></span>"?</p>
+                <p class="text-danger">This action cannot be undone.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <a href="#" id="confirmDeleteBtn" class="btn btn-danger">Delete</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Auto-generate SKU from name
+    document.addEventListener('DOMContentLoaded', function() {
+        const nameInput = document.getElementById('name');
+        const skuInput = document.getElementById('sku');
+        
+        if (nameInput && skuInput) {
+            nameInput.addEventListener('input', function() {
+                // Only auto-generate if user hasn't modified the SKU
+                if (!skuInput.dataset.userModified) {
+                    // Generate SKU from name: uppercase, replace spaces with dashes, limit to 10 chars
+                    const skuValue = this.value
+                        .toUpperCase()
+                        .replace(/[^\w\s-]/g, '')
+                        .replace(/\s+/g, '-')
+                        .substring(0, 10);
+                    
+                    skuInput.value = skuValue;
+                }
+            });
+            
+            // Mark SKU as user-modified when user changes it manually
+            skuInput.addEventListener('input', function() {
+                this.dataset.userModified = 'true';
+            });
+        }
+    });
+    
+    // Handle delete confirmation
+    function confirmDelete(id, name) {
+        const modal = new bootstrap.Modal(document.getElementById('deleteConfirmModal'));
+        document.getElementById('productNameToDelete').textContent = name;
+        document.getElementById('confirmDeleteBtn').href = `/admin/products/delete/${id}`;
+        modal.show();
+    }
+</script>
+{% endblock %}

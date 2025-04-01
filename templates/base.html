@@ -38,6 +38,15 @@
                     <li class="nav-item">
                         <a class="nav-link" href="/products">Products</a>
                     </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="adminDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            Admin
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="adminDropdown">
+                            <li><a class="dropdown-item" href="/admin/stores">Manage Stores</a></li>
+                            <li><a class="dropdown-item" href="/admin/products">Manage Products</a></li>
+                        </ul>
+                    </li>
                     <li class="nav-item">
                         <a class="nav-link" href="/api/docs" target="_blank">API Docs</a>
                     </li>
@@ -75,8 +84,135 @@
             </div>
         </div>
     </footer>
+    
+    <!-- AI Content Generation Modal -->
+    <div id="aiModal" class="modal fade" tabindex="-1" style="display: none;">
+        <div class="modal-dialog">
+            <div class="modal-content bg-dark text-light">
+                <div class="modal-header">
+                    <h5 class="modal-title">Generate Content with AI</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" 
+                            onclick="document.getElementById('aiModal').style.display = 'none';"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="aiPromptInput" class="form-label">What kind of content would you like to generate?</label>
+                        <textarea id="aiPromptInput" class="form-control" rows="3" 
+                                  placeholder="E.g., Write a product description for a premium coffee maker"></textarea>
+                    </div>
+                    <div id="aiModalLoading" class="d-none">
+                        <div class="d-flex justify-content-center">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                        </div>
+                        <p class="text-center mt-2">Generating creative content...</p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" 
+                            onclick="document.getElementById('aiModal').style.display = 'none';">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="aiGenerateBtn">Generate</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.tiny.cloud/1/no-api-key/tinymce/6/tinymce.min.js" referrerpolicy="origin"></script>
+    <script>
+        // Initialize TinyMCE on textareas with the 'wysiwyg-editor' class
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize standard WYSIWYG editors
+            tinymce.init({
+                selector: 'textarea.wysiwyg-editor',
+                plugins: 'anchor autolink charmap codesample emoticons image link lists media searchreplace table visualblocks wordcount',
+                toolbar: 'undo redo | blocks fontfamily fontsize | bold italic underline strikethrough | link image media table | align lineheight | numlist bullist indent outdent | emoticons charmap | removeformat | aibutton',
+                height: 300,
+                menubar: false,
+                setup: function(editor) {
+                    // Add AI assistant button
+                    editor.ui.registry.addButton('aibutton', {
+                        text: 'AI Assist',
+                        icon: 'bot',
+                        onAction: function() {
+                            const content = editor.getContent({format: 'text'});
+                            const selection = editor.selection.getContent({format: 'text'});
+                            const textToEnhance = selection || content || '';
+                            
+                            if (textToEnhance.trim() === '') {
+                                // If there's no text, open modal to generate new content
+                                document.getElementById('aiModal').style.display = 'block';
+                                document.getElementById('aiGenerateBtn').addEventListener('click', function() {
+                                    const prompt = document.getElementById('aiPromptInput').value;
+                                    generateAIContent(prompt, editor);
+                                });
+                            } else {
+                                // Enhance existing text
+                                enhanceWithAI(textToEnhance, editor);
+                            }
+                        }
+                    });
+                }
+            });
+        });
+        
+        // Function to call OpenAI API for content generation
+        function generateAIContent(prompt, editor) {
+            const loadingMsg = document.getElementById('aiModalLoading');
+            loadingMsg.style.display = 'block';
+            
+            fetch('/api/ai/generate', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    prompt: prompt
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                editor.insertContent(data.content);
+                document.getElementById('aiModal').style.display = 'none';
+                loadingMsg.style.display = 'none';
+                document.getElementById('aiPromptInput').value = '';
+            })
+            .catch(error => {
+                console.error('Error generating AI content:', error);
+                loadingMsg.style.display = 'none';
+                alert('Error generating content. Please try again.');
+            });
+        }
+        
+        // Function to enhance existing text with AI
+        function enhanceWithAI(text, editor) {
+            const selection = editor.selection.getContent();
+            const loadingMsg = document.createElement('div');
+            loadingMsg.innerHTML = '<div class="p-2 bg-info text-white rounded">Enhancing with AI...</div>';
+            editor.selection.setContent(loadingMsg.innerHTML);
+            
+            fetch('/api/ai/enhance', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    text: text
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                editor.selection.setContent(data.content);
+            })
+            .catch(error => {
+                console.error('Error enhancing content with AI:', error);
+                editor.selection.setContent(selection);
+                alert('Error enhancing content. Please try again.');
+            });
+        }
+    </script>
+    
     {% block scripts %}{% endblock %}
 </body>
 </html>
