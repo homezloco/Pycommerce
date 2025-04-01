@@ -89,7 +89,7 @@ app.include_router(ai.router, prefix="/api/ai", tags=["ai"])
 templates = Jinja2Templates(directory="templates")
 
 # Get TinyMCE API key from environment
-tinymce_api_key = os.environ.get("TINYMCE_API_KEY", "")
+# No need for external API keys with Quill.js
 
 # Endpoints for HTML templates
 @app.get("/", response_class=HTMLResponse)
@@ -109,8 +109,7 @@ async def index(request: Request):
         "index.html", 
         {
             "request": request,
-            "cart_item_count": cart_item_count,
-            "tinymce_api_key": tinymce_api_key
+            "cart_item_count": cart_item_count
         }
     )
 
@@ -148,8 +147,7 @@ async def stores(request: Request):
         {
             "request": request, 
             "tenants": tenants,
-            "cart_item_count": cart_item_count,
-            "tinymce_api_key": tinymce_api_key
+            "cart_item_count": cart_item_count
         }
     )
 
@@ -251,8 +249,7 @@ async def products(
             "tenants": tenants,
             "selected_tenant": tenant,
             "filters": filters,
-            "cart_item_count": cart_item_count,
-            "tinymce_api_key": tinymce_api_key
+            "cart_item_count": cart_item_count
         }
     )
 
@@ -340,11 +337,9 @@ async def store(
             "tenant": tenant_data,
             "products": products_list,
             "filters": filters,
-            "cart_item_count": cart_item_count,
-            "tinymce_api_key": tinymce_api_key
+            "cart_item_count": cart_item_count
         }
     )
-
 # API endpoint to generate sample data
 @app.get("/api/generate-sample-data")
 async def generate_sample_data():
@@ -481,12 +476,10 @@ async def admin_stores(request: Request, status_message: Optional[str] = None, s
             "tenants": tenants,
             "cart_item_count": cart_item_count,
             "status_message": status_message,
-            "status_type": status_type,
-            "tinymce_api_key": tinymce_api_key
+            "status_type": status_type
         }
     )
 
-@app.post("/admin/stores/add", response_class=RedirectResponse)
 async def admin_add_store(
     request: Request,
     name: str = Form(...),
@@ -559,13 +552,11 @@ async def admin_edit_store(
                 "tenant": tenant,
                 "cart_item_count": cart_item_count,
                 "status_message": status_message,
-                "status_type": status_type,
-                "tinymce_api_key": tinymce_api_key
+                "status_type": status_type
             }
         )
         
     except Exception as e:
-        logger.error(f"Error fetching tenant: {str(e)}")
         # Redirect with error message
         error_message = f"Error fetching store: {str(e)}"
         return RedirectResponse(
@@ -917,14 +908,12 @@ async def admin_edit_product(
                 "tenants": tenants,
                 "cart_item_count": cart_item_count,
                 "status_message": status_message,
-                "status_type": status_type,
-                "tinymce_api_key": tinymce_api_key
+                "status_type": status_type
             }
         )
         
     except Exception as e:
         logger.error(f"Error fetching product: {str(e)}")
-        # Redirect with error message
         error_message = f"Error fetching product: {str(e)}"
         return RedirectResponse(
             url=f"/admin/products?status_message={error_message}&status_type=danger", 
@@ -1085,15 +1074,13 @@ async def view_cart(request: Request):
             "request": request,
             "cart": cart_data,
             "cart_totals": cart_totals,
-            "cart_item_count": cart_data["total_quantity"],
-            "tinymce_api_key": tinymce_api_key
+            "cart_item_count": cart_data["total_quantity"]
         }
     )
 
 
 @app.post("/cart/add", response_class=RedirectResponse)
 async def add_to_cart(
-    request: Request,
     product_id: str = Form(...),
     quantity: int = Form(1)
 ):
@@ -1221,8 +1208,7 @@ async def checkout(request: Request):
             "request": request,
             "cart": cart_data,
             "cart_totals": cart_totals,
-            "cart_item_count": cart_data["total_quantity"],
-            "tinymce_api_key": tinymce_api_key
+            "cart_item_count": cart_data["total_quantity"]
         }
     )
 
@@ -1230,7 +1216,6 @@ async def checkout(request: Request):
 @app.post("/checkout/process", response_class=RedirectResponse)
 async def process_checkout(
     request: Request,
-    first_name: str = Form(...),
     last_name: str = Form(...),
     address_line1: str = Form(...),
     address_line2: Optional[str] = Form(None),
@@ -1339,8 +1324,7 @@ async def order_confirmation(request: Request):
             "created_at": order.created_at,
             "payment_id": order.payment_id,
             "shipping_address": order.shipping_address,
-            "items": order.items,
-            "tinymce_api_key": tinymce_api_key
+            "items": order.items
         }
         
         return templates.TemplateResponse(
