@@ -6,8 +6,9 @@
     <title>{% block title %}PyCommerce Admin{% endblock %}</title>
     <link rel="stylesheet" href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
     <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
-    <script src="https://cdn.tiny.cloud/1/no-api-key/tinymce/6/tinymce.min.js" referrerpolicy="origin"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         .sidebar {
             min-height: calc(100vh - 56px);
@@ -15,25 +16,116 @@
         .content {
             padding: 1.5rem;
         }
-        .tox-tinymce {
+        .store-selector {
+            max-width: 250px;
+        }
+        .dashboard-card {
+            transition: transform 0.2s, box-shadow 0.2s;
+            border-left: 4px solid var(--bs-primary);
+            height: 100%;
+        }
+        .dashboard-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        .dashboard-card i {
+            font-size: 2rem;
+            opacity: 0.8;
+        }
+        .nav-item i {
+            margin-right: 8px;
+            width: 20px;
+            text-align: center;
+        }
+        .dropdown-menu {
             border-radius: 0.25rem;
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+        }
+        .card-header-tabs .nav-link.active {
+            border-bottom: 2px solid var(--bs-primary);
+        }
+        .notification-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            font-size: 0.6rem;
+        }
+        .store-status-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 5px;
+        }
+        .status-active {
+            background-color: var(--bs-success);
+        }
+        .status-inactive {
+            background-color: var(--bs-danger);
         }
     </style>
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm">
         <div class="container-fluid">
-            <a class="navbar-brand" href="/admin">PyCommerce Admin</a>
+            <a class="navbar-brand" href="/admin">
+                <i class="bi bi-shop me-2"></i>PyCommerce Admin
+            </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
+            
             <div class="collapse navbar-collapse" id="navbarNav">
+                <!-- Store Selector Dropdown -->
+                <div class="mx-auto">
+                    <form action="/admin/change-store" method="GET" class="d-flex store-selector">
+                        <select class="form-select form-select-sm me-2" name="tenant" onchange="this.form.submit()">
+                            <option value="">Select Store</option>
+                            {% for tenant in tenants %}
+                            <option value="{{ tenant.slug }}" {% if selected_tenant == tenant.slug %}selected{% endif %}>
+                                <span class="store-status-indicator {% if tenant.active %}status-active{% else %}status-inactive{% endif %}"></span>
+                                {{ tenant.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <a href="/admin/stores/add" class="btn btn-sm btn-outline-light">
+                            <i class="bi bi-plus"></i>
+                        </a>
+                    </form>
+                </div>
+                
                 <ul class="navbar-nav ms-auto">
-                    <li class="nav-item">
-                        <a class="nav-link" href="/">Visit Store</a>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle position-relative" href="#" id="notificationsDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-bell"></i>
+                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger notification-badge">
+                                3
+                            </span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="notificationsDropdown">
+                            <li><h6 class="dropdown-header">Notifications</h6></li>
+                            <li><a class="dropdown-item" href="#">New order received</a></li>
+                            <li><a class="dropdown-item" href="#">Low stock warning: Product #123</a></li>
+                            <li><a class="dropdown-item" href="#">Payment processed</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="#">View all notifications</a></li>
+                        </ul>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="/logout">Logout</a>
+                        <a class="nav-link" href="/" target="_blank">
+                            <i class="bi bi-box-arrow-up-right"></i> Visit Store
+                        </a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-person-circle"></i> Admin
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                            <li><a class="dropdown-item" href="/admin/profile">Profile</a></li>
+                            <li><a class="dropdown-item" href="/admin/settings">Settings</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="/logout">Logout</a></li>
+                        </ul>
                     </li>
                 </ul>
             </div>
@@ -47,22 +139,78 @@
                     <ul class="nav flex-column">
                         <li class="nav-item">
                             <a class="nav-link {% if active_page == 'dashboard' %}active{% endif %}" href="/admin">
-                                Dashboard
+                                <i class="bi bi-speedometer2"></i> Dashboard
                             </a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link {% if active_page == 'stores' %}active{% endif %}" href="/admin/stores">
-                                Stores
+                                <i class="bi bi-shop"></i> Stores
                             </a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link {% if active_page == 'products' %}active{% endif %}" href="/admin/products">
-                                Products
+                                <i class="bi bi-box-seam"></i> Products
                             </a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link {% if active_page == 'orders' %}active{% endif %}" href="/admin/orders">
-                                Orders
+                                <i class="bi bi-cart3"></i> Orders
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if active_page == 'customers' %}active{% endif %}" href="/admin/customers">
+                                <i class="bi bi-people"></i> Customers
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if active_page == 'marketing' %}active{% endif %}" href="/admin/marketing">
+                                <i class="bi bi-graph-up"></i> Marketing
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if active_page == 'newsletters' %}active{% endif %}" href="/admin/newsletters">
+                                <i class="bi bi-envelope"></i> Newsletters
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if active_page == 'analytics' %}active{% endif %}" href="/admin/analytics">
+                                <i class="bi bi-bar-chart"></i> Analytics
+                            </a>
+                        </li>
+                        
+                        <li class="nav-item mt-3">
+                            <h6 class="sidebar-heading px-3 mt-3 mb-1 text-muted text-uppercase">
+                                <i class="bi bi-gear"></i> Settings
+                            </h6>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if active_page == 'store_settings' %}active{% endif %}" href="/admin/store-settings">
+                                <i class="bi bi-sliders"></i> Store Settings
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if active_page == 'design' %}active{% endif %}" href="/admin/design">
+                                <i class="bi bi-brush"></i> Design
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if active_page == 'plugins' %}active{% endif %}" href="/admin/plugins">
+                                <i class="bi bi-puzzle"></i> Plugins
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if active_page == 'payments' %}active{% endif %}" href="/admin/payments">
+                                <i class="bi bi-credit-card"></i> Payments
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if active_page == 'shipping' %}active{% endif %}" href="/admin/shipping">
+                                <i class="bi bi-truck"></i> Shipping
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if active_page == 'users' %}active{% endif %}" href="/admin/users">
+                                <i class="bi bi-person-lock"></i> Users & Permissions
                             </a>
                         </li>
                     </ul>
@@ -70,12 +218,32 @@
             </div>
 
             <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 content">
+                {% if status_message %}
+                <div class="alert alert-{{ status_type }} alert-dismissible fade show mt-3" role="alert">
+                    {{ status_message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+                {% endif %}
+                
                 {% block content %}{% endblock %}
             </main>
         </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Script to mark current navigation item as active
+        document.addEventListener('DOMContentLoaded', function() {
+            const path = window.location.pathname;
+            const navLinks = document.querySelectorAll('.sidebar .nav-link');
+            
+            navLinks.forEach(link => {
+                if (link.getAttribute('href') !== '/admin' && path.includes(link.getAttribute('href'))) {
+                    link.classList.add('active');
+                }
+            });
+        });
+    </script>
     {% block scripts %}{% endblock %}
 </body>
 </html>

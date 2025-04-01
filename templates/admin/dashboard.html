@@ -1,0 +1,312 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}PyCommerce - Admin Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h2">Dashboard</h1>
+        <div class="d-flex">
+            <select class="form-select form-select-sm me-2">
+                <option value="today">Today</option>
+                <option value="yesterday">Yesterday</option>
+                <option value="last7days" selected>Last 7 Days</option>
+                <option value="last30days">Last 30 Days</option>
+                <option value="thismonth">This Month</option>
+                <option value="lastmonth">Last Month</option>
+                <option value="custom">Custom Range</option>
+            </select>
+            <button class="btn btn-sm btn-outline-secondary">
+                <i class="bi bi-arrow-repeat"></i> Refresh
+            </button>
+        </div>
+    </div>
+
+    <!-- Stats Overview -->
+    <div class="row mb-4">
+        <div class="col-md-3 mb-3">
+            <div class="card dashboard-card h-100" style="border-left-color: var(--bs-primary);">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted">Revenue</h6>
+                            <h2 class="mb-0">$1,754</h2>
+                            <small class="text-success"><i class="bi bi-arrow-up"></i> 12% from last week</small>
+                        </div>
+                        <div>
+                            <i class="bi bi-currency-dollar text-primary"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card dashboard-card h-100" style="border-left-color: var(--bs-success);">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted">Orders</h6>
+                            <h2 class="mb-0">24</h2>
+                            <small class="text-success"><i class="bi bi-arrow-up"></i> 8% from last week</small>
+                        </div>
+                        <div>
+                            <i class="bi bi-cart text-success"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card dashboard-card h-100" style="border-left-color: var(--bs-info);">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted">Customers</h6>
+                            <h2 class="mb-0">328</h2>
+                            <small class="text-success"><i class="bi bi-arrow-up"></i> 5% from last week</small>
+                        </div>
+                        <div>
+                            <i class="bi bi-people text-info"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card dashboard-card h-100" style="border-left-color: var(--bs-warning);">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted">Products</h6>
+                            <h2 class="mb-0">64</h2>
+                            <small class="text-muted"><i class="bi bi-dash"></i> No change</small>
+                        </div>
+                        <div>
+                            <i class="bi bi-box-seam text-warning"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <!-- Sales Chart -->
+        <div class="col-md-8 mb-4">
+            <div class="card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">Sales Overview</h5>
+                    <div class="btn-group btn-group-sm">
+                        <button class="btn btn-outline-secondary active">Revenue</button>
+                        <button class="btn btn-outline-secondary">Orders</button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <canvas id="salesChart" height="250"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Orders -->
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Recent Orders</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush">
+                        <a href="#" class="list-group-item list-group-item-action">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">Order #1234</h6>
+                                <small class="text-muted">3 hours ago</small>
+                            </div>
+                            <p class="mb-1">$258.00 - 3 items</p>
+                            <small><span class="badge bg-success">Paid</span> Jane Doe</small>
+                        </a>
+                        <a href="#" class="list-group-item list-group-item-action">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">Order #1233</h6>
+                                <small class="text-muted">5 hours ago</small>
+                            </div>
+                            <p class="mb-1">$129.95 - 2 items</p>
+                            <small><span class="badge bg-warning">Processing</span> John Smith</small>
+                        </a>
+                        <a href="#" class="list-group-item list-group-item-action">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">Order #1232</h6>
+                                <small class="text-muted">Yesterday</small>
+                            </div>
+                            <p class="mb-1">$89.99 - 1 item</p>
+                            <small><span class="badge bg-info">Shipped</span> Mike Johnson</small>
+                        </a>
+                        <a href="#" class="list-group-item list-group-item-action">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">Order #1231</h6>
+                                <small class="text-muted">Yesterday</small>
+                            </div>
+                            <p class="mb-1">$345.50 - 4 items</p>
+                            <small><span class="badge bg-info">Shipped</span> Sarah Williams</small>
+                        </a>
+                    </div>
+                </div>
+                <div class="card-footer text-center">
+                    <a href="/admin/orders" class="btn btn-sm btn-outline-primary">View All Orders</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <!-- Top Products -->
+        <div class="col-md-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Top Products</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Product</th>
+                                    <th>Price</th>
+                                    <th>Sold</th>
+                                    <th>Revenue</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Premium T-Shirt</td>
+                                    <td>$29.99</td>
+                                    <td>18</td>
+                                    <td>$539.82</td>
+                                </tr>
+                                <tr>
+                                    <td>Wireless Earbuds</td>
+                                    <td>$89.95</td>
+                                    <td>5</td>
+                                    <td>$449.75</td>
+                                </tr>
+                                <tr>
+                                    <td>Smartwatch X3</td>
+                                    <td>$119.99</td>
+                                    <td>3</td>
+                                    <td>$359.97</td>
+                                </tr>
+                                <tr>
+                                    <td>Phone Case</td>
+                                    <td>$14.99</td>
+                                    <td>21</td>
+                                    <td>$314.79</td>
+                                </tr>
+                                <tr>
+                                    <td>USB-C Cable (3-pack)</td>
+                                    <td>$19.99</td>
+                                    <td>14</td>
+                                    <td>$279.86</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="card-footer text-center">
+                    <a href="/admin/products" class="btn btn-sm btn-outline-primary">View All Products</a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Store Performance -->
+        <div class="col-md-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Store Performance</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Store</th>
+                                <th>Orders</th>
+                                <th>Revenue</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for tenant in tenants %}
+                            <tr>
+                                <td>{{ tenant.name }}</td>
+                                <td>{{ tenant.orders_count|default(0) }}</td>
+                                <td>${{ tenant.revenue|default(0) }}</td>
+                                <td>
+                                    {% if tenant.active %}
+                                    <span class="badge bg-success">Active</span>
+                                    {% else %}
+                                    <span class="badge bg-danger">Inactive</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="4" class="text-center">No stores found.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <div class="card-footer text-center">
+                    <a href="/admin/stores" class="btn btn-sm btn-outline-primary">Manage Stores</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Initialize Sales Chart
+    document.addEventListener('DOMContentLoaded', function() {
+        const ctx = document.getElementById('salesChart');
+        
+        if (ctx) {
+            const salesChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                    datasets: [{
+                        label: 'Revenue',
+                        data: [350, 290, 410, 320, 560, 480, 320],
+                        borderColor: '#0d6efd',
+                        backgroundColor: 'rgba(13, 110, 253, 0.1)',
+                        borderWidth: 2,
+                        tension: 0.3,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                drawBorder: false
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

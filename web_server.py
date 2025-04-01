@@ -436,6 +436,243 @@ async def generate_sample_data():
         logger.error(f"Error generating sample data: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
+# Admin routes for dashboard and management
+@app.get("/admin", response_class=HTMLResponse)
+async def admin_dashboard(request: Request, status_message: Optional[str] = None, status_type: str = "info"):
+    """Admin dashboard page."""
+    # Get all tenants for the store selector
+    tenants = []
+    try:
+        tenants_list = tenant_manager.list() or []
+        tenants = [
+            {
+                "id": str(t.id),
+                "name": t.name,
+                "slug": t.slug,
+                "domain": t.domain if hasattr(t, 'domain') else None,
+                "active": t.active if hasattr(t, 'active') else True
+            }
+            for t in tenants_list if t and hasattr(t, 'id')
+        ]
+        
+        # Get selected tenant from query param or session
+        selected_tenant = request.query_params.get('tenant')
+        if not selected_tenant and tenants:
+            selected_tenant = tenants[0]["slug"]
+        
+        # Get cart item count if available
+        cart_item_count = 0
+        session = request.session
+        if 'cart_id' in session:
+            try:
+                cart_id = session['cart_id']
+                cart = cart_manager.get(cart_id)
+                cart_item_count = sum(item.quantity for item in cart.items)
+            except Exception:
+                pass
+    except Exception as e:
+        logger.error(f"Error fetching tenants: {str(e)}")
+        if status_message is None:
+            status_message = f"Error fetching tenants: {str(e)}"
+            status_type = "danger"
+        tenants = []
+        selected_tenant = None
+        cart_item_count = 0
+    
+    return templates.TemplateResponse(
+        "admin/dashboard.html", 
+        {
+            "request": request,
+            "active_page": "dashboard",
+            "tenants": tenants,
+            "selected_tenant": selected_tenant,
+            "cart_item_count": cart_item_count,
+            "status_message": status_message,
+            "status_type": status_type
+        }
+    )
+
+# Admin store selector (for changing between stores)
+@app.get("/admin/change-store", response_class=RedirectResponse)
+async def admin_change_store(request: Request, tenant: str = ""):
+    """Change the selected store for admin management."""
+    redirect_url = request.query_params.get('redirect_url', '/admin')
+    if tenant:
+        return RedirectResponse(url=f"{redirect_url}?tenant={tenant}", status_code=303)
+    return RedirectResponse(url=redirect_url, status_code=303)
+
+# Admin store settings
+@app.get("/admin/store-settings", response_class=HTMLResponse)
+async def admin_store_settings(request: Request, status_message: Optional[str] = None, status_type: str = "info"):
+    """Admin page for managing store settings."""
+    # Get all tenants for the store selector
+    tenants = []
+    selected_tenant = None
+    
+    try:
+        tenants_list = tenant_manager.list() or []
+        tenants = [
+            {
+                "id": str(t.id),
+                "name": t.name,
+                "slug": t.slug,
+                "domain": t.domain if hasattr(t, 'domain') else None,
+                "active": t.active if hasattr(t, 'active') else True,
+                "metadata": t.metadata if hasattr(t, 'metadata') else {}
+            }
+            for t in tenants_list if t and hasattr(t, 'id')
+        ]
+        
+        # Get selected tenant from query param
+        selected_tenant_slug = request.query_params.get('tenant')
+        if selected_tenant_slug:
+            for tenant in tenants:
+                if tenant["slug"] == selected_tenant_slug:
+                    selected_tenant = tenant
+                    break
+        elif tenants:
+            selected_tenant = tenants[0]
+            selected_tenant_slug = selected_tenant["slug"]
+        
+        # Get cart item count if available
+        cart_item_count = 0
+        session = request.session
+        if 'cart_id' in session:
+            try:
+                cart_id = session['cart_id']
+                cart = cart_manager.get(cart_id)
+                cart_item_count = sum(item.quantity for item in cart.items)
+            except Exception:
+                pass
+    except Exception as e:
+        logger.error(f"Error fetching tenants: {str(e)}")
+        if status_message is None:
+            status_message = f"Error fetching tenants: {str(e)}"
+            status_type = "danger"
+        tenants = []
+        cart_item_count = 0
+    
+    return templates.TemplateResponse(
+        "admin/store_settings.html", 
+        {
+            "request": request,
+            "active_page": "store_settings",
+            "tenants": tenants,
+            "selected_tenant": selected_tenant_slug,
+            "tenant": selected_tenant,
+            "cart_item_count": cart_item_count,
+            "status_message": status_message,
+            "status_type": status_type
+        }
+    )
+
+# Admin store settings update
+@app.post("/admin/store-settings/update", response_class=RedirectResponse)
+async def admin_store_settings_update(
+    request: Request,
+    tenant_id: str = Form(...),
+    store_name: str = Form(...),
+    store_slug: str = Form(...),
+    store_domain: Optional[str] = Form(None),
+    store_active: bool = Form(False),
+    store_description: Optional[str] = Form(None),
+    store_email: Optional[str] = Form(None),
+    store_phone: Optional[str] = Form(None)
+):
+    """Update store settings."""
+    try:
+        # Get tenant object
+        tenant = tenant_manager.get(tenant_id)
+        
+        # Update basic tenant info
+        tenant.name = store_name
+        tenant.slug = store_slug
+        tenant.domain = store_domain
+        tenant.active = store_active
+        
+        # Update metadata
+        if not hasattr(tenant, 'metadata') or tenant.metadata is None:
+            tenant.metadata = {}
+            
+        tenant.metadata['email'] = store_email
+        tenant.metadata['phone'] = store_phone
+        tenant.metadata['description'] = store_description
+        
+        # Update tenant
+        tenant_manager.update(tenant)
+        
+        return RedirectResponse(
+            url=f"/admin/store-settings?tenant={store_slug}&status_message=Store+settings+updated+successfully&status_type=success", 
+            status_code=303
+        )
+    except Exception as e:
+        error_message = str(e).replace(" ", "+")
+        return RedirectResponse(
+            url=f"/admin/store-settings?tenant={store_slug}&status_message={error_message}&status_type=danger", 
+            status_code=303
+        )
+
+# Admin plugins page
+@app.get("/admin/plugins", response_class=HTMLResponse)
+async def admin_plugins(request: Request, status_message: Optional[str] = None, status_type: str = "info"):
+    """Admin page for managing plugins."""
+    # Get all tenants for the store selector
+    tenants = []
+    try:
+        tenants_list = tenant_manager.list() or []
+        tenants = [
+            {
+                "id": str(t.id),
+                "name": t.name,
+                "slug": t.slug,
+                "domain": t.domain if hasattr(t, 'domain') else None,
+                "active": t.active if hasattr(t, 'active') else True
+            }
+            for t in tenants_list if t and hasattr(t, 'id')
+        ]
+        
+        # Get selected tenant from query param
+        selected_tenant = request.query_params.get('tenant')
+        if not selected_tenant and tenants:
+            selected_tenant = tenants[0]["slug"]
+        
+        # Get cart item count if available
+        cart_item_count = 0
+        session = request.session
+        if 'cart_id' in session:
+            try:
+                cart_id = session['cart_id']
+                cart = cart_manager.get(cart_id)
+                cart_item_count = sum(item.quantity for item in cart.items)
+            except Exception:
+                pass
+    except Exception as e:
+        logger.error(f"Error fetching tenants: {str(e)}")
+        if status_message is None:
+            status_message = f"Error fetching tenants: {str(e)}"
+            status_type = "danger"
+        tenants = []
+        selected_tenant = None
+        cart_item_count = 0
+    
+    # Get available plugins
+    from pycommerce.core.plugin import get_available_plugins
+    plugins = get_available_plugins()
+    
+    return templates.TemplateResponse(
+        "admin/plugins.html", 
+        {
+            "request": request,
+            "active_page": "plugins",
+            "tenants": tenants,
+            "selected_tenant": selected_tenant,
+            "plugins": plugins,
+            "cart_item_count": cart_item_count,
+            "status_message": status_message,
+            "status_type": status_type
+        }
+    )
+
 # Admin routes for store management
 @app.get("/admin/stores", response_class=HTMLResponse)
 async def admin_stores(request: Request, status_message: Optional[str] = None, status_type: str = "info"):
@@ -473,6 +710,7 @@ async def admin_stores(request: Request, status_message: Optional[str] = None, s
         "admin/stores.html", 
         {
             "request": request, 
+            "active_page": "stores",
             "tenants": tenants,
             "cart_item_count": cart_item_count,
             "status_message": status_message,
@@ -549,6 +787,7 @@ async def admin_edit_store(
             "admin/store_edit.html", 
             {
                 "request": request, 
+                "active_page": "stores",
                 "tenant": tenant,
                 "cart_item_count": cart_item_count,
                 "status_message": status_message,
@@ -784,6 +1023,7 @@ async def admin_products(
         "admin/products.html", 
         {
             "request": request, 
+            "active_page": "products",
             "products": products_list,
             "tenants": tenants,
             "selected_tenant": tenant,
@@ -904,6 +1144,7 @@ async def admin_edit_product(
             "admin/product_edit.html", 
             {
                 "request": request, 
+                "active_page": "products",
                 "product": product,
                 "tenants": tenants,
                 "cart_item_count": cart_item_count,
