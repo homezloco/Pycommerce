@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Products - PyCommerce Demo</title>
+    <link href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
+        <div class="container">
+            <a class="navbar-brand" href="/">PyCommerce Demo</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/products">Products</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/cart">Cart</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <h1 class="mb-4">Products</h1>
+
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <form action="{{ url_for('products') }}" method="get" class="mb-3">
+                    <div class="input-group">
+                        <input type="text" name="search" class="form-control" placeholder="Search products..." value="{{ current_search or '' }}">
+                        <button type="submit" class="btn btn-primary">Search</button>
+                        {% if current_search %}
+                            <a href="{{ url_for('products') }}" class="btn btn-secondary">Clear</a>
+                        {% endif %}
+                    </div>
+                </form>
+            </div>
+            <div class="col-md-6">
+                <div class="d-flex justify-content-md-end">
+                    <div class="dropdown me-2">
+                        <button class="btn btn-secondary dropdown-toggle" type="button" id="categoryDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                            {% if current_category %}{{ current_category }}{% else %}All Categories{% endif %}
+                        </button>
+                        <ul class="dropdown-menu" aria-labelledby="categoryDropdown">
+                            <li><a class="dropdown-item" href="{{ url_for('products') }}">All Categories</a></li>
+                            {% for category in categories %}
+                                <li><a class="dropdown-item" href="{{ url_for('products', category=category) }}">{{ category }}</a></li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    <div class="dropdown">
+                        <button class="btn btn-secondary dropdown-toggle" type="button" id="priceDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                            Price Range
+                        </button>
+                        <div class="dropdown-menu p-3" style="min-width: 250px;" aria-labelledby="priceDropdown">
+                            <form action="{{ url_for('products') }}" method="get">
+                                {% if current_category %}
+                                    <input type="hidden" name="category" value="{{ current_category }}">
+                                {% endif %}
+                                <div class="mb-3">
+                                    <label for="minPrice" class="form-label">Min Price ($)</label>
+                                    <input type="number" class="form-control" id="minPrice" name="min_price" value="{{ current_min_price or '' }}" min="0" step="0.01">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="maxPrice" class="form-label">Max Price ($)</label>
+                                    <input type="number" class="form-control" id="maxPrice" name="max_price" value="{{ current_max_price or '' }}" min="0" step="0.01">
+                                </div>
+                                <button type="submit" class="btn btn-primary">Apply</button>
+                                <a href="{{ url_for('products') }}" class="btn btn-secondary">Reset</a>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {% if products %}
+            <div class="row row-cols-1 row-cols-md-3 g-4">
+                {% for product in products %}
+                    <div class="col">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <h5 class="card-title">{{ product.name }}</h5>
+                                <h6 class="card-subtitle mb-2 text-muted">SKU: {{ product.sku }}</h6>
+                                <p class="card-text">{{ product.description }}</p>
+                                <p class="card-text">
+                                    {% for category in product.categories %}
+                                        <span class="badge bg-secondary me-1">{{ category }}</span>
+                                    {% endfor %}
+                                </p>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span class="fs-4">${{ product.price|round(2) }}</span>
+                                    <span class="badge {% if product.stock > 10 %}bg-success{% elif product.stock > 0 %}bg-warning{% else %}bg-danger{% endif %}">
+                                        {% if product.stock > 0 %}In Stock: {{ product.stock }}{% else %}Out of Stock{% endif %}
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="card-footer">
+                                {% if product.stock > 0 %}
+                                    <form action="{{ url_for('add_to_cart') }}" method="post">
+                                        <input type="hidden" name="product_id" value="{{ product.id }}">
+                                        <div class="input-group mb-2">
+                                            <input type="number" name="quantity" class="form-control" value="1" min="1" max="{{ product.stock }}">
+                                            <button type="submit" class="btn btn-primary">Add to Cart</button>
+                                        </div>
+                                    </form>
+                                {% else %}
+                                    <button class="btn btn-secondary w-100" disabled>Out of Stock</button>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="alert alert-info">
+                No products found. {% if current_search or current_category or current_min_price or current_max_price %}Try changing your filters.{% endif %}
+            </div>
+        {% endif %}
+    </div>
+
+    <footer class="bg-dark text-white mt-5 py-4">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5>PyCommerce SDK</h5>
+                    <p>A modular Python ecommerce SDK with plugin architecture and FastAPI integration.</p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <p>Version 0.1.0</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
