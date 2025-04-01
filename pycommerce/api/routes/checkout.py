@@ -16,34 +16,66 @@ from pycommerce.core.plugin import PluginManager
 router = APIRouter()
 logger = logging.getLogger("pycommerce.api.checkout")
 
-# Dependencies to get manager instances
-_order_manager = None
+# Storage for tenant-specific order managers
+_order_managers = {}
 _cart_manager = None
 _product_manager = None
 _plugin_manager = None
 
 def set_order_manager(manager: OrderManager):
-    """Set the OrderManager instance to use in routes."""
-    global _order_manager
-    _order_manager = manager
+    """Set the OrderManager instance to use in routes for the default tenant."""
+    global _order_managers
+    _order_managers["default"] = manager
 
-def get_order_manager() -> OrderManager:
+def set_order_manager_func(get_manager_func):
     """
-    Get the OrderManager instance.
+    Set a function that will be called to get the OrderManager for a tenant.
+    
+    Args:
+        get_manager_func: A function that takes a tenant_id and returns an OrderManager
+    """
+    global _get_manager_func
+    _get_manager_func = get_manager_func
+
+def get_order_manager(tenant_id: str = None) -> OrderManager:
+    """
+    Get the OrderManager instance for a tenant.
+    
+    Args:
+        tenant_id: The tenant ID (optional, uses default if not provided)
     
     Returns:
         The OrderManager instance
         
     Raises:
-        HTTPException: If the OrderManager is not initialized
+        HTTPException: If the OrderManager is not initialized for the tenant
     """
-    if _order_manager is None:
-        logger.error("OrderManager not initialized")
-        raise HTTPException(
-            status_code=500,
-            detail="Order service not available"
-        )
-    return _order_manager
+    # Use default tenant if not specified
+    if tenant_id is None:
+        tenant_id = "default"
+        
+    # Check if we have a manager for this tenant
+    if tenant_id in _order_managers:
+        return _order_managers[tenant_id]
+    
+    # Try to get manager using the function if available
+    if "_get_manager_func" in globals() and globals()["_get_manager_func"] is not None:
+        try:
+            manager = globals()["_get_manager_func"](tenant_id)
+            _order_managers[tenant_id] = manager
+            return manager
+        except Exception as e:
+            logger.error(f"Error getting order manager for tenant {tenant_id}: {str(e)}")
+    
+    # Fallback to default manager
+    if "default" in _order_managers:
+        return _order_managers["default"]
+        
+    logger.error(f"OrderManager not initialized for tenant {tenant_id}")
+    raise HTTPException(
+        status_code=500,
+        detail="Order service not available"
+    )
 
 def get_cart_manager() -> Optional[CartManager]:
     """

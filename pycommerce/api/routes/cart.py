@@ -14,32 +14,64 @@ from pycommerce.models.product import ProductManager
 router = APIRouter()
 logger = logging.getLogger("pycommerce.api.cart")
 
-# Dependencies to get manager instances
-_cart_manager = None
+# Storage for tenant-specific cart managers
+_cart_managers = {}
 _product_manager = None
 
 def set_cart_manager(manager: CartManager):
-    """Set the CartManager instance to use in routes."""
-    global _cart_manager
-    _cart_manager = manager
+    """Set the CartManager instance to use in routes for the default tenant."""
+    global _cart_managers
+    _cart_managers["default"] = manager
 
-def get_cart_manager() -> CartManager:
+def set_cart_manager_func(get_manager_func):
     """
-    Get the CartManager instance.
+    Set a function that will be called to get the CartManager for a tenant.
+    
+    Args:
+        get_manager_func: A function that takes a tenant_id and returns a CartManager
+    """
+    global _get_manager_func
+    _get_manager_func = get_manager_func
+
+def get_cart_manager(tenant_id: str = None) -> CartManager:
+    """
+    Get the CartManager instance for a tenant.
+    
+    Args:
+        tenant_id: The tenant ID (optional, uses default if not provided)
     
     Returns:
         The CartManager instance
         
     Raises:
-        HTTPException: If the CartManager is not initialized
+        HTTPException: If the CartManager is not initialized for the tenant
     """
-    if _cart_manager is None:
-        logger.error("CartManager not initialized")
-        raise HTTPException(
-            status_code=500,
-            detail="Cart service not available"
-        )
-    return _cart_manager
+    # Use default tenant if not specified
+    if tenant_id is None:
+        tenant_id = "default"
+        
+    # Check if we have a manager for this tenant
+    if tenant_id in _cart_managers:
+        return _cart_managers[tenant_id]
+    
+    # Try to get manager using the function if available
+    if "_get_manager_func" in globals() and globals()["_get_manager_func"] is not None:
+        try:
+            manager = globals()["_get_manager_func"](tenant_id)
+            _cart_managers[tenant_id] = manager
+            return manager
+        except Exception as e:
+            logger.error(f"Error getting cart manager for tenant {tenant_id}: {str(e)}")
+    
+    # Fallback to default manager
+    if "default" in _cart_managers:
+        return _cart_managers["default"]
+        
+    logger.error(f"CartManager not initialized for tenant {tenant_id}")
+    raise HTTPException(
+        status_code=500,
+        detail="Cart service not available"
+    )
 
 def get_product_manager() -> Optional[ProductManager]:
     """

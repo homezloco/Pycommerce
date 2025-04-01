@@ -13,31 +13,63 @@ from pycommerce.models.user import User, UserManager
 router = APIRouter()
 logger = logging.getLogger("pycommerce.api.users")
 
-# Dependency to get the UserManager instance
-_user_manager = None
+# Storage for tenant-specific user managers
+_user_managers = {}
 
 def set_user_manager(manager: UserManager):
-    """Set the UserManager instance to use in routes."""
-    global _user_manager
-    _user_manager = manager
+    """Set the UserManager instance to use in routes for the default tenant."""
+    global _user_managers
+    _user_managers["default"] = manager
 
-def get_user_manager() -> UserManager:
+def set_user_manager_func(get_manager_func):
     """
-    Get the UserManager instance.
+    Set a function that will be called to get the UserManager for a tenant.
+    
+    Args:
+        get_manager_func: A function that takes a tenant_id and returns a UserManager
+    """
+    global _get_manager_func
+    _get_manager_func = get_manager_func
+
+def get_user_manager(tenant_id: str = None) -> UserManager:
+    """
+    Get the UserManager instance for a tenant.
+    
+    Args:
+        tenant_id: The tenant ID (optional, uses default if not provided)
     
     Returns:
         The UserManager instance
         
     Raises:
-        HTTPException: If the UserManager is not initialized
+        HTTPException: If the UserManager is not initialized for the tenant
     """
-    if _user_manager is None:
-        logger.error("UserManager not initialized")
-        raise HTTPException(
-            status_code=500,
-            detail="User service not available"
-        )
-    return _user_manager
+    # Use default tenant if not specified
+    if tenant_id is None:
+        tenant_id = "default"
+        
+    # Check if we have a manager for this tenant
+    if tenant_id in _user_managers:
+        return _user_managers[tenant_id]
+    
+    # Try to get manager using the function if available
+    if "_get_manager_func" in globals() and globals()["_get_manager_func"] is not None:
+        try:
+            manager = globals()["_get_manager_func"](tenant_id)
+            _user_managers[tenant_id] = manager
+            return manager
+        except Exception as e:
+            logger.error(f"Error getting user manager for tenant {tenant_id}: {str(e)}")
+    
+    # Fallback to default manager
+    if "default" in _user_managers:
+        return _user_managers["default"]
+        
+    logger.error(f"UserManager not initialized for tenant {tenant_id}")
+    raise HTTPException(
+        status_code=500,
+        detail="User service not available"
+    )
 
 
 @router.get("", response_model=List[User])
