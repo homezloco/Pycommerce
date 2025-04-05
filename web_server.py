@@ -9,7 +9,7 @@ import os
 import logging
 import uvicorn
 from datetime import datetime
-from fastapi import FastAPI, Depends, Query, HTTPException, Request, Form, Cookie
+from fastapi import FastAPI, Depends, Query, HTTPException, Request, Form, Cookie, File, UploadFile
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -39,6 +39,8 @@ from pycommerce.plugins.ai.providers import (
 from pycommerce.plugins.ai.config import get_ai_providers, load_ai_config
 from pycommerce.api.routes import checkout as checkout_router
 from pycommerce.api.routes import users as users_router
+from pycommerce.services.media_service import MediaService
+from pycommerce.api.routes import media as media_router
 
 # Import plugin modules
 from pycommerce.plugins import StripePaymentPlugin, StandardShippingPlugin
@@ -96,6 +98,12 @@ app.include_router(users_router.router, prefix="/api/users", tags=["users"])
 # Import and include AI routes
 from pycommerce.api.routes import ai
 app.include_router(ai.router, prefix="/api/ai", tags=["ai"])
+
+# Include media routes
+app.include_router(media_router.router, prefix="/api/media", tags=["media"])
+
+# Initialize services
+media_service = MediaService()
 
 # Set up templates
 templates = Jinja2Templates(directory="templates")
@@ -536,7 +544,7 @@ async def admin_store_settings(request: Request, status_message: Optional[str] =
                 "slug": t.slug,
                 "domain": t.domain if hasattr(t, 'domain') else None,
                 "active": t.active if hasattr(t, 'active') else True,
-                "metadata": t.metadata if hasattr(t, 'metadata') else {}
+                "settings": t.settings if hasattr(t, 'settings') else {}
             }
             for t in tenants_list if t and hasattr(t, 'id')
         ]
@@ -608,13 +616,13 @@ async def admin_store_settings_update(
         tenant.domain = store_domain
         tenant.active = store_active
         
-        # Update metadata
-        if not hasattr(tenant, 'metadata') or tenant.metadata is None:
-            tenant.metadata = {}
+        # Update settings
+        if not hasattr(tenant, 'settings') or tenant.settings is None:
+            tenant.settings = {}
             
-        tenant.metadata['email'] = store_email
-        tenant.metadata['phone'] = store_phone
-        tenant.metadata['description'] = store_description
+        tenant.settings['email'] = store_email
+        tenant.settings['phone'] = store_phone
+        tenant.settings['description'] = store_description
         
         # Update tenant
         tenant_manager.update(tenant)
@@ -1111,7 +1119,7 @@ async def admin_edit_store(
             "slug": tenant_obj.slug,
             "domain": tenant_obj.domain if hasattr(tenant_obj, 'domain') else None,
             "active": tenant_obj.active if hasattr(tenant_obj, 'active') else True,
-            "description": tenant_obj.metadata.get("description", "") if hasattr(tenant_obj, 'metadata') else ""
+            "description": tenant_obj.settings.get("description", "") if hasattr(tenant_obj, 'settings') else ""
         }
         
         # Get cart data for navigation
@@ -1635,6 +1643,201 @@ async def admin_delete_product(
             status_code=303
         )
 
+# Admin routes for media management
+@app.get("/admin/media", response_class=HTMLResponse)
+async def admin_media(
+    request: Request,
+    tenant: Optional[str] = None,
+    file_type: Optional[str] = None,
+    is_ai_generated: Optional[bool] = None,
+    search: Optional[str] = None,
+    status_message: Optional[str] = None,
+    status_type: str = "info"
+):
+    """Admin page for managing media files."""
+    # Get all tenants for the store selector
+    tenants = []
+    selected_tenant = None
+    
+    try:
+        tenants_list = tenant_manager.list() or []
+        tenants = [
+            {
+                "id": str(t.id),
+                "name": t.name,
+                "slug": t.slug,
+                "domain": t.domain if hasattr(t, 'domain') else None,
+                "active": t.active if hasattr(t, 'active') else True
+            }
+            for t in tenants_list if t and hasattr(t, 'id')
+        ]
+        
+        # Get selected tenant from query param or session
+        selected_tenant_slug = tenant or request.query_params.get('tenant')
+        if not selected_tenant_slug and tenants:
+            selected_tenant_slug = tenants[0]["slug"]
+        
+        selected_tenant = None
+        if selected_tenant_slug:
+            try:
+                selected_tenant = tenant_manager.get_by_slug(selected_tenant_slug)
+            except Exception as e:
+                logger.warning(f"Could not get tenant with slug '{selected_tenant_slug}': {str(e)}")
+                
+        # Get media files for the selected tenant
+        media_files = []
+        if selected_tenant and hasattr(selected_tenant, 'id'):
+            try:
+                # Use the media service to list media files
+                media_list = media_service.list_media(
+                    tenant_id=str(selected_tenant.id),
+                    file_type=file_type,
+                    is_ai_generated=is_ai_generated,
+                    search=search
+                )
+                media_files = media_list.get("media", [])
+            except Exception as e:
+                logger.error(f"Error fetching media files: {str(e)}")
+                if status_message is None:
+                    status_message = f"Error fetching media files: {str(e)}"
+                    status_type = "danger"
+        
+        # Get cart item count if available
+        cart_item_count = 0
+        session = request.session
+        if 'cart_id' in session:
+            try:
+                cart_id = session['cart_id']
+                cart = cart_manager.get(cart_id)
+                cart_item_count = sum(item.quantity for item in cart.items)
+            except Exception:
+                pass
+    except Exception as e:
+        logger.error(f"Error in admin_media: {str(e)}")
+        if status_message is None:
+            status_message = f"Error: {str(e)}"
+            status_type = "danger"
+        tenants = []
+        selected_tenant = None
+        media_files = []
+        cart_item_count = 0
+    
+    # Prepare context data
+    context = {
+        "request": request,
+        "active_page": "media",
+        "tenants": tenants,
+        "selected_tenant": selected_tenant_slug if selected_tenant_slug else "",
+        "media_files": media_files,
+        "cart_item_count": cart_item_count,
+        "status_message": status_message,
+        "status_type": status_type,
+        "has_openai_key": bool(os.environ.get("OPENAI_API_KEY")),
+        "file_type_filter": file_type,
+        "is_ai_generated_filter": is_ai_generated,
+        "search_query": search
+    }
+    
+    return templates.TemplateResponse("admin/media.html", context)
+
+@app.post("/admin/media/upload", response_class=RedirectResponse)
+async def admin_upload_media(
+    request: Request,
+    file: UploadFile = File(...),
+    tenant_id: str = Form(...),
+    alt_text: Optional[str] = Form(None),
+    description: Optional[str] = Form(None)
+):
+    """Upload a media file."""
+    try:
+        # Use the media service to handle the upload
+        result = media_service.upload_file(file, tenant_id, alt_text, description)
+        if result and result.get("id"):
+            return RedirectResponse(
+                url=f"/admin/media?tenant={tenant_id}&status_message=File+uploaded+successfully&status_type=success", 
+                status_code=303
+            )
+        else:
+            error_message = "Upload failed. Please try again."
+            return RedirectResponse(
+                url=f"/admin/media?tenant={tenant_id}&status_message={error_message}&status_type=danger", 
+                status_code=303
+            )
+    except Exception as e:
+        logger.error(f"Error uploading media: {str(e)}")
+        error_message = f"Error uploading media: {str(e)}"
+        return RedirectResponse(
+            url=f"/admin/media?tenant={tenant_id}&status_message={error_message}&status_type=danger", 
+            status_code=303
+        )
+
+@app.post("/admin/media/generate-image", response_class=RedirectResponse)
+async def admin_generate_image(
+    request: Request,
+    prompt: str = Form(...),
+    tenant_id: str = Form(...),
+    size: str = Form("1024x1024"),
+    alt_text: Optional[str] = Form(None),
+    description: Optional[str] = Form(None)
+):
+    """Generate an image using DALL-E."""
+    try:
+        # Use the media service to generate the image
+        result = media_service.generate_image_with_dalle(
+            prompt=prompt, 
+            tenant_id=tenant_id, 
+            size=size,
+            alt_text=alt_text or prompt,
+            description=description
+        )
+        if result and result.get("id"):
+            return RedirectResponse(
+                url=f"/admin/media?tenant={tenant_id}&status_message=Image+generated+successfully&status_type=success", 
+                status_code=303
+            )
+        else:
+            error_message = "Image generation failed. Please try again."
+            return RedirectResponse(
+                url=f"/admin/media?tenant={tenant_id}&status_message={error_message}&status_type=danger", 
+                status_code=303
+            )
+    except Exception as e:
+        logger.error(f"Error generating image: {str(e)}")
+        error_message = f"Error generating image: {str(e)}"
+        return RedirectResponse(
+            url=f"/admin/media?tenant={tenant_id}&status_message={error_message}&status_type=danger", 
+            status_code=303
+        )
+
+@app.delete("/admin/media/{media_id}", response_class=RedirectResponse)
+async def admin_delete_media(
+    request: Request,
+    media_id: str,
+    tenant_id: str = Form(...)
+):
+    """Delete a media file."""
+    try:
+        # Use the media service to delete the media
+        result = media_service.delete_media(media_id)
+        if result:
+            return RedirectResponse(
+                url=f"/admin/media?tenant={tenant_id}&status_message=Media+deleted+successfully&status_type=success", 
+                status_code=303
+            )
+        else:
+            error_message = "Deletion failed. Please try again."
+            return RedirectResponse(
+                url=f"/admin/media?tenant={tenant_id}&status_message={error_message}&status_type=danger", 
+                status_code=303
+            )
+    except Exception as e:
+        logger.error(f"Error deleting media: {str(e)}")
+        error_message = f"Error deleting media: {str(e)}"
+        return RedirectResponse(
+            url=f"/admin/media?tenant={tenant_id}&status_message={error_message}&status_type=danger", 
+            status_code=303
+        )
+
 # Helper function to get or create a cart from session
 def get_session_cart(request: Request):
     """
@@ -1712,6 +1915,7 @@ async def view_cart(request: Request):
 
 @app.post("/cart/add", response_class=RedirectResponse)
 async def add_to_cart(
+    request: Request,
     product_id: str = Form(...),
     quantity: int = Form(1)
 ):
@@ -1847,6 +2051,7 @@ async def checkout(request: Request):
 @app.post("/checkout/process", response_class=RedirectResponse)
 async def process_checkout(
     request: Request,
+    first_name: str = Form(...),
     last_name: str = Form(...),
     address_line1: str = Form(...),
     address_line2: Optional[str] = Form(None),

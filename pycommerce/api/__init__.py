@@ -1,11 +1,5 @@
 """
-API package for PyCommerce SDK.
+API package for PyCommerce.
 
-This package contains the FastAPI routes and utilities for 
-creating a REST API for the PyCommerce SDK.
+This package contains API routes and endpoints for the PyCommerce platform.
 """
-
-# For easier imports of route modules
-from pycommerce.api.routes import products, cart, checkout, users
-
-__all__ = ["products", "cart", "checkout", "users"]

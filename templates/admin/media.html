@@ -1,0 +1,753 @@
+{% extends "admin/base.html" %}
+
+{% block title %}PyCommerce - Media Manager{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h2">Media Manager</h1>
+        <div class="d-flex gap-2">
+            <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#generateImageModal">
+                <i class="bi bi-stars"></i> Generate Image with AI
+            </button>
+            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#uploadMediaModal">
+                <i class="bi bi-cloud-upload"></i> Upload Media
+            </button>
+        </div>
+    </div>
+    
+    {% if status_message %}
+    <div class="alert alert-{{ status_type }}">{{ status_message }}</div>
+    {% endif %}
+    
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <div class="mb-4">
+                <form action="/admin/media" method="get" class="row g-3">
+                    <div class="col-md-3">
+                        <label for="tenant" class="form-label">Store</label>
+                        <select class="form-select" id="tenant" name="tenant_id">
+                            <option value="">All Stores</option>
+                            {% for t in tenants %}
+                            <option value="{{ t.id }}" {% if selected_tenant == t.id %}selected{% endif %}>{{ t.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="file_type" class="form-label">File Type</label>
+                        <select class="form-select" id="file_type" name="file_type">
+                            <option value="">All Types</option>
+                            <option value="image" {% if filters.file_type == 'image' %}selected{% endif %}>Images</option>
+                            <option value="video" {% if filters.file_type == 'video' %}selected{% endif %}>Videos</option>
+                            <option value="audio" {% if filters.file_type == 'audio' %}selected{% endif %}>Audio</option>
+                            <option value="application" {% if filters.file_type == 'application' %}selected{% endif %}>Documents</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="is_ai_generated" class="form-label">Source</label>
+                        <select class="form-select" id="is_ai_generated" name="is_ai_generated">
+                            <option value="">All Sources</option>
+                            <option value="true" {% if filters.is_ai_generated == 'true' %}selected{% endif %}>AI Generated</option>
+                            <option value="false" {% if filters.is_ai_generated == 'false' %}selected{% endif %}>Uploaded</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="search" class="form-label">Search</label>
+                        <input type="text" class="form-control" id="search" name="search" value="{{ filters.search or '' }}" placeholder="Search by name or description">
+                    </div>
+                    <div class="col-md-12 d-flex justify-content-end">
+                        <button type="submit" class="btn btn-primary">Filter</button>
+                    </div>
+                </form>
+            </div>
+            
+            <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4 mb-4">
+                {% for item in media %}
+                <div class="col">
+                    <div class="card h-100">
+                        {% if item.file_type == 'image' %}
+                        <img src="{{ item.file_url }}" class="card-img-top" alt="{{ item.alt_text or item.name }}" style="height: 200px; object-fit: cover;">
+                        {% elif item.file_type == 'video' %}
+                        <div class="card-img-top bg-dark d-flex align-items-center justify-content-center" style="height: 200px;">
+                            <i class="bi bi-film text-light" style="font-size: 3rem;"></i>
+                        </div>
+                        {% elif item.file_type == 'audio' %}
+                        <div class="card-img-top bg-info d-flex align-items-center justify-content-center" style="height: 200px;">
+                            <i class="bi bi-music-note-beamed text-light" style="font-size: 3rem;"></i>
+                        </div>
+                        {% else %}
+                        <div class="card-img-top bg-secondary d-flex align-items-center justify-content-center" style="height: 200px;">
+                            <i class="bi bi-file-earmark text-light" style="font-size: 3rem;"></i>
+                        </div>
+                        {% endif %}
+                        <div class="card-body">
+                            <h5 class="card-title text-truncate" title="{{ item.name }}">{{ item.name }}</h5>
+                            <p class="card-text small text-muted">
+                                {% if item.width and item.height %}{{ item.width }}×{{ item.height }} · {% endif %}
+                                {{ (item.file_size / 1024) | round(1) }} KB · 
+                                {{ item.mime_type }}
+                                {% if item.is_ai_generated %}<span class="badge bg-primary ms-1">AI</span>{% endif %}
+                            </p>
+                        </div>
+                        <div class="card-footer d-flex justify-content-between">
+                            <button type="button" class="btn btn-sm btn-outline-primary" 
+                                    onclick="selectMedia('{{ item.id }}', '{{ item.file_url }}', '{{ item.name }}')">
+                                Select
+                            </button>
+                            <div class="btn-group">
+                                <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
+                                    Actions
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li><a class="dropdown-item" href="{{ item.file_url }}" target="_blank">View</a></li>
+                                    {% if item.file_type == 'image' %}
+                                    <li><a class="dropdown-item" href="#" onclick="showResizeModal('{{ item.id }}', {{ item.width }}, {{ item.height }})">Resize</a></li>
+                                    <li><a class="dropdown-item" href="#" onclick="showCropModal('{{ item.id }}', '{{ item.file_url }}', {{ item.width }}, {{ item.height }})">Crop</a></li>
+                                    {% endif %}
+                                    <li><a class="dropdown-item" href="#" onclick="showEditModal('{{ item.id }}', '{{ item.name }}', '{{ item.alt_text or '' }}', '{{ item.description or '' }}')">Edit Details</a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><a class="dropdown-item text-danger" href="#" onclick="confirmDelete('{{ item.id }}', '{{ item.name }}')">Delete</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% else %}
+                <div class="col-12 text-center py-5">
+                    <div class="text-muted">
+                        <i class="bi bi-image" style="font-size: 3rem;"></i>
+                        <p class="mt-3">No media files found</p>
+                        <p>Upload files or generate images with AI to get started</p>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            
+            {% if pagination.total > pagination.limit %}
+            <nav aria-label="Page navigation">
+                <ul class="pagination justify-content-center">
+                    <li class="page-item {% if pagination.page == 1 %}disabled{% endif %}">
+                        <a class="page-link" href="?page={{ pagination.page - 1 }}{% for key, value in filters.items() %}&{{ key }}={{ value }}{% endfor %}" aria-label="Previous">
+                            <span aria-hidden="true">&laquo;</span>
+                        </a>
+                    </li>
+                    {% for p in range(1, pagination.pages + 1) %}
+                    <li class="page-item {% if pagination.page == p %}active{% endif %}">
+                        <a class="page-link" href="?page={{ p }}{% for key, value in filters.items() %}&{{ key }}={{ value }}{% endfor %}">{{ p }}</a>
+                    </li>
+                    {% endfor %}
+                    <li class="page-item {% if pagination.page == pagination.pages %}disabled{% endif %}">
+                        <a class="page-link" href="?page={{ pagination.page + 1 }}{% for key, value in filters.items() %}&{{ key }}={{ value }}{% endfor %}" aria-label="Next">
+                            <span aria-hidden="true">&raquo;</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Upload Modal -->
+<div class="modal fade" id="uploadMediaModal" tabindex="-1" aria-labelledby="uploadMediaLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="uploadMediaLabel">Upload Media</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="/admin/media/upload" method="post" enctype="multipart/form-data">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="file" class="form-label">File</label>
+                        <input class="form-control" type="file" id="file" name="file" required>
+                        <div class="form-text">
+                            Allowed file types: jpg, jpeg, png, gif, svg, pdf, doc, docx, xls, xlsx, ppt, pptx, mp4, mp3, wav, zip<br>
+                            Maximum file size: 20MB
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="tenant_id" class="form-label">Store (optional)</label>
+                        <select class="form-select" id="tenant_id" name="tenant_id">
+                            <option value="">No specific store</option>
+                            {% for t in tenants %}
+                            <option value="{{ t.id }}" {% if selected_tenant == t.id %}selected{% endif %}>{{ t.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="alt_text" class="form-label">Alt Text (optional)</label>
+                        <input type="text" class="form-control" id="alt_text" name="alt_text" placeholder="Brief description for accessibility">
+                    </div>
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Description (optional)</label>
+                        <textarea class="form-control" id="description" name="description" rows="3"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Upload</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Generate Image Modal -->
+<div class="modal fade" id="generateImageModal" tabindex="-1" aria-labelledby="generateImageLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="generateImageLabel">Generate Image with AI</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="/admin/media/generate" method="post">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="prompt" class="form-label">Image Description</label>
+                        <textarea class="form-control" id="prompt" name="prompt" rows="4" required placeholder="Describe the image you want to generate..."></textarea>
+                        <div class="form-text">Be detailed and specific about what you want in the image</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="tenant_id_gen" class="form-label">Store (optional)</label>
+                        <select class="form-select" id="tenant_id_gen" name="tenant_id">
+                            <option value="">No specific store</option>
+                            {% for t in tenants %}
+                            <option value="{{ t.id }}" {% if selected_tenant == t.id %}selected{% endif %}>{{ t.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col">
+                            <label for="size" class="form-label">Size</label>
+                            <select class="form-select" id="size" name="size">
+                                <option value="1024x1024" selected>Square (1024×1024)</option>
+                                <option value="1792x1024">Landscape (1792×1024)</option>
+                                <option value="1024x1792">Portrait (1024×1792)</option>
+                            </select>
+                        </div>
+                        <div class="col">
+                            <label for="quality" class="form-label">Quality</label>
+                            <select class="form-select" id="quality" name="quality">
+                                <option value="standard" selected>Standard</option>
+                                <option value="hd">HD</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div id="aiGenerationLoading" class="text-center d-none">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="mt-2">Generating image with AI...<br>This may take a minute.</p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success" id="generateButton">Generate Image</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Media Modal -->
+<div class="modal fade" id="editMediaModal" tabindex="-1" aria-labelledby="editMediaLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editMediaLabel">Edit Media Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="editMediaForm" action="/admin/media/update" method="post">
+                <input type="hidden" id="edit_media_id" name="media_id">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="edit_name" class="form-label">Name</label>
+                        <input type="text" class="form-control" id="edit_name" name="name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_alt_text" class="form-label">Alt Text</label>
+                        <input type="text" class="form-control" id="edit_alt_text" name="alt_text" placeholder="Brief description for accessibility">
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_description" class="form-label">Description</label>
+                        <textarea class="form-control" id="edit_description" name="description" rows="3"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Resize Image Modal -->
+<div class="modal fade" id="resizeImageModal" tabindex="-1" aria-labelledby="resizeImageLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="resizeImageLabel">Resize Image</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="resizeImageForm" action="/admin/media/resize" method="post">
+                <input type="hidden" id="resize_media_id" name="media_id">
+                <div class="modal-body">
+                    <div class="row mb-3">
+                        <div class="col">
+                            <label for="resize_width" class="form-label">Width (px)</label>
+                            <input type="number" class="form-control" id="resize_width" name="width" min="1" max="10000" required>
+                        </div>
+                        <div class="col">
+                            <label for="resize_height" class="form-label">Height (px)</label>
+                            <input type="number" class="form-control" id="resize_height" name="height" min="1" max="10000" required>
+                        </div>
+                    </div>
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="maintain_aspect_ratio" checked>
+                        <label class="form-check-label" for="maintain_aspect_ratio">
+                            Maintain aspect ratio
+                        </label>
+                    </div>
+                    <p class="text-muted small">Original dimensions: <span id="original_dimensions"></span></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Resize</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Crop Image Modal -->
+<div class="modal fade" id="cropImageModal" tabindex="-1" aria-labelledby="cropImageLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="cropImageLabel">Crop Image</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="cropImageForm" action="/admin/media/crop" method="post">
+                <input type="hidden" id="crop_media_id" name="media_id">
+                <input type="hidden" id="crop_left" name="left">
+                <input type="hidden" id="crop_top" name="top">
+                <input type="hidden" id="crop_right" name="right">
+                <input type="hidden" id="crop_bottom" name="bottom">
+                <div class="modal-body">
+                    <div class="text-center mb-3">
+                        <div id="crop-container" style="max-width: 100%; max-height: 400px; margin: 0 auto;">
+                            <img id="crop-image" src="" style="max-width: 100%; max-height: 400px;">
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-3">
+                            <label for="crop_display_left" class="form-label">Left</label>
+                            <input type="number" class="form-control" id="crop_display_left" readonly>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="crop_display_top" class="form-label">Top</label>
+                            <input type="number" class="form-control" id="crop_display_top" readonly>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="crop_display_width" class="form-label">Width</label>
+                            <input type="number" class="form-control" id="crop_display_width" readonly>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="crop_display_height" class="form-label">Height</label>
+                            <input type="number" class="form-control" id="crop_display_height" readonly>
+                        </div>
+                    </div>
+                    <p class="text-muted small">Drag to create crop area. Image dimensions: <span id="crop_image_dimensions"></span></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Crop</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteConfirmModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirm Delete</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete "<span id="mediaNameToDelete"></span>"?</p>
+                <p class="text-danger">This action cannot be undone.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <a href="#" id="confirmDeleteBtn" class="btn btn-danger">Delete</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Media Selector Modal (for integration with editors) -->
+<div class="modal fade" id="mediaSelectorModal" tabindex="-1" aria-labelledby="mediaSelectorLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="mediaSelectorLabel">Select Media</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="searchMedia" placeholder="Search media...">
+                            <button class="btn btn-outline-secondary" type="button" id="searchMediaBtn">Search</button>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <select class="form-select" id="filterMediaType">
+                            <option value="">All Types</option>
+                            <option value="image">Images</option>
+                            <option value="video">Videos</option>
+                            <option value="audio">Audio</option>
+                            <option value="application">Documents</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="d-grid">
+                            <button class="btn btn-primary" type="button" data-bs-toggle="modal" data-bs-target="#uploadMediaModal">
+                                <i class="bi bi-cloud-upload"></i> Upload New
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div id="mediaSelectorGrid" class="row row-cols-2 row-cols-md-3 row-cols-lg-4 g-3">
+                    <!-- Media items will be loaded here via JavaScript -->
+                    <div class="col-12 text-center py-5">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="mt-3">Loading media...</p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Function to handle file selection in the media selector
+    function selectMedia(id, url, name) {
+        // Check if we're in a callback context (called from another component)
+        if (window.mediaSelectionCallback) {
+            window.mediaSelectionCallback(id, url, name);
+            
+            // Clear the callback
+            window.mediaSelectionCallback = null;
+            
+            // Close any open media selector modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('mediaSelectorModal'));
+            if (modal) {
+                modal.hide();
+            }
+        } else {
+            // Copy the URL to clipboard if not in callback mode
+            navigator.clipboard.writeText(url).then(() => {
+                alert(`URL copied to clipboard: ${url}`);
+            });
+        }
+    }
+    
+    // Function to show the edit media modal
+    function showEditModal(id, name, altText, description) {
+        document.getElementById('edit_media_id').value = id;
+        document.getElementById('edit_name').value = name;
+        document.getElementById('edit_alt_text').value = altText;
+        document.getElementById('edit_description').value = description;
+        
+        const modal = new bootstrap.Modal(document.getElementById('editMediaModal'));
+        modal.show();
+    }
+    
+    // Function to show the resize modal
+    function showResizeModal(id, width, height) {
+        document.getElementById('resize_media_id').value = id;
+        document.getElementById('resize_width').value = width;
+        document.getElementById('resize_height').value = height;
+        document.getElementById('original_dimensions').textContent = `${width}×${height}`;
+        
+        // Setup aspect ratio maintenance
+        const widthInput = document.getElementById('resize_width');
+        const heightInput = document.getElementById('resize_height');
+        const maintainRatio = document.getElementById('maintain_aspect_ratio');
+        
+        const aspectRatio = width / height;
+        
+        widthInput.addEventListener('input', function() {
+            if (maintainRatio.checked) {
+                heightInput.value = Math.round(this.value / aspectRatio);
+            }
+        });
+        
+        heightInput.addEventListener('input', function() {
+            if (maintainRatio.checked) {
+                widthInput.value = Math.round(this.value * aspectRatio);
+            }
+        });
+        
+        const modal = new bootstrap.Modal(document.getElementById('resizeImageModal'));
+        modal.show();
+    }
+    
+    // Function to show the crop modal
+    function showCropModal(id, url, width, height) {
+        document.getElementById('crop_media_id').value = id;
+        document.getElementById('crop_image').src = url;
+        document.getElementById('crop_image_dimensions').textContent = `${width}×${height}`;
+        
+        const modal = new bootstrap.Modal(document.getElementById('cropImageModal'));
+        modal.show();
+        
+        // Initialize cropping area after modal is shown
+        modal._element.addEventListener('shown.bs.modal', function () {
+            // Simple cropping implementation
+            const image = document.getElementById('crop_image');
+            const container = document.getElementById('crop-container');
+            
+            // Create crop selection box
+            const cropBox = document.createElement('div');
+            cropBox.style.position = 'absolute';
+            cropBox.style.border = '2px dashed white';
+            cropBox.style.backgroundColor = 'rgba(255, 255, 255, 0.2)';
+            cropBox.style.cursor = 'move';
+            cropBox.style.display = 'none';
+            
+            container.style.position = 'relative';
+            container.appendChild(cropBox);
+            
+            let startX, startY, isDrawing = false;
+            let imageRect;
+            
+            // Set initial position when mouse down
+            container.addEventListener('mousedown', function(e) {
+                imageRect = image.getBoundingClientRect();
+                startX = e.clientX - imageRect.left;
+                startY = e.clientY - imageRect.top;
+                
+                // Reset crop box
+                cropBox.style.left = startX + 'px';
+                cropBox.style.top = startY + 'px';
+                cropBox.style.width = '0px';
+                cropBox.style.height = '0px';
+                cropBox.style.display = 'block';
+                
+                isDrawing = true;
+                
+                updateCropInputs(startX, startY, startX, startY);
+            });
+            
+            // Draw the box as mouse moves
+            container.addEventListener('mousemove', function(e) {
+                if (!isDrawing) return;
+                
+                const x = e.clientX - imageRect.left;
+                const y = e.clientY - imageRect.top;
+                
+                const width = x - startX;
+                const height = y - startY;
+                
+                if (width > 0) {
+                    cropBox.style.width = width + 'px';
+                } else {
+                    cropBox.style.left = x + 'px';
+                    cropBox.style.width = (startX - x) + 'px';
+                }
+                
+                if (height > 0) {
+                    cropBox.style.height = height + 'px';
+                } else {
+                    cropBox.style.top = y + 'px';
+                    cropBox.style.height = (startY - y) + 'px';
+                }
+                
+                // Update form inputs
+                updateCropCoordinates();
+            });
+            
+            // Finish drawing when mouse up
+            container.addEventListener('mouseup', function() {
+                isDrawing = false;
+                updateCropCoordinates();
+            });
+            
+            // Update hidden form inputs with the crop coordinates
+            function updateCropCoordinates() {
+                const boxRect = cropBox.getBoundingClientRect();
+                const imageRect = image.getBoundingClientRect();
+                
+                const left = Math.max(0, Math.round((boxRect.left - imageRect.left) * (width / image.width)));
+                const top = Math.max(0, Math.round((boxRect.top - imageRect.top) * (height / image.height)));
+                const right = Math.min(width, Math.round((boxRect.right - imageRect.left) * (width / image.width)));
+                const bottom = Math.min(height, Math.round((boxRect.bottom - imageRect.top) * (height / image.height)));
+                
+                updateCropInputs(left, top, right, bottom);
+            }
+            
+            function updateCropInputs(left, top, right, bottom) {
+                document.getElementById('crop_left').value = left;
+                document.getElementById('crop_top').value = top;
+                document.getElementById('crop_right').value = right;
+                document.getElementById('crop_bottom').value = bottom;
+                
+                // Update display values
+                document.getElementById('crop_display_left').value = left;
+                document.getElementById('crop_display_top').value = top;
+                document.getElementById('crop_display_width').value = right - left;
+                document.getElementById('crop_display_height').value = bottom - top;
+            }
+        });
+    }
+    
+    // Function to confirm deletion
+    function confirmDelete(id, name) {
+        document.getElementById('mediaNameToDelete').textContent = name;
+        document.getElementById('confirmDeleteBtn').href = `/admin/media/delete/${id}`;
+        
+        const modal = new bootstrap.Modal(document.getElementById('deleteConfirmModal'));
+        modal.show();
+    }
+    
+    // Show loading indicator when generating images
+    document.addEventListener('DOMContentLoaded', function() {
+        const generateForm = document.querySelector('#generateImageModal form');
+        const loadingIndicator = document.getElementById('aiGenerationLoading');
+        const generateButton = document.getElementById('generateButton');
+        
+        if (generateForm && loadingIndicator && generateButton) {
+            generateForm.addEventListener('submit', function() {
+                loadingIndicator.classList.remove('d-none');
+                generateButton.disabled = true;
+                generateButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Generating...';
+            });
+        }
+        
+        // Function to load media for the selector modal
+        window.loadMediaSelector = function(callback) {
+            // Store callback function
+            window.mediaSelectionCallback = callback;
+            
+            // Show modal
+            const modal = new bootstrap.Modal(document.getElementById('mediaSelectorModal'));
+            modal.show();
+            
+            // Load media (simplified - in a real app, you'd fetch from API)
+            fetch('/api/media?file_type=image')
+                .then(response => response.json())
+                .then(data => {
+                    const mediaGrid = document.getElementById('mediaSelectorGrid');
+                    
+                    if (data.media && data.media.length > 0) {
+                        let html = '';
+                        data.media.forEach(item => {
+                            html += `
+                                <div class="col">
+                                    <div class="card h-100">
+                                        <img src="${item.file_url}" class="card-img-top" alt="${item.alt_text || item.name}" style="height: 120px; object-fit: cover;">
+                                        <div class="card-body p-2">
+                                            <p class="card-title small text-truncate mb-0">${item.name}</p>
+                                        </div>
+                                        <div class="card-footer p-1">
+                                            <button type="button" class="btn btn-sm btn-primary w-100" 
+                                                    onclick="selectMedia('${item.id}', '${item.file_url}', '${item.name}')">
+                                                Select
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                        });
+                        mediaGrid.innerHTML = html;
+                    } else {
+                        mediaGrid.innerHTML = '<div class="col-12 text-center py-5"><p>No images found</p></div>';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading media:', error);
+                    mediaGrid.innerHTML = '<div class="col-12 text-center py-5"><p class="text-danger">Error loading media</p></div>';
+                });
+        };
+        
+        // Filter media in selector
+        const searchBtn = document.getElementById('searchMediaBtn');
+        if (searchBtn) {
+            searchBtn.addEventListener('click', function() {
+                const searchTerm = document.getElementById('searchMedia').value;
+                const fileType = document.getElementById('filterMediaType').value;
+                
+                // Build query parameters
+                let queryParams = '';
+                if (searchTerm) {
+                    queryParams += `search=${encodeURIComponent(searchTerm)}`;
+                }
+                if (fileType) {
+                    if (queryParams) queryParams += '&';
+                    queryParams += `file_type=${encodeURIComponent(fileType)}`;
+                }
+                
+                // Fetch filtered media
+                const url = `/api/media${queryParams ? '?' + queryParams : ''}`;
+                
+                const mediaGrid = document.getElementById('mediaSelectorGrid');
+                mediaGrid.innerHTML = `
+                    <div class="col-12 text-center py-5">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="mt-3">Loading media...</p>
+                    </div>
+                `;
+                
+                fetch(url)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.media && data.media.length > 0) {
+                            let html = '';
+                            data.media.forEach(item => {
+                                html += `
+                                    <div class="col">
+                                        <div class="card h-100">
+                                            <img src="${item.file_url}" class="card-img-top" alt="${item.alt_text || item.name}" style="height: 120px; object-fit: cover;">
+                                            <div class="card-body p-2">
+                                                <p class="card-title small text-truncate mb-0">${item.name}</p>
+                                            </div>
+                                            <div class="card-footer p-1">
+                                                <button type="button" class="btn btn-sm btn-primary w-100" 
+                                                        onclick="selectMedia('${item.id}', '${item.file_url}', '${item.name}')">
+                                                    Select
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                `;
+                            });
+                            mediaGrid.innerHTML = html;
+                        } else {
+                            mediaGrid.innerHTML = '<div class="col-12 text-center py-5"><p>No images found matching your criteria</p></div>';
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error loading media:', error);
+                        mediaGrid.innerHTML = '<div class="col-12 text-center py-5"><p class="text-danger">Error loading media</p></div>';
+                    });
+            });
+        }
+    });
+</script>
+{% endblock %}

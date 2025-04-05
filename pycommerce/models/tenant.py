@@ -34,6 +34,7 @@ class Tenant(Base):
     
     # Relationships
     plugin_configs = relationship("PluginConfig", back_populates="tenant", cascade="all, delete-orphan")
+    media_files = relationship("Media", back_populates="tenant", cascade="all, delete-orphan")
 
     def __repr__(self):
         return f"<Tenant {self.name}>"
