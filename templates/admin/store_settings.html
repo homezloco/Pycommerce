@@ -70,19 +70,19 @@
                         
                         <div class="mb-3">
                             <label for="store_description" class="form-label">Store Description</label>
-                            <textarea class="form-control" id="store_description" name="store_description" rows="4">{{ tenant.metadata.description }}</textarea>
+                            <textarea class="form-control" id="store_description" name="store_description" rows="4">{{ tenant.settings.description if tenant.settings and 'description' in tenant.settings else '' }}</textarea>
                             <div class="form-text">Briefly describe your store and what you sell.</div>
                         </div>
                         
                         <div class="row mb-3">
                             <div class="col-md-6">
                                 <label for="store_email" class="form-label">Contact Email</label>
-                                <input type="email" class="form-control" id="store_email" name="store_email" value="{{ tenant.metadata.email }}">
+                                <input type="email" class="form-control" id="store_email" name="store_email" value="{{ tenant.settings.email if tenant.settings and "email" in tenant.settings else "" }}">
                                 <div class="form-text">The main contact email for your store.</div>
                             </div>
                             <div class="col-md-6">
                                 <label for="store_phone" class="form-label">Contact Phone</label>
-                                <input type="tel" class="form-control" id="store_phone" name="store_phone" value="{{ tenant.metadata.phone }}">
+                                <input type="tel" class="form-control" id="store_phone" name="store_phone" value="{{ tenant.settings.phone if tenant.settings and "phone" in tenant.settings else "" }}">
                                 <div class="form-text">The main contact phone for your store.</div>
                             </div>
                         </div>
