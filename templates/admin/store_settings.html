@@ -526,33 +526,3 @@
     });
 </script>
 {% endblock %}
-
-{% block scripts %}
-<script>
-    // Auto-generate slug from name
-    document.addEventListener('DOMContentLoaded', function() {
-        const nameInput = document.getElementById('store_name');
-        const slugInput = document.getElementById('store_slug');
-        
-        if (nameInput && slugInput) {
-            nameInput.addEventListener('input', function() {
-                // Only auto-generate if user hasn't modified the slug
-                if (!slugInput.dataset.userModified) {
-                    const slugValue = this.value
-                        .toLowerCase()
-                        .replace(/[^\w\s-]/g, '') // Remove special chars except hyphen
-                        .replace(/\s+/g, '-') // Replace spaces with hyphens
-                        .replace(/-+/g, '-'); // Replace multiple hyphens with single one
-                    
-                    slugInput.value = slugValue;
-                }
-            });
-            
-            // Mark slug as user-modified when user changes it manually
-            slugInput.addEventListener('input', function() {
-                this.dataset.userModified = 'true';
-            });
-        }
-    });
-</script>
-{% endblock %}

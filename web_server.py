@@ -2063,7 +2063,12 @@ async def admin_media(
         "has_openai_key": bool(os.environ.get("OPENAI_API_KEY")),
         "file_type_filter": file_type,
         "is_ai_generated_filter": is_ai_generated,
-        "search_query": search
+        "search_query": search,
+        "filters": {
+            "file_type": file_type,
+            "is_ai_generated": is_ai_generated,
+            "search": search
+        }
     }
     
     return templates.TemplateResponse("admin/media.html", context)
