@@ -1,0 +1,322 @@
+{% extends 'base.html' %}
+
+{% block title %}PyCommerce - AI Configuration{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h2">AI Configuration</h1>
+        <a href="/admin" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Back to Dashboard
+        </a>
+    </div>
+    
+    {% if status_message %}
+    <div class="alert alert-{{ status_type }}">{{ status_message }}</div>
+    {% endif %}
+    
+    <div class="row">
+        <div class="col-md-4">
+            <!-- AI Provider Selection -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">AI Providers</h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted mb-3">Select an AI provider to use for text generation and content enhancement. The active provider is marked with a checkmark.</p>
+                    
+                    <div class="list-group">
+                        {% for provider in ai_providers %}
+                        <a href="/admin/ai-config/configure/{{ provider.id }}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center {{ 'active' if provider.id == active_provider else '' }}">
+                            <div class="d-flex align-items-center">
+                                <div class="me-3">
+                                    {% if provider.id == 'openai' %}
+                                    <i class="bi bi-cpu fs-4 text-success"></i>
+                                    {% elif provider.id == 'gemini' %}
+                                    <i class="bi bi-google fs-4 text-primary"></i>
+                                    {% elif provider.id == 'deepseek' %}
+                                    <i class="bi bi-braces fs-4 text-info"></i>
+                                    {% elif provider.id == 'openrouter' %}
+                                    <i class="bi bi-diagram-3 fs-4 text-warning"></i>
+                                    {% else %}
+                                    <i class="bi bi-robot fs-4"></i>
+                                    {% endif %}
+                                </div>
+                                <div>
+                                    <h6 class="mb-0">{{ provider.name }}</h6>
+                                    <small class="text-muted">{{ provider.description }}</small>
+                                </div>
+                            </div>
+                            {% if provider.id == active_provider %}
+                            <span class="badge bg-primary rounded-pill">
+                                <i class="bi bi-check"></i>
+                            </span>
+                            {% endif %}
+                        </a>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Help Card -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Help</h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i> The AI configuration is used for WYSIWYG editors across the platform. Editors can use AI to generate and enhance content.
+                    </div>
+                    
+                    <h6>How to get API keys:</h6>
+                    <ul class="small">
+                        <li><strong>OpenAI:</strong> Sign up at <a href="https://platform.openai.com/" target="_blank">OpenAI Platform</a></li>
+                        <li><strong>Google Gemini:</strong> Sign up at <a href="https://aistudio.google.com/app/apikey" target="_blank">Google AI Studio</a></li>
+                        <li><strong>DeepSeek:</strong> Sign up at <a href="https://platform.deepseek.com/" target="_blank">DeepSeek Platform</a></li>
+                        <li><strong>OpenRouter:</strong> Sign up at <a href="https://openrouter.ai/" target="_blank">OpenRouter</a></li>
+                    </ul>
+                    
+                    <p class="small text-muted mt-3">You only need to configure the provider you want to use. The active provider is used for all AI operations in the platform.</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-8">
+            <!-- Provider Configuration -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">{{ selected_provider.name }} Configuration</h5>
+                    <div>
+                        {% if selected_provider.id != active_provider %}
+                        <form action="/admin/ai-config/set-active" method="post" class="d-inline">
+                            <input type="hidden" name="provider_id" value="{{ selected_provider.id }}">
+                            <input type="hidden" name="tenant" value="{{ selected_tenant }}">
+                            <button type="submit" class="btn btn-sm btn-primary">
+                                <i class="bi bi-check-circle"></i> Set as Active Provider
+                            </button>
+                        </form>
+                        {% else %}
+                        <span class="badge bg-success">Active Provider</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="card-body">
+                    <!-- Store Selector -->
+                    <div class="mb-3">
+                        <label for="tenant" class="form-label">Store</label>
+                        <select id="tenant" class="form-select" name="tenant" onchange="location.href='/admin/ai-config/configure/{{ selected_provider.id }}?tenant=' + this.value">
+                            {% for tenant in tenants %}
+                            <option value="{{ tenant.slug }}" {% if tenant.slug == selected_tenant %}selected{% endif %}>
+                                {{ tenant.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <div class="form-text text-muted">Configuration will be applied to the selected store.</div>
+                    </div>
+                    
+                    <!-- Provider Configuration Form -->
+                    <form action="/admin/ai-config/save" method="post">
+                        <input type="hidden" name="provider_id" value="{{ selected_provider.id }}">
+                        <input type="hidden" name="tenant" value="{{ selected_tenant }}">
+                        
+                        {% for field in selected_provider.fields %}
+                        <div class="mb-3">
+                            <label for="{{ field.id }}" class="form-label">{{ field.name }}{% if field.required %} <span class="text-danger">*</span>{% endif %}</label>
+                            
+                            {% if field.type == 'text' or field.type == 'password' or field.type == 'number' or field.type == 'email' %}
+                            <input type="{{ field.type }}" 
+                                   class="form-control" 
+                                   id="{{ field.id }}" 
+                                   name="{{ field.id }}"
+                                   value="{{ field_values[field.id] if field_values[field.id] is defined else field.default|default('') }}"
+                                   {% if field.placeholder %}placeholder="{{ field.placeholder }}"{% endif %}
+                                   {% if field.min is defined %}min="{{ field.min }}"{% endif %}
+                                   {% if field.max is defined %}max="{{ field.max }}"{% endif %}
+                                   {% if field.step is defined %}step="{{ field.step }}"{% endif %}
+                                   {% if field.required %}required{% endif %}>
+                            {% endif %}
+                            
+                            {% if field.type == 'select' %}
+                            <select class="form-select"
+                                    id="{{ field.id }}"
+                                    name="{{ field.id }}"
+                                    {% if field.required %}required{% endif %}>
+                                {% for option in field.options %}
+                                <option value="{{ option.value }}" {% if field_values[field.id] is defined and option.value == field_values[field.id] or (field_values[field.id] is not defined and option.value == field.default|default('')) %}selected{% endif %}>
+                                    {{ option.label }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                            {% endif %}
+                            
+                            {% if field.description %}
+                            <div class="form-text text-muted">{{ field.description }}</div>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                        
+                        <div class="mt-4">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-save"></i> Save Configuration
+                            </button>
+                            
+                            <button type="button" class="btn btn-outline-secondary ms-2" data-bs-toggle="modal" data-bs-target="#testAIModal">
+                                <i class="bi bi-lightning"></i> Test Connection
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Integration Information -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Editor Integration</h5>
+                </div>
+                <div class="card-body">
+                    <p>The AI configuration is automatically integrated with the TinyMCE WYSIWYG editor across the platform.</p>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card bg-light mb-3">
+                                <div class="card-body">
+                                    <h6 class="card-title"><i class="bi bi-stars me-2"></i>AI Generate</h6>
+                                    <p class="card-text small">Generate new content from a text prompt using AI.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card bg-light mb-3">
+                                <div class="card-body">
+                                    <h6 class="card-title"><i class="bi bi-magic me-2"></i>AI Enhance</h6>
+                                    <p class="card-text small">Improve selected text with AI-powered enhancements.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <p class="text-muted mt-3 small">These features are available in product descriptions, store pages, and anywhere else the WYSIWYG editor is used.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Test AI Modal -->
+<div class="modal fade" id="testAIModal" tabindex="-1" aria-labelledby="testAIModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="testAIModalLabel">Test AI Connection</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="testPrompt" class="form-label">Test Prompt</label>
+                    <textarea class="form-control" id="testPrompt" rows="3" placeholder="Enter a test prompt, e.g., 'Write a short product description for a wireless keyboard'"></textarea>
+                </div>
+                
+                <div id="testResult" class="d-none">
+                    <div class="border rounded p-3 bg-light mb-3">
+                        <div id="testResultContent"></div>
+                    </div>
+                </div>
+                
+                <div id="testError" class="alert alert-danger d-none"></div>
+                <div id="testLoading" class="text-center d-none">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2">Generating content...</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="runTestBtn">Run Test</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const runTestBtn = document.getElementById('runTestBtn');
+    const testPrompt = document.getElementById('testPrompt');
+    const testResult = document.getElementById('testResult');
+    const testResultContent = document.getElementById('testResultContent');
+    const testError = document.getElementById('testError');
+    const testLoading = document.getElementById('testLoading');
+    
+    runTestBtn.addEventListener('click', function() {
+        // Validate input
+        if (!testPrompt.value.trim()) {
+            testError.textContent = 'Please enter a test prompt.';
+            testError.classList.remove('d-none');
+            return;
+        }
+        
+        // Hide previous results and errors
+        testResult.classList.add('d-none');
+        testError.classList.add('d-none');
+        
+        // Show loading
+        testLoading.classList.remove('d-none');
+        
+        // Get the current provider and tenant
+        const providerId = '{{ selected_provider.id }}';
+        const tenant = '{{ selected_tenant }}';
+        
+        // Collect form data to use the current (unsaved) configuration
+        const form = document.querySelector('form');
+        const formData = new FormData(form);
+        const configData = {};
+        
+        formData.forEach((value, key) => {
+            if (key !== 'provider_id' && key !== 'tenant') {
+                configData[key] = value;
+            }
+        });
+        
+        // Call the API
+        fetch('/api/ai/generate', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                prompt: testPrompt.value,
+                provider: providerId,
+                config: configData,
+                tenant_id: tenant
+            })
+        })
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(data => {
+                    throw new Error(data.detail || 'Error testing AI connection');
+                });
+            }
+            return response.json();
+        })
+        .then(data => {
+            // Hide loading
+            testLoading.classList.add('d-none');
+            
+            // Show result
+            testResultContent.innerHTML = data.content.replace(/\n/g, '<br>');
+            testResult.classList.remove('d-none');
+        })
+        .catch(error => {
+            // Hide loading
+            testLoading.classList.add('d-none');
+            
+            // Show error
+            testError.textContent = error.message;
+            testError.classList.remove('d-none');
+        });
+    });
+});
+</script>
+{% endblock %}

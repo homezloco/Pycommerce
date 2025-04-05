@@ -33,6 +33,10 @@ from pycommerce.plugins.payment.config import (
     STRIPE_API_KEY, STRIPE_WEBHOOK_SECRET, STRIPE_ENABLED,
     PAYPAL_CLIENT_ID, PAYPAL_CLIENT_SECRET, PAYPAL_ENABLED, PAYPAL_SANDBOX
 )
+from pycommerce.plugins.ai.providers import (
+    AIProvider, OpenAIProvider, GeminiProvider, DeepSeekProvider, OpenRouterProvider
+)
+from pycommerce.plugins.ai.config import get_ai_providers, load_ai_config
 from pycommerce.api.routes import checkout as checkout_router
 from pycommerce.api.routes import users as users_router
 
@@ -760,6 +764,194 @@ async def admin_save_theme_settings(request: Request):
     
     # Redirect back to the theme settings page
     redirect_url = f"/admin/theme-settings?tenant={selected_tenant_slug}&status_message={status_message}&status_type={status_type}"
+    return RedirectResponse(url=redirect_url, status_code=303)
+
+# AI Configuration Routes
+@app.get("/admin/ai-config", response_class=HTMLResponse)
+async def admin_ai_config(
+    request: Request, 
+    status_message: Optional[str] = None, 
+    status_type: str = "info"
+):
+    """Admin page for AI configuration."""
+    # Get all tenants for the store selector
+    tenants = []
+    selected_tenant = None
+    
+    try:
+        tenants_list = tenant_manager.list() or []
+        tenants = [
+            {
+                "id": str(t.id),
+                "name": t.name,
+                "slug": t.slug,
+                "domain": t.domain if hasattr(t, 'domain') else None,
+                "active": t.active if hasattr(t, 'active') else True
+            }
+            for t in tenants_list if t and hasattr(t, 'id')
+        ]
+        
+        # Get selected tenant from query param
+        selected_tenant_slug = request.query_params.get('tenant')
+        if selected_tenant_slug:
+            for tenant in tenants:
+                if tenant["slug"] == selected_tenant_slug:
+                    selected_tenant = tenant
+                    break
+        elif tenants:
+            selected_tenant = tenants[0]
+            selected_tenant_slug = selected_tenant["slug"]
+        
+        # Get cart item count if available
+        cart_item_count = 0
+        session = request.session
+        if 'cart_id' in session:
+            try:
+                cart_id = session['cart_id']
+                cart = cart_manager.get(cart_id)
+                cart_item_count = sum(item.quantity for item in cart.items)
+            except Exception:
+                pass
+    except Exception as e:
+        logger.error(f"Error fetching tenants: {str(e)}")
+        if status_message is None:
+            status_message = f"Error fetching tenants: {str(e)}"
+            status_type = "danger"
+        tenants = []
+        cart_item_count = 0
+    
+    # Get AI providers
+    ai_providers = get_ai_providers()
+    
+    # Get active provider
+    tenant_id = selected_tenant["id"] if selected_tenant else None
+    config = load_ai_config(tenant_id)
+    active_provider = config.get("active_provider", "openai")
+    
+    # Default to first provider if none selected
+    selected_provider_id = request.query_params.get('provider', active_provider)
+    selected_provider = next((p for p in ai_providers if p["id"] == selected_provider_id), ai_providers[0])
+    
+    # Get provider configuration
+    field_values = {}
+    provider_config = config.get("provider_config", {}) 
+    
+    if provider_config:
+        for field in selected_provider["fields"]:
+            if field["id"] in provider_config:
+                field_values[field["id"]] = provider_config[field["id"]]
+    
+    return templates.TemplateResponse(
+        "admin/ai_config.html", 
+        {
+            "request": request,
+            "active_page": "ai_config",
+            "tenants": tenants,
+            "selected_tenant": selected_tenant_slug,
+            "ai_providers": ai_providers,
+            "active_provider": active_provider,
+            "selected_provider": selected_provider,
+            "field_values": field_values,
+            "cart_item_count": cart_item_count,
+            "status_message": status_message,
+            "status_type": status_type
+        }
+    )
+
+@app.get("/admin/ai-config/configure/{provider_id}", response_class=RedirectResponse)
+async def admin_ai_config_redirect(provider_id: str, tenant: Optional[str] = None):
+    """Redirect to AI config page with the selected provider."""
+    url = f"/admin/ai-config?provider={provider_id}"
+    if tenant:
+        url += f"&tenant={tenant}"
+    return RedirectResponse(url=url, status_code=303)
+
+@app.post("/admin/ai-config/save", response_class=RedirectResponse)
+async def admin_ai_config_save(
+    request: Request,
+    provider_id: str = Form(...),
+    tenant: str = Form(...)
+):
+    """Save AI provider configuration."""
+    try:
+        # Get form data for provider configuration
+        form_data = await request.form()
+        config_data = {}
+        
+        # Get provider info to know which fields to expect
+        provider_info = next((p for p in get_ai_providers() if p["id"] == provider_id), None)
+        
+        if not provider_info:
+            return RedirectResponse(
+                url=f"/admin/ai-config?status_message=Invalid provider: {provider_id}&status_type=danger", 
+                status_code=303
+            )
+        
+        # Build configuration from form data
+        for field in provider_info["fields"]:
+            field_id = field["id"]
+            if field_id in form_data:
+                value = form_data[field_id]
+                
+                # Convert types as needed
+                if field.get("type") == "number":
+                    try:
+                        value = float(value)
+                    except ValueError:
+                        pass
+                
+                config_data[field_id] = value
+        
+        # Get tenant object if tenant is specified
+        tenant_obj = tenant_manager.get_by_slug(tenant) if tenant else None
+        tenant_id = str(tenant_obj.id) if tenant_obj else None
+        
+        # Save configuration
+        from pycommerce.models.plugin_config import PluginConfigManager
+        config_manager = PluginConfigManager()
+        config_manager.save_config(f"ai_{provider_id}", config_data, tenant_id)
+        
+        # Set status message
+        status_message = f"{provider_info['name']} configuration saved successfully"
+        status_type = "success"
+    except Exception as e:
+        logger.error(f"Error saving AI configuration: {str(e)}")
+        status_message = f"Error saving AI configuration: {str(e)}"
+        status_type = "danger"
+    
+    # Redirect back to AI config page
+    redirect_url = f"/admin/ai-config?provider={provider_id}&tenant={tenant}&status_message={status_message}&status_type={status_type}"
+    return RedirectResponse(url=redirect_url, status_code=303)
+
+@app.post("/admin/ai-config/set-active", response_class=RedirectResponse)
+async def admin_ai_config_set_active(
+    request: Request,
+    provider_id: str = Form(...),
+    tenant: str = Form(...)
+):
+    """Set active AI provider."""
+    try:
+        # Get tenant object if tenant is specified
+        tenant_obj = tenant_manager.get_by_slug(tenant) if tenant else None
+        tenant_id = str(tenant_obj.id) if tenant_obj else None
+        
+        # Save active provider
+        from pycommerce.models.plugin_config import PluginConfigManager
+        config_manager = PluginConfigManager()
+        config_manager.save_config("ai_active_provider", {"provider": provider_id}, tenant_id)
+        
+        # Set status message
+        provider_info = next((p for p in get_ai_providers() if p["id"] == provider_id), None)
+        provider_name = provider_info["name"] if provider_info else provider_id
+        status_message = f"{provider_name} set as active AI provider"
+        status_type = "success"
+    except Exception as e:
+        logger.error(f"Error setting active AI provider: {str(e)}")
+        status_message = f"Error setting active AI provider: {str(e)}"
+        status_type = "danger"
+    
+    # Redirect back to AI config page
+    redirect_url = f"/admin/ai-config?provider={provider_id}&tenant={tenant}&status_message={status_message}&status_type={status_type}"
     return RedirectResponse(url=redirect_url, status_code=303)
 
 # Admin plugins page
