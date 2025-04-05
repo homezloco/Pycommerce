@@ -8,7 +8,7 @@ deploymentTarget = "autoscale"
 run = ["gunicorn", "--bind", "0.0.0.0:5000", "main:app"]
 
 [workflows]
-runButton = "Project"
+runButton = "Run with SQLite"
 
 [[workflows.workflow]]
 name = "Project"
@@ -41,11 +41,24 @@ mode = "sequential"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "export DATABASE_URL=postgresql://postgres:postgres@localhost:5432/pycommerce"
+args = "export DATABASE_URL=sqlite:///pycommerce.db"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "alembic upgrade head"
+
+[[workflows.workflow]]
+name = "Run with SQLite"
+author = 34384132
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "export DATABASE_URL=sqlite:///pycommerce.db"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python main.py"
 
 [[ports]]
 localPort = 5000

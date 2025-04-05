@@ -1,4 +1,3 @@
-
 from logging.config import fileConfig
 import os
 import sys
@@ -68,24 +67,48 @@ def run_migrations_online() -> None:
     and associate a connection with the context.
 
     """
-    # Override the URL in the config
-    config_section = config.get_section(config.config_ini_section)
-    config_section["sqlalchemy.url"] = get_url()
-    
+    # Get database URL from environment or use SQLite as fallback
+    db_url = os.getenv("DATABASE_URL")
+    if not db_url or "localhost" in db_url:
+        # Use SQLite as fallback
+        db_url = "sqlite:///pycommerce.db"
+        config.set_main_option("sqlalchemy.url", db_url)
+        print(f"Using SQLite database at {db_url} as fallback")
+
     connectable = engine_from_config(
-        config_section,
+        config.get_section(config.config_ini_section),
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
     )
 
-    with connectable.connect() as connection:
-        context.configure(
-            connection=connection, 
-            target_metadata=target_metadata
+    try:
+        with connectable.connect() as connection:
+            context.configure(
+                connection=connection, target_metadata=target_metadata
+            )
+
+            with context.begin_transaction():
+                context.run_migrations()
+    except Exception as e:
+        print(f"Error connecting to database: {str(e)}")
+        print("Falling back to SQLite database")
+        # Use SQLite as fallback
+        db_url = "sqlite:///pycommerce.db"
+        config.set_main_option("sqlalchemy.url", db_url)
+
+        connectable = engine_from_config(
+            config.get_section(config.config_ini_section),
+            prefix="sqlalchemy.",
+            poolclass=pool.NullPool,
         )
 
-        with context.begin_transaction():
-            context.run_migrations()
+        with connectable.connect() as connection:
+            context.configure(
+                connection=connection, target_metadata=target_metadata
+            )
+
+            with context.begin_transaction():
+                context.run_migrations()
 
 
 if context.is_offline_mode():

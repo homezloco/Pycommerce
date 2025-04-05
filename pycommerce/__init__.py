@@ -21,8 +21,10 @@ from pycommerce.core.plugin import PluginManager
 # We'll do this inside init_db() to avoid circular imports
 
 # Create plugin managers
-payment_plugins = PluginManager("payment")
-shipping_plugins = PluginManager("shipping")
+payment_plugins = PluginManager()
+payment_plugins.plugin_type = "payment"
+shipping_plugins = PluginManager()
+shipping_plugins.plugin_type = "shipping"
 
 # Initialize plugins from environment variables
 def initialize_plugins():
