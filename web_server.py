@@ -1427,6 +1427,7 @@ async def admin_add_product_form(request: Request):
         "admin/product_add.html", 
         {
             "request": request,
+            "active_page": "products",
             "tenants": tenants,
             "selected_tenant": selected_tenant,
             "cart_item_count": cart_item_count

@@ -123,7 +123,7 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // Initialize the DataTable for better order management
-    const dataTable = new DataTable('#ordersTable', {
+    $('#ordersTable').DataTable({
         responsive: true,
         order: [[1, 'desc']], // Sort by date descending
         lengthMenu: [10, 25, 50, 100],
