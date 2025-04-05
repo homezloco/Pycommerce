@@ -2114,7 +2114,7 @@ async def admin_upload_media(
             status_code=303
         )
 
-@app.post("/admin/media/generate-image", response_class=RedirectResponse)
+@app.post("/admin/media/generate", response_class=RedirectResponse)
 async def admin_generate_image(
     request: Request,
     prompt: str = Form(...),
