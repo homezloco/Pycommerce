@@ -12,7 +12,7 @@ from fastapi import APIRouter, HTTPException, Depends, Query
 
 from pydantic import BaseModel, Field
 
-from pycommerce.plugins.payment import PaymentPlugin, StripePaymentPlugin, PayPalPaymentPlugin
+from pycommerce.plugins.payment import PaymentPlugin, StripePaymentPlugin, PaypalPaymentPlugin
 from pycommerce.core.exceptions import PaymentError
 
 

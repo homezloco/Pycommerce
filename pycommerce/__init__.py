@@ -39,8 +39,9 @@ def initialize_plugins():
         try:
             # Import the plugin module
             plugin_module = import_module(f"pycommerce.plugins.payment.{plugin_name}")
-            # Get the plugin class - corrected to handle capitalization
-            plugin_class = getattr(plugin_module, f"{plugin_name.capitalize()}PaymentPlugin")
+            # Get the plugin class name based on plugin
+            class_name = "PayPalPaymentPlugin" if plugin_name.lower() == "paypal" else f"{plugin_name.capitalize()}PaymentPlugin"
+            plugin_class = getattr(plugin_module, class_name)
             # Register the plugin
             payment_plugins.register(plugin_class())
             logger.info(f"Registered payment plugin: {plugin_name}")
