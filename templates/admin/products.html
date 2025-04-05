@@ -154,7 +154,8 @@
                             </div>
                             <div class="mb-3">
                                 <label for="description" class="form-label">Description</label>
-                                <textarea class="form-control wysiwyg-editor" id="description" name="description" rows="8"></textarea>
+                                <textarea class="form-control" id="description" name="description" rows="8" style="display:none;"></textarea>
+                                <div id="description-editor" class="tinymce-editor"></div>
                             </div>
                         </div>
                     </div>
@@ -211,6 +212,8 @@
 {% endblock %}
 
 {% block scripts %}
+<script src="https://cdn.tiny.cloud/1/no-api-key/tinymce/5/tinymce.min.js" referrerpolicy="origin"></script>
+<script src="/static/js/tinymce-ai.js"></script>
 <script>
     // Auto-generate SKU from name
     document.addEventListener('DOMContentLoaded', function() {
@@ -235,6 +238,32 @@
             // Mark SKU as user-modified when user changes it manually
             skuInput.addEventListener('input', function() {
                 this.dataset.userModified = 'true';
+            });
+        }
+        
+        // Add the TinyMCE API key from meta tag
+        const meta = document.createElement('meta');
+        meta.name = 'tinymce-api-key';
+        meta.content = 'no-api-key'; // This will be replaced with actual API key
+        document.head.appendChild(meta);
+        
+        // Initialize TinyMCE with AI integration for product creation
+        initTinyMCEWithAI('#description-editor', {
+            height: 300,
+            setup: function(editor) {
+                // Sync content with textarea when submitting the form
+                editor.on('change', function() {
+                    document.getElementById('description').value = editor.getContent();
+                });
+            }
+        });
+        
+        // Ensure form submission gets the editor content
+        const addProductForm = document.querySelector('#addProductForm');
+        if (addProductForm) {
+            addProductForm.addEventListener('submit', function() {
+                const editorContent = tinymce.get('description-editor').getContent();
+                document.getElementById('description').value = editorContent;
             });
         }
     });

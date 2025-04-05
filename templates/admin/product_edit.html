@@ -68,7 +68,8 @@
                         </div>
                         <div class="mb-3">
                             <label for="description" class="form-label">Description</label>
-                            <textarea class="form-control wysiwyg-editor" id="description" name="description" rows="8">{{ product.description }}</textarea>
+                            <textarea class="form-control" id="description" name="description" rows="8" style="display:none;">{{ product.description }}</textarea>
+                            <div id="description-editor" class="tinymce-editor"></div>
                         </div>
                     </div>
                 </div>
@@ -83,10 +84,39 @@
 {% endblock %}
 
 {% block scripts %}
+<script src="https://cdn.tiny.cloud/1/no-api-key/tinymce/5/tinymce.min.js" referrerpolicy="origin"></script>
+<script src="/static/js/tinymce-ai.js"></script>
 <script>
-    // Initialize the WYSIWYG editor when the page loads
+    // Initialize the TinyMCE editor with AI capabilities
     document.addEventListener('DOMContentLoaded', function() {
-        // Editor is initialized via the base template for all elements with class 'wysiwyg-editor'
+        // Add the TinyMCE API key from meta tag
+        const meta = document.createElement('meta');
+        meta.name = 'tinymce-api-key';
+        meta.content = 'no-api-key'; // This will be replaced with actual API key
+        document.head.appendChild(meta);
+        
+        // Initialize TinyMCE with AI integration
+        initTinyMCEWithAI('#description-editor', {
+            height: 400,
+            setup: function(editor) {
+                // Sync content with textarea when submitting the form
+                editor.on('change', function() {
+                    document.getElementById('description').value = editor.getContent();
+                });
+                
+                // Initialize the editor with textarea content
+                editor.on('init', function() {
+                    editor.setContent(document.getElementById('description').value || '');
+                });
+            }
+        });
+        
+        // Ensure form submission gets the editor content
+        const form = document.querySelector('form');
+        form.addEventListener('submit', function() {
+            const editorContent = tinymce.activeEditor.getContent();
+            document.getElementById('description').value = editorContent;
+        });
     });
 </script>
 {% endblock %}
