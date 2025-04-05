@@ -464,6 +464,7 @@ async def generate_sample_data():
 
 # Admin routes for dashboard and management
 @app.get("/admin", response_class=HTMLResponse)
+@app.get("/admin/dashboard", response_class=HTMLResponse)
 async def admin_dashboard(request: Request, status_message: Optional[str] = None, status_type: str = "info"):
     """Admin dashboard page."""
     # Get all tenants for the store selector
