@@ -530,7 +530,13 @@ async def admin_change_store(request: Request, tenant: str = ""):
 
 # Admin store settings
 @app.get("/admin/store-settings", response_class=HTMLResponse)
-async def admin_store_settings(request: Request, status_message: Optional[str] = None, status_type: str = "info"):
+async def admin_store_settings(
+    request: Request, 
+    status_message: Optional[str] = None, 
+    status_type: str = "info",
+    tab: Optional[str] = None,
+    provider: Optional[str] = None
+):
     """Admin page for managing store settings."""
     # Get all tenants for the store selector
     tenants = []
@@ -578,6 +584,39 @@ async def admin_store_settings(request: Request, status_message: Optional[str] =
             status_type = "danger"
         tenants = []
         cart_item_count = 0
+        
+    # For AI Configuration tab
+    ai_providers = []
+    active_provider = None
+    selected_provider = None
+    field_values = {}
+    
+    if tab == "ai" or provider:
+        try:
+            # Get AI providers
+            ai_providers = get_ai_providers()
+            
+            # Get active provider
+            tenant_id = selected_tenant["id"] if selected_tenant else None
+            config = load_ai_config(tenant_id)
+            active_provider = config.get("active_provider", "openai")
+            
+            # Default to first provider if none selected
+            selected_provider_id = provider or active_provider
+            selected_provider = next((p for p in ai_providers if p["id"] == selected_provider_id), ai_providers[0])
+            
+            # Get provider configuration
+            provider_config = config.get("provider_config", {}) 
+            
+            if provider_config:
+                for field in selected_provider["fields"]:
+                    if field["id"] in provider_config:
+                        field_values[field["id"]] = provider_config[field["id"]]
+        except Exception as e:
+            logger.error(f"Error loading AI configuration: {str(e)}")
+            if status_message is None:
+                status_message = f"Error loading AI configuration: {str(e)}"
+                status_type = "danger"
     
     return templates.TemplateResponse(
         "admin/store_settings.html", 
@@ -589,7 +628,14 @@ async def admin_store_settings(request: Request, status_message: Optional[str] =
             "tenant": selected_tenant,
             "cart_item_count": cart_item_count,
             "status_message": status_message,
-            "status_type": status_type
+            "status_type": status_type,
+            # Tab selection
+            "tab": tab,
+            # AI Config tab data
+            "ai_providers": ai_providers,
+            "active_provider": active_provider,
+            "selected_provider": selected_provider,
+            "field_values": field_values
         }
     )
 
@@ -869,19 +915,19 @@ async def admin_ai_config(
 
 @app.get("/admin/ai-config/configure/{provider_id}", response_class=RedirectResponse)
 async def admin_ai_config_redirect(provider_id: str, tenant: Optional[str] = None):
-    """Redirect to AI config page with the selected provider."""
-    url = f"/admin/ai-config?provider={provider_id}"
+    """Redirect to store settings page with AI tab active and selected provider."""
+    url = f"/admin/store-settings?tab=ai&provider={provider_id}"
     if tenant:
         url += f"&tenant={tenant}"
     return RedirectResponse(url=url, status_code=303)
 
-@app.post("/admin/ai-config/save", response_class=RedirectResponse)
+@app.post("/admin/store-settings/ai/save", response_class=RedirectResponse)
 async def admin_ai_config_save(
     request: Request,
     provider_id: str = Form(...),
     tenant: str = Form(...)
 ):
-    """Save AI provider configuration."""
+    """Save AI provider configuration from store settings."""
     try:
         # Get form data for provider configuration
         form_data = await request.form()
@@ -892,7 +938,7 @@ async def admin_ai_config_save(
         
         if not provider_info:
             return RedirectResponse(
-                url=f"/admin/ai-config?status_message=Invalid provider: {provider_id}&status_type=danger", 
+                url=f"/admin/store-settings?tab=ai&status_message=Invalid provider: {provider_id}&status_type=danger", 
                 status_code=303
             )
         
@@ -928,17 +974,17 @@ async def admin_ai_config_save(
         status_message = f"Error saving AI configuration: {str(e)}"
         status_type = "danger"
     
-    # Redirect back to AI config page
-    redirect_url = f"/admin/ai-config?provider={provider_id}&tenant={tenant}&status_message={status_message}&status_type={status_type}"
+    # Redirect back to store settings AI tab
+    redirect_url = f"/admin/store-settings?tab=ai&provider={provider_id}&tenant={tenant}&status_message={status_message}&status_type={status_type}"
     return RedirectResponse(url=redirect_url, status_code=303)
 
-@app.post("/admin/ai-config/set-active", response_class=RedirectResponse)
+@app.post("/admin/store-settings/ai/set-active", response_class=RedirectResponse)
 async def admin_ai_config_set_active(
     request: Request,
     provider_id: str = Form(...),
     tenant: str = Form(...)
 ):
-    """Set active AI provider."""
+    """Set active AI provider from store settings."""
     try:
         # Get tenant object if tenant is specified
         tenant_obj = tenant_manager.get_by_slug(tenant) if tenant else None
@@ -959,8 +1005,8 @@ async def admin_ai_config_set_active(
         status_message = f"Error setting active AI provider: {str(e)}"
         status_type = "danger"
     
-    # Redirect back to AI config page
-    redirect_url = f"/admin/ai-config?provider={provider_id}&tenant={tenant}&status_message={status_message}&status_type={status_type}"
+    # Redirect back to store settings AI tab
+    redirect_url = f"/admin/store-settings?tab=ai&provider={provider_id}&tenant={tenant}&status_message={status_message}&status_type={status_type}"
     return RedirectResponse(url=redirect_url, status_code=303)
 
 # Admin plugins page
