@@ -29,6 +29,9 @@ if config.config_file_name is not None:
 # for 'autogenerate' support
 target_metadata = Base.metadata
 
+# Set include_schemas=True to include schema-qualified objects
+target_metadata.schema = "pycommerce"
+
 # Other values from the config, defined by the needs of env.py,
 # can be acquired:
 # my_important_option = config.get_main_option("my_important_option")
@@ -76,6 +79,8 @@ def run_migrations_online() -> None:
         context.configure(
             connection=connection, 
             target_metadata=target_metadata,
+            include_schemas=True,
+            include_object=lambda obj, name, type_, reflected, compare_to: obj.schema == "pycommerce" if hasattr(obj, "schema") else True
         )
 
         with context.begin_transaction():
