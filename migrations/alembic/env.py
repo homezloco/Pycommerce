@@ -1,22 +1,21 @@
 
+from logging.config import fileConfig
 import os
 import sys
-from logging.config import fileConfig
 from pathlib import Path
 
-# Add project root to Python path properly
-project_root = Path(__file__).parents[2].absolute()
+# Add the project root to Python path
+project_root = Path(__file__).parents[2]
 sys.path.insert(0, str(project_root))
 
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 
 from alembic import context
-
-# Import the models
 from pycommerce.core.db import Base
+from pycommerce import models
 
-# This is the Alembic Config object, which provides
+# this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
 
@@ -25,18 +24,18 @@ config = context.config
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-# Add your model's MetaData object here
+# add your model's MetaData object here
 # for 'autogenerate' support
 target_metadata = Base.metadata
 
-# Set include_schemas=True to include schema-qualified objects
-target_metadata.schema = "pycommerce"
-
-# Other values from the config, defined by the needs of env.py,
+# other values from the config, defined by the needs of env.py,
 # can be acquired:
 # my_important_option = config.get_main_option("my_important_option")
 # ... etc.
 
+def get_url():
+    """Get database URL from environment variable."""
+    return os.getenv("DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/pycommerce")
 
 def run_migrations_offline() -> None:
     """Run migrations in 'offline' mode.
@@ -50,7 +49,7 @@ def run_migrations_offline() -> None:
     script output.
 
     """
-    url = config.get_main_option("sqlalchemy.url")
+    url = get_url()
     context.configure(
         url=url,
         target_metadata=target_metadata,
@@ -69,8 +68,12 @@ def run_migrations_online() -> None:
     and associate a connection with the context.
 
     """
+    # Override the URL in the config
+    config_section = config.get_section(config.config_ini_section)
+    config_section["sqlalchemy.url"] = get_url()
+    
     connectable = engine_from_config(
-        config.get_section(config.config_ini_section),
+        config_section,
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
     )
@@ -78,9 +81,7 @@ def run_migrations_online() -> None:
     with connectable.connect() as connection:
         context.configure(
             connection=connection, 
-            target_metadata=target_metadata,
-            include_schemas=True,
-            include_object=lambda obj, name, type_, reflected, compare_to: obj.schema == "pycommerce" if hasattr(obj, "schema") else True
+            target_metadata=target_metadata
         )
 
         with context.begin_transaction():

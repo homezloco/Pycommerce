@@ -1,19 +1,87 @@
+
 """
-PyCommerce - A modular Python ecommerce SDK with plugin architecture and FastAPI integration.
+PyCommerce: A Python-based e-commerce platform.
 
-This package provides a flexible framework for building ecommerce applications with
-support for extensibility through plugins and modern API development using FastAPI.
+This package provides a flexible and extensible e-commerce platform
+built on Python, with support for multiple tenants and plugins.
 """
 
-__version__ = "0.1.0"
+import os
+import logging
+from importlib import import_module
 
-# Don't import modules directly at the top level to avoid circular imports
-# These will be imported explicitly when needed
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
-# Export main classes for easier imports
+# Import core modules
+from pycommerce.core.db import Base, init_db
+from pycommerce.core.plugin import PluginManager
+
+# Import models to ensure they are registered with Base
+from pycommerce.models.tenant import Tenant
+from pycommerce.models.product import Product, Category
+from pycommerce.models.cart import Cart, CartItem
+from pycommerce.models.order import Order, OrderItem
+from pycommerce.models.user import User
+
+# Create plugin managers
+payment_plugins = PluginManager("payment")
+shipping_plugins = PluginManager("shipping")
+
+# Initialize plugins from environment variables
+def initialize_plugins():
+    """Initialize plugins based on environment variables."""
+    # Get enabled payment plugins
+    payment_plugin_list = os.getenv("ENABLED_PAYMENT_PLUGINS", "stripe,paypal").split(",")
+    for plugin_name in payment_plugin_list:
+        plugin_name = plugin_name.strip()
+        if not plugin_name:
+            continue
+        
+        try:
+            # Import the plugin module
+            plugin_module = import_module(f"pycommerce.plugins.payment.{plugin_name}")
+            # Get the plugin class
+            plugin_class = getattr(plugin_module, f"{plugin_name.title()}PaymentPlugin")
+            # Register the plugin
+            payment_plugins.register(plugin_class())
+            logger.info(f"Registered payment plugin: {plugin_name}")
+        except (ImportError, AttributeError) as e:
+            logger.warning(f"Failed to load payment plugin '{plugin_name}': {e}")
+    
+    # Get enabled shipping plugins
+    shipping_plugin_list = os.getenv("ENABLED_SHIPPING_PLUGINS", "standard").split(",")
+    for plugin_name in shipping_plugin_list:
+        plugin_name = plugin_name.strip()
+        if not plugin_name:
+            continue
+        
+        try:
+            # Import the plugin module
+            plugin_module = import_module(f"pycommerce.plugins.shipping.{plugin_name}")
+            # Get the plugin class
+            plugin_class = getattr(plugin_module, f"{plugin_name.title()}ShippingPlugin")
+            # Register the plugin
+            shipping_plugins.register(plugin_class())
+            logger.info(f"Registered shipping plugin: {plugin_name}")
+        except (ImportError, AttributeError) as e:
+            logger.warning(f"Failed to load shipping plugin '{plugin_name}': {e}")
+
+# Initialize plugins
+initialize_plugins()
+
 __all__ = [
-    "PyCommerce",
-    "Plugin",
-    "PluginManager",
-    "PyCommerceError",
+    'Base',
+    'init_db',
+    'Tenant',
+    'Product',
+    'Category',
+    'Cart',
+    'CartItem',
+    'Order',
+    'OrderItem',
+    'User',
+    'payment_plugins',
+    'shipping_plugins',
 ]

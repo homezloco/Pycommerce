@@ -1,259 +1,83 @@
 """
-Database connectivity module for PyCommerce SDK.
+Database configuration for PyCommerce.
 
-This module provides database connection and ORM functionality
-for storing PyCommerce data in persistent storage.
+This module configures the SQLAlchemy engine and session for the application.
 """
 
 import os
+from typing import Any, Optional
 import logging
-from sqlalchemy import create_engine, Column, String, Boolean, Text, Integer, Float, ForeignKey, DateTime, MetaData
+from sqlalchemy import create_engine, MetaData
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker, relationship, scoped_session
-from sqlalchemy.dialects.postgresql import UUID
-import uuid
-from datetime import datetime
+from sqlalchemy.orm import sessionmaker, scoped_session
 
-# Configure logging
-logger = logging.getLogger("pycommerce.db")
+logger = logging.getLogger(__name__)
 
-# Get database URL from environment or use SQLite in-memory
-DATABASE_URL = os.environ.get("DATABASE_URL", "sqlite:///:memory:")
+# Create a base class for declarative models
+convention = {
+    'ix': 'ix_%(column_0_label)s',
+    'uq': 'uq_%(table_name)s_%(column_0_name)s',
+    'ck': 'ck_%(table_name)s_%(constraint_name)s',
+    'fk': 'fk_%(table_name)s_%(column_0_name)s_%(referred_table_name)s',
+    'pk': 'pk_%(table_name)s'
+}
 
-# Create engine
-engine = create_engine(DATABASE_URL, echo=False)
+metadata = MetaData(naming_convention=convention)
+Base = declarative_base(metadata=metadata)
+
+# Database configuration
+DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/pycommerce")
+
+# Initialize SQLAlchemy engine
+engine = create_engine(
+    DATABASE_URL,
+    echo=os.getenv("SQLALCHEMY_ECHO", "false").lower() == "true",
+    pool_pre_ping=True
+)
 
 # Create session factory
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+# Create thread-local session
 db_session = scoped_session(SessionLocal)
 
-# Create base class for models
-metadata = MetaData(schema="pycommerce")
-Base = declarative_base(metadata=metadata)
 
-
-class Tenant(Base):
-    """SQLAlchemy model for a Tenant."""
-    
-    __tablename__ = "tenants"
-    
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    name = Column(String(255), nullable=False)
-    slug = Column(String(255), nullable=False, unique=True)
-    domain = Column(String(255), nullable=True, unique=True)
-    active = Column(Boolean, default=True)
-    created_at = Column(DateTime, default=datetime.now)
-    updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now)
-    
-    # Relationships
-    products = relationship("Product", back_populates="tenant", cascade="all, delete-orphan")
-    carts = relationship("Cart", back_populates="tenant", cascade="all, delete-orphan")
-    orders = relationship("Order", back_populates="tenant", cascade="all, delete-orphan")
-    users = relationship("User", back_populates="tenant", cascade="all, delete-orphan")
-
-
-class Product(Base):
-    """SQLAlchemy model for a Product."""
-    
-    __tablename__ = "products"
-    
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    tenant_id = Column(UUID(as_uuid=True), ForeignKey("tenants.id", ondelete="CASCADE"), nullable=True)
-    sku = Column(String(255), nullable=False)
-    name = Column(String(255), nullable=False)
-    description = Column(Text, nullable=True)
-    price = Column(Float, nullable=False)
-    stock = Column(Integer, default=0)
-    categories = Column(String(255), nullable=True)  # Comma-separated list of categories
-    created_at = Column(DateTime, default=datetime.now)
-    updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now)
-    
-    # Relationships
-    tenant = relationship("Tenant", back_populates="products")
-    cart_items = relationship("CartItem", back_populates="product", cascade="all, delete-orphan")
-    order_items = relationship("OrderItem", back_populates="product", cascade="all, delete-orphan")
-    
-    # Add a unique constraint for (tenant_id, sku) to ensure SKUs are unique within a tenant
-    __table_args__ = (
-        {"schema": "pycommerce"}
-    )
-
-
-class User(Base):
-    """SQLAlchemy model for a User."""
-    
-    __tablename__ = "users"
-    
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    tenant_id = Column(UUID(as_uuid=True), ForeignKey("tenants.id", ondelete="CASCADE"), nullable=True)
-    email = Column(String(255), nullable=False)
-    name = Column(String(255), nullable=False)
-    password_hash = Column(String(255), nullable=False)
-    active = Column(Boolean, default=True)
-    created_at = Column(DateTime, default=datetime.now)
-    updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now)
-    
-    # Relationships
-    tenant = relationship("Tenant", back_populates="users")
-    carts = relationship("Cart", back_populates="user", cascade="all, delete-orphan")
-    orders = relationship("Order", back_populates="user", cascade="all, delete-orphan")
-    
-    # Add a unique constraint for (tenant_id, email) to ensure emails are unique within a tenant
-    __table_args__ = (
-        {"schema": "pycommerce"}
-    )
-
-
-class Cart(Base):
-    """SQLAlchemy model for a Cart."""
-    
-    __tablename__ = "carts"
-    
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    tenant_id = Column(UUID(as_uuid=True), ForeignKey("tenants.id", ondelete="CASCADE"), nullable=True)
-    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
-    created_at = Column(DateTime, default=datetime.now)
-    updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now)
-    
-    # Relationships
-    tenant = relationship("Tenant", back_populates="carts")
-    user = relationship("User", back_populates="carts")
-    items = relationship("CartItem", back_populates="cart", cascade="all, delete-orphan")
-    
-    __table_args__ = (
-        {"schema": "pycommerce"}
-    )
-
-
-class CartItem(Base):
-    """SQLAlchemy model for a CartItem."""
-    
-    __tablename__ = "cart_items"
-    
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    cart_id = Column(UUID(as_uuid=True), ForeignKey("carts.id", ondelete="CASCADE"), nullable=False)
-    product_id = Column(UUID(as_uuid=True), ForeignKey("products.id", ondelete="CASCADE"), nullable=False)
-    quantity = Column(Integer, default=1)
-    added_at = Column(DateTime, default=datetime.now)
-    
-    # Relationships
-    cart = relationship("Cart", back_populates="items")
-    product = relationship("Product", back_populates="cart_items")
-    
-    __table_args__ = (
-        {"schema": "pycommerce"}
-    )
-
-
-class Order(Base):
-    """SQLAlchemy model for an Order."""
-    
-    __tablename__ = "orders"
-    
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    tenant_id = Column(UUID(as_uuid=True), ForeignKey("tenants.id", ondelete="CASCADE"), nullable=True)
-    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
-    status = Column(String(50), nullable=False, default="pending")
-    total = Column(Float, nullable=False)
-    shipping_address = Column(Text, nullable=True)
-    billing_address = Column(Text, nullable=True)
-    payment_method = Column(String(50), nullable=True)
-    payment_id = Column(String(255), nullable=True)
-    created_at = Column(DateTime, default=datetime.now)
-    updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now)
-    
-    # Relationships
-    tenant = relationship("Tenant", back_populates="orders")
-    user = relationship("User", back_populates="orders")
-    items = relationship("OrderItem", back_populates="order", cascade="all, delete-orphan")
-    
-    __table_args__ = (
-        {"schema": "pycommerce"}
-    )
-
-
-class OrderItem(Base):
-    """SQLAlchemy model for an OrderItem."""
-    
-    __tablename__ = "order_items"
-    
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    order_id = Column(UUID(as_uuid=True), ForeignKey("orders.id", ondelete="CASCADE"), nullable=False)
-    product_id = Column(UUID(as_uuid=True), ForeignKey("products.id", ondelete="SET NULL"), nullable=True)
-    quantity = Column(Integer, default=1)
-    price = Column(Float, nullable=False)
-    product_name = Column(String(255), nullable=False)
-    product_sku = Column(String(255), nullable=False)
-    
-    # Relationships
-    order = relationship("Order", back_populates="items")
-    product = relationship("Product", back_populates="order_items")
-    
-    __table_args__ = (
-        {"schema": "pycommerce"}
-    )
-
-
-def init_db():
-    """Initialize the database by creating all tables."""
-    # Create the pycommerce schema if it doesn't exist
-    try:
-        # Use text() for SQLAlchemy 2.0 compatibility
-        from sqlalchemy import text
-        with engine.connect() as conn:
-            conn.execute(text("CREATE SCHEMA IF NOT EXISTS pycommerce"))
-            conn.commit()
-            logger.info("PyCommerce schema created or already exists")
-    except Exception as e:
-        logger.error(f"Error creating schema: {str(e)}")
-        return False
-    
-    try:
-        # Create all tables
-        Base.metadata.create_all(bind=engine)
-        logger.info("Database tables created")
-        return True
-    except Exception as e:
-        logger.error(f"Error creating tables: {str(e)}")
-        return False
-
-
-def get_db():
-    """
-    Get a database session.
-    
-    This function should be used as a dependency in FastAPI route functions.
-    """
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
-"""
-Database configuration for PyCommerce.
-
-This module provides SQLAlchemy configuration and base classes.
-"""
-
-import os
-from sqlalchemy import create_engine
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
-
-# Create a SQLAlchemy Base class
-Base = declarative_base()
-
-# Define engine (can be configured from environment variables)
-DATABASE_URL = os.environ.get("DATABASE_URL", "sqlite:///pycommerce.db")
-engine = create_engine(DATABASE_URL)
-
-# Create a sessionmaker
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
-def get_db():
+def get_db() -> scoped_session:
     """Get a database session."""
-    db = SessionLocal()
+    return db_session
+
+
+def init_db() -> None:
+    """Initialize the database by creating all tables."""
     try:
-        yield db
-    finally:
-        db.close()
+        logger.info("Initializing database...")
+
+        # Import all models to ensure they are registered with Base
+        from pycommerce import models
+
+        # Create tables
+        Base.metadata.create_all(bind=engine)
+        logger.info("Database initialized successfully.")
+    except Exception as e:
+        logger.error(f"Error initializing database: {e}")
+        raise
+
+
+def close_db() -> None:
+    """Close the database session."""
+    db_session.remove()
+
+
+class DBSessionContext:
+    """Context manager for database sessions."""
+
+    def __init__(self):
+        self.session = SessionLocal()
+
+    def __enter__(self):
+        return self.session
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if exc_type is not None:
+            self.session.rollback()
+        self.session.close()
