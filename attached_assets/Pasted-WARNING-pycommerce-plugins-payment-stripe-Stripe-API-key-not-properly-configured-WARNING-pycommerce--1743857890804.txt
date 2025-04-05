@@ -1,0 +1,47 @@
+WARNING:pycommerce.plugins.payment.stripe:Stripe API key not properly configured
+WARNING:pycommerce.plugins.payment.paypal:PayPal client credentials not properly configured
+INFO:pycommerce.plugins.payment.stripe:Initializing Stripe payment plugin
+INFO:pycommerce.plugins.payment.paypal:Initializing PayPal payment plugin
+INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
+INFO  [alembic.runtime.migration] Will assume transactional DDL.
+  Generating /home/runner/workspace/migrations/alembic/versions/aa3c41f3cce2_ini
+  tial_migration.py ...  FAILED
+Traceback (most recent call last):
+  File "/home/runner/workspace/.pythonlibs/bin/alembic", line 8, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/alembic/config.py", line 636, in main
+    CommandLine(prog=prog).main(argv=argv)
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/alembic/config.py", line 626, in main
+    self.run_cmd(cfg, options)
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/alembic/config.py", line 603, in run_cmd
+    fn(
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/alembic/command.py", line 243, in revision
+    scripts = [script for script in revision_context.generate_scripts()]
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/alembic/command.py", line 243, in <listcomp>
+    scripts = [script for script in revision_context.generate_scripts()]
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/alembic/autogenerate/api.py", line 650, in generate_scripts
+    yield self._to_script(generated_revision)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/alembic/autogenerate/api.py", line 555, in _to_script
+    return self.script_directory.generate_revision(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/alembic/script/base.py", line 751, in generate_revision
+    self._generate_template(
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/alembic/script/base.py", line 596, in _generate_template
+    util.template_to_file(src, dest, self.output_encoding, **kw)
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/alembic/util/pyfiles.py", line 25, in template_to_file
+    template = Template(filename=template_file)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/mako/template.py", line 312, in __init__
+    module = self._compile_from_file(path, filename)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/mako/template.py", line 387, in _compile_from_file
+    data = util.read_file(filename)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/mako/util.py", line 375, in read_file
+    with open(path, mode) as fp:
+         ^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: 'migrations/alembic/script.py.mako'
