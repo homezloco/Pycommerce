@@ -229,3 +229,31 @@ def get_db():
         yield db
     finally:
         db.close()
+"""
+Database configuration for PyCommerce.
+
+This module provides SQLAlchemy configuration and base classes.
+"""
+
+import os
+from sqlalchemy import create_engine
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker
+
+# Create a SQLAlchemy Base class
+Base = declarative_base()
+
+# Define engine (can be configured from environment variables)
+DATABASE_URL = os.environ.get("DATABASE_URL", "sqlite:///pycommerce.db")
+engine = create_engine(DATABASE_URL)
+
+# Create a sessionmaker
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+def get_db():
+    """Get a database session."""
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()

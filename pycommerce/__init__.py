@@ -7,17 +7,8 @@ support for extensibility through plugins and modern API development using FastA
 
 __version__ = "0.1.0"
 
-from pycommerce.core.base import PyCommerce
-from pycommerce.core.plugin import Plugin, PluginManager
-from pycommerce.core.exceptions import (
-    PyCommerceError,
-    ProductError,
-    CartError,
-    OrderError,
-    PaymentError,
-    ShippingError,
-    PluginError,
-)
+# Don't import modules directly at the top level to avoid circular imports
+# These will be imported explicitly when needed
 
 # Export main classes for easier imports
 __all__ = [
@@ -25,10 +16,4 @@ __all__ = [
     "Plugin",
     "PluginManager",
     "PyCommerceError",
-    "ProductError",
-    "CartError",
-    "OrderError",
-    "PaymentError",
-    "ShippingError",
-    "PluginError",
 ]
