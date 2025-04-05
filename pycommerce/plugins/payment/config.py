@@ -12,15 +12,15 @@ import logging
 logger = logging.getLogger(__name__)
 
 # Stripe Configuration
-STRIPE_API_KEY = os.environ.get("STRIPE_API_KEY", "")
-STRIPE_WEBHOOK_SECRET = os.environ.get("STRIPE_WEBHOOK_SECRET", "")
-STRIPE_ENABLED = bool(STRIPE_API_KEY)
+STRIPE_API_KEY = os.getenv("STRIPE_API_KEY", "")
+STRIPE_WEBHOOK_SECRET = os.getenv("STRIPE_WEBHOOK_SECRET", "")
+STRIPE_ENABLED = os.getenv("STRIPE_ENABLED", "true").lower() in ("true", "1", "yes")
 
 # PayPal Configuration
-PAYPAL_CLIENT_ID = os.environ.get("PAYPAL_CLIENT_ID", "")
-PAYPAL_CLIENT_SECRET = os.environ.get("PAYPAL_CLIENT_SECRET", "")
-PAYPAL_ENABLED = bool(PAYPAL_CLIENT_ID and PAYPAL_CLIENT_SECRET)
-PAYPAL_SANDBOX = os.environ.get("PAYPAL_SANDBOX", "True").lower() in ("true", "1", "t")
+PAYPAL_CLIENT_ID = os.getenv("PAYPAL_CLIENT_ID", "")
+PAYPAL_CLIENT_SECRET = os.getenv("PAYPAL_CLIENT_SECRET", "")
+PAYPAL_ENABLED = os.getenv("PAYPAL_ENABLED", "true").lower() in ("true", "1", "yes")
+PAYPAL_SANDBOX = os.getenv("PAYPAL_SANDBOX", "true").lower() in ("true", "1", "yes")
 
 # Default configurations for testing/development
 if not STRIPE_API_KEY and os.environ.get("ENVIRONMENT", "development") == "development":
@@ -34,19 +34,3 @@ if not (PAYPAL_CLIENT_ID and PAYPAL_CLIENT_SECRET) and os.environ.get("ENVIRONME
     PAYPAL_CLIENT_SECRET = "test_client_secret"
     PAYPAL_ENABLED = True
     PAYPAL_SANDBOX = True
-"""
-Configuration settings for payment plugins.
-"""
-
-import os
-
-# Stripe configuration
-STRIPE_API_KEY = os.getenv("STRIPE_API_KEY", "")
-STRIPE_WEBHOOK_SECRET = os.getenv("STRIPE_WEBHOOK_SECRET", "")
-STRIPE_ENABLED = os.getenv("STRIPE_ENABLED", "true").lower() in ("true", "1", "yes")
-
-# PayPal configuration
-PAYPAL_CLIENT_ID = os.getenv("PAYPAL_CLIENT_ID", "")
-PAYPAL_CLIENT_SECRET = os.getenv("PAYPAL_CLIENT_SECRET", "")
-PAYPAL_ENABLED = os.getenv("PAYPAL_ENABLED", "true").lower() in ("true", "1", "yes")
-PAYPAL_SANDBOX = os.getenv("PAYPAL_SANDBOX", "true").lower() in ("true", "1", "yes")

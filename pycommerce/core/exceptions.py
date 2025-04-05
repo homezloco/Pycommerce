@@ -53,3 +53,10 @@ class PluginError(PyCommerceError):
     
     def __init__(self, message: str = "An error occurred with plugin operations"):
         super().__init__(message)
+
+
+class ConfigError(PyCommerceError):
+    """Exception raised for errors in configuration operations."""
+    
+    def __init__(self, message: str = "An error occurred with configuration operations"):
+        super().__init__(message)

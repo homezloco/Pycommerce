@@ -28,15 +28,15 @@ from pycommerce.models.product import ProductManager
 from pycommerce.models.user import UserManager
 from pycommerce.api.routes import products as products_router
 from pycommerce.api.routes import cart as cart_router
+from pycommerce.plugins.payment.config import (
+    STRIPE_API_KEY, STRIPE_WEBHOOK_SECRET, STRIPE_ENABLED,
+    PAYPAL_CLIENT_ID, PAYPAL_CLIENT_SECRET, PAYPAL_ENABLED, PAYPAL_SANDBOX
+)
 from pycommerce.api.routes import checkout as checkout_router
 from pycommerce.api.routes import users as users_router
 
 # Import plugin modules
 from pycommerce.plugins import StripePaymentPlugin, StandardShippingPlugin
-from pycommerce.plugins.payment.config import (
-    STRIPE_API_KEY, STRIPE_WEBHOOK_SECRET, STRIPE_ENABLED,
-    PAYPAL_CLIENT_ID, PAYPAL_CLIENT_SECRET, PAYPAL_ENABLED, PAYPAL_SANDBOX
-)
 
 # Initialize the database
 init_db()
@@ -1611,6 +1611,31 @@ async def admin_plugin_config(
     plugin_docs_url = None
     config_fields = []
     help_content = None
+    
+    # Get the selected tenant from the query parameters
+    selected_tenant = request.query_params.get('tenant')
+    tenant_id = None
+    
+    # If a tenant is selected, get its ID
+    if selected_tenant:
+        from pycommerce.models.tenant import TenantManager
+        tenant_manager = TenantManager()
+        tenant_obj = tenant_manager.get_by_slug(selected_tenant)
+        if tenant_obj:
+            tenant_id = str(tenant_obj.id)
+    
+    # Initialize the plugin config manager
+    from pycommerce.models.plugin_config import PluginConfigManager
+    config_manager = PluginConfigManager()
+    
+    # Get plugin configuration from the database
+    try:
+        stored_config = config_manager.get_config(plugin_id, tenant_id)
+        is_enabled = config_manager.is_enabled(plugin_id, tenant_id)
+    except Exception as e:
+        logger.error(f"Error loading plugin configuration: {str(e)}")
+        stored_config = {}
+        is_enabled = True
 
     # Configure different plugins
     if plugin_id == "stripe":
@@ -1619,8 +1644,12 @@ async def admin_plugin_config(
         plugin_version = "1.0.0"
         plugin_type = "Payment"
         plugin_icon = "bi-credit-card"
-        plugin_active = STRIPE_ENABLED
+        plugin_active = is_enabled
         plugin_docs_url = "https://stripe.com/docs/api"
+        
+        # Set default values from stored config
+        stripe_api_key = stored_config.get("stripe_api_key", STRIPE_API_KEY or "")
+        stripe_webhook_secret = stored_config.get("stripe_webhook_secret", STRIPE_WEBHOOK_SECRET or "")
         
         # Define configuration fields
         config_fields = [
@@ -1628,7 +1657,7 @@ async def admin_plugin_config(
                 "id": "stripe_api_key",
                 "label": "Stripe API Key",
                 "type": "password",
-                "value": STRIPE_API_KEY,
+                "value": stripe_api_key,
                 "required": True,
                 "placeholder": "sk_test_...",
                 "help_text": "Your Stripe secret API key. Starts with 'sk_test_' for test mode or 'sk_live_' for live mode."
@@ -1637,7 +1666,7 @@ async def admin_plugin_config(
                 "id": "stripe_webhook_secret",
                 "label": "Webhook Secret",
                 "type": "password",
-                "value": STRIPE_WEBHOOK_SECRET,
+                "value": stripe_webhook_secret,
                 "required": False,
                 "placeholder": "whsec_...",
                 "help_text": "Your Stripe webhook signing secret. Required for handling payment webhooks securely."
@@ -1646,7 +1675,7 @@ async def admin_plugin_config(
                 "id": "stripe_enabled",
                 "label": "Enable Stripe Payments",
                 "type": "checkbox",
-                "value": STRIPE_ENABLED,
+                "value": is_enabled,
                 "required": False,
                 "checkbox_label": "Enable Stripe payment processing",
                 "help_text": "When enabled, Stripe will be available as a payment option for customers."
@@ -1676,8 +1705,13 @@ async def admin_plugin_config(
         plugin_version = "1.0.0"
         plugin_type = "Payment"
         plugin_icon = "bi-paypal"
-        plugin_active = PAYPAL_ENABLED
+        plugin_active = is_enabled
         plugin_docs_url = "https://developer.paypal.com/docs/api/overview/"
+        
+        # Set default values from stored config
+        paypal_client_id = stored_config.get("paypal_client_id", PAYPAL_CLIENT_ID or "")
+        paypal_client_secret = stored_config.get("paypal_client_secret", PAYPAL_CLIENT_SECRET or "")
+        paypal_sandbox = stored_config.get("paypal_sandbox", PAYPAL_SANDBOX)
         
         # Define configuration fields
         config_fields = [
@@ -1685,7 +1719,7 @@ async def admin_plugin_config(
                 "id": "paypal_client_id",
                 "label": "PayPal Client ID",
                 "type": "text",
-                "value": PAYPAL_CLIENT_ID,
+                "value": paypal_client_id,
                 "required": True,
                 "placeholder": "Your PayPal client ID",
                 "help_text": "Your PayPal client ID from the PayPal Developer Dashboard."
@@ -1694,7 +1728,7 @@ async def admin_plugin_config(
                 "id": "paypal_client_secret",
                 "label": "PayPal Client Secret",
                 "type": "password",
-                "value": PAYPAL_CLIENT_SECRET,
+                "value": paypal_client_secret,
                 "required": True,
                 "placeholder": "Your PayPal client secret",
                 "help_text": "Your PayPal client secret from the PayPal Developer Dashboard."
@@ -1703,7 +1737,7 @@ async def admin_plugin_config(
                 "id": "paypal_sandbox",
                 "label": "Use Sandbox Mode",
                 "type": "checkbox",
-                "value": PAYPAL_SANDBOX,
+                "value": paypal_sandbox,
                 "required": False,
                 "checkbox_label": "Use PayPal sandbox for testing",
                 "help_text": "When enabled, payments will be processed in PayPal's sandbox environment."
@@ -1712,7 +1746,7 @@ async def admin_plugin_config(
                 "id": "paypal_enabled",
                 "label": "Enable PayPal Payments",
                 "type": "checkbox",
-                "value": PAYPAL_ENABLED,
+                "value": is_enabled,
                 "required": False,
                 "checkbox_label": "Enable PayPal payment processing",
                 "help_text": "When enabled, PayPal will be available as a payment option for customers."
@@ -1742,7 +1776,28 @@ async def admin_plugin_config(
         plugin_version = "1.0.0"
         plugin_type = "Shipping"
         plugin_icon = "bi-truck"
-        plugin_active = True
+        plugin_active = is_enabled
+        
+        # Set default values from stored config
+        flat_rate_domestic = stored_config.get("flat_rate_domestic", 5.99)
+        flat_rate_international = stored_config.get("flat_rate_international", 19.99)
+        free_shipping_threshold = stored_config.get("free_shipping_threshold", 50.00)
+        
+        # Help content for Standard Shipping
+        help_content = """
+        <p>Configure your shipping rates and options here. These settings will apply to all orders in the selected store.</p>
+        
+        <h6>Shipping Configuration Tips:</h6>
+        <ul>
+            <li>Set domestic rates for orders shipping within your primary country</li>
+            <li>Set international rates for all cross-border shipments</li>
+            <li>Configure free shipping thresholds to encourage larger orders</li>
+        </ul>
+        
+        <div class="alert alert-info">
+            <i class="bi bi-info-circle"></i> <strong>Tip:</strong> Consider offering free shipping on orders above a certain value to increase average order size.
+        </div>
+        """
         
         # Define configuration fields
         config_fields = [
@@ -1750,7 +1805,7 @@ async def admin_plugin_config(
                 "id": "flat_rate_domestic",
                 "label": "Domestic Flat Rate",
                 "type": "number",
-                "value": 5.99,
+                "value": flat_rate_domestic,
                 "required": True,
                 "help_text": "Flat shipping rate for domestic orders."
             },
@@ -1758,7 +1813,7 @@ async def admin_plugin_config(
                 "id": "flat_rate_international",
                 "label": "International Flat Rate",
                 "type": "number",
-                "value": 19.99,
+                "value": flat_rate_international,
                 "required": True,
                 "help_text": "Flat shipping rate for international orders."
             },
@@ -1766,7 +1821,7 @@ async def admin_plugin_config(
                 "id": "free_shipping_threshold",
                 "label": "Free Shipping Threshold",
                 "type": "number",
-                "value": 50.00,
+                "value": free_shipping_threshold,
                 "required": False,
                 "help_text": "Orders over this amount qualify for free shipping. Leave blank to disable free shipping."
             }
@@ -1833,23 +1888,47 @@ async def admin_plugin_save_config(
     try:
         form_data = await request.form()
         
+        # Get the selected tenant from the form
+        selected_tenant = form_data.get('tenant')
+        tenant_id = None
+        
+        # If a tenant is selected, get its ID
+        if selected_tenant:
+            from pycommerce.models.tenant import TenantManager
+            tenant_manager = TenantManager()
+            tenant_obj = tenant_manager.get_by_slug(selected_tenant)
+            if tenant_obj:
+                tenant_id = str(tenant_obj.id)
+        
+        # Initialize the plugin config manager
+        from pycommerce.models.plugin_config import PluginConfigManager
+        config_manager = PluginConfigManager()
+        
         # Get the plugin-specific configuration
         if plugin_id == "stripe":
             stripe_api_key = form_data.get("stripe_api_key", "")
             stripe_webhook_secret = form_data.get("stripe_webhook_secret", "")
             stripe_enabled = form_data.get("stripe_enabled") == "on"
             
-            # Here we would normally save these to the database or environment
-            # For now, just log them (don't log the actual keys in production)
+            # Create configuration dictionary
+            config_data = {
+                "stripe_api_key": stripe_api_key,
+                "stripe_webhook_secret": stripe_webhook_secret
+            }
+            
+            # Log (don't log actual keys in production)
             logger.info(f"Updating Stripe configuration: API Key: {'*' * 10 if stripe_api_key else 'Not provided'}")
             logger.info(f"Updating Stripe configuration: Webhook Secret: {'*' * 10 if stripe_webhook_secret else 'Not provided'}")
             logger.info(f"Updating Stripe configuration: Enabled: {stripe_enabled}")
             
-            # In a real implementation, we would store these in a database or environment variables
-            # For now, let's assume success
+            # Save configuration to database
+            config_manager.save_config(plugin_id, config_data, tenant_id)
+            
+            # Set enabled/disabled status
+            config_manager.set_enabled(plugin_id, stripe_enabled, tenant_id)
             
             return RedirectResponse(
-                url=f"/admin/plugins/configure/stripe?status_message=Stripe+configuration+saved+successfully&status_type=success",
+                url=f"/admin/plugins/configure/stripe?tenant={selected_tenant}&status_message=Stripe+configuration+saved+successfully&status_type=success",
                 status_code=303
             )
         
@@ -1859,18 +1938,27 @@ async def admin_plugin_save_config(
             paypal_sandbox = form_data.get("paypal_sandbox") == "on"
             paypal_enabled = form_data.get("paypal_enabled") == "on"
             
-            # Here we would normally save these to the database or environment
-            # For now, just log them (don't log the actual keys in production)
+            # Create configuration dictionary
+            config_data = {
+                "paypal_client_id": paypal_client_id,
+                "paypal_client_secret": paypal_client_secret,
+                "paypal_sandbox": paypal_sandbox
+            }
+            
+            # Log (don't log actual keys in production)
             logger.info(f"Updating PayPal configuration: Client ID: {'*' * 10 if paypal_client_id else 'Not provided'}")
             logger.info(f"Updating PayPal configuration: Client Secret: {'*' * 10 if paypal_client_secret else 'Not provided'}")
             logger.info(f"Updating PayPal configuration: Sandbox: {paypal_sandbox}")
             logger.info(f"Updating PayPal configuration: Enabled: {paypal_enabled}")
             
-            # In a real implementation, we would store these in a database or environment variables
-            # For now, let's assume success
+            # Save configuration to database
+            config_manager.save_config(plugin_id, config_data, tenant_id)
+            
+            # Set enabled/disabled status
+            config_manager.set_enabled(plugin_id, paypal_enabled, tenant_id)
             
             return RedirectResponse(
-                url=f"/admin/plugins/configure/paypal?status_message=PayPal+configuration+saved+successfully&status_type=success",
+                url=f"/admin/plugins/configure/paypal?tenant={selected_tenant}&status_message=PayPal+configuration+saved+successfully&status_type=success",
                 status_code=303
             )
         
@@ -1881,16 +1969,25 @@ async def admin_plugin_save_config(
             
             free_shipping_threshold = float(free_shipping_threshold_str) if free_shipping_threshold_str else None
             
-            # Here we would normally save these to the database or environment
+            # Create configuration dictionary
+            config_data = {
+                "flat_rate_domestic": flat_rate_domestic,
+                "flat_rate_international": flat_rate_international,
+                "free_shipping_threshold": free_shipping_threshold
+            }
+            
             logger.info(f"Updating Standard Shipping configuration: Domestic Rate: {flat_rate_domestic}")
             logger.info(f"Updating Standard Shipping configuration: International Rate: {flat_rate_international}")
             logger.info(f"Updating Standard Shipping configuration: Free Threshold: {free_shipping_threshold}")
             
-            # In a real implementation, we would store these in a database or environment variables
-            # For now, let's assume success
+            # Save configuration to database
+            config_manager.save_config(plugin_id, config_data, tenant_id)
+            
+            # Always enabled for shipping
+            config_manager.set_enabled(plugin_id, True, tenant_id)
             
             return RedirectResponse(
-                url=f"/admin/plugins/configure/standard-shipping?status_message=Shipping+configuration+saved+successfully&status_type=success",
+                url=f"/admin/plugins/configure/standard-shipping?tenant={selected_tenant}&status_message=Shipping+configuration+saved+successfully&status_type=success",
                 status_code=303
             )
         

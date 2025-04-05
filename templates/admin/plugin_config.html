@@ -23,6 +23,19 @@
                 </div>
                 <div class="card-body">
                     <form action="/admin/plugins/save-config/{{ plugin_id }}" method="post">
+                        <!-- Store Selector -->
+                        <div class="mb-3">
+                            <label for="tenant" class="form-label">Store</label>
+                            <select id="tenant" class="form-select" name="tenant" onchange="location.href='/admin/plugins/configure/{{ plugin_id }}?tenant=' + this.value">
+                                {% for tenant in tenants %}
+                                <option value="{{ tenant.slug }}" {% if tenant.slug == selected_tenant %}selected{% endif %}>
+                                    {{ tenant.name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                            <div class="form-text text-muted">Configuration will be applied to the selected store.</div>
+                        </div>
+                        
                         {% for field in config_fields %}
                         <div class="mb-3">
                             <label for="{{ field.id }}" class="form-label">{{ field.label }}{% if field.required %} <span class="text-danger">*</span>{% endif %}</label>

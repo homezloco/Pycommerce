@@ -10,10 +10,12 @@ from typing import Dict, Any, List, Optional
 from uuid import UUID
 import time
 from datetime import datetime
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 
 from pycommerce.plugins.shipping.base import ShippingPlugin
 from pycommerce.core.exceptions import ShippingError
+from pycommerce.models.plugin_config import PluginConfigManager
+from pycommerce.models.tenant import TenantManager
 
 logger = logging.getLogger("pycommerce.plugins.shipping.standard")
 
@@ -49,12 +51,13 @@ class StandardShippingPlugin(ShippingPlugin):
         router = APIRouter()
         
         @router.get("/rates", tags=["shipping"])
-        def get_shipping_rates(country: str, postal_code: str):
+        def get_shipping_rates(request: Request, country: str, postal_code: str):
             """Get shipping rates for a destination."""
             try:
                 rates = self.calculate_rates(
                     items=[],  # Not used in basic implementation
-                    destination={"country": country, "postal_code": postal_code}
+                    destination={"country": country, "postal_code": postal_code},
+                    request=request
                 )
                 return {"rates": rates}
             except Exception as e:
@@ -74,13 +77,86 @@ class StandardShippingPlugin(ShippingPlugin):
         
         return router
     
-    def calculate_rates(self, items: List[Dict[str, Any]], destination: Dict[str, Any]) -> List[Dict[str, Any]]:
+    def get_tenant_from_host(self, request=None):
+        """
+        Get the current tenant based on the host header.
+        
+        Args:
+            request: The request object (optional)
+            
+        Returns:
+            Tenant ID or None
+        """
+        tenant_id = None
+        try:
+            if request and hasattr(request, 'headers'):
+                host = request.headers.get('host', '')
+                if host:
+                    # Extract domain from host (remove port)
+                    domain = host.split(':')[0]
+                    
+                    # Find tenant by domain
+                    tenant_manager = TenantManager()
+                    tenant = tenant_manager.get_by_domain(domain)
+                    
+                    if tenant:
+                        tenant_id = str(tenant.id)
+            
+            # If we couldn't get tenant by domain, use the default tenant
+            if not tenant_id:
+                # Get the first tenant as default
+                tenant_manager = TenantManager()
+                tenants = tenant_manager.list()
+                if tenants:
+                    tenant_id = str(tenants[0].id)
+        
+        except Exception as e:
+            logger.error(f"Error getting tenant from host: {str(e)}")
+        
+        return tenant_id
+    
+    def get_shipping_config(self, tenant_id=None):
+        """
+        Get shipping configuration for a tenant.
+        
+        Args:
+            tenant_id: The tenant ID (optional)
+            
+        Returns:
+            Dictionary with shipping configuration
+        """
+        # Default configuration
+        config = {
+            "flat_rate_domestic": 5.99,
+            "flat_rate_international": 19.99,
+            "free_shipping_threshold": 50.00
+        }
+        
+        try:
+            if tenant_id:
+                # Get configuration from database
+                config_manager = PluginConfigManager()
+                stored_config = config_manager.get_config("standard-shipping", tenant_id) or {}
+                
+                # Update config with stored values
+                if stored_config:
+                    config["flat_rate_domestic"] = stored_config.get("flat_rate_domestic", config["flat_rate_domestic"])
+                    config["flat_rate_international"] = stored_config.get("flat_rate_international", config["flat_rate_international"])
+                    config["free_shipping_threshold"] = stored_config.get("free_shipping_threshold", config["free_shipping_threshold"])
+        
+        except Exception as e:
+            logger.error(f"Error getting shipping configuration: {str(e)}")
+        
+        return config
+    
+    def calculate_rates(self, items: List[Dict[str, Any]], destination: Dict[str, Any], request=None) -> List[Dict[str, Any]]:
         """
         Calculate shipping rates for an order.
         
         Args:
             items: List of items in the order (not used in basic implementation)
             destination: Shipping destination
+            request: The request object (optional)
             
         Returns:
             List of available shipping options
@@ -91,6 +167,17 @@ class StandardShippingPlugin(ShippingPlugin):
         try:
             country = destination.get("country", "").upper()
             
+            # Get tenant-specific configuration
+            tenant_id = self.get_tenant_from_host(request)
+            config = self.get_shipping_config(tenant_id)
+            
+            # Check if order qualifies for free shipping
+            order_total = sum(item.get("price", 0) * item.get("quantity", 1) for item in items)
+            free_shipping = (
+                config["free_shipping_threshold"] and 
+                order_total >= config["free_shipping_threshold"]
+            )
+            
             # Define standard shipping options
             if country == "US":
                 return [
@@ -98,15 +185,17 @@ class StandardShippingPlugin(ShippingPlugin):
                         "id": "standard",
                         "name": "Standard Shipping",
                         "description": "Delivery in 3-5 business days",
-                        "price": 5.99,
-                        "estimated_days": 5
+                        "price": 0 if free_shipping else config["flat_rate_domestic"],
+                        "estimated_days": 5,
+                        "free_shipping": free_shipping
                     },
                     {
                         "id": "express",
                         "name": "Express Shipping",
                         "description": "Delivery in 1-2 business days",
-                        "price": 12.99,
-                        "estimated_days": 2
+                        "price": 0 if free_shipping else config["flat_rate_domestic"] * 2,
+                        "estimated_days": 2,
+                        "free_shipping": free_shipping
                     }
                 ]
             elif country in ["CA", "MX"]:
@@ -115,15 +204,17 @@ class StandardShippingPlugin(ShippingPlugin):
                         "id": "standard",
                         "name": "Standard International",
                         "description": "Delivery in 5-7 business days",
-                        "price": 9.99,
-                        "estimated_days": 7
+                        "price": 0 if free_shipping else config["flat_rate_international"] * 0.7,
+                        "estimated_days": 7,
+                        "free_shipping": free_shipping
                     },
                     {
                         "id": "express",
                         "name": "Express International",
                         "description": "Delivery in 2-3 business days",
-                        "price": 19.99,
-                        "estimated_days": 3
+                        "price": 0 if free_shipping else config["flat_rate_international"],
+                        "estimated_days": 3,
+                        "free_shipping": free_shipping
                     }
                 ]
             else:
@@ -132,15 +223,17 @@ class StandardShippingPlugin(ShippingPlugin):
                         "id": "standard",
                         "name": "Standard International",
                         "description": "Delivery in 7-14 business days",
-                        "price": 14.99,
-                        "estimated_days": 14
+                        "price": 0 if free_shipping else config["flat_rate_international"],
+                        "estimated_days": 14,
+                        "free_shipping": free_shipping
                     },
                     {
                         "id": "express",
                         "name": "Express International",
                         "description": "Delivery in 3-5 business days",
-                        "price": 29.99,
-                        "estimated_days": 5
+                        "price": 0 if free_shipping else config["flat_rate_international"] * 2,
+                        "estimated_days": 5,
+                        "free_shipping": free_shipping
                     }
                 ]
         
