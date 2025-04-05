@@ -104,7 +104,7 @@
             <!-- Built-in Plugins -->
             <div class="card shadow-sm mb-4">
                 <div class="card-header">
-                    <h5 class="card-title mb-0">Built-in Plugins</h5>
+                    <h5 class="card-title mb-0">Available Plugins</h5>
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">
@@ -118,66 +118,41 @@
                                 </tr>
                             </thead>
                             <tbody>
+                                {% for plugin in plugins %}
                                 <tr>
                                     <td>
                                         <div class="d-flex align-items-center">
                                             <div class="plugin-icon bg-light rounded p-2 me-3">
-                                                <i class="bi bi-credit-card"></i>
+                                                <i class="bi {{ plugin.icon }}"></i>
                                             </div>
                                             <div>
-                                                <h6 class="mb-0">Stripe Payments</h6>
-                                                <span class="text-muted small">Process credit card payments with Stripe</span>
+                                                <h6 class="mb-0">{{ plugin.name }}</h6>
+                                                <span class="text-muted small">{{ plugin.description }}</span>
                                             </div>
                                         </div>
                                     </td>
-                                    <td>Payment</td>
+                                    <td>{{ plugin.type|capitalize }}</td>
                                     <td>
+                                        {% if plugin.enabled and plugin.configured %}
                                         <span class="badge bg-success">Active</span>
-                                    </td>
-                                    <td>
-                                        <a href="/admin/plugins/configure/stripe" class="btn btn-sm btn-outline-primary">Configure</a>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>
-                                        <div class="d-flex align-items-center">
-                                            <div class="plugin-icon bg-light rounded p-2 me-3">
-                                                <i class="bi bi-paypal"></i>
-                                            </div>
-                                            <div>
-                                                <h6 class="mb-0">PayPal Payments</h6>
-                                                <span class="text-muted small">Accept payments via PayPal</span>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td>Payment</td>
-                                    <td>
+                                        {% elif plugin.enabled and not plugin.configured %}
                                         <span class="badge bg-warning">Setup Required</span>
+                                        {% else %}
+                                        <span class="badge bg-danger">Inactive</span>
+                                        {% endif %}
                                     </td>
                                     <td>
-                                        <a href="/admin/plugins/configure/paypal" class="btn btn-sm btn-outline-primary">Configure</a>
+                                        <a href="/admin/plugins/configure/{{ plugin.id }}" class="btn btn-sm btn-outline-primary">Configure</a>
                                     </td>
                                 </tr>
+                                {% else %}
                                 <tr>
-                                    <td>
-                                        <div class="d-flex align-items-center">
-                                            <div class="plugin-icon bg-light rounded p-2 me-3">
-                                                <i class="bi bi-truck"></i>
-                                            </div>
-                                            <div>
-                                                <h6 class="mb-0">Standard Shipping</h6>
-                                                <span class="text-muted small">Basic shipping rate calculations</span>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td>Shipping</td>
-                                    <td>
-                                        <span class="badge bg-success">Active</span>
-                                    </td>
-                                    <td>
-                                        <a href="/admin/plugins/configure/standard-shipping" class="btn btn-sm btn-outline-primary">Configure</a>
+                                    <td colspan="4" class="text-center py-4">
+                                        <i class="bi bi-puzzle fs-2 text-muted mb-2"></i>
+                                        <p>No plugins available.</p>
                                     </td>
                                 </tr>
+                                {% endfor %}
                             </tbody>
                         </table>
                     </div>
@@ -249,20 +224,22 @@
                 <div class="card-body">
                     <p class="text-muted small">Third-party API credentials are securely stored. The following credentials are currently configured:</p>
                     <ul class="list-group list-group-flush mb-3">
-                        <li class="list-group-item d-flex justify-content-between align-items-center py-2">
-                            <span>Stripe API Key</span>
-                            <span class="badge bg-success">Configured</span>
-                        </li>
-                        <li class="list-group-item d-flex justify-content-between align-items-center py-2">
-                            <span>PayPal Client ID</span>
-                            <span class="badge bg-danger">Missing</span>
-                        </li>
-                        <li class="list-group-item d-flex justify-content-between align-items-center py-2">
-                            <span>OpenAI API Key</span>
-                            <span class="badge bg-success">Configured</span>
-                        </li>
+                        {% for plugin in plugins %}
+                            {% if plugin.type == 'payment' %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center py-2">
+                                <span>{{ plugin.name }}</span>
+                                {% if plugin.configured %}
+                                <span class="badge bg-success">Configured</span>
+                                {% else %}
+                                <span class="badge bg-danger">Missing</span>
+                                {% endif %}
+                            </li>
+                            {% endif %}
+                        {% endfor %}
                     </ul>
-                    <a href="/admin/api-keys" class="btn btn-sm btn-outline-primary d-block">Manage API Keys</a>
+                    <div class="d-grid">
+                        <a href="/admin/api-keys" class="btn btn-sm btn-outline-primary">Manage API Keys</a>
+                    </div>
                 </div>
             </div>
         </div>

@@ -1,0 +1,165 @@
+{% extends 'base.html' %}
+
+{% block title %}PyCommerce - Plugin Configuration{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h2">{{ plugin_name }} Configuration</h1>
+        <a href="/admin/plugins" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Back to Plugins
+        </a>
+    </div>
+    
+    {% if status_message %}
+    <div class="alert alert-{{ status_type }}">{{ status_message }}</div>
+    {% endif %}
+    
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Configuration</h5>
+                </div>
+                <div class="card-body">
+                    <form action="/admin/plugins/save-config/{{ plugin_id }}" method="post">
+                        {% for field in config_fields %}
+                        <div class="mb-3">
+                            <label for="{{ field.id }}" class="form-label">{{ field.label }}{% if field.required %} <span class="text-danger">*</span>{% endif %}</label>
+                            
+                            {% if field.type == 'text' or field.type == 'password' or field.type == 'number' or field.type == 'email' %}
+                            <input type="{{ field.type }}" 
+                                   class="form-control" 
+                                   id="{{ field.id }}" 
+                                   name="{{ field.id }}"
+                                   value="{{ field.value|default('') }}"
+                                   {% if field.placeholder %}placeholder="{{ field.placeholder }}"{% endif %}
+                                   {% if field.required %}required{% endif %}>
+                            {% endif %}
+                            
+                            {% if field.type == 'textarea' %}
+                            <textarea class="form-control"
+                                      id="{{ field.id }}"
+                                      name="{{ field.id }}"
+                                      rows="{{ field.rows|default(3) }}"
+                                      {% if field.placeholder %}placeholder="{{ field.placeholder }}"{% endif %}
+                                      {% if field.required %}required{% endif %}>{{ field.value|default('') }}</textarea>
+                            {% endif %}
+                            
+                            {% if field.type == 'checkbox' %}
+                            <div class="form-check">
+                                <input class="form-check-input" 
+                                       type="checkbox" 
+                                       id="{{ field.id }}" 
+                                       name="{{ field.id }}"
+                                       {% if field.value %}checked{% endif %}>
+                                <label class="form-check-label" for="{{ field.id }}">
+                                    {{ field.checkbox_label|default('Enable') }}
+                                </label>
+                            </div>
+                            {% endif %}
+                            
+                            {% if field.type == 'select' %}
+                            <select class="form-select"
+                                    id="{{ field.id }}"
+                                    name="{{ field.id }}"
+                                    {% if field.required %}required{% endif %}>
+                                {% for option in field.options %}
+                                <option value="{{ option.value }}" {% if option.value == field.value %}selected{% endif %}>
+                                    {{ option.label }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                            {% endif %}
+                            
+                            {% if field.help_text %}
+                            <div class="form-text text-muted">{{ field.help_text }}</div>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                        
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-save"></i> Save Configuration
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <!-- Plugin Information -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Plugin Details</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="plugin-icon bg-light rounded p-3 me-3">
+                            <i class="bi {{ plugin_icon }} fs-2"></i>
+                        </div>
+                        <div>
+                            <h5 class="mb-0">{{ plugin_name }}</h5>
+                            <div class="text-muted">v{{ plugin_version }}</div>
+                        </div>
+                    </div>
+                    
+                    <p>{{ plugin_description }}</p>
+                    
+                    {% if plugin_docs_url %}
+                    <a href="{{ plugin_docs_url }}" target="_blank" class="btn btn-sm btn-outline-primary mb-2">
+                        <i class="bi bi-book"></i> Documentation
+                    </a>
+                    {% endif %}
+                    
+                    <div class="d-flex justify-content-between mt-3">
+                        <div>Status:</div>
+                        <div>
+                            {% if plugin_active %}
+                            <span class="badge bg-success">Active</span>
+                            {% else %}
+                            <span class="badge bg-danger">Inactive</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between mt-2">
+                        <div>Type:</div>
+                        <div>{{ plugin_type }}</div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between mt-2">
+                        <div>Author:</div>
+                        <div>{{ plugin_author|default('PyCommerce') }}</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Configuration Help -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Help</h5>
+                </div>
+                <div class="card-body">
+                    {% if help_content %}
+                    {{ help_content|safe }}
+                    {% else %}
+                    <p>This plugin requires configuration to work properly. Fill in the required fields on the left.</p>
+                    
+                    {% if plugin_type == 'payment' %}
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i> You'll need API keys from your payment provider to configure this plugin.
+                    </div>
+                    {% endif %}
+                    
+                    {% if plugin_type == 'shipping' %}
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i> You may need to configure shipping rates and zones for this plugin.
+                    </div>
+                    {% endif %}
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

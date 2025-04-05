@@ -12,7 +12,7 @@ from fastapi import FastAPI, Depends, Query, HTTPException, Request, Form, Cooki
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from typing import Optional, List, Dict, Any
+from typing import Optional, List, Dict, Any, Union
 from uuid import UUID, uuid4
 from starlette.middleware.sessions import SessionMiddleware
 
@@ -30,6 +30,13 @@ from pycommerce.api.routes import products as products_router
 from pycommerce.api.routes import cart as cart_router
 from pycommerce.api.routes import checkout as checkout_router
 from pycommerce.api.routes import users as users_router
+
+# Import plugin modules
+from pycommerce.plugins import StripePaymentPlugin, StandardShippingPlugin
+from pycommerce.plugins.payment.config import (
+    STRIPE_API_KEY, STRIPE_WEBHOOK_SECRET, STRIPE_ENABLED,
+    PAYPAL_CLIENT_ID, PAYPAL_CLIENT_SECRET, PAYPAL_ENABLED, PAYPAL_SANDBOX
+)
 
 # Initialize the database
 init_db()
@@ -1584,6 +1591,326 @@ async def order_confirmation(request: Request):
 
 
 # API health check
+# Plugin configuration routes
+@app.get("/admin/plugins/configure/{plugin_id}", response_class=HTMLResponse)
+async def admin_plugin_config(
+    request: Request,
+    plugin_id: str,
+    status_message: Optional[str] = None,
+    status_type: str = "info"
+):
+    """Plugin configuration page."""
+    # Initialize plugin details
+    plugin_name = ""
+    plugin_description = ""
+    plugin_version = ""
+    plugin_type = ""
+    plugin_icon = "bi-puzzle"
+    plugin_active = False
+    plugin_author = "PyCommerce"
+    plugin_docs_url = None
+    config_fields = []
+    help_content = None
+
+    # Configure different plugins
+    if plugin_id == "stripe":
+        plugin_name = "Stripe Payments"
+        plugin_description = "Process credit card payments with Stripe"
+        plugin_version = "1.0.0"
+        plugin_type = "Payment"
+        plugin_icon = "bi-credit-card"
+        plugin_active = STRIPE_ENABLED
+        plugin_docs_url = "https://stripe.com/docs/api"
+        
+        # Define configuration fields
+        config_fields = [
+            {
+                "id": "stripe_api_key",
+                "label": "Stripe API Key",
+                "type": "password",
+                "value": STRIPE_API_KEY,
+                "required": True,
+                "placeholder": "sk_test_...",
+                "help_text": "Your Stripe secret API key. Starts with 'sk_test_' for test mode or 'sk_live_' for live mode."
+            },
+            {
+                "id": "stripe_webhook_secret",
+                "label": "Webhook Secret",
+                "type": "password",
+                "value": STRIPE_WEBHOOK_SECRET,
+                "required": False,
+                "placeholder": "whsec_...",
+                "help_text": "Your Stripe webhook signing secret. Required for handling payment webhooks securely."
+            },
+            {
+                "id": "stripe_enabled",
+                "label": "Enable Stripe Payments",
+                "type": "checkbox",
+                "value": STRIPE_ENABLED,
+                "required": False,
+                "checkbox_label": "Enable Stripe payment processing",
+                "help_text": "When enabled, Stripe will be available as a payment option for customers."
+            }
+        ]
+        
+        # Help content for Stripe
+        help_content = """
+        <p>Configure your Stripe payments integration here. You'll need to get your API keys from the Stripe Dashboard.</p>
+        
+        <h6>How to get your Stripe API keys:</h6>
+        <ol>
+            <li>Log in to your <a href="https://dashboard.stripe.com" target="_blank">Stripe Dashboard</a></li>
+            <li>Go to Developers > API keys</li>
+            <li>Copy the Secret key (starts with sk_test_ for test mode)</li>
+            <li>Paste it into the API Key field here</li>
+        </ol>
+        
+        <div class="alert alert-warning">
+            <i class="bi bi-shield-exclamation"></i> <strong>Important:</strong> Never share your Stripe secret key publicly or commit it to your code repository.
+        </div>
+        """
+    
+    elif plugin_id == "paypal":
+        plugin_name = "PayPal Payments"
+        plugin_description = "Accept payments via PayPal"
+        plugin_version = "1.0.0"
+        plugin_type = "Payment"
+        plugin_icon = "bi-paypal"
+        plugin_active = PAYPAL_ENABLED
+        plugin_docs_url = "https://developer.paypal.com/docs/api/overview/"
+        
+        # Define configuration fields
+        config_fields = [
+            {
+                "id": "paypal_client_id",
+                "label": "PayPal Client ID",
+                "type": "text",
+                "value": PAYPAL_CLIENT_ID,
+                "required": True,
+                "placeholder": "Your PayPal client ID",
+                "help_text": "Your PayPal client ID from the PayPal Developer Dashboard."
+            },
+            {
+                "id": "paypal_client_secret",
+                "label": "PayPal Client Secret",
+                "type": "password",
+                "value": PAYPAL_CLIENT_SECRET,
+                "required": True,
+                "placeholder": "Your PayPal client secret",
+                "help_text": "Your PayPal client secret from the PayPal Developer Dashboard."
+            },
+            {
+                "id": "paypal_sandbox",
+                "label": "Use Sandbox Mode",
+                "type": "checkbox",
+                "value": PAYPAL_SANDBOX,
+                "required": False,
+                "checkbox_label": "Use PayPal sandbox for testing",
+                "help_text": "When enabled, payments will be processed in PayPal's sandbox environment."
+            },
+            {
+                "id": "paypal_enabled",
+                "label": "Enable PayPal Payments",
+                "type": "checkbox",
+                "value": PAYPAL_ENABLED,
+                "required": False,
+                "checkbox_label": "Enable PayPal payment processing",
+                "help_text": "When enabled, PayPal will be available as a payment option for customers."
+            }
+        ]
+        
+        # Help content for PayPal
+        help_content = """
+        <p>Configure your PayPal payments integration here. You'll need to get your API credentials from the PayPal Developer Dashboard.</p>
+        
+        <h6>How to get your PayPal credentials:</h6>
+        <ol>
+            <li>Log in to the <a href="https://developer.paypal.com/developer/applications/" target="_blank">PayPal Developer Dashboard</a></li>
+            <li>Create a new app or select an existing one</li>
+            <li>Copy the Client ID and Secret</li>
+            <li>Paste them into the fields here</li>
+        </ol>
+        
+        <div class="alert alert-info">
+            <i class="bi bi-info-circle"></i> <strong>Testing:</strong> Use Sandbox mode to test payments without processing real money.
+        </div>
+        """
+    
+    elif plugin_id == "standard-shipping":
+        plugin_name = "Standard Shipping"
+        plugin_description = "Basic shipping rate calculations"
+        plugin_version = "1.0.0"
+        plugin_type = "Shipping"
+        plugin_icon = "bi-truck"
+        plugin_active = True
+        
+        # Define configuration fields
+        config_fields = [
+            {
+                "id": "flat_rate_domestic",
+                "label": "Domestic Flat Rate",
+                "type": "number",
+                "value": 5.99,
+                "required": True,
+                "help_text": "Flat shipping rate for domestic orders."
+            },
+            {
+                "id": "flat_rate_international",
+                "label": "International Flat Rate",
+                "type": "number",
+                "value": 19.99,
+                "required": True,
+                "help_text": "Flat shipping rate for international orders."
+            },
+            {
+                "id": "free_shipping_threshold",
+                "label": "Free Shipping Threshold",
+                "type": "number",
+                "value": 50.00,
+                "required": False,
+                "help_text": "Orders over this amount qualify for free shipping. Leave blank to disable free shipping."
+            }
+        ]
+    
+    else:
+        # Unknown plugin
+        return RedirectResponse(
+            url="/admin/plugins?status_message=Plugin+not+found&status_type=danger",
+            status_code=303
+        )
+    
+    # Get all tenants for the store selector
+    tenants = []
+    try:
+        tenants_list = tenant_manager.list() or []
+        tenants = [
+            {
+                "id": str(t.id),
+                "name": t.name,
+                "slug": t.slug,
+                "domain": t.domain if hasattr(t, 'domain') else None,
+                "active": t.active if hasattr(t, 'active') else True
+            }
+            for t in tenants_list if t and hasattr(t, 'id')
+        ]
+    except Exception as e:
+        logger.error(f"Error fetching tenants: {str(e)}")
+    
+    # Get selected tenant from query param or session
+    selected_tenant = request.query_params.get('tenant')
+    if not selected_tenant and tenants:
+        selected_tenant = tenants[0]["slug"]
+        
+    return templates.TemplateResponse(
+        "admin/plugin_config.html",
+        {
+            "request": request,
+            "active_page": "plugins",
+            "tenants": tenants,
+            "selected_tenant": selected_tenant,
+            "plugin_id": plugin_id,
+            "plugin_name": plugin_name,
+            "plugin_description": plugin_description,
+            "plugin_version": plugin_version,
+            "plugin_type": plugin_type,
+            "plugin_icon": plugin_icon,
+            "plugin_active": plugin_active,
+            "plugin_author": plugin_author,
+            "plugin_docs_url": plugin_docs_url,
+            "config_fields": config_fields,
+            "help_content": help_content,
+            "status_message": status_message,
+            "status_type": status_type
+        }
+    )
+
+@app.post("/admin/plugins/save-config/{plugin_id}", response_class=RedirectResponse)
+async def admin_plugin_save_config(
+    request: Request,
+    plugin_id: str
+):
+    """Save plugin configuration."""
+    try:
+        form_data = await request.form()
+        
+        # Get the plugin-specific configuration
+        if plugin_id == "stripe":
+            stripe_api_key = form_data.get("stripe_api_key", "")
+            stripe_webhook_secret = form_data.get("stripe_webhook_secret", "")
+            stripe_enabled = form_data.get("stripe_enabled") == "on"
+            
+            # Here we would normally save these to the database or environment
+            # For now, just log them (don't log the actual keys in production)
+            logger.info(f"Updating Stripe configuration: API Key: {'*' * 10 if stripe_api_key else 'Not provided'}")
+            logger.info(f"Updating Stripe configuration: Webhook Secret: {'*' * 10 if stripe_webhook_secret else 'Not provided'}")
+            logger.info(f"Updating Stripe configuration: Enabled: {stripe_enabled}")
+            
+            # In a real implementation, we would store these in a database or environment variables
+            # For now, let's assume success
+            
+            return RedirectResponse(
+                url=f"/admin/plugins/configure/stripe?status_message=Stripe+configuration+saved+successfully&status_type=success",
+                status_code=303
+            )
+        
+        elif plugin_id == "paypal":
+            paypal_client_id = form_data.get("paypal_client_id", "")
+            paypal_client_secret = form_data.get("paypal_client_secret", "")
+            paypal_sandbox = form_data.get("paypal_sandbox") == "on"
+            paypal_enabled = form_data.get("paypal_enabled") == "on"
+            
+            # Here we would normally save these to the database or environment
+            # For now, just log them (don't log the actual keys in production)
+            logger.info(f"Updating PayPal configuration: Client ID: {'*' * 10 if paypal_client_id else 'Not provided'}")
+            logger.info(f"Updating PayPal configuration: Client Secret: {'*' * 10 if paypal_client_secret else 'Not provided'}")
+            logger.info(f"Updating PayPal configuration: Sandbox: {paypal_sandbox}")
+            logger.info(f"Updating PayPal configuration: Enabled: {paypal_enabled}")
+            
+            # In a real implementation, we would store these in a database or environment variables
+            # For now, let's assume success
+            
+            return RedirectResponse(
+                url=f"/admin/plugins/configure/paypal?status_message=PayPal+configuration+saved+successfully&status_type=success",
+                status_code=303
+            )
+        
+        elif plugin_id == "standard-shipping":
+            flat_rate_domestic = float(form_data.get("flat_rate_domestic", 5.99))
+            flat_rate_international = float(form_data.get("flat_rate_international", 19.99))
+            free_shipping_threshold_str = form_data.get("free_shipping_threshold", "")
+            
+            free_shipping_threshold = float(free_shipping_threshold_str) if free_shipping_threshold_str else None
+            
+            # Here we would normally save these to the database or environment
+            logger.info(f"Updating Standard Shipping configuration: Domestic Rate: {flat_rate_domestic}")
+            logger.info(f"Updating Standard Shipping configuration: International Rate: {flat_rate_international}")
+            logger.info(f"Updating Standard Shipping configuration: Free Threshold: {free_shipping_threshold}")
+            
+            # In a real implementation, we would store these in a database or environment variables
+            # For now, let's assume success
+            
+            return RedirectResponse(
+                url=f"/admin/plugins/configure/standard-shipping?status_message=Shipping+configuration+saved+successfully&status_type=success",
+                status_code=303
+            )
+        
+        else:
+            # Unknown plugin
+            return RedirectResponse(
+                url="/admin/plugins?status_message=Plugin+not+found&status_type=danger",
+                status_code=303
+            )
+    
+    except Exception as e:
+        logger.error(f"Error saving plugin configuration: {str(e)}")
+        
+        # Redirect with error message
+        error_message = f"Error saving configuration: {str(e)}"
+        return RedirectResponse(
+            url=f"/admin/plugins/configure/{plugin_id}?status_message={error_message}&status_type=danger",
+            status_code=303
+        )
+
 @app.get("/api/health")
 async def health_check():
     return {

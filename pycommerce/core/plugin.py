@@ -10,6 +10,7 @@ from abc import ABC, abstractmethod
 from typing import Dict, List, Optional, Type, Any, Callable
 import importlib
 import inspect
+import os
 from fastapi import FastAPI, APIRouter
 
 logger = logging.getLogger("pycommerce.plugins")
@@ -204,3 +205,66 @@ class PluginManager:
                 prefix = f"/api/plugins/{name}"
                 app.include_router(router, prefix=prefix, tags=[f"plugin:{name}"])
                 logger.debug(f"Registered API routes for plugin {name} at {prefix}")
+
+
+# ----- Plugin Discovery Functions -----
+
+def get_available_plugins() -> List[Dict[str, Any]]:
+    """
+    Get a list of all available plugins in the system.
+    
+    This function provides information about both installed plugins and built-in plugins.
+    
+    Returns:
+        A list of dictionaries containing plugin information:
+        - id: Plugin identifier (used in URLs and configurations)
+        - name: Display name of the plugin
+        - description: Plugin description
+        - type: Plugin type (payment, shipping, etc.)
+        - version: Plugin version string
+        - enabled: Whether the plugin is currently enabled
+        - configured: Whether the plugin is properly configured
+        - icon: Optional Bootstrap icon class for the plugin
+    """
+    from pycommerce.plugins.payment.config import STRIPE_API_KEY, STRIPE_ENABLED
+    from pycommerce.plugins.payment.config import PAYPAL_CLIENT_ID, PAYPAL_ENABLED
+    
+    # Here we manually define our available plugins
+    # In a more sophisticated implementation, this would be discovered dynamically
+    plugins = [
+        {
+            "id": "stripe",
+            "name": "Stripe Payments",
+            "description": "Process credit card payments with Stripe",
+            "type": "payment",
+            "version": "1.0.0",
+            "enabled": STRIPE_ENABLED,
+            "configured": bool(STRIPE_API_KEY),
+            "author": "PyCommerce Team",
+            "icon": "bi-credit-card"
+        },
+        {
+            "id": "paypal",
+            "name": "PayPal Payments",
+            "description": "Accept payments via PayPal",
+            "type": "payment",
+            "version": "1.0.0",
+            "enabled": PAYPAL_ENABLED,
+            "configured": bool(PAYPAL_CLIENT_ID),
+            "author": "PyCommerce Team",
+            "icon": "bi-paypal"
+        },
+        {
+            "id": "standard-shipping",
+            "name": "Standard Shipping",
+            "description": "Basic shipping rate calculations",
+            "type": "shipping",
+            "version": "1.0.0",
+            "enabled": True,
+            "configured": True,
+            "author": "PyCommerce Team",
+            "icon": "bi-truck"
+        }
+    ]
+    
+    return plugins
