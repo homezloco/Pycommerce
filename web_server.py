@@ -2021,9 +2021,13 @@ async def admin_media(
                     tenant_id=str(selected_tenant.id),
                     file_type=file_type,
                     is_ai_generated=is_ai_generated,
-                    search=search
+                    search_term=search
                 )
-                media_files = media_list.get("media", [])
+                # Handle both dict and list return types
+                if isinstance(media_list, dict):
+                    media_files = media_list.get("media", [])
+                else:
+                    media_files = media_list
             except Exception as e:
                 logger.error(f"Error fetching media files: {str(e)}")
                 if status_message is None:
