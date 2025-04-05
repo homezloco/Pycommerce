@@ -68,9 +68,15 @@ class PluginManager:
     Manages the loading and registration of plugins for PyCommerce.
     """
     
-    def __init__(self):
-        """Initialize a new PluginManager."""
+    def __init__(self, plugin_type=None):
+        """
+        Initialize a new PluginManager.
+        
+        Args:
+            plugin_type: Optional type of plugins this manager handles (e.g., 'payment', 'shipping')
+        """
         self._plugins: Dict[str, Plugin] = {}
+        self.plugin_type = plugin_type
     
     def register(self, plugin: Plugin) -> None:
         """
