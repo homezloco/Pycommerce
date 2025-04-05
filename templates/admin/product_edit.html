@@ -13,6 +13,13 @@
     <div class="alert alert-{{ status_type }}">{{ status_message }}</div>
     {% endif %}
     
+    <style>
+        .quill-container {
+            min-height: 250px;
+            margin-bottom: 20px;
+        }
+    </style>
+    
     <div class="card shadow-sm">
         <div class="card-body">
             <form action="/admin/products/update/{{ product.id }}" method="post">
@@ -68,8 +75,7 @@
                         </div>
                         <div class="mb-3">
                             <label for="description" class="form-label">Description</label>
-                            <textarea class="form-control" id="description" name="description" rows="8" style="display:none;">{{ product.description }}</textarea>
-                            <div id="description-editor" class="tinymce-editor"></div>
+                            <textarea class="form-control quill-editor" id="description" name="description" rows="8">{{ product.description }}</textarea>
                         </div>
                     </div>
                 </div>
@@ -84,39 +90,51 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="https://cdn.tiny.cloud/1/no-api-key/tinymce/5/tinymce.min.js" referrerpolicy="origin"></script>
-<script src="/static/js/tinymce-ai.js"></script>
 <script>
-    // Initialize the TinyMCE editor with AI capabilities
+    // Initialize the AI modal
     document.addEventListener('DOMContentLoaded', function() {
-        // Add the TinyMCE API key from meta tag
-        const meta = document.createElement('meta');
-        meta.name = 'tinymce-api-key';
-        meta.content = 'no-api-key'; // This will be replaced with actual API key
-        document.head.appendChild(meta);
-        
-        // Initialize TinyMCE with AI integration
-        initTinyMCEWithAI('#description-editor', {
-            height: 400,
-            setup: function(editor) {
-                // Sync content with textarea when submitting the form
-                editor.on('change', function() {
-                    document.getElementById('description').value = editor.getContent();
+        // Setup for AI Modal
+        const aiModal = document.getElementById('aiModal');
+        if (aiModal) {
+            // Ensure it's properly initialized with Bootstrap
+            new bootstrap.Modal(aiModal);
+
+            // Make sure the close button works
+            const closeButtons = aiModal.querySelectorAll('[data-bs-dismiss="modal"]');
+            closeButtons.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    bootstrap.Modal.getInstance(aiModal).hide();
                 });
-                
-                // Initialize the editor with textarea content
-                editor.on('init', function() {
-                    editor.setContent(document.getElementById('description').value || '');
-                });
-            }
-        });
-        
-        // Ensure form submission gets the editor content
-        const form = document.querySelector('form');
-        form.addEventListener('submit', function() {
-            const editorContent = tinymce.activeEditor.getContent();
-            document.getElementById('description').value = editorContent;
-        });
+            });
+        }
     });
 </script>
 {% endblock %}
+
+<!-- AI Content Generation Modal -->
+<div class="modal fade" id="aiModal" tabindex="-1" aria-labelledby="aiModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="aiModalLabel">Generate Content with AI</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="aiPromptInput" class="form-label">What would you like to generate?</label>
+                    <textarea class="form-control" id="aiPromptInput" rows="4" placeholder="E.g., Write a detailed product description for a waterproof smartwatch that tracks swimming metrics"></textarea>
+                </div>
+                <div id="aiModalLoading" class="text-center d-none">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2">Generating content with AI...</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="aiGenerateBtn">Generate</button>
+            </div>
+        </div>
+    </div>
+</div>
