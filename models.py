@@ -7,7 +7,7 @@ This module contains SQLAlchemy models for the Flask app.
 import os
 import uuid
 from datetime import datetime
-from sqlalchemy import Column, String, Integer, Float, Boolean, DateTime, ForeignKey, JSON
+from sqlalchemy import Column, String, Integer, Float, Boolean, DateTime, ForeignKey, JSON, Text
 from sqlalchemy.orm import relationship
 from app import db
 
@@ -127,10 +127,27 @@ class Order(db.Model):
     
     # Relationships
     items = relationship("OrderItem", back_populates="order", cascade="all, delete-orphan")
+    notes = relationship("OrderNote", back_populates="order", cascade="all, delete-orphan")
     
     def __repr__(self):
         return f"<Order {self.id}>"
 
+class OrderNote(db.Model):
+    """Order note model."""
+    __tablename__ = "order_notes"
+    
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    order_id = Column(String(36), ForeignKey("orders.id"), nullable=False)
+    content = Column(Text, nullable=False)  # Using Text for longer note content
+    author = Column(String(100), nullable=True)
+    is_customer_visible = Column(Boolean, default=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    
+    # Relationships
+    order = relationship("Order", back_populates="notes")
+    
+    def __repr__(self):
+        return f"<OrderNote {self.id}>"
 class OrderItem(db.Model):
     """Order item model."""
     __tablename__ = "order_items"
