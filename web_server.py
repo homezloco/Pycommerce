@@ -2068,6 +2068,12 @@ async def admin_media(
             "file_type": file_type,
             "is_ai_generated": is_ai_generated,
             "search": search
+        },
+        "pagination": {
+            "page": 1,
+            "limit": 10,
+            "total": len(media_files),
+            "pages": max(1, (len(media_files) + 9) // 10)  # Calculate total pages (ceiling division)
         }
     }
     
