@@ -47,7 +47,8 @@ class TenantDTO:
     """
 
     def __init__(self, id: UUID, name: str, slug: str, domain: Optional[str] = None,
-                 active: bool = True, created_at: datetime = None, updated_at: datetime = None):
+                 active: bool = True, settings: Optional[Dict[str, Any]] = None,
+                 created_at: datetime = None, updated_at: datetime = None):
         """
         Initialize a new TenantDTO.
 
@@ -57,6 +58,7 @@ class TenantDTO:
             slug: The tenant slug (used in URLs)
             domain: Optional custom domain for the tenant
             active: Whether the tenant is active
+            settings: Optional tenant settings including theme configuration
             created_at: When the tenant was created
             updated_at: When the tenant was last updated
         """
@@ -65,6 +67,7 @@ class TenantDTO:
         self.slug = slug
         self.domain = domain
         self.active = active
+        self.settings = settings or {}
         self.created_at = created_at or datetime.now()
         self.updated_at = updated_at or datetime.now()
 
@@ -85,6 +88,7 @@ class TenantDTO:
             slug=model.slug,
             domain=model.domain,
             active=model.active,
+            settings=model.settings,
             created_at=model.created_at,
             updated_at=model.updated_at
         )
@@ -102,6 +106,7 @@ class TenantDTO:
             "slug": self.slug,
             "domain": self.domain,
             "active": self.active,
+            "settings": self.settings,
             "created_at": self.created_at.isoformat(),
             "updated_at": self.updated_at.isoformat()
         }
@@ -255,6 +260,9 @@ class TenantManager:
                         raise ValueError(f"Domain '{value}' is already taken")
 
                     setattr(tenant_model, key, value)
+                elif key == "settings":
+                    # Update settings field
+                    tenant_model.settings = value
 
             # Update updated_at timestamp
             tenant_model.updated_at = datetime.now()
@@ -266,6 +274,80 @@ class TenantManager:
         except Exception as e:
             self.session.rollback()
             logger.error(f"Error updating tenant {tenant_id}: {str(e)}")
+            raise
+            
+    def update_settings(self, tenant_id: UUID, settings: Dict[str, Any]) -> Optional[TenantDTO]:
+        """
+        Update tenant settings including theme configuration.
+
+        Args:
+            tenant_id: The tenant ID
+            settings: Dictionary containing tenant settings to update
+
+        Returns:
+            The updated tenant, or None if update fails
+        """
+        try:
+            tenant_model = self.session.query(Tenant).filter(Tenant.id == tenant_id).first()
+            if not tenant_model:
+                raise ValueError(f"Tenant not found: {tenant_id}")
+
+            # Initialize settings if not already present
+            if tenant_model.settings is None:
+                tenant_model.settings = {}
+            
+            # Update settings (merge with existing)
+            tenant_model.settings.update(settings)
+            
+            # Update updated_at timestamp
+            tenant_model.updated_at = datetime.now()
+
+            self.session.commit()
+
+            logger.info(f"Updated settings for tenant: {tenant_id}")
+            return TenantDTO.from_model(tenant_model)
+        except Exception as e:
+            self.session.rollback()
+            logger.error(f"Error updating settings for tenant {tenant_id}: {str(e)}")
+            raise
+            
+    def update_theme(self, tenant_id: UUID, theme_config: Dict[str, Any]) -> Optional[TenantDTO]:
+        """
+        Update theme configuration for a tenant.
+
+        Args:
+            tenant_id: The tenant ID
+            theme_config: Dictionary containing theme configuration
+
+        Returns:
+            The updated tenant, or None if update fails
+        """
+        try:
+            tenant_model = self.session.query(Tenant).filter(Tenant.id == tenant_id).first()
+            if not tenant_model:
+                raise ValueError(f"Tenant not found: {tenant_id}")
+
+            # Initialize settings if not already present
+            if tenant_model.settings is None:
+                tenant_model.settings = {}
+            
+            # Initialize theme settings if not already present
+            if "theme" not in tenant_model.settings:
+                tenant_model.settings["theme"] = {}
+            
+            # Update theme settings
+            tenant_model.settings["theme"].update(theme_config)
+            
+            # Update updated_at timestamp
+            tenant_model.updated_at = datetime.now()
+
+            self.session.commit()
+
+            logger.info(f"Updated theme for tenant: {tenant_id}")
+            return TenantDTO.from_model(tenant_model)
+        except Exception as e:
+            self.session.rollback()
+            logger.error(f"Error updating theme for tenant {tenant_id}: {str(e)}")
             raise
 
     def delete(self, tenant_id: UUID) -> bool:

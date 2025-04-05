@@ -1,0 +1,309 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Theme Settings - PyCommerce Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4">
+    <h1 class="mt-4">Theme Settings</h1>
+    <ol class="breadcrumb mb-4">
+        <li class="breadcrumb-item"><a href="/admin">Dashboard</a></li>
+        <li class="breadcrumb-item"><a href="/admin/stores">Stores</a></li>
+        <li class="breadcrumb-item active">Theme Settings</li>
+    </ol>
+
+    {% if error %}
+    <div class="alert alert-danger" role="alert">
+        {{ error }}
+    </div>
+    {% endif %}
+
+    {% if success %}
+    <div class="alert alert-success" role="alert">
+        {{ success }}
+    </div>
+    {% endif %}
+
+    <div class="card mb-4">
+        <div class="card-header">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <i class="fas fa-paint-brush me-1"></i>
+                    Theme Settings for {{ tenant.name }}
+                </div>
+                <div>
+                    <form method="GET" action="/admin/theme-settings" class="d-flex">
+                        <select name="tenant" class="form-select me-2" onchange="this.form.submit()">
+                            {% for t in tenants %}
+                            <option value="{{ t.slug }}" {% if t.slug == tenant.slug %}selected{% endif %}>{{ t.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            <form method="POST" action="/admin/theme-settings?tenant={{ tenant.slug }}">
+                <div class="row">
+                    <div class="col-md-6 mb-4">
+                        <div class="card h-100">
+                            <div class="card-header">
+                                <h5 class="mb-0">Colors</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label for="primary_color" class="form-label">Primary Color</label>
+                                    <div class="input-group">
+                                        <input type="color" class="form-control form-control-color" id="primary_color" name="primary_color" 
+                                            value="{{ theme.primary_color|default('#007bff') }}">
+                                        <input type="text" class="form-control" aria-label="Primary Color Hex" 
+                                            value="{{ theme.primary_color|default('#007bff') }}" 
+                                            oninput="document.getElementById('primary_color').value = this.value">
+                                    </div>
+                                    <div class="form-text">Main color used for buttons, links, and accents</div>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="secondary_color" class="form-label">Secondary Color</label>
+                                    <div class="input-group">
+                                        <input type="color" class="form-control form-control-color" id="secondary_color" name="secondary_color" 
+                                            value="{{ theme.secondary_color|default('#6c757d') }}">
+                                        <input type="text" class="form-control" aria-label="Secondary Color Hex" 
+                                            value="{{ theme.secondary_color|default('#6c757d') }}" 
+                                            oninput="document.getElementById('secondary_color').value = this.value">
+                                    </div>
+                                    <div class="form-text">Secondary color used for alternative buttons and elements</div>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="background_color" class="form-label">Background Color</label>
+                                    <div class="input-group">
+                                        <input type="color" class="form-control form-control-color" id="background_color" name="background_color" 
+                                            value="{{ theme.background_color|default('#ffffff') }}">
+                                        <input type="text" class="form-control" aria-label="Background Color Hex" 
+                                            value="{{ theme.background_color|default('#ffffff') }}" 
+                                            oninput="document.getElementById('background_color').value = this.value">
+                                    </div>
+                                    <div class="form-text">Main background color of the store</div>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="text_color" class="form-label">Text Color</label>
+                                    <div class="input-group">
+                                        <input type="color" class="form-control form-control-color" id="text_color" name="text_color" 
+                                            value="{{ theme.text_color|default('#212529') }}">
+                                        <input type="text" class="form-control" aria-label="Text Color Hex" 
+                                            value="{{ theme.text_color|default('#212529') }}" 
+                                            oninput="document.getElementById('text_color').value = this.value">
+                                    </div>
+                                    <div class="form-text">Default color for text content</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-4">
+                        <div class="card h-100">
+                            <div class="card-header">
+                                <h5 class="mb-0">Typography</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label for="font_family" class="form-label">Font Family</label>
+                                    <select class="form-select" id="font_family" name="font_family">
+                                        <option value="Arial, sans-serif" {% if theme.font_family == 'Arial, sans-serif' %}selected{% endif %}>Arial</option>
+                                        <option value="'Helvetica Neue', Helvetica, sans-serif" {% if theme.font_family == "'Helvetica Neue', Helvetica, sans-serif" %}selected{% endif %}>Helvetica</option>
+                                        <option value="'Open Sans', sans-serif" {% if theme.font_family == "'Open Sans', sans-serif" %}selected{% endif %}>Open Sans</option>
+                                        <option value="'Roboto', sans-serif" {% if theme.font_family == "'Roboto', sans-serif" %}selected{% endif %}>Roboto</option>
+                                        <option value="'Lato', sans-serif" {% if theme.font_family == "'Lato', sans-serif" %}selected{% endif %}>Lato</option>
+                                        <option value="Georgia, serif" {% if theme.font_family == "Georgia, serif" %}selected{% endif %}>Georgia</option>
+                                        <option value="'Playfair Display', serif" {% if theme.font_family == "'Playfair Display', serif" %}selected{% endif %}>Playfair Display</option>
+                                    </select>
+                                    <div class="form-text">Main font family used throughout the store</div>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="heading_font_family" class="form-label">Heading Font Family</label>
+                                    <select class="form-select" id="heading_font_family" name="heading_font_family">
+                                        <option value="inherit" {% if theme.heading_font_family == 'inherit' %}selected{% endif %}>Same as body text</option>
+                                        <option value="Arial, sans-serif" {% if theme.heading_font_family == 'Arial, sans-serif' %}selected{% endif %}>Arial</option>
+                                        <option value="'Helvetica Neue', Helvetica, sans-serif" {% if theme.heading_font_family == "'Helvetica Neue', Helvetica, sans-serif" %}selected{% endif %}>Helvetica</option>
+                                        <option value="'Open Sans', sans-serif" {% if theme.heading_font_family == "'Open Sans', sans-serif" %}selected{% endif %}>Open Sans</option>
+                                        <option value="'Roboto', sans-serif" {% if theme.heading_font_family == "'Roboto', sans-serif" %}selected{% endif %}>Roboto</option>
+                                        <option value="'Lato', sans-serif" {% if theme.heading_font_family == "'Lato', sans-serif" %}selected{% endif %}>Lato</option>
+                                        <option value="Georgia, serif" {% if theme.heading_font_family == "Georgia, serif" %}selected{% endif %}>Georgia</option>
+                                        <option value="'Playfair Display', serif" {% if theme.heading_font_family == "'Playfair Display', serif" %}selected{% endif %}>Playfair Display</option>
+                                    </select>
+                                    <div class="form-text">Font used for headings (h1-h6)</div>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="base_font_size" class="form-label">Base Font Size</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="base_font_size" name="base_font_size" 
+                                            value="{{ theme.base_font_size|default(16) }}" min="12" max="24" step="1">
+                                        <span class="input-group-text">px</span>
+                                    </div>
+                                    <div class="form-text">Base font size for body text</div>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="heading_scale" class="form-label">Heading Scale</label>
+                                    <select class="form-select" id="heading_scale" name="heading_scale">
+                                        <option value="compact" {% if theme.heading_scale == 'compact' %}selected{% endif %}>Compact</option>
+                                        <option value="moderate" {% if theme.heading_scale == 'moderate' or not theme.heading_scale %}selected{% endif %}>Moderate</option>
+                                        <option value="expansive" {% if theme.heading_scale == 'expansive' %}selected{% endif %}>Expansive</option>
+                                    </select>
+                                    <div class="form-text">Scale for heading sizes relative to base text</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-4">
+                        <div class="card h-100">
+                            <div class="card-header">
+                                <h5 class="mb-0">Layout & Spacing</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label for="container_width" class="form-label">Container Width</label>
+                                    <select class="form-select" id="container_width" name="container_width">
+                                        <option value="narrow" {% if theme.container_width == 'narrow' %}selected{% endif %}>Narrow (980px)</option>
+                                        <option value="standard" {% if theme.container_width == 'standard' or not theme.container_width %}selected{% endif %}>Standard (1140px)</option>
+                                        <option value="wide" {% if theme.container_width == 'wide' %}selected{% endif %}>Wide (1320px)</option>
+                                        <option value="full" {% if theme.container_width == 'full' %}selected{% endif %}>Full Width</option>
+                                    </select>
+                                    <div class="form-text">Maximum width of the main content container</div>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="border_radius" class="form-label">Border Radius</label>
+                                    <div class="input-group">
+                                        <input type="range" class="form-range form-control" id="border_radius" name="border_radius" 
+                                            value="{{ theme.border_radius|default(4) }}" min="0" max="24">
+                                        <span class="input-group-text" id="border_radius_value">{{ theme.border_radius|default(4) }}px</span>
+                                    </div>
+                                    <div class="form-text">Roundness of buttons, cards, and other elements</div>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="spacing_scale" class="form-label">Spacing Scale</label>
+                                    <select class="form-select" id="spacing_scale" name="spacing_scale">
+                                        <option value="compact" {% if theme.spacing_scale == 'compact' %}selected{% endif %}>Compact</option>
+                                        <option value="moderate" {% if theme.spacing_scale == 'moderate' or not theme.spacing_scale %}selected{% endif %}>Moderate</option>
+                                        <option value="spacious" {% if theme.spacing_scale == 'spacious' %}selected{% endif %}>Spacious</option>
+                                    </select>
+                                    <div class="form-text">Controls the amount of whitespace between elements</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-4">
+                        <div class="card h-100">
+                            <div class="card-header">
+                                <h5 class="mb-0">Store Elements</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label for="header_style" class="form-label">Header Style</label>
+                                    <select class="form-select" id="header_style" name="header_style">
+                                        <option value="standard" {% if theme.header_style == 'standard' or not theme.header_style %}selected{% endif %}>Standard</option>
+                                        <option value="minimal" {% if theme.header_style == 'minimal' %}selected{% endif %}>Minimal</option>
+                                        <option value="centered" {% if theme.header_style == 'centered' %}selected{% endif %}>Centered</option>
+                                        <option value="expanded" {% if theme.header_style == 'expanded' %}selected{% endif %}>Expanded</option>
+                                    </select>
+                                    <div class="form-text">Style and layout of the store header</div>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="product_card_style" class="form-label">Product Card Style</label>
+                                    <select class="form-select" id="product_card_style" name="product_card_style">
+                                        <option value="standard" {% if theme.product_card_style == 'standard' or not theme.product_card_style %}selected{% endif %}>Standard</option>
+                                        <option value="compact" {% if theme.product_card_style == 'compact' %}selected{% endif %}>Compact</option>
+                                        <option value="minimal" {% if theme.product_card_style == 'minimal' %}selected{% endif %}>Minimal</option>
+                                        <option value="detailed" {% if theme.product_card_style == 'detailed' %}selected{% endif %}>Detailed</option>
+                                    </select>
+                                    <div class="form-text">Style of product cards in listings</div>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="button_style" class="form-label">Button Style</label>
+                                    <select class="form-select" id="button_style" name="button_style">
+                                        <option value="standard" {% if theme.button_style == 'standard' or not theme.button_style %}selected{% endif %}>Standard</option>
+                                        <option value="rounded" {% if theme.button_style == 'rounded' %}selected{% endif %}>Rounded</option>
+                                        <option value="pill" {% if theme.button_style == 'pill' %}selected{% endif %}>Pill</option>
+                                        <option value="square" {% if theme.button_style == 'square' %}selected{% endif %}>Square</option>
+                                    </select>
+                                    <div class="form-text">Shape and style of buttons throughout the store</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-12 mb-4">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0">Custom CSS</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label for="custom_css" class="form-label">Custom CSS</label>
+                                    <textarea class="form-control" id="custom_css" name="custom_css" rows="6" 
+                                        placeholder="/* Add your custom CSS here */">{{ theme.custom_css|default('') }}</textarea>
+                                    <div class="form-text">Add custom CSS to further customize your store theme</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <a href="/admin/stores" class="btn btn-secondary">Cancel</a>
+                    </div>
+                    <div>
+                        <button type="submit" class="btn btn-primary">Save Theme Settings</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Theme Preview Section -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <i class="fas fa-eye me-1"></i>
+            Theme Preview
+        </div>
+        <div class="card-body">
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle me-2"></i>
+                The theme preview will show how your store will look with the selected theme settings. Save your changes to update the actual store.
+            </div>
+            <div class="text-center">
+                <a href="/store/{{ tenant.slug }}" target="_blank" class="btn btn-primary">
+                    <i class="fas fa-external-link-alt me-1"></i>
+                    View Store
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Update border radius value display
+    const borderRadiusSlider = document.getElementById('border_radius');
+    const borderRadiusValue = document.getElementById('border_radius_value');
+    
+    if (borderRadiusSlider && borderRadiusValue) {
+        borderRadiusSlider.addEventListener('input', function() {
+            borderRadiusValue.textContent = this.value + 'px';
+        });
+    }
+    
+    // Sync color input with text input
+    const colorInputs = document.querySelectorAll('input[type="color"]');
+    colorInputs.forEach(input => {
+        const inputId = input.id;
+        const textInput = input.nextElementSibling;
+        
+        if (textInput) {
+            input.addEventListener('input', function() {
+                textInput.value = this.value;
+            });
+        }
+    });
+});
+</script>
+{% endblock %}
