@@ -53,6 +53,15 @@ document.addEventListener('DOMContentLoaded', function() {
             theme: 'snow'
         });
         
+        // Apply custom styling to the toolbar
+        const toolbarElement = quillContainer.querySelector('.ql-toolbar');
+        if (toolbarElement) {
+            toolbarElement.style.display = 'flex';
+            toolbarElement.style.flexWrap = 'wrap';
+            toolbarElement.style.alignItems = 'center';
+            toolbarElement.style.justifyContent = 'flex-start';
+        }
+        
         // If there's initial content in the textarea, load it into Quill
         quill.root.innerHTML = editorElement.value;
         
@@ -66,6 +75,12 @@ document.addEventListener('DOMContentLoaded', function() {
         // Add AI buttons to the toolbar
         const toolbar = quillContainer.querySelector('.ql-toolbar');
         if (toolbar) {
+            // Add spacer between regular toolbar and AI buttons
+            const spacer = document.createElement('span');
+            spacer.className = 'ql-toolbar-spacer';
+            spacer.style.flex = '1';
+            toolbar.appendChild(spacer);
+            
             // Create AI Generate button
             const aiGenerateBtn = document.createElement('button');
             aiGenerateBtn.className = 'ql-ai-generate';
@@ -86,8 +101,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 const promptInput = document.getElementById('aiPromptInput');
                 const generateBtn = document.getElementById('aiGenerateBtn');
                 
-                // Show the modal
-                modal.style.display = 'block';
+                // Show the modal using Bootstrap
+                const bootstrapModal = bootstrap.Modal.getOrCreateInstance(modal);
+                bootstrapModal.show();
                 
                 // Setup the generate button
                 const oldClickHandler = generateBtn.onclick;
@@ -117,8 +133,11 @@ document.addEventListener('DOMContentLoaded', function() {
                             quill.insertText(quill.getLength(), data.content);
                         }
                         
-                        // Close modal
-                        modal.style.display = 'none';
+                        // Close modal using Bootstrap
+                        const bootstrapModal = bootstrap.Modal.getInstance(modal);
+                        if (bootstrapModal) {
+                            bootstrapModal.hide();
+                        }
                         promptInput.value = '';
                     })
                     .catch(error => {
@@ -130,7 +149,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // Reset input on modal close
                 const closeModal = function() {
-                    modal.style.display = 'none';
+                    const bootstrapModal = bootstrap.Modal.getInstance(modal);
+                    if (bootstrapModal) {
+                        bootstrapModal.hide();
+                    }
                     promptInput.value = '';
                     generateBtn.onclick = oldClickHandler;
                 };
@@ -138,6 +160,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Close modal when user clicks cancel or X
                 modal.querySelector('.btn-secondary').onclick = closeModal;
                 modal.querySelector('.btn-close').onclick = closeModal;
+                
+                // Event listener for when the modal is hidden
+                modal.addEventListener('hidden.bs.modal', function() {
+                    promptInput.value = '';
+                    generateBtn.onclick = oldClickHandler;
+                });
             });
             
             // Add click handler for AI Enhance button
@@ -194,13 +222,27 @@ document.addEventListener('DOMContentLoaded', function() {
                     color: white;
                     border: none;
                     border-radius: 4px;
-                    padding: 5px 10px;
-                    margin-left: 5px;
-                    font-size: 12px;
+                    padding: 8px 12px;
+                    margin-left: 8px;
+                    font-size: 14px;
+                    font-weight: bold;
                     cursor: pointer;
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                    min-width: 100px;
+                    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+                }
+                .ql-ai-generate::before, .ql-ai-enhance::before {
+                    content: "✨";
+                    margin-right: 6px;
+                    font-size: 16px;
                 }
                 .ql-ai-generate:hover, .ql-ai-enhance:hover {
                     background-color: #5649c9;
+                    box-shadow: 0 3px 6px rgba(0,0,0,0.3);
+                    transform: translateY(-1px);
+                    transition: all 0.2s ease;
                 }
             `;
             document.head.appendChild(style);

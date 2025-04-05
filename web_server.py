@@ -1376,6 +1376,54 @@ async def admin_products(
         }
     )
 
+@app.get("/admin/products/add", response_class=HTMLResponse)
+async def admin_add_product_form(request: Request):
+    # Get all tenants for the dropdown
+    tenants = []
+    try:
+        tenants_list = tenant_manager.list() or []
+        tenants = [
+            {
+                "id": str(t.id),
+                "name": t.name,
+                "slug": t.slug
+            }
+            for t in tenants_list if t and hasattr(t, 'id')
+        ]
+    except Exception as e:
+        logger.error(f"Error fetching tenants: {str(e)}")
+    
+    # Get the selected tenant from the session
+    selected_tenant_slug = request.session.get("selected_tenant")
+    selected_tenant = None
+    
+    if selected_tenant_slug:
+        try:
+            selected_tenant = tenant_manager.get_by_slug(selected_tenant_slug)
+        except Exception:
+            pass
+    
+    # Get cart data for navigation
+    cart_id = request.session.get("cart_id")
+    cart_item_count = 0
+    
+    if cart_id:
+        try:
+            cart = cart_manager.get(cart_id)
+            cart_item_count = sum(item.quantity for item in cart.items)
+        except Exception:
+            pass
+    
+    return templates.TemplateResponse(
+        "admin/product_add.html", 
+        {
+            "request": request,
+            "tenants": tenants,
+            "selected_tenant": selected_tenant,
+            "cart_item_count": cart_item_count
+        }
+    )
+
 @app.post("/admin/products/add", response_class=RedirectResponse)
 async def admin_add_product(
     request: Request,
