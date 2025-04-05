@@ -338,6 +338,11 @@ async def store(
         except Exception:
             pass
     
+    # Get theme settings from tenant if available
+    theme_settings = {}
+    if tenant_obj and hasattr(tenant_obj, 'settings') and tenant_obj.settings:
+        theme_settings = tenant_obj.settings.get('theme', {})
+    
     return templates.TemplateResponse(
         "store/index.html", 
         {
@@ -345,7 +350,8 @@ async def store(
             "tenant": tenant_data,
             "products": products_list,
             "filters": filters,
-            "cart_item_count": cart_item_count
+            "cart_item_count": cart_item_count,
+            "theme": theme_settings
         }
     )
 # API endpoint to generate sample data

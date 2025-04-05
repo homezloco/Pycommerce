@@ -8,6 +8,124 @@
     <!-- Quill.js CSS -->
     <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
     <link href="https://cdn.quilljs.com/1.3.6/quill.bubble.css" rel="stylesheet">
+    {% if theme %}
+    <!-- Theme-specific CSS Variables -->
+    <style>
+        :root {
+            /* Color variables */
+            --theme-primary-color: {{ theme.primary_color|default('#007bff') }};
+            --theme-secondary-color: {{ theme.secondary_color|default('#6c757d') }};
+            --theme-background-color: {{ theme.background_color|default('#ffffff') }};
+            --theme-text-color: {{ theme.text_color|default('#212529') }};
+            
+            /* Typography variables */
+            --theme-font-family: {{ theme.font_family|default("'Open Sans', sans-serif") }};
+            --theme-heading-font-family: {{ theme.heading_font_family|default("inherit") }};
+            --theme-base-font-size: {{ theme.base_font_size|default(16) }}px;
+            
+            /* Layout variables */
+            --theme-border-radius: {{ theme.border_radius|default(4) }}px;
+            
+            /* Container width */
+            {% if theme.container_width == 'narrow' %}
+            --theme-container-width: 980px;
+            {% elif theme.container_width == 'wide' %}
+            --theme-container-width: 1320px;
+            {% elif theme.container_width == 'full' %}
+            --theme-container-width: 100%;
+            {% else %}
+            --theme-container-width: 1140px;
+            {% endif %}
+            
+            /* Spacing scale */
+            {% if theme.spacing_scale == 'compact' %}
+            --theme-spacing-base: 0.75;
+            {% elif theme.spacing_scale == 'spacious' %}
+            --theme-spacing-base: 1.25;
+            {% else %}
+            --theme-spacing-base: 1;
+            {% endif %}
+            
+            /* Button styles */
+            {% if theme.button_style == 'pill' %}
+            --theme-button-radius: 50rem;
+            {% elif theme.button_style == 'rounded' %}
+            --theme-button-radius: 10px;
+            {% elif theme.button_style == 'square' %}
+            --theme-button-radius: 0;
+            {% else %}
+            --theme-button-radius: var(--theme-border-radius);
+            {% endif %}
+        }
+        
+        /* Apply theme variables */
+        body {
+            font-family: var(--theme-font-family);
+            font-size: var(--theme-base-font-size);
+            color: var(--theme-text-color);
+            background-color: var(--theme-background-color);
+        }
+        
+        h1, h2, h3, h4, h5, h6 {
+            font-family: var(--theme-heading-font-family);
+        }
+        
+        .btn-primary {
+            background-color: var(--theme-primary-color);
+            border-color: var(--theme-primary-color);
+            border-radius: var(--theme-button-radius);
+        }
+        
+        .btn-secondary {
+            background-color: var(--theme-secondary-color);
+            border-color: var(--theme-secondary-color);
+            border-radius: var(--theme-button-radius);
+        }
+        
+        .btn-outline-primary {
+            color: var(--theme-primary-color);
+            border-color: var(--theme-primary-color);
+            border-radius: var(--theme-button-radius);
+        }
+        
+        .btn-outline-primary:hover {
+            background-color: var(--theme-primary-color);
+            border-color: var(--theme-primary-color);
+        }
+        
+        .btn {
+            border-radius: var(--theme-button-radius);
+        }
+        
+        .card {
+            border-radius: var(--theme-border-radius);
+        }
+        
+        .container {
+            max-width: var(--theme-container-width);
+        }
+        
+        /* Spacing adjustments */
+        .py-4 {
+            padding-top: calc(1.5rem * var(--theme-spacing-base)) !important;
+            padding-bottom: calc(1.5rem * var(--theme-spacing-base)) !important;
+        }
+        
+        .my-4 {
+            margin-top: calc(1.5rem * var(--theme-spacing-base)) !important;
+            margin-bottom: calc(1.5rem * var(--theme-spacing-base)) !important;
+        }
+        
+        .mb-4 {
+            margin-bottom: calc(1.5rem * var(--theme-spacing-base)) !important;
+        }
+        
+        .mt-5 {
+            margin-top: calc(3rem * var(--theme-spacing-base)) !important;
+        }
+    </style>
+    {% endif %}
+    
     <style>
         .store-header {
             padding: 2rem 0;

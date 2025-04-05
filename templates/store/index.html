@@ -3,12 +3,50 @@
 {% block title %}{{ tenant.name }} - PyCommerce Store{% endblock %}
 
 {% block content %}
-<header class="store-header">
-    <div class="container text-center">
-        <h1 class="display-4">{{ tenant.name }}</h1>
-        <p class="lead">Welcome to our store</p>
-    </div>
-</header>
+{% if theme and theme.header_style %}
+    {% if theme.header_style == 'minimal' %}
+    <header class="store-header py-2" style="background-color: var(--theme-primary-color, var(--bs-dark));">
+        <div class="container text-center">
+            <h1 class="display-5">{{ tenant.name }}</h1>
+        </div>
+    </header>
+    {% elif theme.header_style == 'centered' %}
+    <header class="store-header py-4" style="background-color: var(--theme-primary-color, var(--bs-dark));">
+        <div class="container text-center">
+            <h1 class="display-3">{{ tenant.name }}</h1>
+            <p class="lead">Welcome to our store</p>
+            <hr class="my-4" style="background-color: var(--theme-secondary-color, var(--bs-light)); opacity: 0.25;">
+            <p class="mb-0">Discover our amazing products</p>
+        </div>
+    </header>
+    {% elif theme.header_style == 'expanded' %}
+    <header class="store-header py-5" style="background-color: var(--theme-primary-color, var(--bs-dark));">
+        <div class="container text-center">
+            <h1 class="display-2">{{ tenant.name }}</h1>
+            <p class="lead">Welcome to our online store</p>
+            <p class="mb-4">Discover the best products at the best prices</p>
+            <div class="d-grid gap-2 d-sm-flex justify-content-sm-center">
+                <a href="#products" class="btn btn-outline-light px-4 py-2">Browse Products</a>
+                <a href="/cart" class="btn btn-light px-4 py-2">View Cart</a>
+            </div>
+        </div>
+    </header>
+    {% else %}
+    <header class="store-header" style="background-color: var(--theme-primary-color, var(--bs-dark));">
+        <div class="container text-center">
+            <h1 class="display-4">{{ tenant.name }}</h1>
+            <p class="lead">Welcome to our store</p>
+        </div>
+    </header>
+    {% endif %}
+{% else %}
+    <header class="store-header">
+        <div class="container text-center">
+            <h1 class="display-4">{{ tenant.name }}</h1>
+            <p class="lead">Welcome to our store</p>
+        </div>
+    </header>
+{% endif %}
 
 <div class="container">
     <div class="row mb-4">
