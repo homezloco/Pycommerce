@@ -1,3 +1,4 @@
+
 """
 Tenant model for PyCommerce SDK.
 
@@ -10,15 +11,35 @@ from typing import List, Optional, Dict, Any
 from datetime import datetime
 from uuid import UUID
 
-from pycommerce.core.db import db_session, Tenant as TenantModel
+from sqlalchemy import Column, String, Boolean, DateTime, JSON
+from sqlalchemy.orm import relationship
+
+from pycommerce.core.db import Base, db_session
 
 # Configure logging
 logger = logging.getLogger("pycommerce.models.tenant")
 
 
-class Tenant:
+class Tenant(Base):
+    """Tenant model for multi-tenant architecture."""
+    __tablename__ = "tenants"
+    
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    name = Column(String(100), nullable=False)
+    slug = Column(String(100), unique=True, nullable=False)
+    domain = Column(String(255), unique=True, nullable=True)
+    active = Column(Boolean, default=True)
+    settings = Column(JSON, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    def __repr__(self):
+        return f"<Tenant {self.name}>"
+
+
+class TenantDTO:
     """
-    Tenant class for the PyCommerce SDK.
+    Data Transfer Object for Tenant.
     
     Represents a tenant in the multi-tenant PyCommerce platform.
     """
@@ -26,7 +47,7 @@ class Tenant:
     def __init__(self, id: UUID, name: str, slug: str, domain: Optional[str] = None,
                  active: bool = True, created_at: datetime = None, updated_at: datetime = None):
         """
-        Initialize a new Tenant.
+        Initialize a new TenantDTO.
         
         Args:
             id: The tenant ID
@@ -46,15 +67,15 @@ class Tenant:
         self.updated_at = updated_at or datetime.now()
     
     @classmethod
-    def from_model(cls, model: TenantModel) -> 'Tenant':
+    def from_model(cls, model: Tenant) -> 'TenantDTO':
         """
-        Create a Tenant from a TenantModel.
+        Create a TenantDTO from a Tenant model.
         
         Args:
-            model: The TenantModel instance
+            model: The Tenant model instance
             
         Returns:
-            A Tenant instance
+            A TenantDTO instance
         """
         return cls(
             id=model.id,
@@ -91,7 +112,7 @@ class TenantManager:
         """Initialize a new TenantManager."""
         self.session = db_session
     
-    def list(self) -> List[Tenant]:
+    def list(self) -> List[TenantDTO]:
         """
         List all tenants.
         
@@ -99,13 +120,13 @@ class TenantManager:
             List of all tenants
         """
         try:
-            tenant_models = self.session.query(TenantModel).all()
-            return [Tenant.from_model(model) for model in tenant_models]
+            tenant_models = self.session.query(Tenant).all()
+            return [TenantDTO.from_model(model) for model in tenant_models]
         except Exception as e:
             logger.error(f"Error listing tenants: {str(e)}")
             return []
     
-    def get(self, tenant_id: UUID) -> Optional[Tenant]:
+    def get(self, tenant_id: UUID) -> Optional[TenantDTO]:
         """
         Get a tenant by ID.
         
@@ -116,13 +137,13 @@ class TenantManager:
             The tenant, or None if not found
         """
         try:
-            tenant_model = self.session.query(TenantModel).filter(TenantModel.id == tenant_id).first()
-            return Tenant.from_model(tenant_model) if tenant_model else None
+            tenant_model = self.session.query(Tenant).filter(Tenant.id == tenant_id).first()
+            return TenantDTO.from_model(tenant_model) if tenant_model else None
         except Exception as e:
             logger.error(f"Error getting tenant {tenant_id}: {str(e)}")
             return None
     
-    def get_by_slug(self, slug: str) -> Optional[Tenant]:
+    def get_by_slug(self, slug: str) -> Optional[TenantDTO]:
         """
         Get a tenant by slug.
         
@@ -133,13 +154,13 @@ class TenantManager:
             The tenant, or None if not found
         """
         try:
-            tenant_model = self.session.query(TenantModel).filter(TenantModel.slug == slug).first()
-            return Tenant.from_model(tenant_model) if tenant_model else None
+            tenant_model = self.session.query(Tenant).filter(Tenant.slug == slug).first()
+            return TenantDTO.from_model(tenant_model) if tenant_model else None
         except Exception as e:
             logger.error(f"Error getting tenant by slug {slug}: {str(e)}")
             return None
     
-    def get_by_domain(self, domain: str) -> Optional[Tenant]:
+    def get_by_domain(self, domain: str) -> Optional[TenantDTO]:
         """
         Get a tenant by domain.
         
@@ -150,13 +171,13 @@ class TenantManager:
             The tenant, or None if not found
         """
         try:
-            tenant_model = self.session.query(TenantModel).filter(TenantModel.domain == domain).first()
-            return Tenant.from_model(tenant_model) if tenant_model else None
+            tenant_model = self.session.query(Tenant).filter(Tenant.domain == domain).first()
+            return TenantDTO.from_model(tenant_model) if tenant_model else None
         except Exception as e:
             logger.error(f"Error getting tenant by domain {domain}: {str(e)}")
             return None
     
-    def create(self, name: str, slug: str, domain: Optional[str] = None, active: bool = True) -> Optional[Tenant]:
+    def create(self, name: str, slug: str, domain: Optional[str] = None, active: bool = True) -> Optional[TenantDTO]:
         """
         Create a new tenant.
         
@@ -175,15 +196,15 @@ class TenantManager:
                 raise ValueError("Slug must contain only letters, numbers, and hyphens, and must start with a letter")
             
             # Check if slug is already taken
-            if self.session.query(TenantModel).filter(TenantModel.slug == slug).first():
+            if self.session.query(Tenant).filter(Tenant.slug == slug).first():
                 raise ValueError(f"Slug '{slug}' is already taken")
             
             # Check if domain is already taken
-            if domain and self.session.query(TenantModel).filter(TenantModel.domain == domain).first():
+            if domain and self.session.query(Tenant).filter(Tenant.domain == domain).first():
                 raise ValueError(f"Domain '{domain}' is already taken")
             
             # Create tenant
-            tenant_model = TenantModel(
+            tenant_model = Tenant(
                 id=uuid.uuid4(),
                 name=name,
                 slug=slug,
@@ -194,13 +215,13 @@ class TenantManager:
             self.session.commit()
             
             logger.info(f"Created tenant: {name} ({slug})")
-            return Tenant.from_model(tenant_model)
+            return TenantDTO.from_model(tenant_model)
         except Exception as e:
             self.session.rollback()
             logger.error(f"Error creating tenant: {str(e)}")
             raise
     
-    def update(self, tenant_id: UUID, data: Dict[str, Any]) -> Optional[Tenant]:
+    def update(self, tenant_id: UUID, data: Dict[str, Any]) -> Optional[TenantDTO]:
         """
         Update a tenant.
         
@@ -212,7 +233,7 @@ class TenantManager:
             The updated tenant, or None if update fails
         """
         try:
-            tenant_model = self.session.query(TenantModel).filter(TenantModel.id == tenant_id).first()
+            tenant_model = self.session.query(Tenant).filter(Tenant.id == tenant_id).first()
             if not tenant_model:
                 raise ValueError(f"Tenant not found: {tenant_id}")
             
@@ -224,11 +245,11 @@ class TenantManager:
                         raise ValueError("Slug must contain only letters, numbers, and hyphens, and must start with a letter")
                     
                     # Check if slug is already taken
-                    if key == "slug" and value != tenant_model.slug and self.session.query(TenantModel).filter(TenantModel.slug == value).first():
+                    if key == "slug" and value != tenant_model.slug and self.session.query(Tenant).filter(Tenant.slug == value).first():
                         raise ValueError(f"Slug '{value}' is already taken")
                     
                     # Check if domain is already taken
-                    if key == "domain" and value != tenant_model.domain and self.session.query(TenantModel).filter(TenantModel.domain == value).first():
+                    if key == "domain" and value != tenant_model.domain and self.session.query(Tenant).filter(Tenant.domain == value).first():
                         raise ValueError(f"Domain '{value}' is already taken")
                     
                     setattr(tenant_model, key, value)
@@ -239,7 +260,7 @@ class TenantManager:
             self.session.commit()
             
             logger.info(f"Updated tenant: {tenant_id}")
-            return Tenant.from_model(tenant_model)
+            return TenantDTO.from_model(tenant_model)
         except Exception as e:
             self.session.rollback()
             logger.error(f"Error updating tenant {tenant_id}: {str(e)}")
@@ -256,7 +277,7 @@ class TenantManager:
             True if successful, False otherwise
         """
         try:
-            tenant_model = self.session.query(TenantModel).filter(TenantModel.id == tenant_id).first()
+            tenant_model = self.session.query(Tenant).filter(Tenant.id == tenant_id).first()
             if not tenant_model:
                 raise ValueError(f"Tenant not found: {tenant_id}")
             

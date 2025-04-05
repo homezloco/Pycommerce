@@ -1,4 +1,3 @@
-
 """
 PyCommerce: A Python-based e-commerce platform.
 
@@ -18,12 +17,8 @@ logger = logging.getLogger(__name__)
 from pycommerce.core.db import Base, init_db
 from pycommerce.core.plugin import PluginManager
 
-# Import models to ensure they are registered with Base
-from pycommerce.models.tenant import Tenant
-from pycommerce.models.product import Product, Category
-from pycommerce.models.cart import Cart, CartItem
-from pycommerce.models.order import Order, OrderItem
-from pycommerce.models.user import User
+# Import models to register them with Base
+# We'll do this inside init_db() to avoid circular imports
 
 # Create plugin managers
 payment_plugins = PluginManager("payment")
@@ -38,7 +33,7 @@ def initialize_plugins():
         plugin_name = plugin_name.strip()
         if not plugin_name:
             continue
-        
+
         try:
             # Import the plugin module
             plugin_module = import_module(f"pycommerce.plugins.payment.{plugin_name}")
@@ -49,14 +44,14 @@ def initialize_plugins():
             logger.info(f"Registered payment plugin: {plugin_name}")
         except (ImportError, AttributeError) as e:
             logger.warning(f"Failed to load payment plugin '{plugin_name}': {e}")
-    
+
     # Get enabled shipping plugins
     shipping_plugin_list = os.getenv("ENABLED_SHIPPING_PLUGINS", "standard").split(",")
     for plugin_name in shipping_plugin_list:
         plugin_name = plugin_name.strip()
         if not plugin_name:
             continue
-        
+
         try:
             # Import the plugin module
             plugin_module = import_module(f"pycommerce.plugins.shipping.{plugin_name}")
@@ -74,14 +69,6 @@ initialize_plugins()
 __all__ = [
     'Base',
     'init_db',
-    'Tenant',
-    'Product',
-    'Category',
-    'Cart',
-    'CartItem',
-    'Order',
-    'OrderItem',
-    'User',
     'payment_plugins',
     'shipping_plugins',
 ]
