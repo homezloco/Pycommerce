@@ -6,9 +6,15 @@ using the PayPal payment gateway.
 """
 
 import logging
-import requests
-from .base import PaymentPlugin, PaymentMethod, PaymentStatus
-from .config import PAYPAL_CLIENT_ID, PAYPAL_CLIENT_SECRET, PAYPAL_ENABLED, PAYPAL_SANDBOX
+import httpx
+import json
+from typing import Dict, Any, Optional
+from uuid import UUID
+from fastapi import APIRouter, HTTPException
+
+from pycommerce.plugins.payment.base import PaymentPlugin, PaymentMethod, PaymentStatus
+from pycommerce.plugins.payment.config import PAYPAL_CLIENT_ID, PAYPAL_CLIENT_SECRET, PAYPAL_ENABLED, PAYPAL_SANDBOX
+from pycommerce.core.exceptions import PaymentError
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -32,8 +38,6 @@ class PayPalPaymentPlugin(PaymentPlugin):
 
     def __init__(self, client_id=None, client_secret=None, sandbox=None):
         """Initialize the PayPal payment plugin."""
-        super().__init__(name="paypal", display_name="PayPal")
-
         self.client_id = client_id or PAYPAL_CLIENT_ID
         self.client_secret = client_secret or PAYPAL_CLIENT_SECRET
         self.sandbox = PAYPAL_SANDBOX if sandbox is None else sandbox

@@ -9,11 +9,31 @@ import logging
 from abc import abstractmethod
 from typing import Dict, Any, Optional
 from uuid import UUID
+from enum import Enum, auto
 
 from pycommerce.core.plugin import Plugin
 from pycommerce.core.exceptions import PaymentError
 
 logger = logging.getLogger("pycommerce.plugins.payment")
+
+
+class PaymentMethod(Enum):
+    """Enum representing supported payment methods."""
+    CREDIT_CARD = auto()
+    PAYPAL = auto()
+    BANK_TRANSFER = auto()
+    APPLE_PAY = auto()
+    GOOGLE_PAY = auto()
+
+
+class PaymentStatus(Enum):
+    """Enum representing payment status."""
+    PENDING = auto()
+    PROCESSING = auto()
+    COMPLETED = auto()
+    FAILED = auto()
+    REFUNDED = auto()
+    PARTIALLY_REFUNDED = auto()
 
 
 class PaymentPlugin(Plugin):

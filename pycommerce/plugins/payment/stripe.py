@@ -14,7 +14,7 @@ import httpx
 
 from fastapi import APIRouter, HTTPException
 from pycommerce.plugins.payment.base import PaymentPlugin, PaymentMethod, PaymentStatus
-from .config import STRIPE_API_KEY, STRIPE_WEBHOOK_SECRET, STRIPE_ENABLED
+from pycommerce.plugins.payment.config import STRIPE_API_KEY, STRIPE_WEBHOOK_SECRET, STRIPE_ENABLED
 
 logger = logging.getLogger(__name__)
 
@@ -47,6 +47,7 @@ class StripePaymentPlugin(PaymentPlugin):
             self.enabled = STRIPE_ENABLED
 
         self.webhook_secret = STRIPE_WEBHOOK_SECRET
+        self.api_base_url = "https://api.stripe.com/v1"
         logger.info("Initializing Stripe payment plugin")
 
     def initialize(self) -> None:

@@ -8,7 +8,7 @@ deploymentTarget = "autoscale"
 run = ["gunicorn", "--bind", "0.0.0.0:5000", "main:app"]
 
 [workflows]
-runButton = "Run with SQLite"
+runButton = "Run with migrations"
 
 [[workflows.workflow]]
 name = "Project"
@@ -55,6 +55,23 @@ mode = "sequential"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "export DATABASE_URL=sqlite:///pycommerce.db"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python main.py"
+
+[[workflows.workflow]]
+name = "Run with migrations"
+author = 34384132
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "export DATABASE_URL=sqlite:///pycommerce.db"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "alembic upgrade head"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
