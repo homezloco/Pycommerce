@@ -783,6 +783,14 @@ async def admin_save_theme_settings(request: Request):
         if not tenant_obj:
             raise ValueError(f"Tenant not found: {selected_tenant_slug}")
         
+        # Log form data for debugging
+        logo_url = form_data.get("logo_url", "")
+        logo_position = form_data.get("logo_position", "left")
+        logger.info(f"Saving theme settings for tenant {selected_tenant_slug}:")
+        logger.info(f"Logo URL: '{logo_url}'")
+        logger.info(f"Logo Position: '{logo_position}'")
+        logger.info(f"Custom CSS: '{form_data.get('custom_css', '')}'")
+        
         # Create theme settings dictionary
         theme_settings = {
             # Colors
@@ -806,8 +814,8 @@ async def admin_save_theme_settings(request: Request):
             "header_style": form_data.get("header_style", "standard"),
             "product_card_style": form_data.get("product_card_style", "standard"),
             "button_style": form_data.get("button_style", "standard"),
-            "logo_url": form_data.get("logo_url", ""),
-            "logo_position": form_data.get("logo_position", "left"),
+            "logo_url": logo_url,
+            "logo_position": logo_position,
             
             # Custom CSS
             "custom_css": form_data.get("custom_css", ""),
@@ -818,6 +826,9 @@ async def admin_save_theme_settings(request: Request):
         
         # Update tenant theme settings
         tenant_manager.update_theme(tenant_obj.id, theme_settings)
+        
+        # Log the saved theme settings
+        logger.info(f"Theme settings after update: {theme_settings}")
         
         status_message = "Theme settings saved successfully"
         status_type = "success"
