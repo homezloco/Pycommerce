@@ -357,30 +357,16 @@ async def store(
         logger.info(f"Theme settings for tenant {tenant_obj.name}: {theme_settings}")
     else:
         logger.warning(f"No theme settings found for tenant {tenant_obj.name if tenant_obj else 'unknown'}")
-        if tenant_obj:
-            logger.warning(f"Tenant settings attribute exists: {hasattr(tenant_obj, 'settings')}")
-            if hasattr(tenant_obj, 'settings'):
-                logger.warning(f"Tenant settings: {tenant_obj.settings}")
-    
-    # Force load updated theme settings directly from the database
-    try:
-        # First, check if this is even needed by verifying if logo_url exists
-        if 'logo_url' not in theme_settings or not theme_settings.get('logo_url'):
-            logger.warning("Logo URL not found in theme settings, trying to fetch fresh tenant data")
-            # Create a fresh database session to ensure we're not using stale data
-            from pycommerce.core.db import db_session
-            with db_session() as session:
-                from pycommerce.models.tenant import Tenant
-                # Fetch fresh data from database
-                fresh_tenant = session.query(Tenant).filter(Tenant.id == tenant_obj.id).first()
-                if fresh_tenant and fresh_tenant.settings and 'theme' in fresh_tenant.settings:
-                    fresh_theme = fresh_tenant.settings.get('theme', {})
-                    logger.info(f"Fresh theme settings from DB: {fresh_theme}")
-                    # Update theme settings
-                    theme_settings = fresh_theme
-    except Exception as e:
-        logger.error(f"Error trying to fetch fresh tenant data: {str(e)}")
-    
+        
+    # Check if logo_url exists
+    if 'logo_url' not in theme_settings or not theme_settings.get('logo_url'):
+        # Refetch the tenant using our improved get_by_slug method that always gets fresh data
+        logger.info(f"No logo found in theme settings, re-fetching tenant with slug: {tenant}")
+        tenant_obj = tenant_manager.get_by_slug(tenant)
+        if tenant_obj and hasattr(tenant_obj, 'settings') and tenant_obj.settings:
+            theme_settings = tenant_obj.settings.get('theme', {})
+            logger.info(f"Re-fetched theme settings: {theme_settings}")
+            
     return templates.TemplateResponse(
         "store/index.html", 
         {

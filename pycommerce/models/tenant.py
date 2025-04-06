@@ -162,8 +162,15 @@ class TenantManager:
             The tenant, or None if not found
         """
         try:
-            tenant_model = self.session.query(Tenant).filter(Tenant.slug == slug).first()
-            return TenantDTO.from_model(tenant_model) if tenant_model else None
+            # Always create a fresh session to ensure we get the latest data
+            with db_session() as fresh_session:
+                tenant_model = fresh_session.query(Tenant).filter(Tenant.slug == slug).first()
+                if tenant_model:
+                    # Force refresh to make sure we have the latest data including settings
+                    fresh_session.refresh(tenant_model)
+                    logger.info(f"Retrieved tenant by slug {slug} with theme settings: {tenant_model.settings.get('theme', {}) if tenant_model.settings else {}}")
+                    return TenantDTO.from_model(tenant_model)
+                return None
         except Exception as e:
             logger.error(f"Error getting tenant by slug {slug}: {str(e)}")
             return None
