@@ -1,63 +1,163 @@
-{% extends 'base.html' %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .hero {
+            background-color: #f8f9fa;
+            padding: 5rem 0;
+            margin-bottom: 2rem;
+        }
+        .feature-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            color: #6c757d;
+        }
+        .footer {
+            margin-top: 4rem;
+            padding: 2rem 0;
+            background-color: #f8f9fa;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <div class="container">
+            <a class="navbar-brand" href="/">PyCommerce</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/products">Products</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/admin/dashboard">Admin</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/api/docs">API Docs</a>
+                    </li>
+                </ul>
+                <div class="d-flex">
+                    <a href="/cart" class="btn btn-outline-primary">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-cart" viewBox="0 0 16 16">
+                            <path d="M0 1.5A.5.5 0 0 1 .5 1H2a.5.5 0 0 1 .485.379L2.89 3H14.5a.5.5 0 0 1 .491.592l-1.5 8A.5.5 0 0 1 13 12H4a.5.5 0 0 1-.491-.408L2.01 3.607 1.61 2H.5a.5.5 0 0 1-.5-.5zM3.102 4l1.313 7h8.17l1.313-7H3.102zM5 12a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm7 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm-7 1a1 1 0 1 1 0 2 1 1 0 0 1 0-2zm7 0a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
+                        </svg>
+                        Cart <span class="badge bg-primary">{{ cart_item_count }}</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
 
-{% block title %}PyCommerce - Multi-tenant E-commerce Platform{% endblock %}
-
-{% block content %}
-<div class="container">
-    <div class="text-center my-5">
-        <h1 class="display-4">Welcome to PyCommerce</h1>
-        <p class="lead">A modular, multi-tenant e-commerce platform built with Python and FastAPI</p>
+    <div class="hero">
+        <div class="container text-center">
+            <h1 class="display-4">Welcome to PyCommerce</h1>
+            <p class="lead">A Modern Ecommerce Platform Built with Python</p>
+            <div class="d-flex justify-content-center">
+                <a href="/products" class="btn btn-primary me-2">Shop Now</a>
+                <a href="/api/docs" class="btn btn-outline-secondary">API Documentation</a>
+            </div>
+        </div>
     </div>
 
-    <div class="row">
-        <div class="col-md-8 mx-auto">
-            <div class="card shadow-sm">
-                <div class="card-body">
-                    <h3 class="card-title">About PyCommerce</h3>
-                    <p>PyCommerce is a powerful, modular e-commerce SDK with a plugin architecture. It supports:</p>
-                    <ul>
-                        <li>Multi-tenant architecture for SaaS deployment</li>
-                        <li>Extensible plugin system for payments and shipping</li>
-                        <li>FastAPI and uvicorn for high performance</li>
-                        <li>PostgreSQL database for reliable data storage</li>
+    <div class="container">
+        <div class="row text-center">
+            <div class="col-md-4 mb-4">
+                <div class="feature-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" fill="currentColor" class="bi bi-building" viewBox="0 0 16 16">
+                        <path d="M4 2.5a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 .5.5v10a.5.5 0 0 1-.5.5h-7a.5.5 0 0 1-.5-.5v-10Zm.5.5v9h6v-9h-6Z"/>
+                        <path d="M2 2a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V2Zm11 12V2H3v12h10Z"/>
+                    </svg>
+                </div>
+                <h3>Multi-tenant</h3>
+                <p>Support multiple stores on a single platform with tenant-specific configurations.</p>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="feature-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" fill="currentColor" class="bi bi-plugin" viewBox="0 0 16 16">
+                        <path fill-rule="evenodd" d="M1 8a7 7 0 1 1 14 0A7 7 0 0 1 1 8Zm15 0A8 8 0 1 0 0 8a8 8 0 0 0 16 0ZM8.5 4.5a.5.5 0 0 0-1 0v3h-3a.5.5 0 0 0 0 1h3v3a.5.5 0 0 0 1 0v-3h3a.5.5 0 0 0 0-1h-3v-3Z"/>
+                    </svg>
+                </div>
+                <h3>Plugin System</h3>
+                <p>Extensible architecture with payment, shipping, and AI plugins to customize your store.</p>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="feature-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" fill="currentColor" class="bi bi-code-slash" viewBox="0 0 16 16">
+                        <path d="M10.478 1.647a.5.5 0 1 0-.956-.294l-4 13a.5.5 0 0 0 .956.294l4-13zM4.854 4.146a.5.5 0 0 1 0 .708L1.707 8l3.147 3.146a.5.5 0 0 1-.708.708l-3.5-3.5a.5.5 0 0 1 0-.708l3.5-3.5a.5.5 0 0 1 .708 0zm6.292 0a.5.5 0 0 0 0 .708L14.293 8l-3.147 3.146a.5.5 0 0 0 .708.708l3.5-3.5a.5.5 0 0 0 0-.708l-3.5-3.5a.5.5 0 0 0-.708 0z"/>
+                    </svg>
+                </div>
+                <h3>API-First</h3>
+                <p>Built with FastAPI for a modern, fast, and fully documented REST API.</p>
+            </div>
+        </div>
+
+        <div class="row mt-5">
+            <div class="col-md-12 text-center">
+                <h2>Getting Started</h2>
+                <p class="lead">Explore PyCommerce and its features</p>
+            </div>
+        </div>
+
+        <div class="row mt-3">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">Browse Products</h5>
+                        <p class="card-text">View our catalog of products and add items to your cart.</p>
+                        <a href="/products" class="btn btn-primary">Browse Products</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">Admin Dashboard</h5>
+                        <p class="card-text">Manage tenants, products, orders, and configurations.</p>
+                        <a href="/admin/dashboard" class="btn btn-secondary">Access Admin</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="footer mt-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5>PyCommerce</h5>
+                    <p>A modular Python e-commerce SDK with advanced AI configuration management.</p>
+                </div>
+                <div class="col-md-3">
+                    <h5>Resources</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="/api/docs">API Documentation</a></li>
+                        <li><a href="/admin/dashboard">Admin Dashboard</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-3">
+                    <h5>Links</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="/">Home</a></li>
+                        <li><a href="/products">Products</a></li>
                     </ul>
                 </div>
             </div>
+            <hr>
+            <div class="text-center">
+                <p>&copy; 2025 PyCommerce. All rights reserved.</p>
+            </div>
         </div>
-    </div>
+    </footer>
 
-    <div class="row my-5">
-        <div class="col-md-4">
-            <div class="card shadow-sm h-100">
-                <div class="card-body text-center">
-                    <h3 class="card-title">Explore Stores</h3>
-                    <p class="card-text">Browse through our demo stores and see multi-tenancy in action.</p>
-                    <a href="/stores" class="btn btn-primary">View Stores</a>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="card shadow-sm h-100">
-                <div class="card-body text-center">
-                    <h3 class="card-title">Browse Products</h3>
-                    <p class="card-text">See products from all of our demo stores.</p>
-                    <a href="/products" class="btn btn-primary">View Products</a>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="card shadow-sm h-100">
-                <div class="card-body text-center">
-                    <h3 class="card-title">API Documentation</h3>
-                    <p class="card-text">Explore the API endpoints and learn how to integrate with PyCommerce.</p>
-                    <a href="/api/docs" class="btn btn-primary">API Docs</a>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="text-center mt-5">
-        <a href="/api/generate-sample-data" class="btn btn-info">Generate Demo Data</a>
-    </div>
-</div>
-{% endblock %}
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -69,6 +69,20 @@ def close_db() -> None:
     db_session.remove()
 
 
+def get_session():
+    """
+    Get a session context manager.
+    
+    This function returns a context manager for database sessions,
+    ensuring they are properly closed after use.
+    
+    Example:
+        with get_session() as session:
+            result = session.query(Model).all()
+    """
+    return DBSessionContext()
+
+
 class DBSessionContext:
     """Context manager for database sessions."""
 

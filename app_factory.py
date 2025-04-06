@@ -15,6 +15,19 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.sessions import SessionMiddleware
 
+# PyCommerce core imports
+from pycommerce.core.db import init_db
+from pycommerce.core.migrations import init_migrations
+from pycommerce.models.tenant import TenantManager
+from pycommerce.models.product import ProductManager
+from pycommerce.models.order import OrderManager
+from pycommerce.models.user import UserManager
+from pycommerce.services.media_service import MediaService
+from pycommerce.plugins import StripePaymentPlugin, StandardShippingPlugin
+
+# Import route registration
+from routes import register_routes
+
 logger = logging.getLogger(__name__)
 
 # Define template directory
@@ -28,6 +41,10 @@ def create_app():
     Returns:
         FastAPI: A configured FastAPI application
     """
+    # Initialize database
+    init_db()
+    init_migrations()
+    
     # Create FastAPI app
     app = FastAPI(
         title="PyCommerce",
@@ -44,5 +61,8 @@ def create_app():
         secret_key=os.environ.get("SESSION_SECRET", "dev_secret_key"),
         max_age=7 * 24 * 60 * 60  # 1 week
     )
+    
+    # Register all modular routes
+    register_routes(app, templates)
     
     return app, templates

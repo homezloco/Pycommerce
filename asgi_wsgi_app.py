@@ -5,7 +5,7 @@ This module adapts the FastAPI app (ASGI) to work with gunicorn (WSGI server).
 """
 import os
 import logging
-from web_server import app as asgi_app
+from web_app import app as asgi_app
 
 import uvicorn
 import httpx
@@ -40,7 +40,7 @@ def start_uvicorn_server():
         return
 
     cmd = [
-        sys.executable, "-m", "uvicorn", "web_server:app",
+        sys.executable, "-m", "uvicorn", "web_app:app",
         "--host", UVICORN_HOST, "--port", str(UVICORN_PORT)
     ]
     logger.info(f"Starting uvicorn server with command: {' '.join(cmd)}")
