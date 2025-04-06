@@ -15,11 +15,8 @@ from models import (
     Tenant, Product, Cart, CartItem, User,
     InventoryRecord, InventoryTransaction
 )
-
-# NOTE: To prevent circular imports:
-# 1. We don't import Order, OrderItem, Shipment, ShipmentItem here
-# 2. We don't import OrderManager from pycommerce.models.order
-# 3. Instead, those imports are done inside the methods where needed
+# Import these separately to prevent circular imports
+from models import Order, OrderItem, Shipment, ShipmentItem
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -101,7 +98,7 @@ class ProductManager:
         price: float = 0.0,
         sku: str = "",
         stock: int = 0,
-        categories: Optional[List[str]] = None,
+        categories: List[str] = None,
         active: bool = True
     ) -> Product:
         """Create a new product."""
@@ -135,7 +132,7 @@ class ProductManager:
         """Get a product by ID."""
         return Product.query.filter_by(id=product_id).first()
     
-    def get_products_by_tenant(self, tenant_id: str, filters: Optional[Dict[str, Any]] = None) -> List[Product]:
+    def get_products_by_tenant(self, tenant_id: str, filters: Dict[str, Any] = None) -> List[Product]:
         """Get products for a tenant with optional filtering."""
         if filters is None:
             filters = {}
@@ -320,9 +317,127 @@ class CartManager:
             logger.error(f"Error deleting cart: {e}")
             raise
 
-# OrderManager has been removed from this file to prevent circular imports.
-# Instead, the OrderManager from pycommerce.models.order should be used.
-# This comment block is kept as a placeholder to maintain file structure.
+class OrderManager:
+    """Manager for order operations."""
+    
+    def create_order(
+        self,
+        tenant_id: str,
+        email: str,
+        user_id: Optional[str] = None,
+        shipping_address: Dict[str, Any] = None,
+        billing_address: Dict[str, Any] = None,
+        payment_info: Dict[str, Any] = None,
+        shipping_method: Optional[str] = None,
+        payment_method: Optional[str] = None
+    ) -> Order:
+        """Create a new order."""
+        try:
+            if shipping_address is None:
+                shipping_address = {}
+            
+            if billing_address is None:
+                billing_address = {}
+            
+            if payment_info is None:
+                payment_info = {}
+            
+            order = Order(
+                id=str(uuid.uuid4()),
+                tenant_id=tenant_id,
+                user_id=user_id,
+                status="pending",
+                total=0.0,
+                email=email,
+                shipping_address=shipping_address,
+                billing_address=billing_address,
+                payment_info=payment_info,
+                shipping_method=shipping_method,
+                payment_method=payment_method,
+                created_at=datetime.utcnow(),
+                updated_at=datetime.utcnow()
+            )
+            db.session.add(order)
+            db.session.commit()
+            logger.info(f"Created order for tenant {tenant_id}")
+            return order
+        except Exception as e:
+            db.session.rollback()
+            logger.error(f"Error creating order: {e}")
+            raise
+    
+    def get_order_by_id(self, order_id: str) -> Optional[Order]:
+        """Get an order by ID."""
+        return Order.query.filter_by(id=order_id).first()
+    
+    def get_orders_by_tenant(self, tenant_id: str) -> List[Order]:
+        """Get all orders for a tenant."""
+        return Order.query.filter_by(tenant_id=tenant_id).all()
+    
+    def get_orders_by_user(self, user_id: str) -> List[Order]:
+        """Get all orders for a user."""
+        return Order.query.filter_by(user_id=user_id).all()
+    
+    def add_item_to_order(self, order_id: str, product_id: str, quantity: int, price: float) -> OrderItem:
+        """Add an item to an order."""
+        try:
+            order_item = OrderItem(
+                id=str(uuid.uuid4()),
+                order_id=order_id,
+                product_id=product_id,
+                quantity=quantity,
+                price=price,
+                created_at=datetime.utcnow()
+            )
+            db.session.add(order_item)
+            
+            # Update order total
+            order = self.get_order_by_id(order_id)
+            if order:
+                order.total += price * quantity
+                order.updated_at = datetime.utcnow()
+            
+            db.session.commit()
+            logger.info(f"Added item {product_id} to order {order_id}")
+            return order_item
+        except Exception as e:
+            db.session.rollback()
+            logger.error(f"Error adding item to order: {e}")
+            raise
+    
+    def update_order(self, order_id: str, **kwargs) -> Optional[Order]:
+        """Update an order."""
+        order = self.get_order_by_id(order_id)
+        if not order:
+            return None
+        
+        for key, value in kwargs.items():
+            if hasattr(order, key):
+                setattr(order, key, value)
+        
+        order.updated_at = datetime.utcnow()
+        db.session.commit()
+        return order
+    
+    def delete_order(self, order_id: str) -> bool:
+        """Delete an order."""
+        try:
+            order = self.get_order_by_id(order_id)
+            if not order:
+                return False
+            
+            # First delete all order items
+            OrderItem.query.filter_by(order_id=order_id).delete()
+            
+            # Then delete the order
+            db.session.delete(order)
+            db.session.commit()
+            logger.info(f"Deleted order {order_id}")
+            return True
+        except Exception as e:
+            db.session.rollback()
+            logger.error(f"Error deleting order: {e}")
+            raise
 
 class UserManager:
     """Manager for user operations."""
@@ -407,12 +522,9 @@ class ShipmentManager:
         tracking_url: Optional[str] = None,
         label_url: Optional[str] = None,
         metadata: Optional[Dict[str, Any]] = None
-    ) -> "Shipment":
+    ) -> Shipment:
         """Create a new shipment for an order."""
         try:
-            # Late import to prevent circular imports
-            from models import Order, Shipment
-            
             # Check if the order exists
             order = Order.query.filter_by(id=order_id).first()
             if not order:
@@ -450,16 +562,12 @@ class ShipmentManager:
             logger.error(f"Error creating shipment: {e}")
             raise
     
-    def get_shipment_by_id(self, shipment_id: str) -> Optional["Shipment"]:
+    def get_shipment_by_id(self, shipment_id: str) -> Optional[Shipment]:
         """Get a shipment by ID."""
-        # Late import to prevent circular imports
-        from models import Shipment
         return Shipment.query.filter_by(id=shipment_id).first()
     
-    def get_shipments_by_order(self, order_id: str) -> List["Shipment"]:
+    def get_shipments_by_order(self, order_id: str) -> List[Shipment]:
         """Get all shipments for an order."""
-        # Late import to prevent circular imports
-        from models import Shipment
         return Shipment.query.filter_by(order_id=order_id).all()
     
     def add_item_to_shipment(
@@ -468,12 +576,9 @@ class ShipmentManager:
         order_item_id: str,
         product_id: str,
         quantity: int
-    ) -> "ShipmentItem":
+    ) -> ShipmentItem:
         """Add an item to a shipment."""
         try:
-            # Late import to prevent circular imports
-            from models import ShipmentItem
-            
             shipment_item = ShipmentItem(
                 id=str(uuid.uuid4()),
                 shipment_id=shipment_id,
@@ -499,16 +604,13 @@ class ShipmentManager:
         status: str,
         tracking_number: Optional[str] = None,
         tracking_url: Optional[str] = None
-    ) -> Optional["Shipment"]:
+    ) -> Optional[Shipment]:
         """Update a shipment's status."""
         shipment = self.get_shipment_by_id(shipment_id)
         if not shipment:
             return None
         
         try:
-            # Late import to prevent circular imports
-            from models import Order, Shipment
-            
             # Update status and tracking info
             shipment.status = status
             if tracking_number:
@@ -549,9 +651,6 @@ class ShipmentManager:
     def delete_shipment(self, shipment_id: str) -> bool:
         """Delete a shipment."""
         try:
-            # Late import to prevent circular imports
-            from models import ShipmentItem
-            
             shipment = self.get_shipment_by_id(shipment_id)
             if not shipment:
                 return False
