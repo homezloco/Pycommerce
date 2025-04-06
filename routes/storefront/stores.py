@@ -17,7 +17,7 @@ from pycommerce.models.cart import CartManager
 logger = logging.getLogger(__name__)
 
 # Create router
-router = APIRouter(prefix="/store", tags=["store"])
+router = APIRouter(tags=["store"])
 
 # Global variables initialized in setup_routes
 templates = None
@@ -64,7 +64,7 @@ async def stores(request: Request):
         }
     )
 
-@router.get("/{slug}", response_class=HTMLResponse)
+@router.get("/store/{slug}", response_class=HTMLResponse)
 async def store(
     request: Request,
     slug: str,
