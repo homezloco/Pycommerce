@@ -2025,13 +2025,41 @@ async def admin_media(
                     is_ai_generated_bool = True
                 elif is_ai_generated.lower() in ['false', 'no', '0']:
                     is_ai_generated_bool = False
+            
+            # First, try to get media for the selected tenant
+            if tenant_id:
+                media_list = media_service.list_media(
+                    tenant_id=tenant_id,
+                    file_type=file_type,
+                    is_ai_generated=is_ai_generated_bool,
+                    search_term=search
+                )
+            else:
+                # If no tenant, get all media
+                media_list = media_service.list_media(
+                    file_type=file_type,
+                    is_ai_generated=is_ai_generated_bool,
+                    search_term=search
+                )
+                
+            # If no results and a tenant was selected, try to get media with NULL tenant_id
+            if (not media_list or len(media_list) == 0) and tenant_id:
+                logger.info("No tenant-specific media found, checking for shared media with NULL tenant_id")
+                try:
+                    # Execute custom SQL query to get media with NULL tenant_id
+                    from sqlalchemy import text
+                    from pycommerce.core.db import engine
                     
-            media_list = media_service.list_media(
-                tenant_id=tenant_id,
-                file_type=file_type,
-                is_ai_generated=is_ai_generated_bool,
-                search_term=search
-            )
+                    # This is a simplification; ideally this would be handled in the model layer
+                    with engine.connect() as connection:
+                        query = text("SELECT * FROM media WHERE tenant_id IS NULL")
+                        result = connection.execute(query)
+                        # Convert to Media objects or at least compatible dicts
+                        media_list = list(result)
+                except Exception as e:
+                    logger.error(f"Error fetching shared media: {str(e)}")
+                    # Fallback to empty list
+                    media_list = []
             # Handle both dict and list return types
             if isinstance(media_list, dict):
                 media_files = media_list.get("media", [])
