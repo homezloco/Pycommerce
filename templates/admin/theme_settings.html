@@ -193,6 +193,13 @@ document.addEventListener('DOMContentLoaded', function() {
         if (textInput) {
             input.addEventListener('input', function() {
                 textInput.value = this.value;
+            });
+        }
+    });
+});
+
+// Function to open the media selector and handle selection
+function openMediaSelector(targetFieldId) {
 
 <!-- Media Selector Modal -->
 <div class="modal fade" id="mediaSelectorModal" tabindex="-1" aria-labelledby="mediaSelectorLabel" aria-hidden="true">
@@ -244,13 +251,6 @@ document.addEventListener('DOMContentLoaded', function() {
     </div>
 </div>
 
-            });
-        }
-    });
-});
-
-// Function to open the media selector and handle selection
-function openMediaSelector(targetFieldId) {
     // Show the media selector modal
     const mediaSelectorModal = new bootstrap.Modal(document.getElementById('mediaSelectorModal'));
     
