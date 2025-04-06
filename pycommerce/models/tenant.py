@@ -324,6 +324,15 @@ class TenantManager:
             The updated tenant, or None if update fails
         """
         try:
+            # Add more detailed logging about the theme configuration being saved
+            logger.info(f"Updating theme for tenant {tenant_id} with config: {theme_config}")
+            
+            # Check if logo_url is in the theme_config and log it
+            if 'logo_url' in theme_config:
+                logger.info(f"Logo URL from theme_config: {theme_config['logo_url']}")
+            else:
+                logger.warning(f"No logo_url found in theme_config: {list(theme_config.keys())}")
+                
             tenant_model = self.session.query(Tenant).filter(Tenant.id == tenant_id).first()
             if not tenant_model:
                 raise ValueError(f"Tenant not found: {tenant_id}")
@@ -336,14 +345,31 @@ class TenantManager:
             if "theme" not in tenant_model.settings:
                 tenant_model.settings["theme"] = {}
             
+            # Log the current theme settings before update
+            logger.info(f"Current theme settings before update: {tenant_model.settings.get('theme', {})}")
+            
             # Update theme settings
             tenant_model.settings["theme"].update(theme_config)
+            
+            # Log the updated theme settings
+            logger.info(f"Updated theme settings: {tenant_model.settings.get('theme', {})}")
             
             # Update updated_at timestamp
             tenant_model.updated_at = datetime.now()
 
             self.session.commit()
 
+            # Force a fresh query to verify changes were saved
+            refreshed_tenant = self.session.query(Tenant).filter(Tenant.id == tenant_id).first()
+            refreshed_theme = refreshed_tenant.settings.get('theme', {}) if refreshed_tenant.settings else {}
+            logger.info(f"Theme settings after commit: {refreshed_theme}")
+            
+            # Specifically check if logo_url was saved
+            if 'logo_url' in refreshed_theme:
+                logger.info(f"Logo URL saved successfully: {refreshed_theme['logo_url']}")
+            else:
+                logger.warning("Logo URL not found in saved theme settings")
+            
             logger.info(f"Updated theme for tenant: {tenant_id}")
             return TenantDTO.from_model(tenant_model)
         except Exception as e:
