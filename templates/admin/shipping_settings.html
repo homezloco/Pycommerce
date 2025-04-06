@@ -1,0 +1,377 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}Shipping Settings - {{ tenant.name }}{% endblock %}
+
+{% block admin_content %}
+<div class="container py-4">
+    <div class="row">
+        <div class="col-12 col-lg-10 mx-auto">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3">Shipping Settings</h1>
+                <div>
+                    <a href="/admin/dashboard" class="btn btn-outline-secondary">
+                        <i class="fa fa-arrow-left me-2"></i> Back to Dashboard
+                    </a>
+                </div>
+            </div>
+
+            {% if error %}
+            <div class="alert alert-danger" role="alert">
+                {{ error }}
+            </div>
+            {% endif %}
+
+            {% if success %}
+            <div class="alert alert-success" role="alert">
+                {{ success }}
+            </div>
+            {% endif %}
+
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-white">
+                    <h5 class="card-title mb-0">Shipping Configuration</h5>
+                </div>
+                <div class="card-body">
+                    <form action="/admin/shipping-settings" method="POST" id="shipping-settings-form">
+                        
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <h6 class="fw-bold mb-3">Basic Settings</h6>
+                                
+                                <div class="mb-3">
+                                    <label for="store_country" class="form-label">Store Country</label>
+                                    <select class="form-select" id="store_country" name="store_country">
+                                        <option value="US" {% if config.store_country == 'US' %}selected{% endif %}>United States</option>
+                                        <option value="CA" {% if config.store_country == 'CA' %}selected{% endif %}>Canada</option>
+                                        <option value="GB" {% if config.store_country == 'GB' %}selected{% endif %}>United Kingdom</option>
+                                        <option value="AU" {% if config.store_country == 'AU' %}selected{% endif %}>Australia</option>
+                                        <option value="DE" {% if config.store_country == 'DE' %}selected{% endif %}>Germany</option>
+                                        <option value="FR" {% if config.store_country == 'FR' %}selected{% endif %}>France</option>
+                                    </select>
+                                    <div class="form-text">The country where your store is located.</div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="store_postal_code" class="form-label">Store Postal/ZIP Code</label>
+                                    <input type="text" class="form-control" id="store_postal_code" name="store_postal_code" value="{{ config.store_postal_code }}">
+                                    <div class="form-text">Used for distance calculations.</div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="free_shipping_threshold" class="form-label">Free Shipping Threshold</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">$</span>
+                                        <input type="number" class="form-control" id="free_shipping_threshold" name="free_shipping_threshold" value="{{ config.free_shipping_threshold }}" step="0.01" min="0">
+                                    </div>
+                                    <div class="form-text">Orders above this amount qualify for free shipping. Set to 0 to disable.</div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <h6 class="fw-bold mb-3">Advanced Settings</h6>
+                                
+                                <div class="mb-3">
+                                    <label for="dimensional_weight_factor" class="form-label">Dimensional Weight Factor</label>
+                                    <input type="number" class="form-control" id="dimensional_weight_factor" name="dimensional_weight_factor" value="{{ config.dimensional_weight_factor }}" step="1" min="1">
+                                    <div class="form-text">Conversion factor for calculating dimensional weight (kg/m³).</div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="express_multiplier" class="form-label">Express Shipping Multiplier</label>
+                                    <input type="number" class="form-control" id="express_multiplier" name="express_multiplier" value="{{ config.express_multiplier }}" step="0.01" min="1">
+                                    <div class="form-text">Multiplier for express shipping rates (e.g., 1.75 = 75% more than standard).</div>
+                                </div>
+
+                                <!-- Add these fields for backwards compatibility -->
+                                <input type="hidden" name="flat_rate_domestic" value="{{ config.flat_rate_domestic }}">
+                                <input type="hidden" name="flat_rate_international" value="{{ config.flat_rate_international }}">
+                            </div>
+                        </div>
+
+                        <h6 class="fw-bold mb-3">Shipping Zone Rates</h6>
+                        <p class="text-muted small">Configure shipping rates based on zones and weight.</p>
+                        
+                        <div class="table-responsive mb-4">
+                            <table class="table table-bordered">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th scope="col">Shipping Zone</th>
+                                        <th scope="col">Base Rate ($)</th>
+                                        <th scope="col">Rate per kg ($)</th>
+                                        <th scope="col">Min Weight (kg)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for zone in ['domestic', 'continental', 'international_close', 'international_far'] %}
+                                    <tr>
+                                        <td>
+                                            <strong>{{ zone|replace('_', ' ')|title }}</strong>
+                                            {% if zone == 'domestic' %}
+                                            <div class="small text-muted">Within {{ config.store_country }}</div>
+                                            {% elif zone == 'continental' %}
+                                            <div class="small text-muted">Neighboring countries</div>
+                                            {% elif zone == 'international_close' %}
+                                            <div class="small text-muted">Same continent</div>
+                                            {% elif zone == 'international_far' %}
+                                            <div class="small text-muted">Rest of the world</div>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <div class="input-group input-group-sm">
+                                                <span class="input-group-text">$</span>
+                                                <input type="number" class="form-control" 
+                                                    name="weight_rates[{{ zone }}][base_rate]" 
+                                                    value="{{ config.weight_rates[zone].base_rate }}" 
+                                                    step="0.01" min="0">
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="input-group input-group-sm">
+                                                <span class="input-group-text">$</span>
+                                                <input type="number" class="form-control" 
+                                                    name="weight_rates[{{ zone }}][per_kg]" 
+                                                    value="{{ config.weight_rates[zone].per_kg }}" 
+                                                    step="0.01" min="0">
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="input-group input-group-sm">
+                                                <input type="number" class="form-control" 
+                                                    name="weight_rates[{{ zone }}][min_weight_kg]" 
+                                                    value="{{ config.weight_rates[zone].min_weight_kg }}" 
+                                                    step="0.01" min="0">
+                                                <span class="input-group-text">kg</span>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="d-flex justify-content-end">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fa fa-save me-2"></i> Save Settings
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-lg-6">
+                    <div class="card shadow-sm mb-4">
+                        <div class="card-header bg-white">
+                            <h5 class="card-title mb-0">Shipping Rate Test</h5>
+                        </div>
+                        <div class="card-body">
+                            <form id="shipping-test-form">
+                                <div class="mb-3">
+                                    <label for="test_country" class="form-label">Destination Country</label>
+                                    <select class="form-select" id="test_country">
+                                        <option value="US">United States</option>
+                                        <option value="CA">Canada</option>
+                                        <option value="MX">Mexico</option>
+                                        <option value="GB">United Kingdom</option>
+                                        <option value="FR">France</option>
+                                        <option value="DE">Germany</option>
+                                        <option value="IT">Italy</option>
+                                        <option value="ES">Spain</option>
+                                        <option value="AU">Australia</option>
+                                        <option value="JP">Japan</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="test_postal_code" class="form-label">Destination Postal/ZIP Code</label>
+                                    <input type="text" class="form-control" id="test_postal_code">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="test_weight" class="form-label">Package Weight (kg)</label>
+                                    <input type="number" class="form-control" id="test_weight" value="1" step="0.1" min="0">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Package Dimensions (cm)</label>
+                                    <div class="row g-2">
+                                        <div class="col-4">
+                                            <div class="input-group input-group-sm">
+                                                <input type="number" class="form-control" id="test_length" value="20" step="1" min="0">
+                                                <span class="input-group-text">L</span>
+                                            </div>
+                                        </div>
+                                        <div class="col-4">
+                                            <div class="input-group input-group-sm">
+                                                <input type="number" class="form-control" id="test_width" value="15" step="1" min="0">
+                                                <span class="input-group-text">W</span>
+                                            </div>
+                                        </div>
+                                        <div class="col-4">
+                                            <div class="input-group input-group-sm">
+                                                <input type="number" class="form-control" id="test_height" value="10" step="1" min="0">
+                                                <span class="input-group-text">H</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="test_order_total" class="form-label">Order Total ($)</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">$</span>
+                                        <input type="number" class="form-control" id="test_order_total" value="45" step="0.01" min="0">
+                                    </div>
+                                </div>
+                                <button type="button" class="btn btn-primary w-100" id="calculate-shipping-btn">
+                                    Calculate Shipping Rates
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-6">
+                    <div class="card shadow-sm mb-4">
+                        <div class="card-header bg-white">
+                            <h5 class="card-title mb-0">Shipping Rate Results</h5>
+                        </div>
+                        <div class="card-body">
+                            <div id="shipping-results">
+                                <div class="text-center text-muted py-4">
+                                    <i class="fa fa-shipping-fast fa-3x mb-3"></i>
+                                    <p>Use the form on the left to calculate shipping rates.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const calculateBtn = document.getElementById('calculate-shipping-btn');
+    const resultsContainer = document.getElementById('shipping-results');
+    
+    calculateBtn.addEventListener('click', function() {
+        // Show loading state
+        resultsContainer.innerHTML = `
+            <div class="text-center py-4">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-2">Calculating shipping rates...</p>
+            </div>
+        `;
+        
+        // Get form values
+        const country = document.getElementById('test_country').value;
+        const postalCode = document.getElementById('test_postal_code').value;
+        const weight = parseFloat(document.getElementById('test_weight').value) || 0;
+        const length = parseFloat(document.getElementById('test_length').value) || 0;
+        const width = parseFloat(document.getElementById('test_width').value) || 0;
+        const height = parseFloat(document.getElementById('test_height').value) || 0;
+        const orderTotal = parseFloat(document.getElementById('test_order_total').value) || 0;
+        
+        // Build request data
+        const requestData = {
+            destination: {
+                country: country,
+                postal_code: postalCode
+            },
+            items: [{
+                weight: weight,
+                quantity: 1,
+                price: orderTotal,
+                dimensions: {
+                    length: length,
+                    width: width,
+                    height: height
+                }
+            }]
+        };
+        
+        // Send API request
+        fetch('/api/plugins/shipping/standard/calculate', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(requestData)
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            // Display results
+            displayShippingRates(data.rates);
+        })
+        .catch(error => {
+            resultsContainer.innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="fa fa-exclamation-triangle me-2"></i>
+                    Error: ${error.message}
+                </div>
+            `;
+        });
+    });
+    
+    function displayShippingRates(rates) {
+        if (!rates || rates.length === 0) {
+            resultsContainer.innerHTML = `
+                <div class="alert alert-warning">
+                    <i class="fa fa-exclamation-circle me-2"></i>
+                    No shipping options available for this destination.
+                </div>
+            `;
+            return;
+        }
+        
+        let html = '<div class="list-group">';
+        
+        rates.forEach(rate => {
+            const freeShippingBadge = rate.free_shipping ? 
+                '<span class="badge bg-success ms-2">Free</span>' : '';
+                
+            let details = '';
+            if (rate.billable_weight) {
+                details += `<div>Billable Weight: ${rate.billable_weight} kg</div>`;
+            }
+            if (rate.zone) {
+                details += `<div>Zone: ${rate.zone.replace('_', ' ').toUpperCase()}</div>`;
+            }
+            if (rate.distance_km) {
+                details += `<div>Estimated Distance: ${rate.distance_km} km</div>`;
+            }
+            
+            html += `
+                <div class="list-group-item">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-1">${rate.name} ${freeShippingBadge}</h6>
+                            <p class="mb-1 text-muted small">${rate.description}</p>
+                        </div>
+                        <div class="text-end">
+                            <h5 class="mb-0 ${rate.free_shipping ? 'text-success' : ''}">
+                                ${rate.free_shipping ? 'FREE' : '$' + rate.price.toFixed(2)}
+                            </h5>
+                            <small class="text-muted">${rate.estimated_days} days</small>
+                        </div>
+                    </div>
+                    <div class="mt-2 small text-muted">
+                        ${details}
+                    </div>
+                </div>
+            `;
+        });
+        
+        html += '</div>';
+        resultsContainer.innerHTML = html;
+    }
+});
+</script>
+{% endblock %}

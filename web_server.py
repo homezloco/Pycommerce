@@ -697,6 +697,255 @@ async def admin_store_settings_update(
             status_code=303
         )
 
+# Admin shipping settings
+@app.get("/admin/shipping-settings", response_class=HTMLResponse)
+async def admin_shipping_settings(request: Request, status_message: Optional[str] = None, status_type: str = "info"):
+    """Admin page for managing shipping settings."""
+    # Get all tenants for the store selector
+    tenants = []
+    try:
+        tenants_list = tenant_manager.list() or []
+        tenants = [
+            {
+                "id": str(t.id),
+                "name": t.name,
+                "slug": t.slug,
+                "domain": t.domain if hasattr(t, 'domain') else None,
+                "active": t.active if hasattr(t, 'active') else True
+            }
+            for t in tenants_list if t and hasattr(t, 'id')
+        ]
+        
+        # Get selected tenant from query param
+        selected_tenant_slug = request.query_params.get('tenant')
+        if not selected_tenant_slug and tenants:
+            selected_tenant_slug = tenants[0]["slug"]
+            
+        # Get the tenant details
+        tenant = None
+        shipping_config = {}
+        if selected_tenant_slug:
+            tenant_obj = tenant_manager.get_by_slug(selected_tenant_slug)
+            if tenant_obj:
+                tenant = {
+                    "id": str(tenant_obj.id),
+                    "name": tenant_obj.name,
+                    "slug": tenant_obj.slug,
+                    "domain": tenant_obj.domain,
+                    "active": tenant_obj.active
+                }
+                
+                # Get shipping configuration
+                try:
+                    # Get shipping plugin from the registry
+                    from pycommerce.plugins import get_plugin_registry
+                    plugin_registry = get_plugin_registry()
+                    shipping_plugin = plugin_registry.get_shipping_plugin('standard')
+                    if shipping_plugin:
+                        # Get configuration for this tenant
+                        shipping_config = shipping_plugin.get_shipping_config(str(tenant_obj.id))
+                        
+                        # Ensure the weight_rates dictionary is properly structured
+                        # This is a safety check in case the config is missing some expected values
+                        if "weight_rates" not in shipping_config:
+                            shipping_config["weight_rates"] = {}
+                        
+                        # Ensure all required zones exist
+                        zones = ['domestic', 'continental', 'international_close', 'international_far']
+                        for zone in zones:
+                            if zone not in shipping_config["weight_rates"]:
+                                shipping_config["weight_rates"][zone] = {
+                                    "base_rate": 5.99 if zone == 'domestic' else 19.99,
+                                    "per_kg": 0.5 if zone == 'domestic' else 2.0,
+                                    "min_weight_kg": 0.1
+                                }
+                    else:
+                        raise ValueError("Standard shipping plugin not found")
+                except Exception as e:
+                    logger.error(f"Error loading shipping configuration: {str(e)}")
+                    if status_message is None:
+                        status_message = f"Error loading shipping configuration: {str(e)}"
+                        status_type = "danger"
+                        
+                    # Provide a default configuration in case of error
+                    shipping_config = {
+                        "store_country": "US",
+                        "store_postal_code": "",
+                        "free_shipping_threshold": 50.00,
+                        "flat_rate_domestic": 5.99,
+                        "flat_rate_international": 19.99,
+                        "dimensional_weight_factor": 200,
+                        "express_multiplier": 1.75,
+                        "weight_rates": {
+                            "domestic": {
+                                "base_rate": 5.99,
+                                "per_kg": 0.5,
+                                "min_weight_kg": 0.1
+                            },
+                            "continental": {
+                                "base_rate": 12.99,
+                                "per_kg": 2.0,
+                                "min_weight_kg": 0.1
+                            },
+                            "international_close": {
+                                "base_rate": 19.99,
+                                "per_kg": 4.0,
+                                "min_weight_kg": 0.1
+                            },
+                            "international_far": {
+                                "base_rate": 29.99,
+                                "per_kg": 6.0,
+                                "min_weight_kg": 0.1
+                            }
+                        }
+                    }
+        
+        # Get cart item count if available
+        cart_item_count = 0
+        session = request.session
+        if 'cart_id' in session:
+            try:
+                cart_id = session['cart_id']
+                cart = cart_manager.get(cart_id)
+                cart_item_count = sum(item.quantity for item in cart.items)
+            except Exception:
+                pass
+                
+    except Exception as e:
+        logger.error(f"Error loading shipping settings: {str(e)}")
+        if status_message is None:
+            status_message = f"Error loading shipping settings: {str(e)}"
+            status_type = "danger"
+    
+    return templates.TemplateResponse(
+        "admin/shipping_settings.html", 
+        {
+            "request": request,
+            "active_page": "shipping_settings",
+            "tenants": tenants,
+            "tenant": tenant,
+            "config": shipping_config,
+            "cart_item_count": cart_item_count,
+            "success": status_message if status_type == "success" else None,
+            "error": status_message if status_type == "danger" else None
+        }
+    )
+
+@app.post("/admin/shipping-settings", response_class=RedirectResponse)
+async def admin_save_shipping_settings(request: Request):
+    """Save shipping settings for a tenant."""
+    try:
+        form_data = await request.form()
+        
+        # Get the selected tenant from the query parameters
+        selected_tenant_slug = request.query_params.get('tenant')
+        
+        if not selected_tenant_slug:
+            raise ValueError("No tenant selected")
+        
+        # Get the tenant
+        tenant_obj = tenant_manager.get_by_slug(selected_tenant_slug)
+        if not tenant_obj:
+            raise ValueError(f"Tenant not found: {selected_tenant_slug}")
+        
+        # Create shipping settings dictionary
+        store_country = form_data.get("store_country", "US")
+        shipping_config = {
+            # Basic configuration (backwards compatibility)
+            "flat_rate_domestic": float(form_data.get("flat_rate_domestic", 5.99)),
+            "flat_rate_international": float(form_data.get("flat_rate_international", 19.99)),
+            "free_shipping_threshold": float(form_data.get("free_shipping_threshold", 50.00)),
+            
+            # Advanced configuration
+            "store_country": store_country,
+            "store_postal_code": form_data.get("store_postal_code", ""),
+            "dimensional_weight_factor": float(form_data.get("dimensional_weight_factor", 200)),
+            "express_multiplier": float(form_data.get("express_multiplier", 1.75)),
+            
+            # Weight-based rates
+            "weight_rates": {}
+        }
+        
+        # Process weight rates for each zone
+        zones = ['domestic', 'continental', 'international_close', 'international_far']
+        
+        # Debug log form data keys to see what we're getting
+        logger.info(f"Form data keys: {form_data.keys()}")
+        
+        for zone in zones:
+            # Handle form data that may have special formatting for nested keys
+            # Try multiple formats to handle different ways browsers might encode form data
+            possible_base_rate_keys = [
+                f"weight_rates[{zone}][base_rate]",  # Standard format
+                f"weight_rates.{zone}.base_rate",    # Dot notation
+                f"weight_rates_{zone}_base_rate"     # Underscore notation
+            ]
+            
+            possible_per_kg_keys = [
+                f"weight_rates[{zone}][per_kg]",
+                f"weight_rates.{zone}.per_kg",
+                f"weight_rates_{zone}_per_kg"
+            ]
+            
+            possible_min_weight_keys = [
+                f"weight_rates[{zone}][min_weight_kg]",
+                f"weight_rates.{zone}.min_weight_kg",
+                f"weight_rates_{zone}_min_weight_kg"
+            ]
+            
+            # Find the first key that exists in form_data
+            base_rate_key = next((key for key in possible_base_rate_keys if key in form_data), None)
+            per_kg_key = next((key for key in possible_per_kg_keys if key in form_data), None)
+            min_weight_key = next((key for key in possible_min_weight_keys if key in form_data), None)
+            
+            # Default values if specific zone rates aren't found
+            default_base_rate = 5.99 if zone == 'domestic' else (
+                12.99 if zone == 'continental' else (
+                    19.99 if zone == 'international_close' else 29.99
+                )
+            )
+            default_per_kg = 0.5 if zone == 'domestic' else (
+                2.0 if zone == 'continental' else (
+                    4.0 if zone == 'international_close' else 6.0
+                )
+            )
+            
+            # Set values with fallbacks
+            shipping_config["weight_rates"][zone] = {
+                "base_rate": float(form_data.get(base_rate_key, default_base_rate)) if base_rate_key else default_base_rate,
+                "per_kg": float(form_data.get(per_kg_key, default_per_kg)) if per_kg_key else default_per_kg,
+                "min_weight_kg": float(form_data.get(min_weight_key, 0.1)) if min_weight_key else 0.1,
+            }
+            
+            # Log the values being saved
+            logger.info(f"Saving weight rates for zone {zone}: {shipping_config['weight_rates'][zone]}")
+        
+        # Save configuration to plugin settings
+        from pycommerce.core.plugin import PluginConfigManager
+        config_manager = PluginConfigManager()
+        config_manager.save_config("standard-shipping", str(tenant_obj.id), shipping_config)
+        
+        logger.info(f"Saved shipping settings for tenant {selected_tenant_slug}")
+        
+        # Redirect back to the shipping settings page with success message
+        return RedirectResponse(
+            url=f"/admin/shipping-settings?tenant={selected_tenant_slug}&status_message=Shipping+settings+saved+successfully&status_type=success", 
+            status_code=303
+        )
+        
+    except Exception as e:
+        logger.error(f"Error saving shipping settings: {str(e)}")
+        
+        # Redirect with error message
+        error_message = f"Error saving shipping settings: {str(e)}"
+        tenant_param = request.query_params.get('tenant', '')
+        tenant_query = f"tenant={tenant_param}" if tenant_param else ""
+        
+        return RedirectResponse(
+            url=f"/admin/shipping-settings?{tenant_query}&status_message={error_message}&status_type=danger", 
+            status_code=303
+        )
+
 # Admin theme settings
 @app.get("/admin/theme-settings", response_class=HTMLResponse)
 async def admin_theme_settings(request: Request, status_message: Optional[str] = None, status_type: str = "info"):

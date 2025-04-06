@@ -1,0 +1,39 @@
+{{ store_name }} - Order Confirmation
+
+Thank you for your order!
+
+Hi{% if order.shipping_address %} {{ order.shipping_address.first_name }}{% endif %},
+
+Your order has been received and is now being processed. We'll send you another email when your order ships.
+
+ORDER DETAILS
+Order Number: #{{ order.id }}
+Order Date: {{ order.created_at.strftime('%B %d, %Y') }}
+Order Status: {{ order.status.value.capitalize() }}
+Payment Method: {% if order.metadata.payment_method %}{{ order.metadata.payment_method }}{% else %}Online Payment{% endif %}
+
+ORDER SUMMARY
+{% for item in order.items %}
+- {{ item.product_name }} ({{ item.quantity }}) x ${{ "%.2f"|format(item.unit_price) }} = ${{ "%.2f"|format(item.total_price) }}
+{% endfor %}
+
+Subtotal: ${{ "%.2f"|format(order.subtotal) }}
+Shipping: ${{ "%.2f"|format(order.shipping_cost) }}
+Tax: ${{ "%.2f"|format(order.tax) }}
+Total: ${{ "%.2f"|format(order.total) }}
+
+{% if order.shipping_address %}
+SHIPPING ADDRESS
+{{ order.shipping_address.first_name }} {{ order.shipping_address.last_name }}
+{{ order.shipping_address.address_line1 }}
+{% if order.shipping_address.address_line2 %}{{ order.shipping_address.address_line2 }}{% endif %}
+{{ order.shipping_address.city }}, {{ order.shipping_address.state }} {{ order.shipping_address.postal_code }}
+{{ order.shipping_address.country }}
+{% endif %}
+
+If you have any questions about your order, please contact us at {{ contact_email }}.
+
+Visit our store: {{ store_url }}
+
+© {{ year }} {{ store_name }}. All rights reserved.
+This email was sent to confirm your recent order.
