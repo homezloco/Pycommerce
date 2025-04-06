@@ -799,6 +799,8 @@ async def admin_save_theme_settings(request: Request):
             "header_style": form_data.get("header_style", "standard"),
             "product_card_style": form_data.get("product_card_style", "standard"),
             "button_style": form_data.get("button_style", "standard"),
+            "logo_url": form_data.get("logo_url", ""),
+            "logo_position": form_data.get("logo_position", "left"),
             
             # Custom CSS
             "custom_css": form_data.get("custom_css", ""),

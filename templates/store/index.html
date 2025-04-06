@@ -5,15 +5,29 @@
 {% block content %}
 {% if theme and theme.header_style %}
     {% if theme.header_style == 'minimal' %}
-    <header class="store-header py-2" style="background-color: var(--theme-primary-color, var(--bs-dark));">
-        <div class="container text-center">
-            <h1 class="display-5">{{ tenant.name }}</h1>
+    <header class="store-header py-3" style="background-color: var(--theme-primary-color, var(--bs-dark));">
+        <div class="container">
+            <div class="d-flex justify-content-{% if theme.logo_position == 'center' %}center{% elif theme.logo_position == 'right' %}end{% else %}start{% endif %} align-items-center">
+                {% if theme.logo_url %}
+                <div style="max-width: 200px; max-height: 80px;">
+                    <img src="{{ theme.logo_url }}" alt="{{ tenant.name }} Logo" style="max-width: 100%; max-height: 100%; object-fit: contain;">
+                </div>
+                {% else %}
+                <h1 class="h3 mb-0">{{ tenant.name }}</h1>
+                {% endif %}
+            </div>
         </div>
     </header>
     {% elif theme.header_style == 'centered' %}
     <header class="store-header py-4" style="background-color: var(--theme-primary-color, var(--bs-dark));">
         <div class="container text-center">
+            {% if theme.logo_url %}
+            <div class="mb-3 {% if theme.logo_position == 'center' %}mx-auto{% elif theme.logo_position == 'right' %}ms-auto me-0{% else %}ms-0 me-auto{% endif %}" style="max-width: 250px; max-height: 100px;">
+                <img src="{{ theme.logo_url }}" alt="{{ tenant.name }} Logo" style="max-width: 100%; max-height: 100%; object-fit: contain;">
+            </div>
+            {% else %}
             <h1 class="display-3">{{ tenant.name }}</h1>
+            {% endif %}
             <p class="lead">Welcome to our store</p>
             <hr class="my-4" style="background-color: var(--theme-secondary-color, var(--bs-light)); opacity: 0.25;">
             <p class="mb-0">Discover our amazing products</p>
@@ -22,7 +36,13 @@
     {% elif theme.header_style == 'expanded' %}
     <header class="store-header py-5" style="background-color: var(--theme-primary-color, var(--bs-dark));">
         <div class="container text-center">
+            {% if theme.logo_url %}
+            <div class="mb-4 {% if theme.logo_position == 'center' %}mx-auto{% elif theme.logo_position == 'right' %}ms-auto me-0{% else %}ms-0 me-auto{% endif %}" style="max-width: 300px; max-height: 120px;">
+                <img src="{{ theme.logo_url }}" alt="{{ tenant.name }} Logo" style="max-width: 100%; max-height: 100%; object-fit: contain;">
+            </div>
+            {% else %}
             <h1 class="display-2">{{ tenant.name }}</h1>
+            {% endif %}
             <p class="lead">Welcome to our online store</p>
             <p class="mb-4">Discover the best products at the best prices</p>
             <div class="d-grid gap-2 d-sm-flex justify-content-sm-center">
@@ -34,7 +54,13 @@
     {% else %}
     <header class="store-header" style="background-color: var(--theme-primary-color, var(--bs-dark));">
         <div class="container text-center">
+            {% if theme.logo_url %}
+            <div class="mb-3 {% if theme.logo_position == 'center' %}mx-auto{% elif theme.logo_position == 'right' %}ms-auto me-0{% else %}ms-0 me-auto{% endif %}" style="max-width: 250px; max-height: 100px;">
+                <img src="{{ theme.logo_url }}" alt="{{ tenant.name }} Logo" style="max-width: 100%; max-height: 100%; object-fit: contain;">
+            </div>
+            {% else %}
             <h1 class="display-4">{{ tenant.name }}</h1>
+            {% endif %}
             <p class="lead">Welcome to our store</p>
         </div>
     </header>
