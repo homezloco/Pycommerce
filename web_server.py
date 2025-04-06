@@ -776,6 +776,7 @@ async def admin_save_theme_settings(request: Request):
     """Save theme settings for a tenant."""
     try:
         form_data = await request.form()
+        logger.info(f"Form data received: {dict(form_data)}")
         
         # Get the selected tenant from the query parameters
         selected_tenant_slug = request.query_params.get('tenant')
@@ -788,7 +789,10 @@ async def admin_save_theme_settings(request: Request):
         if not tenant_obj:
             raise ValueError(f"Tenant not found: {selected_tenant_slug}")
         
-        # Log form data for debugging
+        # Log tenant data before update
+        logger.info(f"Current tenant settings before update: {tenant_obj.settings}")
+        
+        # Explicitly get logo URL and log it
         logo_url = form_data.get("logo_url", "")
         logo_position = form_data.get("logo_position", "left")
         logger.info(f"Saving theme settings for tenant {selected_tenant_slug}:")
@@ -819,6 +823,8 @@ async def admin_save_theme_settings(request: Request):
             "header_style": form_data.get("header_style", "standard"),
             "product_card_style": form_data.get("product_card_style", "standard"),
             "button_style": form_data.get("button_style", "standard"),
+            
+            # IMPORTANT: Logo settings
             "logo_url": logo_url,
             "logo_position": logo_position,
             
@@ -829,11 +835,24 @@ async def admin_save_theme_settings(request: Request):
             "updated_at": datetime.now().isoformat()
         }
         
-        # Update tenant theme settings
-        tenant_manager.update_theme(tenant_obj.id, theme_settings)
+        # Add debugging to verify logo_url is in the theme_settings
+        logger.info(f"Theme settings being sent to update_theme: {theme_settings}")
+        logger.info(f"logo_url key exists in theme_settings: {'logo_url' in theme_settings}")
+        logger.info(f"logo_url value in theme_settings: '{theme_settings.get('logo_url', 'NOT FOUND')}'")
         
-        # Log the saved theme settings
-        logger.info(f"Theme settings after update: {theme_settings}")
+        # Update tenant theme settings
+        updated_tenant = tenant_manager.update_theme(tenant_obj.id, theme_settings)
+        
+        # Log the saved theme settings from the returned tenant
+        if updated_tenant and hasattr(updated_tenant, 'settings') and updated_tenant.settings:
+            logger.info(f"Theme settings after update (from returned tenant): {updated_tenant.settings.get('theme', {})}")
+            logger.info(f"logo_url in returned settings: '{updated_tenant.settings.get('theme', {}).get('logo_url', 'NOT FOUND')}'")
+        
+        # Force a fresh fetch to verify the changes were saved to the database
+        fresh_tenant = tenant_manager.get_by_slug(selected_tenant_slug)
+        if fresh_tenant and hasattr(fresh_tenant, 'settings') and fresh_tenant.settings:
+            logger.info(f"Fresh theme settings after update: {fresh_tenant.settings.get('theme', {})}")
+            logger.info(f"logo_url in fresh settings: '{fresh_tenant.settings.get('theme', {}).get('logo_url', 'NOT FOUND')}'")
         
         status_message = "Theme settings saved successfully"
         status_type = "success"
