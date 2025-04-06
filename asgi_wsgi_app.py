@@ -40,8 +40,9 @@ def start_uvicorn_server():
         return
 
     cmd = [
-        sys.executable, "-m", "uvicorn", "web_app:app",
-        "--host", UVICORN_HOST, "--port", str(UVICORN_PORT)
+        sys.executable, "-m", "uvicorn", "uvicorn_server:app",
+        "--host", UVICORN_HOST, "--port", str(UVICORN_PORT),
+        "--reload"
     ]
     logger.info(f"Starting uvicorn server with command: {' '.join(cmd)}")
     
