@@ -354,6 +354,13 @@ async def store(
     theme_settings = {}
     if tenant_obj and hasattr(tenant_obj, 'settings') and tenant_obj.settings:
         theme_settings = tenant_obj.settings.get('theme', {})
+        logger.info(f"Theme settings for tenant {tenant_obj.name}: {theme_settings}")
+    else:
+        logger.warning(f"No theme settings found for tenant {tenant_obj.name if tenant_obj else 'unknown'}")
+        if tenant_obj:
+            logger.warning(f"Tenant settings attribute exists: {hasattr(tenant_obj, 'settings')}")
+            if hasattr(tenant_obj, 'settings'):
+                logger.warning(f"Tenant settings: {tenant_obj.settings}")
     
     return templates.TemplateResponse(
         "store/index.html", 
