@@ -361,8 +361,8 @@ async def store(
     # Check if logo_url exists
     if 'logo_url' not in theme_settings or not theme_settings.get('logo_url'):
         # Refetch the tenant using our improved get_by_slug method that always gets fresh data
-        logger.info(f"No logo found in theme settings, re-fetching tenant with slug: {tenant}")
-        tenant_obj = tenant_manager.get_by_slug(tenant)
+        logger.info(f"No logo found in theme settings, re-fetching tenant with slug: {slug}")
+        tenant_obj = tenant_manager.get_by_slug(slug)
         if tenant_obj and hasattr(tenant_obj, 'settings') and tenant_obj.settings:
             theme_settings = tenant_obj.settings.get('theme', {})
             logger.info(f"Re-fetched theme settings: {theme_settings}")
