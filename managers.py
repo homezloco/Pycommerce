@@ -12,9 +12,11 @@ from typing import List, Dict, Any, Optional, Union
 
 from app import db
 from models import (
-    Tenant, Product, Cart, CartItem, Order, OrderItem, User,
-    Shipment, ShipmentItem, InventoryRecord, InventoryTransaction
+    Tenant, Product, Cart, CartItem, User,
+    InventoryRecord, InventoryTransaction
 )
+# Import these separately to prevent circular imports
+from models import Order, OrderItem, Shipment, ShipmentItem
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)

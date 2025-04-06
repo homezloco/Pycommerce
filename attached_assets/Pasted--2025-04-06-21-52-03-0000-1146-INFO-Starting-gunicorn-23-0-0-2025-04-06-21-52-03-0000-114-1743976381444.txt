@@ -1,0 +1,163 @@
+[2025-04-06 21:52:03 +0000] [1146] [INFO] Starting gunicorn 23.0.0
+[2025-04-06 21:52:03 +0000] [1146] [INFO] Listening at: http://0.0.0.0:5000 (1146)
+[2025-04-06 21:52:03 +0000] [1146] [INFO] Using worker: sync
+[2025-04-06 21:52:03 +0000] [1157] [INFO] Booting worker with pid: 1157
+[2025-04-06 21:52:03 +0000] [1146] [INFO] Handling signal: winch
+[2025-04-06 21:52:03 +0000] [1146] [INFO] Handling signal: winch
+[2025-04-06 21:52:04 +0000] [1146] [INFO] Handling signal: winch
+[2025-04-06 21:52:04 +0000] [1146] [INFO] Handling signal: winch
+[2025-04-06 21:52:04 +0000] [1146] [INFO] Handling signal: winch
+INFO:pycommerce.plugins.payment.config:Using development Stripe credentials
+INFO:pycommerce.plugins.payment.config:Using development PayPal credentials
+INFO:pycommerce.plugins.payment.stripe:Initializing Stripe payment plugin
+INFO:pycommerce.plugins:Registering plugin: stripe_payment v0.1.0
+INFO:pycommerce.plugins.payment.stripe:Initializing Stripe payment plugin
+INFO:pycommerce:Registered payment plugin: stripe
+INFO:pycommerce.plugins.payment.paypal:Initializing PayPal payment plugin
+INFO:pycommerce.plugins:Registering plugin: paypal_payment v0.1.0
+INFO:pycommerce.plugins.payment.paypal:Initializing PayPal payment plugin
+INFO:pycommerce:Registered payment plugin: paypal
+INFO:pycommerce.plugins:Registering plugin: standard_shipping v0.1.0
+INFO:pycommerce.plugins.shipping.standard:Initializing Standard shipping plugin
+INFO:pycommerce:Registered shipping plugin: standard
+INFO:pycommerce.core.db:Initializing database...
+INFO:pycommerce.core.db:Database initialized successfully.
+INFO:pycommerce.core.db:Initializing database...
+INFO:pycommerce.core.db:Database initialized successfully.
+INFO:pycommerce.migrations:Database migrations initialized
+WARNING:routes.storefront.stores:Error loading Flask TenantManager: cannot import name 'OrderManager' from partially initialized module 'managers' (most likely due to a circular import) (/home/runner/workspace/managers.py)
+INFO:routes.storefront.stores:Initialized SDK TenantManager as fallback
+WARNING:routes.storefront.stores:Error loading Flask ProductManager: cannot import name 'OrderManager' from partially initialized module 'managers' (most likely due to a circular import) (/home/runner/workspace/managers.py)
+INFO:routes.storefront.stores:Initialized SDK ProductManager as fallback
+WARNING:routes.storefront.stores:Error loading Flask CartManager: cannot import name 'OrderManager' from partially initialized module 'managers' (most likely due to a circular import) (/home/runner/workspace/managers.py)
+INFO:routes.storefront.stores:Initialized SDK CartManager as fallback
+INFO:routes.storefront.stores:Finished loading managers
+WARNING:routes.storefront.cart:Error loading Flask ProductManager: cannot import name 'OrderManager' from partially initialized module 'managers' (most likely due to a circular import) (/home/runner/workspace/managers.py)
+INFO:routes.storefront.cart:Initialized SDK ProductManager as fallback
+WARNING:routes.storefront.cart:Error loading Flask CartManager: cannot import name 'OrderManager' from partially initialized module 'managers' (most likely due to a circular import) (/home/runner/workspace/managers.py)
+INFO:routes.storefront.cart:Initialized SDK CartManager as fallback
+INFO:routes.storefront.cart:Initialized SDK TenantManager
+INFO:routes.storefront.cart:Finished loading managers
+WARNING:routes.storefront.checkout:Error loading Flask TenantManager: cannot import name 'OrderManager' from partially initialized module 'managers' (most likely due to a circular import) (/home/runner/workspace/managers.py)
+WARNING:routes.storefront.checkout:Error loading Flask ProductManager: cannot import name 'OrderManager' from partially initialized module 'managers' (most likely due to a circular import) (/home/runner/workspace/managers.py)
+WARNING:routes.storefront.checkout:Error loading Flask CartManager: cannot import name 'OrderManager' from partially initialized module 'managers' (most likely due to a circular import) (/home/runner/workspace/managers.py)
+INFO:routes.storefront.checkout:Initialized SDK OrderManager
+INFO:routes.storefront.checkout:Finished loading Flask app managers
+INFO:asgi_wsgi_app:Starting uvicorn server with command: /nix/store/wqhkxzzlaswkj3gimqign99sshvllcg6-python-wrapped-0.1.0/bin/python3 -m uvicorn web_app:app --host 127.0.0.1 --port 8000 --reload
+INFO:asgi_wsgi_app:Waiting for uvicorn server to start...
+INFO:asgi_wsgi_app:Waiting for uvicorn server (attempt 1/10)
+INFO:asgi_wsgi_app:Uvicorn: INFO:     Will watch for changes in these directories: ['/home/runner/workspace']
+INFO:asgi_wsgi_app:Uvicorn: INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+INFO:asgi_wsgi_app:Uvicorn: INFO:     Started reloader process [1180] using WatchFiles
+INFO:asgi_wsgi_app:Waiting for uvicorn server (attempt 2/10)
+INFO:asgi_wsgi_app:Waiting for uvicorn server (attempt 3/10)
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.plugins.payment.config:Using development Stripe credentials
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.plugins.payment.config:Using development PayPal credentials
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.plugins.payment.stripe:Initializing Stripe payment plugin
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.plugins:Registering plugin: stripe_payment v0.1.0
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.plugins.payment.stripe:Initializing Stripe payment plugin
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce:Registered payment plugin: stripe
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.plugins.payment.paypal:Initializing PayPal payment plugin
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.plugins:Registering plugin: paypal_payment v0.1.0
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.plugins.payment.paypal:Initializing PayPal payment plugin
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce:Registered payment plugin: paypal
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.plugins:Registering plugin: standard_shipping v0.1.0
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.plugins.shipping.standard:Initializing Standard shipping plugin
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce:Registered shipping plugin: standard
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.core.db:Initializing database...
+INFO:asgi_wsgi_app:Waiting for uvicorn server (attempt 4/10)
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.core.db:Database initialized successfully.
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.core.db:Initializing database...
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.core.db:Database initialized successfully.
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.migrations:Database migrations initialized
+INFO:asgi_wsgi_app:Waiting for uvicorn server (attempt 5/10)
+INFO:asgi_wsgi_app:Uvicorn: WARNING:routes.storefront.stores:Error loading Flask TenantManager: cannot import name 'OrderManager' from partially initialized module 'managers' (most likely due to a circular import) (/home/runner/workspace/managers.py)
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.storefront.stores:Initialized SDK TenantManager as fallback
+INFO:asgi_wsgi_app:Waiting for uvicorn server (attempt 6/10)
+INFO:asgi_wsgi_app:Uvicorn: WARNING:routes.storefront.stores:Error loading Flask ProductManager: cannot import name 'OrderManager' from partially initialized module 'managers' (most likely due to a circular import) (/home/runner/workspace/managers.py)
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.storefront.stores:Initialized SDK ProductManager as fallback
+[2025-04-06 21:52:20 +0000] [1146] [INFO] Handling signal: winch
+INFO:asgi_wsgi_app:Waiting for uvicorn server (attempt 7/10)
+INFO:asgi_wsgi_app:Uvicorn: WARNING:routes.storefront.stores:Error loading Flask CartManager: cannot import name 'OrderManager' from partially initialized module 'managers' (most likely due to a circular import) (/home/runner/workspace/managers.py)
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.storefront.stores:Initialized SDK CartManager as fallback
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.storefront.stores:Finished loading managers
+INFO:asgi_wsgi_app:Waiting for uvicorn server (attempt 8/10)
+INFO:asgi_wsgi_app:Uvicorn: WARNING:routes.storefront.cart:Error loading Flask ProductManager: cannot import name 'OrderManager' from partially initialized module 'managers' (most likely due to a circular import) (/home/runner/workspace/managers.py)
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.storefront.cart:Initialized SDK ProductManager as fallback
+INFO:asgi_wsgi_app:Waiting for uvicorn server (attempt 9/10)
+INFO:asgi_wsgi_app:Uvicorn: WARNING:routes.storefront.cart:Error loading Flask CartManager: cannot import name 'OrderManager' from partially initialized module 'managers' (most likely due to a circular import) (/home/runner/workspace/managers.py)
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.storefront.cart:Initialized SDK CartManager as fallback
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.storefront.cart:Initialized SDK TenantManager
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.storefront.cart:Finished loading managers
+INFO:asgi_wsgi_app:Waiting for uvicorn server (attempt 10/10)
+INFO:asgi_wsgi_app:Uvicorn: WARNING:routes.storefront.checkout:Error loading Flask TenantManager: cannot import name 'OrderManager' from partially initialized module 'managers' (most likely due to a circular import) (/home/runner/workspace/managers.py)
+ERROR:asgi_wsgi_app:Failed to start uvicorn server
+INFO:asgi_wsgi_app:Uvicorn server is already running
+INFO:asgi_wsgi_app:Uvicorn server is already running
+INFO:asgi_wsgi_app:Uvicorn server is already running
+INFO:asgi_wsgi_app:Uvicorn server is already running
+INFO:asgi_wsgi_app:Uvicorn server is already running
+INFO:asgi_wsgi_app:Uvicorn: WARNING:routes.storefront.checkout:Error loading Flask ProductManager: cannot import name 'OrderManager' from partially initialized module 'managers' (most likely due to a circular import) (/home/runner/workspace/managers.py)
+INFO:asgi_wsgi_app:Uvicorn: WARNING:routes.storefront.checkout:Error loading Flask CartManager: cannot import name 'OrderManager' from partially initialized module 'managers' (most likely due to a circular import) (/home/runner/workspace/managers.py)
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.storefront.checkout:Initialized SDK OrderManager
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.storefront.checkout:Finished loading Flask app managers
+INFO:asgi_wsgi_app:Uvicorn: INFO:     Started server process [1187]
+INFO:asgi_wsgi_app:Uvicorn: INFO:     Waiting for application startup.
+INFO:asgi_wsgi_app:Uvicorn: INFO:     Application startup complete.
+INFO:asgi_wsgi_app:Uvicorn: INFO:     127.0.0.1:36220 - "GET /api/health HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET http://127.0.0.1:8000/api/health "HTTP/1.1 200 OK"
+INFO:asgi_wsgi_app:Uvicorn: INFO:     127.0.0.1:36224 - "GET /stores HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET http://127.0.0.1:8000/stores "HTTP/1.1 200 OK"
+INFO:asgi_wsgi_app:Uvicorn: INFO:     127.0.0.1:56382 - "GET /api/health HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET http://127.0.0.1:8000/api/health "HTTP/1.1 200 OK"
+INFO:asgi_wsgi_app:Uvicorn: INFO:     127.0.0.1:56388 - "GET /store/tech-gadgets HTTP/1.1" 500 Internal Server Error
+INFO:asgi_wsgi_app:Uvicorn: ERROR:    Exception in ASGI application
+INFO:asgi_wsgi_app:Uvicorn: Traceback (most recent call last):
+INFO:asgi_wsgi_app:Uvicorn: File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/uvicorn/protocols/http/httptools_impl.py", line 409, in run_asgi
+INFO:asgi_wsgi_app:Uvicorn: result = await app(  # type: ignore[func-returns-value]
+INFO:asgi_wsgi_app:Uvicorn: ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+INFO:asgi_wsgi_app:Uvicorn: File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/uvicorn/middleware/proxy_headers.py", line 60, in __call__
+INFO:asgi_wsgi_app:Uvicorn: return await self.app(scope, receive, send)
+INFO:asgi_wsgi_app:Uvicorn: ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+INFO:asgi_wsgi_app:Uvicorn: File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/fastapi/applications.py", line 1054, in __call__
+INFO:asgi_wsgi_app:Uvicorn: await super().__call__(scope, receive, send)
+INFO:asgi_wsgi_app:Uvicorn: File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/starlette/applications.py", line 112, in __call__
+INFO:asgi_wsgi_app:Uvicorn: await self.middleware_stack(scope, receive, send)
+INFO:asgi_wsgi_app:Uvicorn: File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/starlette/middleware/errors.py", line 187, in __call__
+INFO:asgi_wsgi_app:Uvicorn: raise exc
+INFO:asgi_wsgi_app:Uvicorn: File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/starlette/middleware/errors.py", line 165, in __call__
+INFO:asgi_wsgi_app:Uvicorn: await self.app(scope, receive, _send)
+INFO:asgi_wsgi_app:Uvicorn: File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/starlette/middleware/sessions.py", line 85, in __call__
+INFO:asgi_wsgi_app:Uvicorn: await self.app(scope, receive, send_wrapper)
+INFO:asgi_wsgi_app:Uvicorn: File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/starlette/middleware/exceptions.py", line 62, in __call__
+INFO:httpx:HTTP Request: GET http://127.0.0.1:8000/store/tech-gadgets "HTTP/1.1 500 Internal Server Error"
+INFO:asgi_wsgi_app:Uvicorn: await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+INFO:asgi_wsgi_app:Uvicorn: File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+INFO:asgi_wsgi_app:Uvicorn: raise exc
+INFO:asgi_wsgi_app:Uvicorn: File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+INFO:asgi_wsgi_app:Uvicorn: await app(scope, receive, sender)
+INFO:asgi_wsgi_app:Uvicorn: File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/starlette/routing.py", line 714, in __call__
+INFO:asgi_wsgi_app:Uvicorn: await self.middleware_stack(scope, receive, send)
+INFO:asgi_wsgi_app:Uvicorn: File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/starlette/routing.py", line 734, in app
+INFO:asgi_wsgi_app:Uvicorn: await route.handle(scope, receive, send)
+INFO:asgi_wsgi_app:Uvicorn: File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/starlette/routing.py", line 288, in handle
+INFO:asgi_wsgi_app:Uvicorn: await self.app(scope, receive, send)
+INFO:asgi_wsgi_app:Uvicorn: File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/starlette/routing.py", line 76, in app
+INFO:asgi_wsgi_app:Uvicorn: await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+INFO:asgi_wsgi_app:Uvicorn: File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+INFO:asgi_wsgi_app:Uvicorn: raise exc
+INFO:asgi_wsgi_app:Uvicorn: File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+INFO:asgi_wsgi_app:Uvicorn: await app(scope, receive, sender)
+INFO:asgi_wsgi_app:Uvicorn: File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/starlette/routing.py", line 73, in app
+INFO:asgi_wsgi_app:Uvicorn: response = await f(request)
+INFO:asgi_wsgi_app:Uvicorn: ^^^^^^^^^^^^^^^^
+INFO:asgi_wsgi_app:Uvicorn: File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/fastapi/routing.py", line 301, in app
+INFO:asgi_wsgi_app:Uvicorn: raw_response = await run_endpoint_function(
+INFO:asgi_wsgi_app:Uvicorn: ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+INFO:asgi_wsgi_app:Uvicorn: File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/fastapi/routing.py", line 212, in run_endpoint_function
+INFO:asgi_wsgi_app:Uvicorn: return await dependant.call(**values)
+INFO:asgi_wsgi_app:Uvicorn: ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+INFO:asgi_wsgi_app:Uvicorn: File "/home/runner/workspace/routes/storefront/stores.py", line 104, in store
+INFO:asgi_wsgi_app:Uvicorn: "id": str(tenant_obj.id),
+INFO:asgi_wsgi_app:Uvicorn: ^^^^^^^^^^^^^
+INFO:asgi_wsgi_app:Uvicorn: AttributeError: 'NoneType' object has no attribute 'id'

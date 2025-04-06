@@ -22,9 +22,11 @@ router = APIRouter(tags=["cart"])
 
 # Global variables initialized in setup_routes
 templates = None
-tenant_manager = TenantManager()
-product_manager = ProductManager()
-cart_manager = CartManager()
+tenant_manager = None
+product_manager = None
+cart_manager = None
+
+# Will initialize these in setup_routes to avoid circular imports
 
 @router.get("/cart", response_class=HTMLResponse)
 async def view_cart(request: Request):
@@ -311,6 +313,44 @@ def setup_routes(app_templates):
     Args:
         app_templates: Jinja2Templates instance from the main app
     """
-    global templates
+    global templates, tenant_manager, product_manager, cart_manager
     templates = app_templates
+    
+    # Try to load Flask app managers to replace SDK managers
+    try:
+        # Import managers one by one to avoid circular import errors
+        try:
+            from managers import ProductManager as FlaskProductManager
+            product_manager = FlaskProductManager()
+            logger.info("Loaded Flask ProductManager")
+        except Exception as product_err:
+            logger.warning(f"Error loading Flask ProductManager: {product_err}")
+            # Initialize with SDK manager as fallback
+            from pycommerce.models.product import ProductManager as SDKProductManager
+            product_manager = SDKProductManager()
+            logger.info("Initialized SDK ProductManager as fallback")
+            
+        try:
+            from managers import CartManager as FlaskCartManager
+            cart_manager = FlaskCartManager()
+            logger.info("Loaded Flask CartManager")
+        except Exception as cart_err:
+            logger.warning(f"Error loading Flask CartManager: {cart_err}")
+            # Initialize with SDK manager as fallback
+            from pycommerce.models.cart import CartManager as SDKCartManager
+            cart_manager = SDKCartManager()
+            logger.info("Initialized SDK CartManager as fallback")
+            
+        try:
+            from pycommerce.models.tenant import TenantManager as SDKTenantManager
+            tenant_manager = SDKTenantManager()
+            logger.info("Initialized SDK TenantManager")
+        except Exception as tenant_err:
+            logger.warning(f"Error initializing SDK TenantManager: {tenant_err}")
+            
+        logger.info("Finished loading managers")
+    except Exception as e:
+        logger.error(f"General error loading managers: {e}")
+        # We'll keep using the SDK managers as fallback
+        
     return router

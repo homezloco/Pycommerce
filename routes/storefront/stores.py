@@ -22,9 +22,11 @@ router = APIRouter(tags=["store"])
 
 # Global variables initialized in setup_routes
 templates = None
-tenant_manager = TenantManager()
-product_manager = ProductManager()
-cart_manager = CartManager()
+tenant_manager = None
+product_manager = None
+cart_manager = None
+
+# Will initialize these in setup_routes to avoid circular imports
 
 @router.get("/stores", response_class=HTMLResponse)
 async def stores(request: Request):
@@ -94,10 +96,14 @@ async def store(
         else:
             tenant_obj = tenant_manager.get_by_slug(slug)
     except Exception as e:
-        logger.warning(f"Tenant not found with slug '{slug}': {str(e)}")
-        # Redirect to stores page if tenant not found
-        return RedirectResponse(url="/stores")
+        logger.warning(f"Error fetching tenant with slug '{slug}': {str(e)}")
+        # Will redirect below if tenant not found
     
+    # Check if tenant_obj is None
+    if not tenant_obj:
+        logger.warning(f"Tenant not found with slug '{slug}'")
+        return RedirectResponse(url="/stores")
+        
     tenant_data = {
         "id": str(tenant_obj.id),
         "name": tenant_obj.name,
@@ -249,14 +255,22 @@ async def store(
         logger.info(f"No logo found in theme settings, re-fetching tenant with slug: {slug}")
         
         # Handle both SDK and Flask managers
-        if hasattr(tenant_manager, 'get_tenant_by_slug'):
-            tenant_obj = tenant_manager.get_tenant_by_slug(slug)
-        else:
-            tenant_obj = tenant_manager.get_by_slug(slug)
+        refetched_tenant = None
+        try:
+            if hasattr(tenant_manager, 'get_tenant_by_slug'):
+                refetched_tenant = tenant_manager.get_tenant_by_slug(slug)
+            else:
+                refetched_tenant = tenant_manager.get_by_slug(slug)
+        except Exception as e:
+            logger.warning(f"Error re-fetching tenant with slug '{slug}': {str(e)}")
             
-        if tenant_obj and hasattr(tenant_obj, 'settings') and tenant_obj.settings:
-            theme_settings = tenant_obj.settings.get('theme', {})
-            logger.info(f"Re-fetched theme settings: {theme_settings}")
+        # Use the refetched tenant if found, otherwise keep the original
+        if refetched_tenant:
+            tenant_obj = refetched_tenant
+            
+            if hasattr(tenant_obj, 'settings') and tenant_obj.settings:
+                theme_settings = tenant_obj.settings.get('theme', {})
+                logger.info(f"Re-fetched theme settings: {theme_settings}")
             
     return templates.TemplateResponse(
         "store/index.html", 
@@ -283,19 +297,43 @@ def setup_routes(app_templates):
     # Now that we have the application context, we can import the managers
     # from the Flask app instead of using the SDK versions
     try:
-        # Importing here to avoid circular import errors
-        from managers import TenantManager as FlaskTenantManager
-        from managers import ProductManager as FlaskProductManager
-        from managers import CartManager as FlaskCartManager
-        
-        # Replace the SDK managers with the Flask app managers
-        tenant_manager = FlaskTenantManager()
-        product_manager = FlaskProductManager()
-        cart_manager = FlaskCartManager()
-        
-        logger.info("Successfully loaded Flask app managers")
+        # Import managers one by one to avoid circular import errors
+        try:
+            from managers import TenantManager as FlaskTenantManager
+            tenant_manager = FlaskTenantManager()
+            logger.info("Loaded Flask TenantManager")
+        except Exception as tenant_err:
+            logger.warning(f"Error loading Flask TenantManager: {tenant_err}")
+            # Initialize with SDK manager as fallback
+            from pycommerce.models.tenant import TenantManager as SDKTenantManager
+            tenant_manager = SDKTenantManager()
+            logger.info("Initialized SDK TenantManager as fallback")
+            
+        try:
+            from managers import ProductManager as FlaskProductManager
+            product_manager = FlaskProductManager()
+            logger.info("Loaded Flask ProductManager")
+        except Exception as product_err:
+            logger.warning(f"Error loading Flask ProductManager: {product_err}")
+            # Initialize with SDK manager as fallback
+            from pycommerce.models.product import ProductManager as SDKProductManager
+            product_manager = SDKProductManager()
+            logger.info("Initialized SDK ProductManager as fallback")
+            
+        try:
+            from managers import CartManager as FlaskCartManager
+            cart_manager = FlaskCartManager()
+            logger.info("Loaded Flask CartManager")
+        except Exception as cart_err:
+            logger.warning(f"Error loading Flask CartManager: {cart_err}")
+            # Initialize with SDK manager as fallback
+            from pycommerce.models.cart import CartManager as SDKCartManager
+            cart_manager = SDKCartManager()
+            logger.info("Initialized SDK CartManager as fallback")
+            
+        logger.info("Finished loading managers")
     except Exception as e:
-        logger.error(f"Error loading Flask app managers: {e}")
+        logger.error(f"General error loading managers: {e}")
         # We'll keep using the SDK managers as fallback
     
     return router
