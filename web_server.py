@@ -2602,12 +2602,12 @@ async def admin_download_media(
         )
 
 @app.delete("/admin/media/{media_id}", response_class=RedirectResponse)
-async def admin_delete_media(
+async def admin_delete_media_via_api(
     request: Request,
     media_id: str,
     tenant_id: str = Form(...)
 ):
-    """Delete a media file."""
+    """Delete a media file via API (DELETE request)."""
     try:
         # Use the media service to delete the media
         result = media_service.delete_media(media_id)
@@ -2626,7 +2626,49 @@ async def admin_delete_media(
         logger.error(f"Error deleting media: {str(e)}")
         error_message = f"Error deleting media: {str(e)}"
         return RedirectResponse(
-            url=f"/admin/media?tenant={tenant_id}&status_message={error_message}&status_type=danger", 
+            url=f"/admin/media?tenant={tenant_id if tenant_id else ''}&status_message={error_message}&status_type=danger", 
+            status_code=303
+        )
+@app.get("/admin/media/delete/{media_id}", response_class=RedirectResponse)
+async def admin_delete_media(
+    request: Request,
+    media_id: str
+):
+    """Delete a media file via browser link (GET request)."""
+    try:
+        # Get tenant ID from session or query params if available
+        selected_tenant_slug = None
+        tenant_id = None
+        
+        if "selected_tenant" in request.session:
+            selected_tenant_slug = request.session.get("selected_tenant")
+        
+        if selected_tenant_slug:
+            try:
+                selected_tenant = tenant_manager.get_by_slug(selected_tenant_slug)
+                if selected_tenant and hasattr(selected_tenant, 'id'):
+                    tenant_id = str(selected_tenant.id)
+            except Exception as e:
+                logger.warning(f"Could not get tenant with slug '{selected_tenant_slug}': {str(e)}")
+        
+        # Use the media service to delete the media
+        result = media_service.delete_media(media_id)
+        if result:
+            return RedirectResponse(
+                url=f"/admin/media?tenant={tenant_id if tenant_id else ''}&status_message=Media+deleted+successfully&status_type=success", 
+                status_code=303
+            )
+        else:
+            error_message = "Deletion failed. Please try again."
+            return RedirectResponse(
+                url=f"/admin/media?tenant={tenant_id if tenant_id else ''}&status_message={error_message}&status_type=danger", 
+                status_code=303
+            )
+    except Exception as e:
+        logger.error(f"Error deleting media: {str(e)}")
+        error_message = f"Error deleting media: {str(e)}"
+        return RedirectResponse(
+            url=f"/admin/media?status_message={error_message}&status_type=danger",
             status_code=303
         )
 
