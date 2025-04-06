@@ -921,7 +921,7 @@ async def admin_save_shipping_settings(request: Request):
             logger.info(f"Saving weight rates for zone {zone}: {shipping_config['weight_rates'][zone]}")
         
         # Save configuration to plugin settings
-        from pycommerce.core.plugin import PluginConfigManager
+        from pycommerce.core import PluginConfigManager
         config_manager = PluginConfigManager()
         config_manager.save_config("standard-shipping", str(tenant_obj.id), shipping_config)
         

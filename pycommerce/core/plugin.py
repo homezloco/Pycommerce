@@ -12,6 +12,7 @@ import importlib
 import inspect
 import os
 from fastapi import FastAPI, APIRouter
+import json
 
 logger = logging.getLogger("pycommerce.plugins")
 
@@ -208,6 +209,86 @@ class PluginManager:
 
 
 # ----- Plugin Discovery Functions -----
+
+class PluginConfigManager:
+    """
+    Manages plugin configuration storage and retrieval.
+    
+    This class provides methods to save and retrieve plugin configurations,
+    which can be tenant-specific or global.
+    """
+    
+    def __init__(self, config_dir=None):
+        """
+        Initialize the plugin configuration manager.
+        
+        Args:
+            config_dir: Directory to store configuration files (optional)
+        """
+        self.config_dir = config_dir
+        if not self.config_dir:
+            # Use a memory-based configuration store for now
+            self._config_store = {}
+    
+    def save_config(self, plugin_id: str, tenant_id: str, config: Dict[str, Any]) -> None:
+        """
+        Save plugin configuration.
+        
+        Args:
+            plugin_id: ID of the plugin
+            tenant_id: ID of the tenant (or None for global config)
+            config: Configuration dictionary to save
+        """
+        key = f"{plugin_id}:{tenant_id}" if tenant_id else plugin_id
+        
+        if self.config_dir:
+            # File-based storage (not implemented yet)
+            logger.warning("File-based configuration storage not implemented yet")
+            
+        # Memory-based storage
+        self._config_store[key] = config
+        logger.debug(f"Saved configuration for plugin {plugin_id}, tenant {tenant_id}")
+    
+    def get_config(self, plugin_id: str, tenant_id: str = None) -> Dict[str, Any]:
+        """
+        Get plugin configuration.
+        
+        Args:
+            plugin_id: ID of the plugin
+            tenant_id: ID of the tenant (or None for global config)
+            
+        Returns:
+            Configuration dictionary, or empty dict if not found
+        """
+        key = f"{plugin_id}:{tenant_id}" if tenant_id else plugin_id
+        
+        if self.config_dir:
+            # File-based storage (not implemented yet)
+            logger.warning("File-based configuration storage not implemented yet")
+            return {}
+            
+        # Memory-based storage
+        return self._config_store.get(key, {})
+    
+    def delete_config(self, plugin_id: str, tenant_id: str = None) -> None:
+        """
+        Delete plugin configuration.
+        
+        Args:
+            plugin_id: ID of the plugin
+            tenant_id: ID of the tenant (or None for global config)
+        """
+        key = f"{plugin_id}:{tenant_id}" if tenant_id else plugin_id
+        
+        if self.config_dir:
+            # File-based storage (not implemented yet)
+            logger.warning("File-based configuration storage not implemented yet")
+            
+        # Memory-based storage
+        if key in self._config_store:
+            del self._config_store[key]
+            logger.debug(f"Deleted configuration for plugin {plugin_id}, tenant {tenant_id}")
+
 
 def get_available_plugins() -> List[Dict[str, Any]]:
     """
