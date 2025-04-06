@@ -1,0 +1,333 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}Settings - PyCommerce Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <h1 class="h3 mb-4">Settings</h1>
+    
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-dark">
+            <ul class="nav nav-tabs card-header-tabs" id="settingsTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="payment-tab" data-bs-toggle="tab" data-bs-target="#payment" type="button" role="tab" aria-controls="payment" aria-selected="true">
+                        <i class="bi bi-credit-card me-2"></i>Payment
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="shipping-tab" data-bs-toggle="tab" data-bs-target="#shipping" type="button" role="tab" aria-controls="shipping" aria-selected="false">
+                        <i class="bi bi-truck me-2"></i>Shipping
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="ai-tab" data-bs-toggle="tab" data-bs-target="#ai" type="button" role="tab" aria-controls="ai" aria-selected="false">
+                        <i class="bi bi-robot me-2"></i>AI Providers
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="email-tab" data-bs-toggle="tab" data-bs-target="#email" type="button" role="tab" aria-controls="email" aria-selected="false">
+                        <i class="bi bi-envelope me-2"></i>Email
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="general-tab" data-bs-toggle="tab" data-bs-target="#general" type="button" role="tab" aria-controls="general" aria-selected="false">
+                        <i class="bi bi-gear me-2"></i>General
+                    </button>
+                </li>
+            </ul>
+        </div>
+        <div class="card-body">
+            <div class="tab-content" id="settingsTabsContent">
+                <!-- Payment Settings -->
+                <div class="tab-pane fade show active" id="payment" role="tabpanel" aria-labelledby="payment-tab">
+                    <h5 class="card-title mb-4">Payment Providers</h5>
+                    
+                    <form action="/admin/settings/payment" method="post">
+                        <!-- Stripe Settings Panel -->
+                        <div class="card mb-4">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h5 class="mb-0">
+                                    <img src="https://cdn.jsdelivr.net/gh/stripe-samples/logo/img/stroke.svg" alt="Stripe" height="24">
+                                    Stripe
+                                </h5>
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="stripe_enabled" name="stripe_enabled" {% if stripe_enabled %}checked{% endif %}>
+                                    <label class="form-check-label" for="stripe_enabled">Enabled</label>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label for="stripe_api_key" class="form-label">API Secret Key</label>
+                                    <input type="password" class="form-control" id="stripe_api_key" name="stripe_api_key" value="{{ stripe_api_key }}">
+                                    <div class="form-text">Your Stripe Secret API Key (starts with sk_)</div>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="stripe_public_key" class="form-label">Public Key</label>
+                                    <input type="text" class="form-control" id="stripe_public_key" name="stripe_public_key" value="{{ stripe_public_key }}">
+                                    <div class="form-text">Your Stripe Public Key (starts with pk_)</div>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="stripe_webhook_secret" class="form-label">Webhook Secret</label>
+                                    <input type="password" class="form-control" id="stripe_webhook_secret" name="stripe_webhook_secret" value="{{ stripe_webhook_secret }}">
+                                    <div class="form-text">Your Stripe Webhook Secret (starts with whsec_)</div>
+                                </div>
+                                <p class="text-info">
+                                    <i class="bi bi-info-circle"></i>
+                                    {% if development_mode %}
+                                    Currently using <strong>development</strong> credentials.
+                                    {% else %}
+                                    Using production credentials.
+                                    {% endif %}
+                                </p>
+                            </div>
+                        </div>
+                        
+                        <!-- PayPal Settings Panel -->
+                        <div class="card mb-4">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h5 class="mb-0">
+                                    <img src="https://www.paypalobjects.com/webstatic/mktg/logo/pp_cc_mark_37x23.jpg" alt="PayPal" height="24">
+                                    PayPal
+                                </h5>
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="paypal_enabled" name="paypal_enabled" {% if paypal_enabled %}checked{% endif %}>
+                                    <label class="form-check-label" for="paypal_enabled">Enabled</label>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label for="paypal_client_id" class="form-label">Client ID</label>
+                                    <input type="text" class="form-control" id="paypal_client_id" name="paypal_client_id" value="{{ paypal_client_id }}">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="paypal_client_secret" class="form-label">Client Secret</label>
+                                    <input type="password" class="form-control" id="paypal_client_secret" name="paypal_client_secret" value="{{ paypal_client_secret }}">
+                                </div>
+                                <div class="mb-3 form-check">
+                                    <input type="checkbox" class="form-check-input" id="paypal_sandbox" name="paypal_sandbox" {% if paypal_sandbox %}checked{% endif %}>
+                                    <label class="form-check-label" for="paypal_sandbox">Sandbox Mode</label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-save me-2"></i>Save Payment Settings
+                        </button>
+                    </form>
+                </div>
+                
+                <!-- Shipping Settings -->
+                <div class="tab-pane fade" id="shipping" role="tabpanel" aria-labelledby="shipping-tab">
+                    <h5 class="card-title mb-4">Shipping Providers</h5>
+                    <p class="card-text">Configure available shipping methods and providers.</p>
+                    
+                    <form action="/admin/settings/shipping" method="post">
+                        <!-- Standard Shipping Settings -->
+                        <div class="card mb-4">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h5 class="mb-0">
+                                    <i class="bi bi-box-seam me-2"></i>
+                                    Standard Shipping
+                                </h5>
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="standard_shipping_enabled" name="standard_shipping_enabled" {% if standard_shipping_enabled %}checked{% endif %}>
+                                    <label class="form-check-label" for="standard_shipping_enabled">Enabled</label>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label for="standard_shipping_rate" class="form-label">Base Rate</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">$</span>
+                                        <input type="number" step="0.01" min="0" class="form-control" id="standard_shipping_rate" name="standard_shipping_rate" value="{{ standard_shipping_rate|default(5.00) }}">
+                                    </div>
+                                </div>
+                                <div class="mb-3 form-check">
+                                    <input type="checkbox" class="form-check-input" id="standard_shipping_free_threshold_enabled" name="standard_shipping_free_threshold_enabled" {% if standard_shipping_free_threshold_enabled %}checked{% endif %}>
+                                    <label class="form-check-label" for="standard_shipping_free_threshold_enabled">Enable Free Shipping Threshold</label>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="standard_shipping_free_threshold" class="form-label">Free Shipping Threshold</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">$</span>
+                                        <input type="number" step="0.01" min="0" class="form-control" id="standard_shipping_free_threshold" name="standard_shipping_free_threshold" value="{{ standard_shipping_free_threshold|default(50.00) }}">
+                                    </div>
+                                    <div class="form-text">Orders above this amount qualify for free shipping</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-save me-2"></i>Save Shipping Settings
+                        </button>
+                    </form>
+                </div>
+                
+                <!-- AI Providers Settings -->
+                <div class="tab-pane fade" id="ai" role="tabpanel" aria-labelledby="ai-tab">
+                    <h5 class="card-title mb-4">AI Provider Configuration</h5>
+                    <p class="card-text">Configure AI providers for text generation, image generation, and other AI features.</p>
+                    
+                    <form action="/admin/settings/ai" method="post">
+                        <!-- OpenAI Settings -->
+                        <div class="card mb-4">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h5 class="mb-0">
+                                    <i class="bi bi-stars me-2"></i>
+                                    OpenAI
+                                </h5>
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="openai_enabled" name="openai_enabled" {% if openai_enabled %}checked{% endif %}>
+                                    <label class="form-check-label" for="openai_enabled">Enabled</label>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label for="openai_api_key" class="form-label">API Key</label>
+                                    <input type="password" class="form-control" id="openai_api_key" name="openai_api_key" value="{{ openai_api_key }}">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="openai_model" class="form-label">Default Model</label>
+                                    <select class="form-select" id="openai_model" name="openai_model">
+                                        <option value="gpt-4" {% if openai_model == 'gpt-4' %}selected{% endif %}>GPT-4</option>
+                                        <option value="gpt-4-turbo" {% if openai_model == 'gpt-4-turbo' %}selected{% endif %}>GPT-4 Turbo</option>
+                                        <option value="gpt-3.5-turbo" {% if openai_model == 'gpt-3.5-turbo' %}selected{% endif %}>GPT-3.5 Turbo</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="openai_image_model" class="form-label">Image Model</label>
+                                    <select class="form-select" id="openai_image_model" name="openai_image_model">
+                                        <option value="dall-e-3" {% if openai_image_model == 'dall-e-3' %}selected{% endif %}>DALL-E 3</option>
+                                        <option value="dall-e-2" {% if openai_image_model == 'dall-e-2' %}selected{% endif %}>DALL-E 2</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-save me-2"></i>Save AI Settings
+                        </button>
+                    </form>
+                </div>
+                
+                <!-- Email Settings -->
+                <div class="tab-pane fade" id="email" role="tabpanel" aria-labelledby="email-tab">
+                    <h5 class="card-title mb-4">Email Configuration</h5>
+                    <p class="card-text">Configure email sending for order confirmations, shipping updates, and other notifications.</p>
+                    
+                    <form action="/admin/settings/email" method="post">
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h5 class="mb-0">SMTP Settings</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label for="smtp_server" class="form-label">SMTP Server</label>
+                                    <input type="text" class="form-control" id="smtp_server" name="smtp_server" value="{{ smtp_server }}">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="smtp_port" class="form-label">SMTP Port</label>
+                                    <input type="number" class="form-control" id="smtp_port" name="smtp_port" value="{{ smtp_port|default(587) }}">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="smtp_username" class="form-label">SMTP Username</label>
+                                    <input type="text" class="form-control" id="smtp_username" name="smtp_username" value="{{ smtp_username }}">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="smtp_password" class="form-label">SMTP Password</label>
+                                    <input type="password" class="form-control" id="smtp_password" name="smtp_password" value="{{ smtp_password }}">
+                                </div>
+                                <div class="mb-3 form-check">
+                                    <input type="checkbox" class="form-check-input" id="smtp_tls" name="smtp_tls" {% if smtp_tls %}checked{% endif %}>
+                                    <label class="form-check-label" for="smtp_tls">Use TLS</label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h5 class="mb-0">Email Templates</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label for="email_from_name" class="form-label">From Name</label>
+                                    <input type="text" class="form-control" id="email_from_name" name="email_from_name" value="{{ email_from_name }}">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="email_from_address" class="form-label">From Address</label>
+                                    <input type="email" class="form-control" id="email_from_address" name="email_from_address" value="{{ email_from_address }}">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-save me-2"></i>Save Email Settings
+                        </button>
+                    </form>
+                </div>
+                
+                <!-- General Settings -->
+                <div class="tab-pane fade" id="general" role="tabpanel" aria-labelledby="general-tab">
+                    <h5 class="card-title mb-4">General Settings</h5>
+                    <p class="card-text">Configure general store settings and preferences.</p>
+                    
+                    <form action="/admin/settings/general" method="post">
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h5 class="mb-0">Store Settings</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label for="default_currency" class="form-label">Default Currency</label>
+                                    <select class="form-select" id="default_currency" name="default_currency">
+                                        <option value="USD" {% if default_currency == 'USD' %}selected{% endif %}>USD ($)</option>
+                                        <option value="EUR" {% if default_currency == 'EUR' %}selected{% endif %}>EUR (€)</option>
+                                        <option value="GBP" {% if default_currency == 'GBP' %}selected{% endif %}>GBP (£)</option>
+                                        <option value="CAD" {% if default_currency == 'CAD' %}selected{% endif %}>CAD ($)</option>
+                                        <option value="AUD" {% if default_currency == 'AUD' %}selected{% endif %}>AUD ($)</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="tax_rate" class="form-label">Default Tax Rate (%)</label>
+                                    <input type="number" step="0.01" min="0" max="100" class="form-control" id="tax_rate" name="tax_rate" value="{{ tax_rate|default(0) }}">
+                                </div>
+                                <div class="mb-3 form-check">
+                                    <input type="checkbox" class="form-check-input" id="enable_guest_checkout" name="enable_guest_checkout" {% if enable_guest_checkout %}checked{% endif %}>
+                                    <label class="form-check-label" for="enable_guest_checkout">Enable Guest Checkout</label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-save me-2"></i>Save General Settings
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // JavaScript for Settings page
+    $(document).ready(function() {
+        // Handle tab links from URL hash
+        let hash = window.location.hash;
+        if (hash) {
+            $('#settingsTabs button[data-bs-target="' + hash + '"]').tab('show');
+        }
+        
+        // Update URL hash when tab changes
+        $('#settingsTabs button').on('shown.bs.tab', function (e) {
+            window.location.hash = $(e.target).data('bs-target');
+        });
+        
+        // Toggle dependent fields based on checkbox state
+        $('#standard_shipping_free_threshold_enabled').change(function() {
+            $('#standard_shipping_free_threshold').prop('disabled', !this.checked);
+        }).trigger('change');
+    });
+</script>
+{% endblock %}

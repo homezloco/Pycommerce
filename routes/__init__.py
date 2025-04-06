@@ -11,6 +11,7 @@ from fastapi.templating import Jinja2Templates
 from routes.admin.dashboard import setup_routes as setup_dashboard_routes
 from routes.admin.media import setup_routes as setup_media_routes
 from routes.admin.orders import setup_routes as setup_orders_routes
+from routes.admin.settings import setup_routes as setup_settings_routes
 from routes.admin.stores import setup_routes as setup_stores_admin_routes
 from routes.storefront.cart import setup_routes as setup_cart_routes
 from routes.storefront.checkout import setup_routes as setup_checkout_routes
@@ -30,6 +31,7 @@ def register_routes(app: FastAPI, templates: Jinja2Templates):
     app.include_router(setup_dashboard_routes(templates))
     app.include_router(setup_media_routes(templates))
     app.include_router(setup_orders_routes(templates))
+    app.include_router(setup_settings_routes(templates))
     app.include_router(setup_stores_admin_routes(templates))
     
     # Register storefront routes
