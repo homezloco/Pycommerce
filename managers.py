@@ -706,9 +706,9 @@ class InventoryManager:
                 
                 # Update metadata if provided
                 if metadata:
-                    current_metadata = inventory.metadata or {}
+                    current_metadata = inventory.inventory_metadata or {}
                     current_metadata.update(metadata)
-                    inventory.metadata = current_metadata
+                    inventory.inventory_metadata = current_metadata
                 
                 inventory.updated_at = datetime.utcnow()
                 
@@ -736,7 +736,7 @@ class InventoryManager:
                     reserved_quantity=0,
                     reorder_point=reorder_point or 0,
                     reorder_quantity=reorder_quantity or 0,
-                    metadata=metadata or {},
+                    inventory_metadata=metadata or {},
                     created_at=datetime.utcnow(),
                     updated_at=datetime.utcnow()
                 )

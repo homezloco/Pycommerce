@@ -187,7 +187,7 @@ class Shipment(db.Model):
     delivered_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    metadata = Column(JSON, nullable=True)
+    shipment_metadata = Column(JSON, nullable=True)  # Renamed from metadata to avoid reserved name conflict
     
     # Relationships
     order = relationship("Order", back_populates="shipments")
@@ -233,7 +233,7 @@ class InventoryRecord(db.Model):
     last_counted = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    metadata = Column(JSON, nullable=True)
+    inventory_metadata = Column(JSON, nullable=True)  # Renamed from metadata to avoid reserved name conflict
     
     # Relationships
     product = relationship("Product", back_populates="inventory_records")
@@ -255,7 +255,7 @@ class InventoryTransaction(db.Model):
     notes = Column(Text, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     created_by = Column(String(100), nullable=True)  # User who created the transaction
-    metadata = Column(JSON, nullable=True)
+    transaction_metadata = Column(JSON, nullable=True)  # Renamed from metadata to avoid reserved name conflict
     
     # Relationships
     inventory_record = relationship("InventoryRecord", back_populates="transactions")
