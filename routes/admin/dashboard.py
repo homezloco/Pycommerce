@@ -61,10 +61,10 @@ async def admin_dashboard(request: Request, status_message: Optional[str] = None
     
     if selected_tenant:
         # Get counts and summary data for the selected tenant
-        products = product_manager.get_by_tenant(selected_tenant.id)
+        products = product_manager.get_by_tenant(str(selected_tenant.id))
         dashboard_data["products_count"] = len(products)
         
-        orders = order_manager.get_for_tenant(selected_tenant.id)
+        orders = order_manager.get_for_tenant(str(selected_tenant.id))
         dashboard_data["orders_count"] = len(orders)
         
         # Get pending orders count
@@ -80,11 +80,18 @@ async def admin_dashboard(request: Request, status_message: Optional[str] = None
         recent_orders_data = []
         
         for order in recent_orders:
+            # Create customer name from available fields
+            customer_name = order.customer_name if hasattr(order, 'customer_name') and order.customer_name else ""
+            if not customer_name and hasattr(order, 'shipping_address_line1') and order.shipping_address_line1:
+                # If we have shipping info but no customer name, use that
+                customer_name = f"{order.shipping_address_line1}"
+            
+            # Append order data
             recent_orders_data.append({
                 "id": str(order.id),
-                "customer_name": f"{order.shipping_address.get('first_name', '')} {order.shipping_address.get('last_name', '')}",
+                "customer_name": customer_name,
                 "total": order.total,
-                "status": order.status.value,
+                "status": order.status.name if hasattr(order.status, "name") else str(order.status),
                 "created_at": order.created_at
             })
         

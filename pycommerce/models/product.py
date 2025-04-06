@@ -235,3 +235,19 @@ class ProductManager:
                 results.append(product)
         
         return results
+        
+    def get_by_tenant(self, tenant_id: str) -> List[Product]:
+        """
+        Get all products for a specific tenant.
+        
+        Args:
+            tenant_id: The ID of the tenant
+            
+        Returns:
+            List of products for the tenant
+        """
+        # For now, we don't have tenant associations in the in-memory implementation
+        # In a real database implementation, we would filter by tenant_id
+        # For this demo, we'll return all products
+        logger.info(f"Getting products for tenant: {tenant_id}")
+        return list(self._products.values())

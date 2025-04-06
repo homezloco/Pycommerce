@@ -133,6 +133,17 @@ class TenantManager:
         except Exception as e:
             logger.error(f"Error listing tenants: {str(e)}")
             return []
+            
+    def get_all(self) -> List[TenantDTO]:
+        """
+        Get all tenants.
+        
+        This is an alias for the list() method.
+
+        Returns:
+            List of all tenants
+        """
+        return self.list()
 
     def get(self, tenant_id: UUID) -> Optional[TenantDTO]:
         """
