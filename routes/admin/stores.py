@@ -38,7 +38,7 @@ def setup_routes(templates: Jinja2Templates) -> APIRouter:
         Args:
             request: FastAPI request object
         """
-        tenants = tenant_manager.get_all_tenants()
+        tenants = tenant_manager.get_all()
         
         return templates.TemplateResponse(
             "admin/stores/list.html",
@@ -90,7 +90,7 @@ def setup_routes(templates: Jinja2Templates) -> APIRouter:
         """
         try:
             # Check if tenant with this slug already exists
-            existing = tenant_manager.get_tenant_by_slug(slug)
+            existing = tenant_manager.get_by_slug(slug)
             if existing:
                 return templates.TemplateResponse(
                     "admin/stores/form.html",
@@ -120,7 +120,7 @@ def setup_routes(templates: Jinja2Templates) -> APIRouter:
                 'logo_position': 'left'
             }
             
-            tenant = tenant_manager.create_tenant(
+            tenant = tenant_manager.create(
                 name=name,
                 slug=slug,
                 domain=domain,
@@ -173,7 +173,7 @@ def setup_routes(templates: Jinja2Templates) -> APIRouter:
             request: FastAPI request object
             tenant_id: Tenant ID
         """
-        tenant = tenant_manager.get_tenant(tenant_id)
+        tenant = tenant_manager.get(tenant_id)
         if not tenant:
             raise HTTPException(
                 status_code=404,
@@ -213,7 +213,7 @@ def setup_routes(templates: Jinja2Templates) -> APIRouter:
         """
         try:
             # Check if tenant exists
-            tenant = tenant_manager.get_tenant(tenant_id)
+            tenant = tenant_manager.get(tenant_id)
             if not tenant:
                 raise HTTPException(
                     status_code=404,
@@ -222,7 +222,7 @@ def setup_routes(templates: Jinja2Templates) -> APIRouter:
             
             # Check if slug is already used by another tenant
             if slug != tenant.slug:
-                existing = tenant_manager.get_tenant_by_slug(slug)
+                existing = tenant_manager.get_by_slug(slug)
                 if existing and existing.id != tenant_id:
                     return templates.TemplateResponse(
                         "admin/stores/form.html",
@@ -244,7 +244,7 @@ def setup_routes(templates: Jinja2Templates) -> APIRouter:
                     )
             
             # Update tenant
-            tenant_manager.update_tenant(
+            tenant_manager.update(
                 tenant_id=tenant_id,
                 name=name,
                 slug=slug,
@@ -298,7 +298,7 @@ def setup_routes(templates: Jinja2Templates) -> APIRouter:
             request: FastAPI request object
             tenant_id: Tenant ID
         """
-        tenant = tenant_manager.get_tenant(tenant_id)
+        tenant = tenant_manager.get(tenant_id)
         if not tenant:
             raise HTTPException(
                 status_code=404,
@@ -344,7 +344,7 @@ def setup_routes(templates: Jinja2Templates) -> APIRouter:
         """
         try:
             # Check if tenant exists
-            tenant = tenant_manager.get_tenant(tenant_id)
+            tenant = tenant_manager.get(tenant_id)
             if not tenant:
                 raise HTTPException(
                     status_code=404,
@@ -365,7 +365,7 @@ def setup_routes(templates: Jinja2Templates) -> APIRouter:
             if custom_css:
                 settings['custom_css'] = custom_css
             
-            tenant_manager.update_tenant_settings(tenant_id, settings)
+            tenant_manager.update_settings(tenant_id, settings)
             
             logger.info(f"Updated theme settings for store: {tenant.name}")
             
