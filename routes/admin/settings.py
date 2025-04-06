@@ -110,27 +110,51 @@ async def update_payment_settings(
     paypal_sandbox: Optional[str] = Form(None)
 ):
     """Update payment settings."""
-    # In a production environment, these settings would be securely stored
-    # in a database or environment variables. For this prototype, we'll
-    # display a success message and log the changed settings.
-    
     # Process form data
     is_stripe_enabled = stripe_enabled is not None
     is_paypal_enabled = paypal_enabled is not None
     is_paypal_sandbox = paypal_sandbox is not None
     
-    logger.info(f"Updated payment settings:")
-    logger.info(f"Stripe: {'Enabled' if is_stripe_enabled else 'Disabled'}")
-    logger.info(f"PayPal: {'Enabled' if is_paypal_enabled else 'Disabled'}")
-    logger.info(f"PayPal Sandbox Mode: {'Enabled' if is_paypal_sandbox else 'Disabled'}")
+    logger.info(f"Updating payment settings")
     
-    # In a production app, we'd update environment variables or database entries
-    # os.environ["STRIPE_ENABLED"] = "true" if is_stripe_enabled else "false"
-    # etc.
-    
-    # Add a status message to display on the settings page
-    request.session["status_message"] = "Payment settings updated successfully."
-    request.session["status_type"] = "success"
+    # Import payment config module
+    try:
+        from pycommerce.plugins.payment.config import save_stripe_config, save_paypal_config
+        
+        # Save Stripe configuration
+        stripe_config = {
+            "enabled": is_stripe_enabled,
+            "api_key": stripe_api_key,
+            "public_key": stripe_public_key,
+            "webhook_secret": stripe_webhook_secret
+        }
+        stripe_success = await save_stripe_config(stripe_config)
+        
+        # Save PayPal configuration
+        paypal_config = {
+            "enabled": is_paypal_enabled,
+            "client_id": paypal_client_id,
+            "client_secret": paypal_client_secret,
+            "sandbox": is_paypal_sandbox
+        }
+        paypal_success = await save_paypal_config(paypal_config)
+        
+        if stripe_success and paypal_success:
+            logger.info("Payment settings updated successfully")
+            request.session["status_message"] = "Payment settings updated successfully."
+            request.session["status_type"] = "success"
+        else:
+            logger.error("Error updating payment settings")
+            request.session["status_message"] = "Error updating payment settings. Check logs for details."
+            request.session["status_type"] = "danger"
+    except ImportError as e:
+        logger.error(f"Could not import payment config module: {str(e)}")
+        request.session["status_message"] = "Error: Payment configuration module not found."
+        request.session["status_type"] = "danger"
+    except Exception as e:
+        logger.error(f"Error updating payment settings: {str(e)}")
+        request.session["status_message"] = f"Error updating payment settings: {str(e)}"
+        request.session["status_type"] = "danger"
     
     # Redirect back to the settings page
     return RedirectResponse(url="/admin/settings#payment", status_code=303)
