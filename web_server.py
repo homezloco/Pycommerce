@@ -1977,7 +1977,7 @@ async def admin_media(
     request: Request,
     tenant: Optional[str] = None,
     file_type: Optional[str] = None,
-    is_ai_generated: Optional[bool] = None,
+    is_ai_generated: Optional[str] = None,
     search: Optional[str] = None,
     status_message: Optional[str] = None,
     status_type: str = "info"
@@ -2018,10 +2018,18 @@ async def admin_media(
             tenant_id = str(selected_tenant.id) if selected_tenant and hasattr(selected_tenant, 'id') else None
             
             # Use the media service to list media files
+            # Convert string 'is_ai_generated' to boolean if it has a value
+            is_ai_generated_bool = None
+            if is_ai_generated:
+                if is_ai_generated.lower() in ['true', 'yes', '1']:
+                    is_ai_generated_bool = True
+                elif is_ai_generated.lower() in ['false', 'no', '0']:
+                    is_ai_generated_bool = False
+                    
             media_list = media_service.list_media(
                 tenant_id=tenant_id,
                 file_type=file_type,
-                is_ai_generated=is_ai_generated,
+                is_ai_generated=is_ai_generated_bool,
                 search_term=search
             )
             # Handle both dict and list return types
