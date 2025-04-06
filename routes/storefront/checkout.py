@@ -118,6 +118,17 @@ async def checkout(request: Request):
                     "description": "1-2 business days",
                     "price": express_price
                 })
+                
+            # Add premium shipping if available
+            premium_multiplier = shipping_config.get("premium_multiplier", 2.5)
+            if premium_multiplier > 1:
+                premium_price = shipping_config.get("flat_rate_domestic", 5.99) * premium_multiplier
+                shipping_methods.append({
+                    "id": "premium",
+                    "name": "Premium Shipping",
+                    "description": "Next day delivery",
+                    "price": premium_price
+                })
     except Exception as e:
         logger.error(f"Error fetching shipping methods: {str(e)}")
         # Default shipping methods
@@ -133,6 +144,12 @@ async def checkout(request: Request):
                 "name": "Express Shipping",
                 "description": "1-2 business days",
                 "price": 12.99
+            },
+            {
+                "id": "premium",
+                "name": "Premium Shipping",
+                "description": "Next day delivery",
+                "price": 24.99
             }
         ]
     
@@ -220,6 +237,9 @@ async def process_checkout(
                 elif shipping_method == "express":
                     express_multiplier = shipping_config.get("express_multiplier", 1.75)
                     shipping_cost = shipping_config.get("flat_rate_domestic", 5.99) * express_multiplier
+                elif shipping_method == "premium":
+                    premium_multiplier = shipping_config.get("premium_multiplier", 2.5)
+                    shipping_cost = shipping_config.get("flat_rate_domestic", 5.99) * premium_multiplier
         except Exception as e:
             logger.error(f"Error calculating shipping cost: {str(e)}")
         

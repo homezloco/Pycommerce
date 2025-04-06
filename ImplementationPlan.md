@@ -42,10 +42,10 @@ PyCommerce is a scalable, multi-tenant ecommerce platform built with Python. It 
 - ✅ **Settings Management**: Database-backed persistent configuration system
 - ✅ **Payment Configuration**: Payment provider settings persistence and admin UI
 - ✅ **Payment Error Handling**: Enhanced error handling for payment providers with specific error types
+- ✅ **Shipping Options**: Implemented tiered shipping (standard, express, premium) with rate calculation
 
 ### In Progress:
 
-- 🔄 **Shipping Options**: Standard shipping provider implementation with rate calculation
 - 🔄 **Admin Dashboard**: Enhancing admin controls and analytics
 - 🔄 **AI Configuration**: Configurable AI providers for text and image generation
 
@@ -109,7 +109,7 @@ PyCommerce is a scalable, multi-tenant ecommerce platform built with Python. It 
 2. **Shipping Options**
    - ✅ Basic shipping integration
    - ✅ Shipping rate calculations
-   - 🔄 Multiple shipping methods
+   - ✅ Multiple shipping methods (standard, express, premium)
    - ⏳ Address validation
    - ⏳ Shipping label generation
 
@@ -319,16 +319,14 @@ For existing ecommerce stores looking to migrate to PyCommerce:
 11. ✅ Modularize application code structure - COMPLETED
 12. ✅ Fix server stability issues - COMPLETED
 13. ✅ Implement database-backed configuration system - COMPLETED
-15. ✅ Implement enhanced payment error handling with specific error types - COMPLETED
 14. ✅ Create payment settings UI in admin dashboard - COMPLETED
-15. 🔄 Finalize payment integrations with proper credentials
-16. 🔄 Optimize system performance and database queries
-17. 🔄 Complete shipping provider implementation
-18. 🔄 Enhance admin dashboard with analytics
-19. ✅ Implement order fulfillment workflow - COMPLETED
-20. ✅ Add inventory management - COMPLETED
-21. ⏳ Add return processing workflow
-22. ⏳ Implement shipping notifications
+15. ✅ Implement enhanced payment error handling with specific error types - COMPLETED
+16. ✅ Implement tiered shipping options (standard, express, premium) - COMPLETED
+17. 🔄 Finalize payment integrations with proper credentials
+18. 🔄 Optimize system performance and database queries
+19. 🔄 Enhance admin dashboard with analytics
+20. ⏳ Add return processing workflow
+21. ⏳ Implement shipping notifications
 
 ### Future Roadmap
 1. **Marketplace for Plugins**
@@ -353,4 +351,3 @@ For existing ecommerce stores looking to migrate to PyCommerce:
    - Push notifications
    - Offline functionality
    - Mobile payment integration
-
