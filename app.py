@@ -10,19 +10,13 @@ import logging
 import threading
 import time
 from flask import Flask, render_template_string, jsonify, request, redirect, url_for
-from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy.orm import DeclarativeBase
+from database import db
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Define base class for SQLAlchemy models
-class Base(DeclarativeBase):
-    pass
-
-# Initialize Flask app and SQLAlchemy
-db = SQLAlchemy(model_class=Base)
+# Initialize Flask app
 app = Flask(__name__)
 app.secret_key = os.environ.get("SESSION_SECRET", "pycommerce-dev-key")
 

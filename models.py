@@ -9,7 +9,7 @@ import uuid
 from datetime import datetime
 from sqlalchemy import Column, String, Integer, Float, Boolean, DateTime, ForeignKey, JSON, Text
 from sqlalchemy.orm import relationship
-from app import db
+from database import db
 
 class User(db.Model):
     """User model."""

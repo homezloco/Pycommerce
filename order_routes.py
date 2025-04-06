@@ -11,7 +11,7 @@ import uuid
 from datetime import datetime
 from flask import Blueprint, render_template, redirect, url_for, request, flash, jsonify, session
 
-from app import db
+from database import db
 from models import Tenant, Order, OrderItem, Product, Shipment, ShipmentItem
 from managers import OrderManager, ShipmentManager, InventoryManager
 
