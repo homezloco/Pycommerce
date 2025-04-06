@@ -51,7 +51,7 @@ async def admin_orders(
         )
     
     # Get tenant object using tenant_manager
-    tenant = tenant_manager.get_tenant_by_slug(selected_tenant_slug)
+    tenant = tenant_manager.get_by_slug(selected_tenant_slug)
     if not tenant:
         return RedirectResponse(
             url="/admin/dashboard?status_message=Store+not+found&status_type=error", 
@@ -137,7 +137,7 @@ async def admin_order_detail(
         )
     
     # Get tenant object
-    tenant = tenant_manager.get_tenant_by_slug(selected_tenant_slug)
+    tenant = tenant_manager.get_by_slug(selected_tenant_slug)
     if not tenant:
         return RedirectResponse(
             url="/admin/dashboard?status_message=Store+not+found&status_type=error", 

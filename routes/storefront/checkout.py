@@ -678,28 +678,19 @@ def setup_routes(app_templates):
     
     # Try to load Flask app managers to replace SDK managers
     try:
-        # Import managers one by one to avoid circular import errors
-        try:
-            from managers import TenantManager as FlaskTenantManager
-            tenant_manager = FlaskTenantManager()
-            logger.info("Loaded Flask TenantManager")
-        except Exception as tenant_err:
-            logger.warning(f"Error loading Flask TenantManager: {tenant_err}")
-            
-        try:
-            from managers import ProductManager as FlaskProductManager
-            product_manager = FlaskProductManager()
-            logger.info("Loaded Flask ProductManager")
-        except Exception as product_err:
-            logger.warning(f"Error loading Flask ProductManager: {product_err}")
-            
-        try:
-            from managers import CartManager as FlaskCartManager
-            cart_manager = FlaskCartManager()
-            logger.info("Loaded Flask CartManager")
-        except Exception as cart_err:
-            logger.warning(f"Error loading Flask CartManager: {cart_err}")
-            
+        # Always use the SDK implementations to avoid circular imports
+        from pycommerce.models.tenant import TenantManager as SDKTenantManager
+        tenant_manager = SDKTenantManager()
+        logger.info("Initialized SDK TenantManager")
+        
+        from pycommerce.models.product import ProductManager as SDKProductManager
+        product_manager = SDKProductManager()
+        logger.info("Initialized SDK ProductManager")
+        
+        from pycommerce.models.cart import CartManager as SDKCartManager
+        cart_manager = SDKCartManager()
+        logger.info("Initialized SDK CartManager")
+        
         # Import order manager separately to avoid circular imports
         global order_manager
         if order_manager is None:

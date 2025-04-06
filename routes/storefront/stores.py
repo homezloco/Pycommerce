@@ -91,10 +91,13 @@ async def store(
     tenant_obj = None
     try:
         # Handle both SDK and Flask managers
-        if hasattr(tenant_manager, 'get_tenant_by_slug'):
-            tenant_obj = tenant_manager.get_tenant_by_slug(slug)
-        else:
+        if hasattr(tenant_manager, 'get_by_slug'):
             tenant_obj = tenant_manager.get_by_slug(slug)
+        else:
+            # Fallback - should not reach here as the SDK has get_by_slug
+            logger.warning(f"TenantManager doesn't have get_by_slug method, falling back to list()")
+            tenants = tenant_manager.list() or []
+            tenant_obj = next((t for t in tenants if t.slug == slug), None)
     except Exception as e:
         logger.warning(f"Error fetching tenant with slug '{slug}': {str(e)}")
         # Will redirect below if tenant not found
@@ -257,10 +260,13 @@ async def store(
         # Handle both SDK and Flask managers
         refetched_tenant = None
         try:
-            if hasattr(tenant_manager, 'get_tenant_by_slug'):
-                refetched_tenant = tenant_manager.get_tenant_by_slug(slug)
-            else:
+            if hasattr(tenant_manager, 'get_by_slug'):
                 refetched_tenant = tenant_manager.get_by_slug(slug)
+            else:
+                # Fallback - should not reach here as the SDK has get_by_slug
+                logger.warning(f"TenantManager doesn't have get_by_slug method, falling back to list()")
+                tenants = tenant_manager.list() or []
+                refetched_tenant = next((t for t in tenants if t.slug == slug), None)
         except Exception as e:
             logger.warning(f"Error re-fetching tenant with slug '{slug}': {str(e)}")
             
@@ -297,39 +303,18 @@ def setup_routes(app_templates):
     # Now that we have the application context, we can import the managers
     # from the Flask app instead of using the SDK versions
     try:
-        # Import managers one by one to avoid circular import errors
-        try:
-            from managers import TenantManager as FlaskTenantManager
-            tenant_manager = FlaskTenantManager()
-            logger.info("Loaded Flask TenantManager")
-        except Exception as tenant_err:
-            logger.warning(f"Error loading Flask TenantManager: {tenant_err}")
-            # Initialize with SDK manager as fallback
-            from pycommerce.models.tenant import TenantManager as SDKTenantManager
-            tenant_manager = SDKTenantManager()
-            logger.info("Initialized SDK TenantManager as fallback")
+        # Always use the SDK implementations to avoid circular imports
+        from pycommerce.models.tenant import TenantManager as SDKTenantManager
+        tenant_manager = SDKTenantManager()
+        logger.info("Initialized SDK TenantManager")
+
+        from pycommerce.models.product import ProductManager as SDKProductManager
+        product_manager = SDKProductManager()
+        logger.info("Initialized SDK ProductManager")
             
-        try:
-            from managers import ProductManager as FlaskProductManager
-            product_manager = FlaskProductManager()
-            logger.info("Loaded Flask ProductManager")
-        except Exception as product_err:
-            logger.warning(f"Error loading Flask ProductManager: {product_err}")
-            # Initialize with SDK manager as fallback
-            from pycommerce.models.product import ProductManager as SDKProductManager
-            product_manager = SDKProductManager()
-            logger.info("Initialized SDK ProductManager as fallback")
-            
-        try:
-            from managers import CartManager as FlaskCartManager
-            cart_manager = FlaskCartManager()
-            logger.info("Loaded Flask CartManager")
-        except Exception as cart_err:
-            logger.warning(f"Error loading Flask CartManager: {cart_err}")
-            # Initialize with SDK manager as fallback
-            from pycommerce.models.cart import CartManager as SDKCartManager
-            cart_manager = SDKCartManager()
-            logger.info("Initialized SDK CartManager as fallback")
+        from pycommerce.models.cart import CartManager as SDKCartManager
+        cart_manager = SDKCartManager()
+        logger.info("Initialized SDK CartManager")
             
         logger.info("Finished loading managers")
     except Exception as e:

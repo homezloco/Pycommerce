@@ -39,7 +39,6 @@ PyCommerce is a scalable, multi-tenant ecommerce platform built with Python. It 
 - ✅ **Server Stability**: Fixed Uvicorn server configuration to prevent crashes
 - ✅ **API Compatibility**: Fixed method name inconsistencies between SDK and implementation
 - ✅ **API Compatibility**: Fixed method name inconsistencies between SDK and implementation
-- ✅ **API Compatibility**: Fixed method name inconsistencies between SDK and implementation
 
 ### In Progress:
 
