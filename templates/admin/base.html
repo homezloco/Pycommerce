@@ -133,96 +133,9 @@
     </nav>
 
     <div class="container-fluid">
+        <!-- Removed desktop navigation sidebar - now using base_admin.html's responsive sidebar only -->
         <div class="row">
-            <div class="col-md-3 col-lg-2 d-md-block bg-dark sidebar collapse">
-                <div class="position-sticky pt-3">
-                    <ul class="nav flex-column">
-                        <li class="nav-item">
-                            <a class="nav-link {% if active_page == 'dashboard' %}active{% endif %}" href="/admin">
-                                <i class="bi bi-speedometer2"></i> Dashboard
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link {% if active_page == 'stores' %}active{% endif %}" href="/admin/stores">
-                                <i class="bi bi-shop"></i> Stores
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link {% if active_page == 'products' %}active{% endif %}" href="/admin/products">
-                                <i class="bi bi-box-seam"></i> Products
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link {% if active_page == 'orders' %}active{% endif %}" href="/admin/orders">
-                                <i class="bi bi-cart3"></i> Orders
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link {% if active_page == 'customers' %}active{% endif %}" href="/admin/customers">
-                                <i class="bi bi-people"></i> Customers
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link {% if active_page == 'marketing' %}active{% endif %}" href="/admin/marketing">
-                                <i class="bi bi-graph-up"></i> Marketing
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link {% if active_page == 'newsletters' %}active{% endif %}" href="/admin/newsletters">
-                                <i class="bi bi-envelope"></i> Newsletters
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link {% if active_page == 'analytics' %}active{% endif %}" href="/admin/analytics">
-                                <i class="bi bi-bar-chart"></i> Analytics
-                            </a>
-                        </li>
-                        
-                        <li class="nav-item mt-3">
-                            <h6 class="sidebar-heading px-3 mt-3 mb-1 text-muted text-uppercase">
-                                <i class="bi bi-gear"></i> Settings
-                            </h6>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link {% if active_page == 'store_settings' %}active{% endif %}" href="/admin/store-settings">
-                                <i class="bi bi-sliders"></i> Store Settings
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link {% if active_page == 'theme_settings' %}active{% endif %}" href="/admin/theme-settings">
-                                <i class="bi bi-palette"></i> Theme Settings
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link {% if active_page == 'plugins' %}active{% endif %}" href="/admin/plugins">
-                                <i class="bi bi-puzzle"></i> Plugins
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link {% if active_page == 'ai_config' %}active{% endif %}" href="/admin/ai-config">
-                                <i class="bi bi-robot"></i> AI Configuration
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link {% if active_page == 'payments' %}active{% endif %}" href="/admin/payments">
-                                <i class="bi bi-credit-card"></i> Payments
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link {% if active_page == 'shipping' %}active{% endif %}" href="/admin/shipping">
-                                <i class="bi bi-truck"></i> Shipping
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link {% if active_page == 'users' %}active{% endif %}" href="/admin/users">
-                                <i class="bi bi-person-lock"></i> Users & Permissions
-                            </a>
-                        </li>
-                    </ul>
-                </div>
-            </div>
-
-            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 content">
+            <main class="col-12 px-md-4 content">
                 {% if status_message %}
                 <div class="alert alert-{{ status_type }} alert-dismissible fade show mt-3" role="alert">
                     {{ status_message }}
