@@ -1,0 +1,168 @@
+[2025-04-06 11:24:33 +0000] [5301] [INFO] Starting gunicorn 23.0.0
+[2025-04-06 11:24:33 +0000] [5301] [INFO] Listening at: http://0.0.0.0:5000 (5301)
+[2025-04-06 11:24:33 +0000] [5301] [INFO] Using worker: sync
+[2025-04-06 11:24:33 +0000] [5312] [INFO] Booting worker with pid: 5312
+[2025-04-06 11:24:33 +0000] [5301] [INFO] Handling signal: winch
+[2025-04-06 11:24:33 +0000] [5301] [INFO] Handling signal: winch
+[2025-04-06 11:24:34 +0000] [5301] [INFO] Handling signal: winch
+[2025-04-06 11:24:34 +0000] [5301] [INFO] Handling signal: winch
+[2025-04-06 11:24:34 +0000] [5301] [INFO] Handling signal: winch
+[2025-04-06 11:24:34 +0000] [5301] [INFO] Handling signal: winch
+[2025-04-06 11:24:34 +0000] [5301] [INFO] Handling signal: winch
+[2025-04-06 11:24:34 +0000] [5301] [INFO] Handling signal: winch
+[2025-04-06 11:24:34 +0000] [5301] [INFO] Handling signal: winch
+INFO:pycommerce.plugins.payment.config:Using development Stripe credentials
+INFO:pycommerce.plugins.payment.config:Using development PayPal credentials
+INFO:pycommerce.plugins.payment.stripe:Initializing Stripe payment plugin
+INFO:pycommerce.plugins:Registering plugin: stripe_payment v0.1.0
+INFO:pycommerce.plugins.payment.stripe:Initializing Stripe payment plugin
+INFO:pycommerce:Registered payment plugin: stripe
+INFO:pycommerce.plugins.payment.paypal:Initializing PayPal payment plugin
+INFO:pycommerce.plugins:Registering plugin: paypal_payment v0.1.0
+INFO:pycommerce.plugins.payment.paypal:Initializing PayPal payment plugin
+INFO:pycommerce:Registered payment plugin: paypal
+INFO:pycommerce.plugins:Registering plugin: standard_shipping v0.1.0
+INFO:pycommerce.plugins.shipping.standard:Initializing Standard shipping plugin
+INFO:pycommerce:Registered shipping plugin: standard
+[2025-04-06 11:24:35 +0000] [5301] [INFO] Handling signal: winch
+INFO:pycommerce.services.mail:Email template directory: /home/runner/workspace/templates/emails
+/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/pydantic/_internal/_config.py:373: UserWarning: Valid config keys have changed in V2:
+* 'orm_mode' has been renamed to 'from_attributes'
+  warnings.warn(message, UserWarning)
+INFO:pycommerce.core.db:Initializing database...
+[2025-04-06 11:24:35 +0000] [5301] [INFO] Handling signal: winch
+[2025-04-06 11:24:35 +0000] [5301] [INFO] Handling signal: winch
+[2025-04-06 11:24:35 +0000] [5301] [INFO] Handling signal: winch
+[2025-04-06 11:24:35 +0000] [5301] [INFO] Handling signal: winch
+[2025-04-06 11:24:35 +0000] [5301] [INFO] Handling signal: winch
+[2025-04-06 11:24:35 +0000] [5301] [INFO] Handling signal: winch
+[2025-04-06 11:24:35 +0000] [5301] [INFO] Handling signal: winch
+[2025-04-06 11:24:35 +0000] [5301] [INFO] Handling signal: winch
+[2025-04-06 11:24:35 +0000] [5301] [INFO] Handling signal: winch
+[2025-04-06 11:24:35 +0000] [5301] [INFO] Handling signal: winch
+INFO:pycommerce.core.db:Database initialized successfully.
+INFO:pycommerce.core.db:Initializing database...
+INFO:pycommerce.core.db:Database initialized successfully.
+INFO:pycommerce.migrations:Database migrations initialized
+INFO:asgi_wsgi_app:Starting uvicorn server with command: /nix/store/wqhkxzzlaswkj3gimqign99sshvllcg6-python-wrapped-0.1.0/bin/python3 -m uvicorn web_server:app --host 127.0.0.1 --port 8000
+INFO:asgi_wsgi_app:Waiting for uvicorn server to start...
+INFO:asgi_wsgi_app:Waiting for uvicorn server (attempt 1/10)
+[2025-04-06 11:24:38 +0000] [5301] [INFO] Handling signal: winch
+INFO:asgi_wsgi_app:Waiting for uvicorn server (attempt 2/10)
+INFO:asgi_wsgi_app:Waiting for uvicorn server (attempt 3/10)
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.plugins.payment.config:Using development Stripe credentials
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.plugins.payment.config:Using development PayPal credentials
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.plugins.payment.stripe:Initializing Stripe payment plugin
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.plugins:Registering plugin: stripe_payment v0.1.0
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.plugins.payment.stripe:Initializing Stripe payment plugin
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce:Registered payment plugin: stripe
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.plugins.payment.paypal:Initializing PayPal payment plugin
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.plugins:Registering plugin: paypal_payment v0.1.0
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.plugins.payment.paypal:Initializing PayPal payment plugin
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce:Registered payment plugin: paypal
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.plugins:Registering plugin: standard_shipping v0.1.0
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.plugins.shipping.standard:Initializing Standard shipping plugin
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce:Registered shipping plugin: standard
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.services.mail:Email template directory: /home/runner/workspace/templates/emails
+INFO:asgi_wsgi_app:Uvicorn: /home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/pydantic/_internal/_config.py:373: UserWarning: Valid config keys have changed in V2:
+INFO:asgi_wsgi_app:Uvicorn: * 'orm_mode' has been renamed to 'from_attributes'
+INFO:asgi_wsgi_app:Uvicorn: warnings.warn(message, UserWarning)
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.core.db:Initializing database...
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.core.db:Database initialized successfully.
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.core.db:Initializing database...
+INFO:asgi_wsgi_app:Waiting for uvicorn server (attempt 4/10)
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.core.db:Database initialized successfully.
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.migrations:Database migrations initialized
+INFO:asgi_wsgi_app:Uvicorn: INFO:     Started server process [5353]
+INFO:asgi_wsgi_app:Uvicorn: INFO:     Waiting for application startup.
+INFO:asgi_wsgi_app:Uvicorn: INFO:     Application startup complete.
+INFO:asgi_wsgi_app:Uvicorn: INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+INFO:asgi_wsgi_app:Uvicorn: INFO:     127.0.0.1:45580 - "GET /api/health HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET http://127.0.0.1:8000/api/health "HTTP/1.1 200 OK"
+INFO:asgi_wsgi_app:Uvicorn server is running
+INFO:asgi_wsgi_app:Uvicorn: INFO:     127.0.0.1:45590 - "GET /api/health HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET http://127.0.0.1:8000/api/health "HTTP/1.1 200 OK"
+INFO:asgi_wsgi_app:Uvicorn: INFO:     127.0.0.1:45598 - "GET / HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET http://127.0.0.1:8000/ "HTTP/1.1 200 OK"
+INFO:asgi_wsgi_app:Uvicorn: INFO:     127.0.0.1:45600 - "GET /api/health HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET http://127.0.0.1:8000/api/health "HTTP/1.1 200 OK"
+INFO:asgi_wsgi_app:Uvicorn: INFO:     127.0.0.1:45608 - "GET / HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET http://127.0.0.1:8000/ "HTTP/1.1 200 OK"
+INFO:asgi_wsgi_app:Uvicorn: INFO:     127.0.0.1:45622 - "GET /api/health HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET http://127.0.0.1:8000/api/health "HTTP/1.1 200 OK"
+INFO:asgi_wsgi_app:Uvicorn: INFO:     127.0.0.1:45628 - "GET / HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET http://127.0.0.1:8000/ "HTTP/1.1 200 OK"
+[2025-04-06 11:24:44 +0000] [5301] [INFO] Handling signal: winch
+INFO:asgi_wsgi_app:Uvicorn: INFO:     127.0.0.1:47306 - "GET /api/health HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET http://127.0.0.1:8000/api/health "HTTP/1.1 200 OK"
+INFO:asgi_wsgi_app:Uvicorn: INFO:     127.0.0.1:47312 - "GET /admin/dashboard HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET http://127.0.0.1:8000/admin/dashboard "HTTP/1.1 200 OK"
+INFO:asgi_wsgi_app:Uvicorn: INFO:     127.0.0.1:47314 - "GET /api/health HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET http://127.0.0.1:8000/api/health "HTTP/1.1 200 OK"
+INFO:asgi_wsgi_app:Uvicorn: INFO:     127.0.0.1:47326 - "GET /admin/store-settings HTTP/1.1" 500 Internal Server Error
+INFO:asgi_wsgi_app:Uvicorn: ERROR:    Exception in ASGI application
+INFO:asgi_wsgi_app:Uvicorn: Traceback (most recent call last):
+INFO:asgi_wsgi_app:Uvicorn: File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/uvicorn/protocols/http/httptools_impl.py", line 409, in run_asgi
+INFO:asgi_wsgi_app:Uvicorn: result = await app(  # type: ignore[func-returns-value]
+INFO:asgi_wsgi_app:Uvicorn: ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+INFO:asgi_wsgi_app:Uvicorn: File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/uvicorn/middleware/proxy_headers.py", line 60, in __call__
+INFO:asgi_wsgi_app:Uvicorn: return await self.app(scope, receive, send)
+INFO:asgi_wsgi_app:Uvicorn: ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+INFO:asgi_wsgi_app:Uvicorn: File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/fastapi/applications.py", line 1054, in __call__
+INFO:asgi_wsgi_app:Uvicorn: await super().__call__(scope, receive, send)
+INFO:httpx:HTTP Request: GET http://127.0.0.1:8000/admin/store-settings "HTTP/1.1 500 Internal Server Error"
+INFO:asgi_wsgi_app:Uvicorn: File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/starlette/applications.py", line 112, in __call__
+INFO:asgi_wsgi_app:Uvicorn: await self.middleware_stack(scope, receive, send)
+INFO:asgi_wsgi_app:Uvicorn: File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/starlette/middleware/errors.py", line 187, in __call__
+INFO:asgi_wsgi_app:Uvicorn: raise exc
+INFO:asgi_wsgi_app:Uvicorn: File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/starlette/middleware/errors.py", line 165, in __call__
+INFO:asgi_wsgi_app:Uvicorn: await self.app(scope, receive, _send)
+INFO:asgi_wsgi_app:Uvicorn: File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/starlette/middleware/sessions.py", line 85, in __call__
+INFO:asgi_wsgi_app:Uvicorn: await self.app(scope, receive, send_wrapper)
+INFO:asgi_wsgi_app:Uvicorn: File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/starlette/middleware/exceptions.py", line 62, in __call__
+INFO:asgi_wsgi_app:Uvicorn: await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+INFO:asgi_wsgi_app:Uvicorn: File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+INFO:asgi_wsgi_app:Uvicorn: raise exc
+INFO:asgi_wsgi_app:Uvicorn: File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+INFO:asgi_wsgi_app:Uvicorn: await app(scope, receive, sender)
+INFO:asgi_wsgi_app:Uvicorn: File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/starlette/routing.py", line 714, in __call__
+INFO:asgi_wsgi_app:Uvicorn: await self.middleware_stack(scope, receive, send)
+INFO:asgi_wsgi_app:Uvicorn: File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/starlette/routing.py", line 734, in app
+INFO:asgi_wsgi_app:Uvicorn: await route.handle(scope, receive, send)
+INFO:asgi_wsgi_app:Uvicorn: File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/starlette/routing.py", line 288, in handle
+INFO:asgi_wsgi_app:Uvicorn: await self.app(scope, receive, send)
+INFO:asgi_wsgi_app:Uvicorn: File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/starlette/routing.py", line 76, in app
+INFO:asgi_wsgi_app:Uvicorn: await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+INFO:asgi_wsgi_app:Uvicorn: File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+INFO:asgi_wsgi_app:Uvicorn: raise exc
+INFO:asgi_wsgi_app:Uvicorn: File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+INFO:asgi_wsgi_app:Uvicorn: await app(scope, receive, sender)
+INFO:asgi_wsgi_app:Uvicorn: File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/starlette/routing.py", line 73, in app
+INFO:asgi_wsgi_app:Uvicorn: response = await f(request)
+INFO:asgi_wsgi_app:Uvicorn: ^^^^^^^^^^^^^^^^
+INFO:asgi_wsgi_app:Uvicorn: File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/fastapi/routing.py", line 301, in app
+INFO:asgi_wsgi_app:Uvicorn: raw_response = await run_endpoint_function(
+INFO:asgi_wsgi_app:Uvicorn: ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+INFO:asgi_wsgi_app:Uvicorn: File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/fastapi/routing.py", line 212, in run_endpoint_function
+INFO:asgi_wsgi_app:Uvicorn: return await dependant.call(**values)
+INFO:asgi_wsgi_app:Uvicorn: ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+INFO:asgi_wsgi_app:Uvicorn: File "/home/runner/workspace/web_server.py", line 679, in admin_store_settings
+INFO:asgi_wsgi_app:Uvicorn: return templates.TemplateResponse(
+INFO:asgi_wsgi_app:Uvicorn: ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+INFO:asgi_wsgi_app:Uvicorn: File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/starlette/templating.py", line 209, in TemplateResponse
+INFO:asgi_wsgi_app:Uvicorn: return _TemplateResponse(
+INFO:asgi_wsgi_app:Uvicorn: ^^^^^^^^^^^^^^^^^^
+INFO:asgi_wsgi_app:Uvicorn: File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/starlette/templating.py", line 40, in __init__
+INFO:asgi_wsgi_app:Uvicorn: content = template.render(context)
+INFO:asgi_wsgi_app:Uvicorn: ^^^^^^^^^^^^^^^^^^^^^^^^
+INFO:asgi_wsgi_app:Uvicorn: File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/jinja2/environment.py", line 1295, in render
+INFO:asgi_wsgi_app:Uvicorn: self.environment.handle_exception()
+INFO:asgi_wsgi_app:Uvicorn: File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/jinja2/environment.py", line 942, in handle_exception
+INFO:asgi_wsgi_app:Uvicorn: raise rewrite_traceback_stack(source=source)
+INFO:asgi_wsgi_app:Uvicorn: File "templates/admin/store_settings.html", line 23, in top-level template code
+INFO:asgi_wsgi_app:Uvicorn: <option value="US" {% if config.store_country == 'US' %}selected{% endif %}>United States</option>
+INFO:asgi_wsgi_app:Uvicorn: ^^^^^^^^^^^^^^^^^^^^^^^^^
+INFO:asgi_wsgi_app:Uvicorn: File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/jinja2/environment.py", line 490, in getattr
+INFO:asgi_wsgi_app:Uvicorn: return getattr(obj, attribute)
+INFO:asgi_wsgi_app:Uvicorn: ^^^^^^^^^^^^^^^^^^^^^^^
+INFO:asgi_wsgi_app:Uvicorn: jinja2.exceptions.UndefinedError: 'config' is undefined

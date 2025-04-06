@@ -676,6 +676,37 @@ async def admin_store_settings(
                 status_message = f"Error loading AI configuration: {str(e)}"
                 status_type = "danger"
     
+    # Default shipping config
+    shipping_config = {
+        "store_country": "US",
+        "store_postal_code": "",
+        "free_shipping_threshold": 100,
+        "dimensional_weight_factor": 5000,
+        "express_multiplier": 1.75,
+        "flat_rate_domestic": 5.99,
+        "flat_rate_international": 19.99,
+        "weight_rates": {
+            "domestic": {"base_rate": 5.99, "per_kg": 1.5, "min_weight_kg": 0.1},
+            "continental": {"base_rate": 12.99, "per_kg": 3.5, "min_weight_kg": 0.1},
+            "international_close": {"base_rate": 18.99, "per_kg": 5.0, "min_weight_kg": 0.1},
+            "international_far": {"base_rate": 29.99, "per_kg": 8.0, "min_weight_kg": 0.1}
+        }
+    }
+    
+    # Get shipping config if tenant is selected
+    if selected_tenant:
+        try:
+            from pycommerce.plugins import get_plugin_registry
+            plugin_registry = get_plugin_registry()
+            shipping_plugin = plugin_registry.get_shipping_plugin('standard')
+            
+            if shipping_plugin:
+                tenant_shipping_config = shipping_plugin.get_shipping_config(str(selected_tenant["id"]))
+                if tenant_shipping_config:
+                    shipping_config.update(tenant_shipping_config)
+        except Exception as e:
+            logger.error(f"Error loading shipping configuration: {e}")
+            
     return templates.TemplateResponse(
         "admin/store_settings.html", 
         {
@@ -693,7 +724,9 @@ async def admin_store_settings(
             "ai_providers": ai_providers,
             "active_provider": active_provider,
             "selected_provider": selected_provider,
-            "field_values": field_values
+            "field_values": field_values,
+            # Shipping config data
+            "config": shipping_config
         }
     )
 
