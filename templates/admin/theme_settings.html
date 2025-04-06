@@ -1,3 +1,4 @@
+
 {% extends "admin/base_admin.html" %}
 
 {% block title %}Theme Settings - PyCommerce Admin{% endblock %}
@@ -172,35 +173,6 @@
     </div>
 </div>
 
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Update border radius value display
-    const borderRadiusSlider = document.getElementById('border_radius');
-    const borderRadiusValue = document.getElementById('border_radius_value');
-    
-    if (borderRadiusSlider && borderRadiusValue) {
-        borderRadiusSlider.addEventListener('input', function() {
-            borderRadiusValue.textContent = this.value + 'px';
-        });
-    }
-    
-    // Sync color input with text input
-    const colorInputs = document.querySelectorAll('input[type="color"]');
-    colorInputs.forEach(input => {
-        const inputId = input.id;
-        const textInput = input.nextElementSibling;
-        
-        if (textInput) {
-            input.addEventListener('input', function() {
-                textInput.value = this.value;
-            });
-        }
-    });
-});
-
-// Function to open the media selector and handle selection
-function openMediaSelector(targetFieldId) {
-
 <!-- Media Selector Modal -->
 <div class="modal fade" id="mediaSelectorModal" tabindex="-1" aria-labelledby="mediaSelectorLabel" aria-hidden="true">
     <div class="modal-dialog modal-xl">
@@ -251,6 +223,34 @@ function openMediaSelector(targetFieldId) {
     </div>
 </div>
 
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Update border radius value display
+    const borderRadiusSlider = document.getElementById('border_radius');
+    const borderRadiusValue = document.getElementById('border_radius_value');
+    
+    if (borderRadiusSlider && borderRadiusValue) {
+        borderRadiusSlider.addEventListener('input', function() {
+            borderRadiusValue.textContent = this.value + 'px';
+        });
+    }
+    
+    // Sync color input with text input
+    const colorInputs = document.querySelectorAll('input[type="color"]');
+    colorInputs.forEach(input => {
+        const inputId = input.id;
+        const textInput = input.nextElementSibling;
+        
+        if (textInput) {
+            input.addEventListener('input', function() {
+                textInput.value = this.value;
+            });
+        }
+    });
+});
+
+// Function to open the media selector and handle selection
+function openMediaSelector(targetFieldId) {
     // Show the media selector modal
     const mediaSelectorModal = new bootstrap.Modal(document.getElementById('mediaSelectorModal'));
     
