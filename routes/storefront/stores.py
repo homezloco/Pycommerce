@@ -130,19 +130,35 @@ async def store(
             # Use SDK manager's method
             logger.info(f"Using SDK ProductManager to filter products for tenant: {tenant_obj.id}")
             
-            # For the SDK version, we need to get all products and filter them by tenant_id in the metadata
-            tenant_products = []
-            all_products = product_manager.list(
-                category=filters_dict.get("category"),
-                min_price=filters_dict.get("min_price"),
-                max_price=filters_dict.get("max_price"),
-                in_stock=filters_dict.get("in_stock")
-            )
-            
-            # Filter by tenant ID in metadata
-            for p in all_products:
-                if hasattr(p, 'metadata') and p.metadata.get('tenant_id') == str(tenant_obj.id):
-                    tenant_products.append(p)
+            # Use get_by_tenant method for SDK ProductManager if available
+            if hasattr(product_manager, 'get_by_tenant'):
+                logger.info(f"Using get_by_tenant method for tenant: {tenant_obj.id}")
+                tenant_products = product_manager.get_by_tenant(str(tenant_obj.id))
+                
+                # Apply filters after getting tenant products
+                if filters_dict.get("category"):
+                    tenant_products = [p for p in tenant_products if filters_dict["category"] in p.categories]
+                if filters_dict.get("min_price") is not None:
+                    tenant_products = [p for p in tenant_products if p.price >= filters_dict["min_price"]]
+                if filters_dict.get("max_price") is not None:
+                    tenant_products = [p for p in tenant_products if p.price <= filters_dict["max_price"]]
+                if filters_dict.get("in_stock") is not None and filters_dict["in_stock"]:
+                    tenant_products = [p for p in tenant_products if p.stock > 0]
+            else:
+                # Fallback to getting all products and filtering manually
+                logger.info(f"Using list method and filtering for tenant: {tenant_obj.id}")
+                tenant_products = []
+                all_products = product_manager.list(
+                    category=filters_dict.get("category"),
+                    min_price=filters_dict.get("min_price"),
+                    max_price=filters_dict.get("max_price"),
+                    in_stock=filters_dict.get("in_stock")
+                )
+                
+                # Filter by tenant ID in metadata
+                for p in all_products:
+                    if hasattr(p, 'metadata') and p.metadata.get('tenant_id') == str(tenant_obj.id):
+                        tenant_products.append(p)
         
         # Format products for template
         if tenant_products:
