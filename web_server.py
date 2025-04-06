@@ -2120,6 +2120,7 @@ async def admin_generate_image(
     prompt: str = Form(...),
     tenant_id: str = Form(...),
     size: str = Form("1024x1024"),
+    quality: str = Form("standard"),
     alt_text: Optional[str] = Form(None),
     description: Optional[str] = Form(None)
 ):
@@ -2130,10 +2131,11 @@ async def admin_generate_image(
             prompt=prompt, 
             tenant_id=tenant_id, 
             size=size,
+            quality=quality,
             alt_text=alt_text or prompt,
             description=description
         )
-        if result and result.get("id"):
+        if result and hasattr(result, 'id'):
             return RedirectResponse(
                 url=f"/admin/media?tenant={tenant_id}&status_message=Image+generated+successfully&status_type=success", 
                 status_code=303
