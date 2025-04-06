@@ -40,7 +40,50 @@ async def view_cart(request: Request):
             
             # Format cart items for template
             for item in cart.items:
-                product = product_manager.get(item.product_id)
+                # Try to get product from SDK manager first
+                product = None
+                try:
+                    product = product_manager.get(item.product_id)
+                except Exception as e:
+                    logger.warning(f"SDK product manager failed to find product {item.product_id}: {str(e)}")
+                
+                # If product not found in SDK manager, try the database directly
+                if not product:
+                    try:
+                        # Import directly to avoid circular imports
+                        from models import Product
+                        from app import app
+                        
+                        logger.info(f"Looking up product {item.product_id} directly in database")
+                        with app.app_context():
+                            db_product = Product.query.filter_by(id=item.product_id).first()
+                            
+                        if db_product:
+                            # Convert SQLAlchemy model to SDK format
+                            from pycommerce.models.product import Product as SDKProduct
+                            
+                            logger.info(f"Found product in database: {db_product.name}")
+                            product = SDKProduct(
+                                id=db_product.id,
+                                name=db_product.name,
+                                sku=db_product.sku,
+                                description=db_product.description or "",
+                                price=db_product.price,
+                                stock=db_product.stock,
+                                categories=db_product.categories or []
+                            )
+                            
+                            # Add to SDK manager for future use
+                            try:
+                                # Store the product in the SDK manager's cache
+                                product_manager._products[product.id] = product
+                                product_manager._sku_index[product.sku] = product.id
+                                logger.info(f"Added product {product.id} to SDK manager cache")
+                            except Exception as cache_error:
+                                logger.warning(f"Failed to cache product in SDK manager: {str(cache_error)}")
+                    except Exception as db_error:
+                        logger.error(f"Error accessing database for product: {str(db_error)}")
+                
                 if product:
                     item_data = {
                         "id": str(item.id),
@@ -82,8 +125,50 @@ async def add_to_cart(
             cart_id = str(cart.id)
             request.session["cart_id"] = cart_id
         
-        # Check if product exists
-        product = product_manager.get(product_id)
+        # Check if product exists - first try the SDK manager
+        product = None
+        try:
+            product = product_manager.get(product_id)
+        except Exception as e:
+            logger.warning(f"SDK product manager failed to find product {product_id}: {str(e)}")
+            
+        # If product not found in SDK manager, try the database directly
+        if not product:
+            try:
+                # Import directly to avoid circular imports
+                from models import Product
+                from app import app
+                
+                logger.info(f"Looking up product {product_id} directly in database")
+                with app.app_context():
+                    db_product = Product.query.filter_by(id=product_id).first()
+                    
+                if db_product:
+                    # Convert SQLAlchemy model to SDK format
+                    from pycommerce.models.product import Product as SDKProduct
+                    
+                    logger.info(f"Found product in database: {db_product.name}")
+                    product = SDKProduct(
+                        id=db_product.id,
+                        name=db_product.name,
+                        sku=db_product.sku,
+                        description=db_product.description or "",
+                        price=db_product.price,
+                        stock=db_product.stock,
+                        categories=db_product.categories or []
+                    )
+                    
+                    # Add to SDK manager for future use
+                    try:
+                        # Store the product in the SDK manager's cache
+                        product_manager._products[product.id] = product
+                        product_manager._sku_index[product.sku] = product.id
+                        logger.info(f"Added product {product.id} to SDK manager cache")
+                    except Exception as cache_error:
+                        logger.warning(f"Failed to cache product in SDK manager: {str(cache_error)}")
+            except Exception as db_error:
+                logger.error(f"Error accessing database for product: {str(db_error)}")
+                
         if not product:
             return JSONResponse(
                 status_code=404,
