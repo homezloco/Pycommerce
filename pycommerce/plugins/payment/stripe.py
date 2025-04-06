@@ -15,6 +15,10 @@ import httpx
 from fastapi import APIRouter, HTTPException
 from pycommerce.plugins.payment.base import PaymentPlugin, PaymentMethod, PaymentStatus
 from pycommerce.plugins.payment.config import STRIPE_API_KEY, STRIPE_WEBHOOK_SECRET, STRIPE_ENABLED, STRIPE_PUBLIC_KEY
+from pycommerce.core.exceptions import (
+    PaymentError, PaymentConfigError, PaymentAuthenticationError,
+    PaymentProcessingError, PaymentValidationError, PaymentRefundError
+)
 
 logger = logging.getLogger(__name__)
 
@@ -43,8 +47,13 @@ class StripePaymentPlugin(PaymentPlugin):
             logger.warning("Stripe API key not properly configured")
             self.enabled = False
         else:
-            stripe.api_key = self.api_key
-            self.enabled = STRIPE_ENABLED
+            try:
+                stripe.api_key = self.api_key
+                self.enabled = STRIPE_ENABLED
+            except Exception as e:
+                logger.error(f"Error initializing Stripe API: {str(e)}")
+                self.enabled = False
+                raise PaymentConfigError(f"Failed to initialize Stripe API: {str(e)}")
 
         self.webhook_secret = STRIPE_WEBHOOK_SECRET
         self.api_base_url = "https://api.stripe.com/v1"
@@ -107,17 +116,57 @@ class StripePaymentPlugin(PaymentPlugin):
                 - client_secret: Client secret for frontend confirmation (if needed)
 
         Raises:
-            PaymentError: If payment processing fails
+            PaymentValidationError: If payment data is invalid or missing required fields
+            PaymentConfigError: If plugin is not properly configured
+            PaymentProcessingError: If payment processing fails
+            PaymentAuthenticationError: If authentication with Stripe fails
+            PaymentError: For other general payment errors
         """
+        # First verify plugin is enabled
+        if not self.enabled:
+            raise PaymentConfigError("Stripe payment plugin is not enabled or properly configured")
+
+        # Ensure we have an API key
+        if not self.api_key:
+            raise PaymentConfigError("Stripe API key is not configured")
+
         try:
             # Validate required fields
+            missing_fields = []
             required_fields = ["amount", "currency", "payment_method"]
             for field in required_fields:
                 if field not in payment_data:
-                    raise PaymentError(f"Missing required payment field: {field}")
+                    missing_fields.append(field)
+            
+            if missing_fields:
+                missing_fields_str = ", ".join(missing_fields)
+                raise PaymentValidationError(
+                    f"Missing required payment fields: {missing_fields_str}",
+                    invalid_fields=missing_fields
+                )
 
-            # Convert amount to cents (Stripe requires integer in smallest currency unit)
-            amount_cents = int(float(payment_data["amount"]) * 100)
+            # Validate amount and currency
+            try:
+                # Convert amount to cents (Stripe requires integer in smallest currency unit)
+                amount_cents = int(float(payment_data["amount"]) * 100)
+                if amount_cents <= 0:
+                    raise PaymentValidationError(
+                        "Payment amount must be greater than zero",
+                        invalid_fields=["amount"]
+                    )
+            except (ValueError, TypeError):
+                raise PaymentValidationError(
+                    "Invalid payment amount format",
+                    invalid_fields=["amount"]
+                )
+
+            # Validate currency (must be 3-letter code)
+            currency = payment_data["currency"].upper()
+            if not currency or len(currency) != 3:
+                raise PaymentValidationError(
+                    "Invalid currency code format. Must be a 3-letter code (e.g., USD)",
+                    invalid_fields=["currency"]
+                )
 
             # Create payment intent
             headers = {
@@ -127,7 +176,7 @@ class StripePaymentPlugin(PaymentPlugin):
 
             request_data = {
                 "amount": str(amount_cents),
-                "currency": payment_data["currency"].lower(),
+                "currency": currency.lower(),
                 "payment_method": payment_data["payment_method"],
                 "metadata[order_id]": str(order_id),
                 "confirm": "true",
@@ -138,19 +187,56 @@ class StripePaymentPlugin(PaymentPlugin):
             if "description" in payment_data:
                 request_data["description"] = payment_data["description"]
 
-            async with httpx.AsyncClient() as client:
-                response = await client.post(
-                    f"{self.api_base_url}/payment_intents",
-                    headers=headers,
-                    data=request_data
-                )
+            # Process payment with Stripe API
+            try:
+                async with httpx.AsyncClient() as client:
+                    response = await client.post(
+                        f"{self.api_base_url}/payment_intents",
+                        headers=headers,
+                        data=request_data
+                    )
+            except httpx.RequestError as e:
+                logger.error(f"HTTP request error during payment processing: {str(e)}")
+                raise PaymentProcessingError(f"Failed to connect to Stripe API: {str(e)}")
 
-            if response.status_code >= 400:
-                error_data = response.json()
-                logger.error(f"Stripe payment error: {error_data}")
-                raise PaymentError(f"Payment failed: {json.dumps(error_data)}")
+            # Handle HTTP error responses
+            if response.status_code == 401:
+                logger.error("Stripe authentication failed - invalid API key")
+                raise PaymentAuthenticationError("Invalid Stripe API credentials")
+                
+            elif response.status_code >= 400:
+                try:
+                    error_data = response.json()
+                    error_type = error_data.get("error", {}).get("type", "")
+                    error_code = error_data.get("error", {}).get("code", "")
+                    error_message = error_data.get("error", {}).get("message", "Unknown error")
+                    
+                    logger.error(f"Stripe payment error: {error_type}/{error_code} - {error_message}")
+                    
+                    # Card declined errors
+                    if error_type == "card_error" or error_code in ["card_declined", "expired_card", "incorrect_cvc"]:
+                        decline_reason = error_data.get("error", {}).get("decline_code", error_code)
+                        raise PaymentProcessingError(
+                            f"Card payment failed: {error_message}",
+                            decline_reason=decline_reason
+                        )
+                    # Configuration errors
+                    elif error_type in ["invalid_request_error", "api_connection_error"]:
+                        raise PaymentConfigError(f"Stripe configuration error: {error_message}")
+                    # Authentication errors
+                    elif error_type == "authentication_error":
+                        raise PaymentAuthenticationError(f"Stripe authentication failed: {error_message}")
+                    # Other errors
+                    else:
+                        raise PaymentProcessingError(f"Payment failed: {error_message}")
+                except ValueError:
+                    raise PaymentProcessingError(f"Payment failed with status {response.status_code}")
 
-            payment_intent = response.json()
+            # Parse the successful payment response
+            try:
+                payment_intent = response.json()
+            except ValueError:
+                raise PaymentProcessingError("Invalid response from Stripe API")
 
             status = payment_intent.get("status", "unknown")
             approval_url = None
@@ -168,13 +254,14 @@ class StripePaymentPlugin(PaymentPlugin):
                 "approval_url": approval_url
             }
 
-        except httpx.HTTPError as e:
-            logger.error(f"HTTP error during payment processing: {str(e)}")
-            raise PaymentError(f"Payment failed due to network error: {str(e)}")
+        except (PaymentValidationError, PaymentConfigError, 
+                PaymentProcessingError, PaymentAuthenticationError):
+            # Re-raise specific payment errors unchanged
+            raise
 
         except Exception as e:
             logger.error(f"Unexpected error during payment processing: {str(e)}")
-            raise PaymentError(f"Payment failed due to unexpected error: {str(e)}")
+            raise PaymentProcessingError(f"Payment failed due to unexpected error: {str(e)}")
 
     async def refund_payment(self, payment_id: str, amount: Optional[float] = None) -> Dict[str, Any]:
         """
@@ -191,9 +278,38 @@ class StripePaymentPlugin(PaymentPlugin):
                 - amount: Amount refunded
 
         Raises:
-            PaymentError: If refund processing fails
+            PaymentConfigError: If plugin is not properly configured
+            PaymentRefundError: If refund processing fails
+            PaymentAuthenticationError: If authentication with Stripe fails
+            PaymentError: For other general payment errors
         """
+        # First verify plugin is enabled
+        if not self.enabled:
+            raise PaymentConfigError("Stripe payment plugin is not enabled or properly configured")
+
+        # Ensure we have an API key
+        if not self.api_key:
+            raise PaymentConfigError("Stripe API key is not configured")
+
+        # Validate payment ID
+        if not payment_id:
+            raise PaymentValidationError("Payment ID is required for refund")
+
         try:
+            # Validate amount if provided
+            if amount is not None:
+                try:
+                    if float(amount) <= 0:
+                        raise PaymentValidationError(
+                            "Refund amount must be greater than zero",
+                            invalid_fields=["amount"]
+                        )
+                except (ValueError, TypeError):
+                    raise PaymentValidationError(
+                        "Invalid refund amount format",
+                        invalid_fields=["amount"]
+                    )
+
             # Prepare refund data
             headers = {
                 "Authorization": f"Bearer {self.api_key}",
@@ -211,19 +327,54 @@ class StripePaymentPlugin(PaymentPlugin):
                 request_data["amount"] = str(amount_cents)
 
             # Process refund
-            async with httpx.AsyncClient() as client:
-                response = await client.post(
-                    f"{self.api_base_url}/refunds",
-                    headers=headers,
-                    data=request_data
-                )
+            try:
+                async with httpx.AsyncClient() as client:
+                    response = await client.post(
+                        f"{self.api_base_url}/refunds",
+                        headers=headers,
+                        data=request_data
+                    )
+            except httpx.RequestError as e:
+                logger.error(f"HTTP request error during refund processing: {str(e)}")
+                raise PaymentRefundError(f"Failed to connect to Stripe API for refund: {str(e)}")
 
-            if response.status_code >= 400:
-                error_data = response.json()
-                logger.error(f"Stripe refund error: {error_data}")
-                raise PaymentError(f"Refund failed: {json.dumps(error_data)}")
+            # Handle HTTP error responses
+            if response.status_code == 401:
+                logger.error("Stripe authentication failed during refund - invalid API key")
+                raise PaymentAuthenticationError("Invalid Stripe API credentials")
+                
+            elif response.status_code >= 400:
+                try:
+                    error_data = response.json()
+                    error_type = error_data.get("error", {}).get("type", "")
+                    error_code = error_data.get("error", {}).get("code", "")
+                    error_message = error_data.get("error", {}).get("message", "Unknown error")
+                    
+                    logger.error(f"Stripe refund error: {error_type}/{error_code} - {error_message}")
+                    
+                    # Configuration errors
+                    if error_type in ["invalid_request_error", "api_connection_error"]:
+                        if "amount" in error_message.lower():
+                            raise PaymentRefundError(f"Refund amount error: {error_message}")
+                        else:
+                            raise PaymentConfigError(f"Stripe configuration error: {error_message}")
+                    # Authentication errors
+                    elif error_type == "authentication_error":
+                        raise PaymentAuthenticationError(f"Stripe authentication failed: {error_message}")
+                    # Payment Intent not found
+                    elif error_code == "resource_missing":
+                        raise PaymentRefundError(f"Payment not found: {error_message}")
+                    # Other errors
+                    else:
+                        raise PaymentRefundError(f"Refund failed: {error_message}")
+                except ValueError:
+                    raise PaymentRefundError(f"Refund failed with status {response.status_code}")
 
-            refund_data = response.json()
+            # Parse the successful refund response
+            try:
+                refund_data = response.json()
+            except ValueError:
+                raise PaymentRefundError("Invalid response from Stripe API")
 
             # Convert amount from cents back to dollars
             refund_amount = float(refund_data.get("amount", 0)) / 100
@@ -234,13 +385,14 @@ class StripePaymentPlugin(PaymentPlugin):
                 "amount": refund_amount
             }
 
-        except httpx.HTTPError as e:
-            logger.error(f"HTTP error during refund processing: {str(e)}")
-            raise PaymentError(f"Refund failed due to network error: {str(e)}")
+        except (PaymentValidationError, PaymentConfigError, 
+                PaymentRefundError, PaymentAuthenticationError):
+            # Re-raise specific payment errors unchanged
+            raise
 
         except Exception as e:
             logger.error(f"Unexpected error during refund processing: {str(e)}")
-            raise PaymentError(f"Refund failed due to unexpected error: {str(e)}")
+            raise PaymentRefundError(f"Refund failed due to unexpected error: {str(e)}")
 
     async def get_payment_status(self, payment_id: str) -> Dict[str, Any]:
         """
@@ -257,8 +409,23 @@ class StripePaymentPlugin(PaymentPlugin):
                 - currency: Currency used
 
         Raises:
-            PaymentError: If status retrieval fails
+            PaymentConfigError: If plugin is not properly configured
+            PaymentValidationError: If payment ID is invalid
+            PaymentAuthenticationError: If authentication with Stripe fails
+            PaymentError: For other general payment errors
         """
+        # First verify plugin is enabled
+        if not self.enabled:
+            raise PaymentConfigError("Stripe payment plugin is not enabled or properly configured")
+
+        # Ensure we have an API key
+        if not self.api_key:
+            raise PaymentConfigError("Stripe API key is not configured")
+
+        # Validate payment ID
+        if not payment_id:
+            raise PaymentValidationError("Payment ID is required to check status")
+
         try:
             # Get payment intent details
             headers = {
@@ -266,18 +433,52 @@ class StripePaymentPlugin(PaymentPlugin):
                 "Content-Type": "application/x-www-form-urlencoded"
             }
 
-            async with httpx.AsyncClient() as client:
-                response = await client.get(
-                    f"{self.api_base_url}/payment_intents/{payment_id}",
-                    headers=headers
-                )
+            try:
+                async with httpx.AsyncClient() as client:
+                    response = await client.get(
+                        f"{self.api_base_url}/payment_intents/{payment_id}",
+                        headers=headers
+                    )
+            except httpx.RequestError as e:
+                logger.error(f"HTTP request error during payment status check: {str(e)}")
+                raise PaymentError(f"Failed to connect to Stripe API for status check: {str(e)}")
 
-            if response.status_code >= 400:
-                error_data = response.json()
-                logger.error(f"Stripe payment status error: {error_data}")
-                raise PaymentError(f"Status check failed: {json.dumps(error_data)}")
+            # Handle HTTP error responses
+            if response.status_code == 401:
+                logger.error("Stripe authentication failed during status check - invalid API key")
+                raise PaymentAuthenticationError("Invalid Stripe API credentials")
+                
+            elif response.status_code == 404:
+                logger.error(f"Payment not found: {payment_id}")
+                raise PaymentValidationError(f"Payment not found with ID: {payment_id}", 
+                                            invalid_fields=["payment_id"])
+                
+            elif response.status_code >= 400:
+                try:
+                    error_data = response.json()
+                    error_type = error_data.get("error", {}).get("type", "")
+                    error_message = error_data.get("error", {}).get("message", "Unknown error")
+                    
+                    logger.error(f"Stripe payment status error: {error_type} - {error_message}")
+                    
+                    # Authentication errors
+                    if error_type == "authentication_error":
+                        raise PaymentAuthenticationError(f"Stripe authentication failed: {error_message}")
+                    # Resource not found
+                    elif error_type == "invalid_request_error" and "no such payment_intent" in error_message.lower():
+                        raise PaymentValidationError(f"Payment not found: {error_message}", 
+                                                   invalid_fields=["payment_id"])
+                    # Other errors
+                    else:
+                        raise PaymentError(f"Status check failed: {error_message}")
+                except ValueError:
+                    raise PaymentError(f"Status check failed with status {response.status_code}")
 
-            payment_intent = response.json()
+            # Parse the successful payment intent response
+            try:
+                payment_intent = response.json()
+            except ValueError:
+                raise PaymentError("Invalid response from Stripe API")
 
             # Convert amount from cents to dollars
             amount = float(payment_intent.get("amount", 0)) / 100
@@ -289,9 +490,9 @@ class StripePaymentPlugin(PaymentPlugin):
                 "currency": payment_intent.get("currency", "").upper()
             }
 
-        except httpx.HTTPError as e:
-            logger.error(f"HTTP error during payment status check: {str(e)}")
-            raise PaymentError(f"Status check failed due to network error: {str(e)}")
+        except (PaymentValidationError, PaymentConfigError, PaymentAuthenticationError):
+            # Re-raise specific payment errors unchanged
+            raise
 
         except Exception as e:
             logger.error(f"Unexpected error during payment status check: {str(e)}")
