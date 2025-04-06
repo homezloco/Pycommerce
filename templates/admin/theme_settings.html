@@ -197,5 +197,59 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 });
+
+// Function to open the media selector and handle selection
+function openMediaSelector(targetFieldId) {
+    // Show the media selector modal
+    const mediaSelectorModal = new bootstrap.Modal(document.getElementById('mediaSelectorModal'));
+    
+    // Define the callback function that will be called when media is selected
+    window.mediaSelectionCallback = function(id, url, name) {
+        // Update the target input field with the selected media URL
+        document.getElementById(targetFieldId).value = url;
+        
+        // Close the media selector modal
+        mediaSelectorModal.hide();
+    };
+    
+    // Load media content into the selector
+    if (typeof window.loadMediaSelector === 'function') {
+        window.loadMediaSelector(window.mediaSelectionCallback);
+    } else {
+        // If the loadMediaSelector function is not available, show the modal directly
+        mediaSelectorModal.show();
+        
+        // Fetch media items from the API
+        fetch('/api/media?file_type=image')
+            .then(response => response.json())
+            .then(data => {
+                const mediaGrid = document.getElementById('mediaSelectorGrid');
+                
+                if (data.media && data.media.length > 0) {
+                    let html = '';
+                    data.media.forEach(item => {
+                        html += `
+                            <div class="col">
+                                <div class="card h-100">
+                                    <img src="${item.file_url}" class="card-img-top" alt="${item.alt_text || item.name}" style="height: 160px; object-fit: contain;">
+                                    <div class="card-body">
+                                        <h6 class="card-title text-truncate">${item.name}</h6>
+                                        <button class="btn btn-sm btn-primary w-100" onclick="selectMedia('${item.id}', '${item.file_url}', '${item.name}')">Select</button>
+                                    </div>
+                                </div>
+                            </div>`;
+                    });
+                    mediaGrid.innerHTML = html;
+                } else {
+                    mediaGrid.innerHTML = '<div class="col-12 text-center py-5"><p>No media found. Please upload some images first.</p></div>';
+                }
+            })
+            .catch(error => {
+                console.error('Error loading media:', error);
+                const mediaGrid = document.getElementById('mediaSelectorGrid');
+                mediaGrid.innerHTML = '<div class="col-12 text-center py-5"><p class="text-danger">Error loading media</p></div>';
+            });
+    }
+}
 </script>
 {% endblock admin_content %}
