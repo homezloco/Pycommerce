@@ -17,7 +17,7 @@ if __name__ == "__main__":
     
     logger.info("Starting uvicorn server from uvicorn_server.py entry point")
     uvicorn.run(
-        "uvicorn_server:app", 
+        "web_app:app", 
         host="127.0.0.1", 
         port=8000,
         reload=True,
