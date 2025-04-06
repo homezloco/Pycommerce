@@ -85,12 +85,16 @@ class ShippingRateCalculator:
     # Default express multipliers
     DEFAULT_EXPRESS_MULTIPLIER = 1.75  # Express costs 75% more than standard
     
+    # Default premium multipliers
+    DEFAULT_PREMIUM_MULTIPLIER = 2.5  # Premium costs 150% more than standard
+    
     def __init__(
         self,
         zones_mapping: Optional[Dict[str, Dict[str, ShippingZone]]] = None,
         weight_rates: Optional[Dict[ShippingZone, Dict[str, float]]] = None,
         dimensional_weight_factor: Optional[float] = None,
         express_multiplier: Optional[float] = None,
+        premium_multiplier: Optional[float] = None,
         free_shipping_threshold: Optional[float] = None
     ):
         """
@@ -101,12 +105,14 @@ class ShippingRateCalculator:
             weight_rates: Rates for each shipping zone based on weight
             dimensional_weight_factor: Factor for calculating dimensional weight
             express_multiplier: Multiplier for express shipping rates
+            premium_multiplier: Multiplier for premium shipping rates
             free_shipping_threshold: Minimum order total for free shipping
         """
         self.zones_mapping = zones_mapping or self.DEFAULT_ZONES
         self.weight_rates = weight_rates or self.DEFAULT_WEIGHT_RATES
         self.dimensional_weight_factor = dimensional_weight_factor or self.DEFAULT_DIM_WEIGHT_FACTOR
         self.express_multiplier = express_multiplier or self.DEFAULT_EXPRESS_MULTIPLIER
+        self.premium_multiplier = premium_multiplier or self.DEFAULT_PREMIUM_MULTIPLIER
         self.free_shipping_threshold = free_shipping_threshold or 0.0
     
     def determine_shipping_zone(self, origin_country: str, destination_country: str) -> ShippingZone:
@@ -179,7 +185,7 @@ class ShippingRateCalculator:
         self,
         zone: ShippingZone,
         weight_kg: float,
-        express: bool = False
+        shipping_method: str = "standard"
     ) -> float:
         """
         Calculate shipping price based on zone and weight.
@@ -187,7 +193,7 @@ class ShippingRateCalculator:
         Args:
             zone: The shipping zone
             weight_kg: The weight in kg
-            express: Whether to calculate express shipping
+            shipping_method: The shipping method (standard, express, or premium)
             
         Returns:
             The shipping price
@@ -206,9 +212,11 @@ class ShippingRateCalculator:
         # Calculate price
         price = base_rate + (weight_kg * per_kg)
         
-        # Apply express multiplier if needed
-        if express:
+        # Apply method multiplier if needed
+        if shipping_method == "express":
             price *= self.express_multiplier
+        elif shipping_method == "premium":
+            price *= self.premium_multiplier
         
         return round(price, 2)
     
@@ -240,9 +248,10 @@ class ShippingRateCalculator:
         # Use the higher of actual or dimensional weight
         billable_weight = max(actual_weight, dimensional_weight)
         
-        # Calculate standard and express rates
-        standard_rate = self.calculate_shipping_price(zone, billable_weight, express=False)
-        express_rate = self.calculate_shipping_price(zone, billable_weight, express=True)
+        # Calculate standard, express, and premium rates
+        standard_rate = self.calculate_shipping_price(zone, billable_weight, shipping_method="standard")
+        express_rate = self.calculate_shipping_price(zone, billable_weight, shipping_method="express")
+        premium_rate = self.calculate_shipping_price(zone, billable_weight, shipping_method="premium")
         
         # Check for free shipping
         free_shipping = self.free_shipping_threshold > 0 and order_total >= self.free_shipping_threshold
@@ -252,9 +261,9 @@ class ShippingRateCalculator:
             {
                 "id": "standard",
                 "name": "Standard Shipping",
-                "description": self._get_delivery_description(zone, express=False),
+                "description": self._get_delivery_description(zone, shipping_method="standard"),
                 "price": 0.0 if free_shipping else standard_rate,
-                "estimated_days": self._get_delivery_days(zone, express=False),
+                "estimated_days": self._get_delivery_days(zone, shipping_method="standard"),
                 "free_shipping": free_shipping,
                 "billable_weight": round(billable_weight, 2),
                 "zone": zone.value
@@ -262,9 +271,19 @@ class ShippingRateCalculator:
             {
                 "id": "express",
                 "name": "Express Shipping",
-                "description": self._get_delivery_description(zone, express=True),
+                "description": self._get_delivery_description(zone, shipping_method="express"),
                 "price": 0.0 if free_shipping else express_rate,
-                "estimated_days": self._get_delivery_days(zone, express=True),
+                "estimated_days": self._get_delivery_days(zone, shipping_method="express"),
+                "free_shipping": free_shipping,
+                "billable_weight": round(billable_weight, 2),
+                "zone": zone.value
+            },
+            {
+                "id": "premium",
+                "name": "Premium Shipping",
+                "description": self._get_delivery_description(zone, shipping_method="premium"),
+                "price": 0.0 if free_shipping else premium_rate,
+                "estimated_days": self._get_delivery_days(zone, shipping_method="premium"),
                 "free_shipping": free_shipping,
                 "billable_weight": round(billable_weight, 2),
                 "zone": zone.value
@@ -273,18 +292,29 @@ class ShippingRateCalculator:
         
         return rates
     
-    def _get_delivery_days(self, zone: ShippingZone, express: bool) -> int:
+    def _get_delivery_days(self, zone: ShippingZone, shipping_method: str = "standard") -> int:
         """
         Get estimated delivery days based on zone and shipping method.
         
         Args:
             zone: The shipping zone
-            express: Whether this is express shipping
+            shipping_method: The shipping method (standard, express, or premium)
             
         Returns:
             Estimated delivery days
         """
-        if express:
+        if shipping_method == "premium":
+            # Premium shipping is fastest
+            if zone == ShippingZone.DOMESTIC:
+                return 1
+            elif zone == ShippingZone.CONTINENTAL:
+                return 2
+            elif zone == ShippingZone.INTERNATIONAL_CLOSE:
+                return 3
+            else:  # INTERNATIONAL_FAR
+                return 4
+        elif shipping_method == "express":
+            # Express shipping is faster than standard
             if zone == ShippingZone.DOMESTIC:
                 return 2
             elif zone == ShippingZone.CONTINENTAL:
@@ -294,6 +324,7 @@ class ShippingRateCalculator:
             else:  # INTERNATIONAL_FAR
                 return 5
         else:
+            # Standard shipping
             if zone == ShippingZone.DOMESTIC:
                 return 5
             elif zone == ShippingZone.CONTINENTAL:
@@ -303,20 +334,22 @@ class ShippingRateCalculator:
             else:  # INTERNATIONAL_FAR
                 return 14
     
-    def _get_delivery_description(self, zone: ShippingZone, express: bool) -> str:
+    def _get_delivery_description(self, zone: ShippingZone, shipping_method: str = "standard") -> str:
         """
         Get a human-readable description of delivery time.
         
         Args:
             zone: The shipping zone
-            express: Whether this is express shipping
+            shipping_method: The shipping method (standard, express, or premium)
             
         Returns:
             Description string
         """
-        days = self._get_delivery_days(zone, express)
+        days = self._get_delivery_days(zone, shipping_method)
         
-        if days <= 2:
+        if days == 1:
+            return "Next day delivery"
+        elif days <= 2:
             return f"Delivery in {days} business days"
         else:
             return f"Delivery in {days-1}-{days} business days"

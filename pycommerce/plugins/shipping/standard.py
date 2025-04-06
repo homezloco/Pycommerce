@@ -14,6 +14,7 @@ from fastapi import APIRouter, HTTPException, Request, Depends, Query, Form, Bod
 
 from pycommerce.plugins.shipping.base import ShippingPlugin
 from pycommerce.plugins.shipping.calculator import ShippingRateCalculator, PostalCodeCalculator, ShippingZone
+from pycommerce.models.shipment import ShipmentManager
 from pycommerce.core.exceptions import ShippingError
 from pycommerce.models.plugin_config import PluginConfigManager
 from pycommerce.models.tenant import TenantManager
@@ -230,6 +231,7 @@ class StandardShippingPlugin(ShippingPlugin):
             "store_country": "US",
             "dimensional_weight_factor": 200,  # 1 cubic meter = 200kg
             "express_multiplier": 1.75,        # Express costs 75% more
+            "premium_multiplier": 2.5,         # Premium costs 150% more
             
             # Weight-based rates for each zone
             "weight_rates": {
@@ -277,6 +279,9 @@ class StandardShippingPlugin(ShippingPlugin):
                     
                     if "express_multiplier" in stored_config:
                         config["express_multiplier"] = stored_config["express_multiplier"]
+                    
+                    if "premium_multiplier" in stored_config:
+                        config["premium_multiplier"] = stored_config["premium_multiplier"]
                     
                     # Update weight-based rates
                     if "weight_rates" in stored_config:
@@ -337,6 +342,7 @@ class StandardShippingPlugin(ShippingPlugin):
                 weight_rates=weight_rates,
                 dimensional_weight_factor=config.get("dimensional_weight_factor", 200),
                 express_multiplier=config.get("express_multiplier", 1.75),
+                premium_multiplier=config.get("premium_multiplier", 2.5),
                 free_shipping_threshold=config.get("free_shipping_threshold", 0)
             )
             
@@ -381,10 +387,14 @@ class StandardShippingPlugin(ShippingPlugin):
                         rate["name"] = "Standard Shipping"
                     elif rate["id"] == "express" and country == "US":
                         rate["name"] = "Express Shipping"
+                    elif rate["id"] == "premium" and country == "US":
+                        rate["name"] = "Premium Shipping"
                     elif rate["id"] == "standard":
                         rate["name"] = "Standard International"
                     elif rate["id"] == "express":
                         rate["name"] = "Express International"
+                    elif rate["id"] == "premium":
+                        rate["name"] = "Premium International"
             
             return rates
         
@@ -425,6 +435,9 @@ class StandardShippingPlugin(ShippingPlugin):
             if shipping_option_id == "express":
                 carrier = "Express Carrier"
                 shipping_method = "Express Shipping"
+            elif shipping_option_id == "premium":
+                carrier = "Premium Carrier"
+                shipping_method = "Premium Shipping"
             
             # Store shipment information
             shipment = {

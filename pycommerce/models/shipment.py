@@ -53,7 +53,7 @@ class Shipment(Base):
     delivered_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    metadata = Column(JSON, nullable=True)
+    shipment_metadata = Column(JSON, nullable=True)  # Renamed from metadata to avoid reserved name conflict
     
     # Relationships
     order = relationship("Order", back_populates="shipments")
@@ -146,7 +146,7 @@ class ShipmentManager:
                 shipping_address=shipping_address,
                 tracking_url=tracking_url,
                 label_url=label_url,
-                metadata=metadata or {}
+                shipment_metadata=metadata or {}
             )
             
             session.add(shipment)
@@ -253,9 +253,9 @@ class ShipmentManager:
                 
             # Update metadata if provided
             if metadata:
-                current_metadata = shipment.metadata or {}
+                current_metadata = shipment.shipment_metadata or {}
                 current_metadata.update(metadata)
-                shipment.metadata = current_metadata
+                shipment.shipment_metadata = current_metadata
             
             session.commit()
             session.refresh(shipment)
