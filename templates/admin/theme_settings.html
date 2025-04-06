@@ -193,6 +193,57 @@ document.addEventListener('DOMContentLoaded', function() {
         if (textInput) {
             input.addEventListener('input', function() {
                 textInput.value = this.value;
+
+<!-- Media Selector Modal -->
+<div class="modal fade" id="mediaSelectorModal" tabindex="-1" aria-labelledby="mediaSelectorLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="mediaSelectorLabel">Select Media</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="searchMedia" placeholder="Search media...">
+                            <button class="btn btn-outline-secondary" type="button" id="searchMediaBtn">Search</button>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <select class="form-select" id="filterMediaType">
+                            <option value="">All Types</option>
+                            <option value="image" selected>Images</option>
+                            <option value="video">Videos</option>
+                            <option value="audio">Audio</option>
+                            <option value="application">Documents</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="d-grid">
+                            <button class="btn btn-primary" type="button" onclick="window.location.href='/admin/media'">
+                                <i class="fas fa-photo-video me-1"></i> Manage Media
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div id="mediaSelectorGrid" class="row row-cols-2 row-cols-md-3 row-cols-lg-4 g-3">
+                    <!-- Media items will be loaded here via JavaScript -->
+                    <div class="col-12 text-center py-5">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="mt-2">Loading media...</p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
             });
         }
     });
@@ -249,6 +300,19 @@ function openMediaSelector(targetFieldId) {
                 const mediaGrid = document.getElementById('mediaSelectorGrid');
                 mediaGrid.innerHTML = '<div class="col-12 text-center py-5"><p class="text-danger">Error loading media</p></div>';
             });
+    }
+}
+
+// Function to handle media selection from the modal
+function selectMedia(id, url, name) {
+    // Check if we're in a callback context
+    if (window.mediaSelectionCallback) {
+        window.mediaSelectionCallback(id, url, name);
+    } else {
+        // If no callback is set, just copy the URL to clipboard
+        navigator.clipboard.writeText(url).then(() => {
+            alert(`URL copied to clipboard: ${url}`);
+        });
     }
 }
 </script>
