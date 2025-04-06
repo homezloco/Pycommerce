@@ -1,0 +1,207 @@
+{% extends 'base.html' %}
+
+{% block title %}Payment - PyCommerce{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-lg-7 mx-auto">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">Payment</h4>
+                </div>
+                <div class="card-body">
+                    {% if error %}
+                    <div class="alert alert-danger" role="alert">
+                        {{ error }}
+                    </div>
+                    {% endif %}
+                    
+                    {% if payment_cancelled %}
+                    <div class="alert alert-warning" role="alert">
+                        {{ message }}
+                    </div>
+                    {% endif %}
+                    
+                    <div class="order-summary mb-4">
+                        <h5>Order Summary</h5>
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span>Order #{{ order.id }}</span>
+                                </div>
+                                <hr>
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span>Subtotal:</span>
+                                    <span>${{ order.subtotal|default(0)|round(2) }}</span>
+                                </div>
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span>Shipping:</span>
+                                    <span>${{ order.shipping_cost|default(0)|round(2) }}</span>
+                                </div>
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span>Tax:</span>
+                                    <span>${{ order.tax|default(0)|round(2) }}</span>
+                                </div>
+                                <hr>
+                                <div class="d-flex justify-content-between fw-bold">
+                                    <span>Total:</span>
+                                    <span>${{ order.total|default(0)|round(2) }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <form id="payment-form" method="POST" action="/checkout/payment/{{ order.id }}/process">
+                        <h5>Payment Method</h5>
+                        <div class="mb-3">
+                            {% if payment_method.id == "stripe_payment" %}
+                            <!-- Stripe Payment Form -->
+                            <div class="form-group">
+                                <label for="card-element" class="form-label">Credit or debit card</label>
+                                <div id="card-element" class="form-control">
+                                    <!-- Stripe.js injects the Card Element -->
+                                </div>
+                                <div id="card-errors" class="text-danger mt-2" role="alert"></div>
+                            </div>
+                            <input type="hidden" name="payment_method_id" value="{{ payment_method.id }}">
+                            <input type="hidden" id="payment-token" name="payment_token" value="">
+                            
+                            {% elif payment_method.id == "paypal_payment" %}
+                            <!-- PayPal Payment Form -->
+                            <div class="text-center mb-3">
+                                <div id="paypal-button-container"></div>
+                                <input type="hidden" name="payment_method_id" value="{{ payment_method.id }}">
+                                <input type="hidden" id="payment-token" name="payment_token" value="paypal-token">
+                            </div>
+                            
+                            {% else %}
+                            <!-- Generic Payment Form -->
+                            <div class="form-group mb-3">
+                                <label for="card-number" class="form-label">Card Number</label>
+                                <input type="text" id="card-number" class="form-control" placeholder="1234 5678 9012 3456">
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group mb-3">
+                                        <label for="card-expiry" class="form-label">Expiration Date</label>
+                                        <input type="text" id="card-expiry" class="form-control" placeholder="MM/YY">
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group mb-3">
+                                        <label for="card-cvc" class="form-label">CVC</label>
+                                        <input type="text" id="card-cvc" class="form-control" placeholder="123">
+                                    </div>
+                                </div>
+                            </div>
+                            <input type="hidden" name="payment_method_id" value="{{ payment_method.id }}">
+                            <input type="hidden" id="payment-token" name="payment_token" value="test-token">
+                            {% endif %}
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            <button id="submit-button" class="btn btn-primary" type="submit">
+                                Pay ${{ order.total|default(0)|round(2) }}
+                            </button>
+                            <a href="/checkout" class="btn btn-outline-secondary">Change Payment Method</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{% if payment_method.id == "stripe_payment" %}
+<!-- Stripe Integration -->
+<script src="https://js.stripe.com/v3/"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Create a Stripe client
+        const stripe = Stripe('{{ payment_method.client_key }}');
+        const elements = stripe.elements();
+        
+        // Create a card Element and mount it
+        const cardElement = elements.create('card');
+        cardElement.mount('#card-element');
+        
+        // Handle form submission
+        const form = document.getElementById('payment-form');
+        const submitButton = document.getElementById('submit-button');
+        
+        form.addEventListener('submit', async function(event) {
+            event.preventDefault();
+            
+            // Disable the submit button to prevent multiple clicks
+            submitButton.disabled = true;
+            
+            try {
+                // Create a payment method using the card Element
+                const result = await stripe.createPaymentMethod({
+                    type: 'card',
+                    card: cardElement
+                });
+                
+                if (result.error) {
+                    // Display error if payment method creation fails
+                    const errorElement = document.getElementById('card-errors');
+                    errorElement.textContent = result.error.message;
+                    submitButton.disabled = false;
+                } else {
+                    // Set the payment method ID to the hidden input
+                    document.getElementById('payment-token').value = result.paymentMethod.id;
+                    
+                    // Submit the form
+                    form.submit();
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                submitButton.disabled = false;
+            }
+        });
+    });
+</script>
+
+{% elif payment_method.id == "paypal_payment" %}
+<!-- PayPal Integration -->
+<script src="https://www.paypal.com/sdk/js?client-id={{ payment_method.client_key }}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Render the PayPal button
+        paypal.Buttons({
+            // Create order
+            createOrder: function(data, actions) {
+                return actions.order.create({
+                    purchase_units: [{
+                        amount: {
+                            value: '{{ order.total|round(2) }}'
+                        }
+                    }]
+                });
+            },
+            
+            // Handle approval
+            onApprove: function(data, actions) {
+                // Set the order ID to the hidden input
+                document.getElementById('payment-token').value = data.orderID;
+                
+                // Submit the form
+                document.getElementById('payment-form').submit();
+            },
+            
+            // Handle errors
+            onError: function(err) {
+                console.error('PayPal Error:', err);
+                alert('There was an error processing your payment. Please try again.');
+            }
+        }).render('#paypal-button-container');
+        
+        // Hide the submit button for PayPal
+        document.getElementById('submit-button').style.display = 'none';
+    });
+</script>
+{% endif %}
+{% endblock %}

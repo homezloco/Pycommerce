@@ -14,7 +14,7 @@ import httpx
 
 from fastapi import APIRouter, HTTPException
 from pycommerce.plugins.payment.base import PaymentPlugin, PaymentMethod, PaymentStatus
-from pycommerce.plugins.payment.config import STRIPE_API_KEY, STRIPE_WEBHOOK_SECRET, STRIPE_ENABLED
+from pycommerce.plugins.payment.config import STRIPE_API_KEY, STRIPE_WEBHOOK_SECRET, STRIPE_ENABLED, STRIPE_PUBLIC_KEY
 
 logger = logging.getLogger(__name__)
 
@@ -53,6 +53,15 @@ class StripePaymentPlugin(PaymentPlugin):
     def initialize(self) -> None:
         """Initialize the plugin."""
         logger.info("Initializing Stripe payment plugin")
+        
+    def get_client_key(self) -> str:
+        """
+        Get the public API key for Stripe.
+        
+        Returns:
+            str: The public API key for use in frontend code
+        """
+        return STRIPE_PUBLIC_KEY
 
     def get_router(self) -> APIRouter:
         """Create and return a FastAPI router for Stripe-specific endpoints."""

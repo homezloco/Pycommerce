@@ -6,6 +6,7 @@ This module defines the routes for checkout process and payment handling.
 import logging
 import json
 from typing import Optional, Dict, List, Any
+from uuid import UUID
 from fastapi import APIRouter, Request, Depends, Query, Body, Form
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
@@ -341,6 +342,9 @@ async def process_payment(
                 content={"error": "Order not found"}
             )
         
+        # Prepare the base URL for redirect URLs
+        base_url = str(request.base_url).rstrip('/')
+        
         # Process payment with plugin
         plugin_registry = get_plugin_registry()
         payment_plugin = plugin_registry.get_payment_plugin(payment_method_id)
@@ -351,36 +355,98 @@ async def process_payment(
                 content={"error": f"Payment method {payment_method_id} not available"}
             )
         
-        payment_result = payment_plugin.process_payment({
-            "order_id": order_id,
+        # Build payment data specific to the plugin type
+        payment_data = {
             "amount": order.total,
             "currency": "USD",
-            "token": payment_token,
+            "return_url": f"{base_url}/checkout/payment/{order_id}/complete",
+            "cancel_url": f"{base_url}/checkout/payment/{order_id}/cancel",
             "metadata": {
                 "customer_email": order.customer.get("email"),
                 "customer_name": f"{order.customer.get('first_name')} {order.customer.get('last_name')}"
             }
-        })
+        }
         
-        if payment_result.get("success"):
-            # Update order status
-            order_manager.update(order_id, {"status": "PAID"})
-            
-            # Clear cart
-            cart_id = order.metadata.get("cart_id")
-            if cart_id:
-                cart = cart_manager.get(cart_id)
-                cart.clear()
-                
-                # Clear cart from session
-                if request.session.get("cart_id") == cart_id:
-                    del request.session["cart_id"]
-            
-            # Redirect to confirmation page
-            return RedirectResponse(url=f"/checkout/confirmation/{order_id}", status_code=303)
+        # Add payment method data based on the payment method type
+        if payment_method_id == "stripe_payment":
+            payment_data["payment_method"] = payment_token
+        elif payment_method_id == "paypal_payment":
+            # PayPal doesn't need a token at this stage
+            pass
         else:
-            # Payment failed
-            error_message = payment_result.get("message", "Payment failed")
+            payment_data["token"] = payment_token
+            
+        # Call the async method properly with await
+        try:
+            payment_result = await payment_plugin.process_payment(UUID(order_id), payment_data)
+            
+            # Check for PayPal approval URL
+            if payment_method_id == "paypal_payment" and payment_result.get("approval_url"):
+                # Store payment ID in session for later completion
+                request.session["paypal_payment_id"] = payment_result.get("payment_id")
+                
+                # Redirect to PayPal for approval
+                return RedirectResponse(url=payment_result["approval_url"], status_code=303)
+            
+            # For immediate payment methods (like Stripe)
+            if payment_result.get("status") in ["succeeded", "COMPLETED", "complete", "authorized"]:
+                # Update order with payment information
+                order_manager.update(order_id, {
+                    "status": "PAID", 
+                    "payment_id": payment_result.get("payment_id"),
+                    "payment_status": payment_result.get("status")
+                })
+                
+                # Clear cart
+                cart_id = order.metadata.get("cart_id")
+                if cart_id:
+                    cart = cart_manager.get(cart_id)
+                    cart.clear()
+                    
+                    # Clear cart from session
+                    if request.session.get("cart_id") == cart_id:
+                        del request.session["cart_id"]
+                
+                # Redirect to confirmation page
+                return RedirectResponse(url=f"/checkout/confirmation/{order_id}", status_code=303)
+            elif payment_result.get("status") in ["requires_action", "requires_confirmation"]:
+                # Payment needs additional action (like 3D Secure)
+                return templates.TemplateResponse(
+                    "payment_action.html", 
+                    {
+                        "request": request, 
+                        "order": {
+                            "id": str(order.id),
+                            "total": order.total
+                        },
+                        "payment_result": payment_result,
+                        "client_secret": payment_result.get("client_secret"),
+                        "payment_method": {
+                            "id": payment_method_id,
+                            "client_key": payment_plugin.get_client_key() if hasattr(payment_plugin, "get_client_key") else None
+                        }
+                    }
+                )
+            else:
+                # Payment failed or is pending
+                error_message = payment_result.get("message", f"Payment failed with status: {payment_result.get('status', 'unknown')}")
+                logger.error(f"Payment failed: {error_message}")
+                return templates.TemplateResponse(
+                    "payment.html", 
+                    {
+                        "request": request, 
+                        "order": {
+                            "id": str(order.id),
+                            "total": order.total
+                        },
+                        "payment_method": {"id": payment_method_id},
+                        "error": error_message
+                    },
+                    status_code=400
+                )
+                
+        except Exception as payment_error:
+            logger.error(f"Payment processing error: {str(payment_error)}")
             return templates.TemplateResponse(
                 "payment.html", 
                 {
@@ -390,7 +456,7 @@ async def process_payment(
                         "total": order.total
                     },
                     "payment_method": {"id": payment_method_id},
-                    "error": error_message
+                    "error": f"Payment error: {str(payment_error)}"
                 },
                 status_code=400
             )
@@ -401,6 +467,163 @@ async def process_payment(
             status_code=500,
             content={"error": f"Failed to process payment: {str(e)}"}
         )
+
+@router.get("/checkout/payment/{order_id}/complete")
+async def payment_complete(request: Request, order_id: str, token: Optional[str] = None, PayerID: Optional[str] = None):
+    """Complete payment after external payment provider approval (like PayPal)."""
+    try:
+        # Get order
+        order = order_manager.get(order_id)
+        
+        if not order:
+            return JSONResponse(
+                status_code=404,
+                content={"error": "Order not found"}
+            )
+        
+        # Check if PayPal payment needs to be captured
+        if order.payment_method == "paypal_payment" and PayerID and token:
+            # Get payment ID from session
+            payment_id = request.session.get("paypal_payment_id")
+            
+            if not payment_id:
+                logger.error(f"PayPal payment ID not found in session for order {order_id}")
+                return templates.TemplateResponse(
+                    "payment.html", 
+                    {
+                        "request": request, 
+                        "order": {
+                            "id": str(order.id),
+                            "total": order.total
+                        },
+                        "payment_method": {"id": "paypal_payment"},
+                        "error": "Payment session expired or invalid. Please try again."
+                    },
+                    status_code=400
+                )
+            
+            # Capture the PayPal payment
+            try:
+                plugin_registry = get_plugin_registry()
+                payment_plugin = plugin_registry.get_payment_plugin("paypal_payment")
+                
+                if not payment_plugin:
+                    raise Exception("PayPal payment plugin not available")
+                
+                # Call the async capture method
+                capture_result = await payment_plugin.capture_payment(payment_id)
+                
+                if capture_result.get("status") in ["COMPLETED", "CAPTURED"]:
+                    # Update order status
+                    order_manager.update(order_id, {
+                        "status": "PAID", 
+                        "payment_id": payment_id,
+                        "payment_status": capture_result.get("status"),
+                        "payment_details": {
+                            "payer_id": PayerID,
+                            "capture_id": capture_result.get("capture_id")
+                        }
+                    })
+                    
+                    # Clear cart
+                    cart_id = order.metadata.get("cart_id")
+                    if cart_id:
+                        cart = cart_manager.get(cart_id)
+                        cart.clear()
+                        
+                        # Clear cart from session
+                        if request.session.get("cart_id") == cart_id:
+                            del request.session["cart_id"]
+                    
+                    # Clear PayPal payment ID from session
+                    if "paypal_payment_id" in request.session:
+                        del request.session["paypal_payment_id"]
+                    
+                    # Redirect to confirmation page
+                    return RedirectResponse(url=f"/checkout/confirmation/{order_id}", status_code=303)
+                else:
+                    # Payment capture failed
+                    error_message = f"PayPal payment could not be completed. Status: {capture_result.get('status')}"
+                    logger.error(error_message)
+                    return templates.TemplateResponse(
+                        "payment.html", 
+                        {
+                            "request": request, 
+                            "order": {
+                                "id": str(order.id),
+                                "total": order.total
+                            },
+                            "payment_method": {"id": "paypal_payment"},
+                            "error": error_message
+                        },
+                        status_code=400
+                    )
+            
+            except Exception as capture_error:
+                logger.error(f"Error capturing PayPal payment: {str(capture_error)}")
+                return templates.TemplateResponse(
+                    "payment.html", 
+                    {
+                        "request": request, 
+                        "order": {
+                            "id": str(order.id),
+                            "total": order.total
+                        },
+                        "payment_method": {"id": "paypal_payment"},
+                        "error": f"Error completing payment: {str(capture_error)}"
+                    },
+                    status_code=400
+                )
+        
+        # For other payment methods
+        return RedirectResponse(url=f"/checkout/confirmation/{order_id}", status_code=303)
+    
+    except Exception as e:
+        logger.error(f"Error completing payment: {str(e)}")
+        return JSONResponse(
+            status_code=500,
+            content={"error": f"Failed to complete payment: {str(e)}"}
+        )
+
+@router.get("/checkout/payment/{order_id}/cancel")
+async def payment_cancel(request: Request, order_id: str):
+    """Handle payment cancellation from external payment providers."""
+    try:
+        # Get order
+        order = order_manager.get(order_id)
+        
+        if not order:
+            return RedirectResponse(url="/")
+        
+        # Clear PayPal payment ID from session if it exists
+        if "paypal_payment_id" in request.session:
+            del request.session["paypal_payment_id"]
+        
+        # Return to payment page with a cancellation message
+        return templates.TemplateResponse(
+            "payment.html", 
+            {
+                "request": request, 
+                "order": {
+                    "id": str(order.id),
+                    "customer": order.customer,
+                    "items": order.items,
+                    "subtotal": order.subtotal,
+                    "shipping_cost": order.shipping_cost,
+                    "tax": order.tax,
+                    "total": order.total,
+                    "payment_method": {"id": order.payment_method},
+                    "shipping_method": order.shipping_method,
+                    "status": order.status
+                },
+                "payment_cancelled": True,
+                "message": "Your payment was cancelled. Please try again or choose a different payment method."
+            }
+        )
+    
+    except Exception as e:
+        logger.error(f"Error handling payment cancellation: {str(e)}")
+        return RedirectResponse(url="/")
 
 @router.get("/checkout/confirmation/{order_id}", response_class=HTMLResponse)
 async def confirmation(request: Request, order_id: str):
@@ -424,7 +647,9 @@ async def confirmation(request: Request, order_id: str):
             "payment_method": order.payment_method,
             "shipping_method": order.shipping_method,
             "status": order.status,
-            "created_at": order.created_at if hasattr(order, 'created_at') else None
+            "created_at": order.created_at if hasattr(order, 'created_at') else None,
+            "payment_id": getattr(order, "payment_id", None),
+            "payment_status": getattr(order, "payment_status", None)
         }
         
         return templates.TemplateResponse(

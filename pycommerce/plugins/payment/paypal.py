@@ -54,6 +54,15 @@ class PayPalPaymentPlugin(PaymentPlugin):
     def initialize(self) -> None:
         """Initialize the plugin."""
         logger.info("Initializing PayPal payment plugin")
+        
+    def get_client_key(self) -> str:
+        """
+        Get the client ID for PayPal.
+        
+        Returns:
+            str: The client ID for use in frontend code
+        """
+        return self.client_id
 
     async def _get_auth_token(self) -> str:
         """Get an OAuth 2.0 access token from PayPal."""

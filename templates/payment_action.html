@@ -1,0 +1,102 @@
+{% extends 'base.html' %}
+
+{% block title %}Complete Payment - PyCommerce{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-lg-7 mx-auto">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">Complete Your Payment</h4>
+                </div>
+                <div class="card-body">
+                    <div class="text-center mb-4">
+                        <div class="spinner-border text-primary mb-3" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <h5>Please wait while we process your payment...</h5>
+                        <p class="text-muted">You may be redirected to your bank for verification.</p>
+                        <div id="payment-message"></div>
+                    </div>
+                    
+                    <div class="order-summary mb-4">
+                        <h5>Order Summary</h5>
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span>Order #{{ order.id }}</span>
+                                </div>
+                                <hr>
+                                <div class="d-flex justify-content-between fw-bold">
+                                    <span>Total:</span>
+                                    <span>${{ order.total|default(0)|round(2) }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="payment-element" class="mb-4">
+                        <!-- Payment element will be mounted here for Stripe -->
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <a href="/checkout/confirmation/{{ order.id }}" id="complete-button" class="btn btn-success d-none">
+                            Continue to Order Confirmation
+                        </a>
+                        <a href="/checkout/payment/{{ order.id }}/cancel" class="btn btn-outline-secondary">Cancel Payment</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://js.stripe.com/v3/"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const stripe = Stripe('{{ payment_method.client_key if payment_method and payment_method.client_key else "pk_test_51NbHvWJL4GB7BpjzyuRbcoCQa8aOTgipDQxKCnJkEZBfY62WjXVvXrJPkUQdYzsTFLxyWBqedSrP4gX9eYGGY3uA00JETEwOCf" }}');
+        const clientSecret = '{{ client_secret }}';
+        
+        if (clientSecret) {
+            // Show the 3D Secure confirmation dialog
+            stripe.confirmCardPayment(clientSecret)
+                .then(function(result) {
+                    if (result.error) {
+                        // Show error to customer
+                        const messageContainer = document.getElementById('payment-message');
+                        messageContainer.classList.add('alert', 'alert-danger');
+                        messageContainer.textContent = result.error.message;
+                        
+                        // Redirect back to payment page after short delay
+                        setTimeout(function() {
+                            window.location.href = '/checkout/payment/{{ order.id }}?error=' + encodeURIComponent(result.error.message);
+                        }, 5000);
+                    } else {
+                        // The payment has been processed!
+                        if (result.paymentIntent.status === 'succeeded') {
+                            const messageContainer = document.getElementById('payment-message');
+                            messageContainer.classList.add('alert', 'alert-success');
+                            messageContainer.textContent = 'Payment successful! Redirecting to order confirmation...';
+                            
+                            // Show the complete button
+                            document.getElementById('complete-button').classList.remove('d-none');
+                            
+                            // Redirect to the confirmation page
+                            setTimeout(function() {
+                                window.location.href = '/checkout/confirmation/{{ order.id }}';
+                            }, 2000);
+                        }
+                    }
+                });
+        } else {
+            // Handle cases where client_secret is not available
+            const messageContainer = document.getElementById('payment-message');
+            messageContainer.classList.add('alert', 'alert-warning');
+            messageContainer.textContent = 'Please wait while we process your payment...';
+        }
+    });
+</script>
+{% endblock %}
