@@ -1,213 +1,223 @@
 """
-Storefront routes for cart management.
+Cart routes for the PyCommerce storefront.
 
-This module contains all the routes for cart management in the storefront.
+This module defines the routes for cart management including adding, updating, and removing items.
 """
 import logging
-from typing import Optional
-from uuid import UUID
+from typing import Optional, Dict, List, Any
+from fastapi import APIRouter, Request, Depends, Query, Body, Form
+from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
+from fastapi.templating import Jinja2Templates
+from typing import cast
 
-from fastapi import APIRouter, Form, HTTPException, Request
-from fastapi.responses import HTMLResponse, RedirectResponse
+from pycommerce.models.tenant import TenantManager
+from pycommerce.models.product import ProductManager
+from pycommerce.models.cart import CartManager
 
-# Template setup will be passed from main app
-templates = None
-
-# Initialize logger
+# Configure logging
 logger = logging.getLogger(__name__)
 
 # Create router
 router = APIRouter(tags=["cart"])
 
-# Import models and managers
-try:
-    from pycommerce.models.cart import CartManager
-    from pycommerce.models.product import ProductManager
-    
-    # Initialize managers
-    cart_manager = CartManager()
-    product_manager = ProductManager()
-except ImportError as e:
-    logger.error(f"Error importing cart modules: {str(e)}")
-
-def get_session_cart(request: Request):
-    """
-    Get or create a cart for the current session.
-    
-    Args:
-        request: The FastAPI request object
-        
-    Returns:
-        The cart object and a dict with cart details for templates
-    """
-    session = request.session
-    cart_id = session.get("cart_id")
-    
-    try:
-        if cart_id:
-            # Get existing cart
-            cart = cart_manager.get(cart_id)
-        else:
-            # Create new cart
-            cart = cart_manager.create()
-            session["cart_id"] = str(cart.id)
-        
-        # Serialize cart items for template
-        items = []
-        for item in cart.items:
-            # Get product details
-            product = product_manager.get(item.product_id)
-            items.append({
-                "product_id": str(item.product_id),
-                "product_name": product.name,
-                "unit_price": product.price,
-                "quantity": item.quantity,
-                "total": product.price * item.quantity
-            })
-        
-        # Calculate totals
-        totals = cart_manager.calculate_totals(cart.id, product_manager)
-        
-        # Prepare cart for template
-        cart_data = {
-            "id": str(cart.id),
-            "items": items,
-            "item_count": len(items),
-            "total_quantity": sum(item["quantity"] for item in items)
-        }
-        
-        return cart, cart_data, totals
-    
-    except Exception as e:
-        logger.error(f"Error getting session cart: {str(e)}")
-        # Return empty cart if there was an error
-        return None, {"id": None, "items": [], "item_count": 0, "total_quantity": 0}, {"subtotal": 0, "tax": 0, "total": 0}
+# Global variables initialized in setup_routes
+templates = None
+tenant_manager = TenantManager()
+product_manager = ProductManager()
+cart_manager = CartManager()
 
 @router.get("/cart", response_class=HTMLResponse)
 async def view_cart(request: Request):
-    """
-    Render the cart page with the current cart contents.
-    """
+    """View the current cart."""
     # Get cart from session
-    cart, cart_data, cart_totals = get_session_cart(request)
+    cart_id = request.session.get("cart_id")
+    cart_items = []
+    cart_total = 0.0
+    
+    if cart_id:
+        try:
+            cart = cart_manager.get(cart_id)
+            
+            # Format cart items for template
+            for item in cart.items:
+                product = product_manager.get(item.product_id)
+                if product:
+                    item_data = {
+                        "id": str(item.id),
+                        "product_id": str(item.product_id),
+                        "name": product.name,
+                        "price": product.price,
+                        "quantity": item.quantity,
+                        "subtotal": product.price * item.quantity
+                    }
+                    cart_items.append(item_data)
+                    cart_total += item_data["subtotal"]
+        except Exception as e:
+            logger.error(f"Error fetching cart: {str(e)}")
     
     return templates.TemplateResponse(
-        "cart.html",
+        "cart.html", 
         {
-            "request": request,
-            "cart": cart_data,
-            "cart_totals": cart_totals,
-            "cart_item_count": cart_data["total_quantity"]
+            "request": request, 
+            "cart_items": cart_items,
+            "cart_total": cart_total,
+            "cart_item_count": len(cart_items)
         }
     )
 
-@router.post("/cart/add", response_class=RedirectResponse)
+@router.post("/cart/add")
 async def add_to_cart(
     request: Request,
     product_id: str = Form(...),
     quantity: int = Form(1)
 ):
-    """
-    Add an item to the cart.
-    """
-    # Get cart from session
-    session = request.session
-    cart_id = session.get("cart_id")
+    """Add a product to the cart."""
+    # Get or create cart
+    cart_id = request.session.get("cart_id")
     
     try:
         if not cart_id:
-            # Create new cart
+            # Create a new cart
             cart = cart_manager.create()
-            session["cart_id"] = str(cart.id)
             cart_id = str(cart.id)
+            request.session["cart_id"] = cart_id
         
-        # Get product to check if it exists
+        # Check if product exists
         product = product_manager.get(product_id)
+        if not product:
+            return JSONResponse(
+                status_code=404,
+                content={"error": "Product not found"}
+            )
         
-        # Add item to cart
-        cart_manager.add_item(cart_id, product_id, quantity)
+        # Check if item already in cart
+        cart = cart_manager.get(cart_id)
+        existing_item = None
         
-        # Redirect back to products page
+        for item in cart.items:
+            if item.product_id == product_id:
+                existing_item = item
+                break
+        
+        if existing_item:
+            # Update quantity
+            cart.update_item(
+                str(existing_item.id),
+                {"quantity": existing_item.quantity + quantity}
+            )
+        else:
+            # Add new item
+            cart.add_item({
+                "product_id": product_id,
+                "quantity": quantity
+            })
+        
+        # Redirect back to product or referrer
         referer = request.headers.get("referer")
-        return RedirectResponse(url=referer or "/products", status_code=303)
-        
+        if referer:
+            return RedirectResponse(url=referer, status_code=303)
+        return RedirectResponse(url=f"/products/{product_id}", status_code=303)
+    
     except Exception as e:
         logger.error(f"Error adding item to cart: {str(e)}")
-        # Redirect to products page
-        return RedirectResponse(url="/products", status_code=303)
+        return JSONResponse(
+            status_code=500,
+            content={"error": f"Failed to add item to cart: {str(e)}"}
+        )
 
-@router.post("/cart/update", response_class=RedirectResponse)
-async def update_cart_item(
+@router.post("/cart/update")
+async def update_cart(
     request: Request,
-    product_id: str = Form(...),
-    quantity: int = Form(1)
+    item_id: str = Form(...),
+    quantity: int = Form(...)
 ):
-    """
-    Update the quantity of an item in the cart.
-    """
-    # Get cart from session
-    session = request.session
-    cart_id = session.get("cart_id")
+    """Update the quantity of an item in the cart."""
+    cart_id = request.session.get("cart_id")
+    
+    if not cart_id:
+        return JSONResponse(
+            status_code=400,
+            content={"error": "No active cart found"}
+        )
     
     try:
-        if cart_id:
-            # Update item quantity
-            cart_manager.update_item(cart_id, product_id, quantity)
+        # Get cart
+        cart = cart_manager.get(cart_id)
         
-        # Redirect back to cart page
+        # Validate quantity
+        if quantity <= 0:
+            # Remove item if quantity is 0 or negative
+            cart.remove_item(item_id)
+        else:
+            # Update quantity
+            cart.update_item(item_id, {"quantity": quantity})
+        
+        # Redirect back to cart
         return RedirectResponse(url="/cart", status_code=303)
-        
+    
     except Exception as e:
-        logger.error(f"Error updating cart item: {str(e)}")
-        # Redirect to cart page
-        return RedirectResponse(url="/cart", status_code=303)
+        logger.error(f"Error updating cart: {str(e)}")
+        return JSONResponse(
+            status_code=500,
+            content={"error": f"Failed to update cart: {str(e)}"}
+        )
 
-@router.post("/cart/remove", response_class=RedirectResponse)
+@router.post("/cart/remove")
 async def remove_from_cart(
     request: Request,
-    product_id: str = Form(...)
+    item_id: str = Form(...)
 ):
-    """
-    Remove an item from the cart.
-    """
-    # Get cart from session
-    session = request.session
-    cart_id = session.get("cart_id")
+    """Remove an item from the cart."""
+    cart_id = request.session.get("cart_id")
+    
+    if not cart_id:
+        return JSONResponse(
+            status_code=400,
+            content={"error": "No active cart found"}
+        )
     
     try:
-        if cart_id:
-            # Remove item from cart
-            cart_manager.remove_item(cart_id, product_id)
+        # Get cart
+        cart = cart_manager.get(cart_id)
         
-        # Redirect back to cart page
+        # Remove item
+        cart.remove_item(item_id)
+        
+        # Redirect back to cart
         return RedirectResponse(url="/cart", status_code=303)
-        
+    
     except Exception as e:
         logger.error(f"Error removing item from cart: {str(e)}")
-        # Redirect to cart page
-        return RedirectResponse(url="/cart", status_code=303)
+        return JSONResponse(
+            status_code=500,
+            content={"error": f"Failed to remove item from cart: {str(e)}"}
+        )
 
-@router.post("/cart/clear", response_class=RedirectResponse)
+@router.post("/cart/clear")
 async def clear_cart(request: Request):
-    """
-    Clear all items from the cart.
-    """
-    # Get cart from session
-    session = request.session
-    cart_id = session.get("cart_id")
+    """Clear all items from the cart."""
+    cart_id = request.session.get("cart_id")
     
-    try:
-        if cart_id:
+    if cart_id:
+        try:
+            # Get cart
+            cart = cart_manager.get(cart_id)
+            
             # Clear cart
-            cart_manager.clear(cart_id)
+            cart.clear()
+            
+            # Redirect back to cart
+            return RedirectResponse(url="/cart", status_code=303)
         
-        # Redirect back to cart page
-        return RedirectResponse(url="/cart", status_code=303)
-        
-    except Exception as e:
-        logger.error(f"Error clearing cart: {str(e)}")
-        # Redirect to cart page
-        return RedirectResponse(url="/cart", status_code=303)
+        except Exception as e:
+            logger.error(f"Error clearing cart: {str(e)}")
+            return JSONResponse(
+                status_code=500,
+                content={"error": f"Failed to clear cart: {str(e)}"}
+            )
+    
+    # No active cart, just redirect to cart page
+    return RedirectResponse(url="/cart", status_code=303)
 
 def setup_routes(app_templates):
     """
