@@ -1,0 +1,6 @@
+        <li class="nav-item" role="presentation">
+            <button class="nav-link {% if tab == 'shipping' %}active{% endif %}" id="shipping-tab" data-bs-toggle="tab" data-bs-target="#shipping-pane" 
+                    type="button" role="tab" aria-controls="shipping-pane" aria-selected="{% if tab == 'shipping' %}true{% else %}false{% endif %}">
+                <i class="bi bi-truck me-1"></i> Shipping Configuration
+            </button>
+        </li>

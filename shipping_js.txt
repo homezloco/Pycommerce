@@ -1,0 +1,4 @@
+        // Check if we should activate the Shipping tab based on URL params
+        if (urlParams.has('tab') && urlParams.get('tab') === 'shipping') {
+            document.getElementById('shipping-tab').click();
+        }

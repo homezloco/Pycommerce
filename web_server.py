@@ -125,6 +125,52 @@ async def index(request: Request):
         except Exception:
             pass
             
+    # Default shipping config
+    shipping_config = {
+        "store_country": "US",
+        "store_postal_code": "",
+        "free_shipping_threshold": 100,
+        "dimensional_weight_factor": 5000,
+        "express_multiplier": 1.75,
+        "flat_rate_domestic": 5.99,
+        "flat_rate_international": 19.99,
+        "weight_rates": {
+            "domestic": {"base_rate": 5.99, "per_kg": 1.5, "min_weight_kg": 0.1},
+            "continental": {"base_rate": 12.99, "per_kg": 3.5, "min_weight_kg": 0.1},
+            "international_close": {"base_rate": 18.99, "per_kg": 5.0, "min_weight_kg": 0.1},
+            "international_far": {"base_rate": 29.99, "per_kg": 8.0, "min_weight_kg": 0.1}
+        }
+    }
+    
+    # Get current tenant from request or default to None
+    selected_tenant = None
+    try:
+        # Try to get tenant from domain or query parameter
+        tenant_slug = request.query_params.get('tenant')
+        if tenant_slug:
+            tenant = tenant_manager.get_by_slug(tenant_slug)
+            if tenant:
+                selected_tenant = {
+                    "id": str(tenant.id),
+                    "name": tenant.name,
+                    "slug": tenant.slug
+                }
+    except Exception as e:
+        logger.error(f"Error determining current tenant: {e}")
+    
+    # Get shipping config if tenant is selected
+    if selected_tenant:
+        try:
+            from pycommerce.plugins import get_plugin_registry
+            plugin_registry = get_plugin_registry()
+            shipping_plugin = plugin_registry.get_shipping_plugin('standard')
+            
+            if shipping_plugin:
+                tenant_shipping_config = shipping_plugin.get_shipping_config(str(selected_tenant["id"]))
+                if tenant_shipping_config:
+                    shipping_config.update(tenant_shipping_config)
+        except Exception as e:
+            logger.error(f"Error loading shipping configuration: {e}")
     return templates.TemplateResponse(
         "index.html", 
         {
