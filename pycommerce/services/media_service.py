@@ -39,7 +39,7 @@ class MediaService:
         """Initialize the media service."""
         self.media_manager = MediaManager()
         
-    def upload_file(
+    async def upload_file(
         self,
         file: BinaryIO,
         filename: str,
@@ -79,7 +79,8 @@ class MediaService:
             
             # Save the file
             with open(file_path, "wb") as f:
-                f.write(file.read())
+                content = await file.read() if hasattr(file, "read") and callable(file.read) else file
+                f.write(content)
                 
             # Get file size
             file_size = os.path.getsize(file_path)

@@ -100,6 +100,7 @@
                                 </button>
                                 <ul class="dropdown-menu dropdown-menu-end">
                                     <li><a class="dropdown-item" href="{{ item.file_url }}" target="_blank">View</a></li>
+                                    <li><a class="dropdown-item" href="/admin/media/download/{{ item.id }}"><i class="bi bi-download"></i> Download</a></li>
                                     {% if item.file_type == 'image' %}
                                     <li><a class="dropdown-item" href="#" onclick="showResizeModal('{{ item.id }}', {{ item.width }}, {{ item.height }})">Resize</a></li>
                                     <li><a class="dropdown-item" href="#" onclick="showCropModal('{{ item.id }}', '{{ item.file_url }}', {{ item.width }}, {{ item.height }})">Crop</a></li>

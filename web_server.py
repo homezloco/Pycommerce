@@ -10,7 +10,7 @@ import logging
 import uvicorn
 from datetime import datetime
 from fastapi import FastAPI, Depends, Query, HTTPException, Request, Form, Cookie, File, UploadFile
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from typing import Optional, List, Dict, Any, Union
@@ -2095,7 +2095,7 @@ async def admin_upload_media(
     """Upload a media file."""
     try:
         # Use the media service to handle the upload
-        result = media_service.upload_file(file, tenant_id, alt_text, description)
+        result = await media_service.upload_file(file, file.filename, tenant_id, alt_text, description)
         if result and result.get("id"):
             return RedirectResponse(
                 url=f"/admin/media?tenant={tenant_id}&status_message=File+uploaded+successfully&status_type=success", 
@@ -2153,6 +2153,44 @@ async def admin_generate_image(
         return RedirectResponse(
             url=f"/admin/media?tenant={tenant_id}&status_message={error_message}&status_type=danger", 
             status_code=303
+        )
+
+@app.get("/admin/media/download/{media_id}")
+async def admin_download_media(
+    request: Request,
+    media_id: str
+):
+    """Download a media file."""
+    try:
+        # Get the media file
+        media = media_service.get_media(media_id)
+        if not media:
+            return JSONResponse(
+                status_code=404,
+                content={"detail": "Media not found"}
+            )
+
+        # Determine the file path (this will be the absolute path on the server)
+        file_path = media.file_path
+        if not os.path.exists(file_path):
+            return JSONResponse(
+                status_code=404,
+                content={"detail": "File not found on server"}
+            )
+            
+        # Return the file as a downloadable attachment
+        filename = os.path.basename(file_path)
+        return FileResponse(
+            path=file_path,
+            filename=f"{media.name}{os.path.splitext(filename)[1]}",
+            media_type=media.mime_type,
+            headers={"Content-Disposition": f"attachment; filename=\"{media.name}{os.path.splitext(filename)[1]}\""}
+        )
+    except Exception as e:
+        logger.error(f"Error downloading media: {str(e)}")
+        return JSONResponse(
+            status_code=500,
+            content={"detail": f"Error downloading file: {str(e)}"}
         )
 
 @app.delete("/admin/media/{media_id}", response_class=RedirectResponse)

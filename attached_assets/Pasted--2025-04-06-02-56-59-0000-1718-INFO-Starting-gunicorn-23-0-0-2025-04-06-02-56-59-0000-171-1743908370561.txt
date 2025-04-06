@@ -1,0 +1,103 @@
+[2025-04-06 02:56:59 +0000] [1718] [INFO] Starting gunicorn 23.0.0
+[2025-04-06 02:56:59 +0000] [1718] [INFO] Listening at: http://0.0.0.0:5000 (1718)
+[2025-04-06 02:56:59 +0000] [1718] [INFO] Using worker: sync
+[2025-04-06 02:56:59 +0000] [1730] [INFO] Booting worker with pid: 1730
+[2025-04-06 02:57:00 +0000] [1718] [INFO] Handling signal: winch
+[2025-04-06 02:57:00 +0000] [1718] [INFO] Handling signal: winch
+[2025-04-06 02:57:00 +0000] [1718] [INFO] Handling signal: winch
+[2025-04-06 02:57:00 +0000] [1718] [INFO] Handling signal: winch
+INFO:pycommerce.plugins.payment.config:Using development Stripe credentials
+INFO:pycommerce.plugins.payment.config:Using development PayPal credentials
+INFO:pycommerce.plugins.payment.stripe:Initializing Stripe payment plugin
+INFO:pycommerce.plugins:Registering plugin: stripe_payment v0.1.0
+INFO:pycommerce.plugins.payment.stripe:Initializing Stripe payment plugin
+INFO:pycommerce:Registered payment plugin: stripe
+INFO:pycommerce.plugins.payment.paypal:Initializing PayPal payment plugin
+INFO:pycommerce.plugins:Registering plugin: paypal_payment v0.1.0
+INFO:pycommerce.plugins.payment.paypal:Initializing PayPal payment plugin
+INFO:pycommerce:Registered payment plugin: paypal
+INFO:pycommerce.plugins:Registering plugin: standard_shipping v0.1.0
+INFO:pycommerce.plugins.shipping.standard:Initializing Standard shipping plugin
+INFO:pycommerce:Registered shipping plugin: standard
+/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/pydantic/_internal/_config.py:373: UserWarning: Valid config keys have changed in V2:
+* 'orm_mode' has been renamed to 'from_attributes'
+  warnings.warn(message, UserWarning)
+INFO:pycommerce.core.db:Initializing database...
+[2025-04-06 02:57:01 +0000] [1718] [INFO] Handling signal: winch
+[2025-04-06 02:57:01 +0000] [1718] [INFO] Handling signal: winch
+[2025-04-06 02:57:01 +0000] [1718] [INFO] Handling signal: winch
+[2025-04-06 02:57:01 +0000] [1718] [INFO] Handling signal: winch
+[2025-04-06 02:57:01 +0000] [1718] [INFO] Handling signal: winch
+[2025-04-06 02:57:01 +0000] [1718] [INFO] Handling signal: winch
+[2025-04-06 02:57:01 +0000] [1718] [INFO] Handling signal: winch
+[2025-04-06 02:57:01 +0000] [1718] [INFO] Handling signal: winch
+[2025-04-06 02:57:01 +0000] [1718] [INFO] Handling signal: winch
+[2025-04-06 02:57:01 +0000] [1718] [INFO] Handling signal: winch
+[2025-04-06 02:57:01 +0000] [1718] [INFO] Handling signal: winch
+[2025-04-06 02:57:01 +0000] [1718] [INFO] Handling signal: winch
+INFO:pycommerce.core.db:Database initialized successfully.
+INFO:pycommerce.core.db:Initializing database...
+[2025-04-06 02:57:01 +0000] [1718] [INFO] Handling signal: winch
+[2025-04-06 02:57:02 +0000] [1718] [INFO] Handling signal: winch
+[2025-04-06 02:57:02 +0000] [1718] [INFO] Handling signal: winch
+[2025-04-06 02:57:02 +0000] [1718] [INFO] Handling signal: winch
+INFO:pycommerce.core.db:Database initialized successfully.
+INFO:pycommerce.migrations:Database migrations initialized
+INFO:asgi_wsgi_app:Starting uvicorn server with command: /nix/store/wqhkxzzlaswkj3gimqign99sshvllcg6-python-wrapped-0.1.0/bin/python3 -m uvicorn web_server:app --host 127.0.0.1 --port 8000
+INFO:asgi_wsgi_app:Waiting for uvicorn server to start...
+INFO:asgi_wsgi_app:Waiting for uvicorn server (attempt 1/10)
+INFO:asgi_wsgi_app:Waiting for uvicorn server (attempt 2/10)
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.plugins.payment.config:Using development Stripe credentials
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.plugins.payment.config:Using development PayPal credentials
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.plugins.payment.stripe:Initializing Stripe payment plugin
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.plugins:Registering plugin: stripe_payment v0.1.0
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.plugins.payment.stripe:Initializing Stripe payment plugin
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce:Registered payment plugin: stripe
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.plugins.payment.paypal:Initializing PayPal payment plugin
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.plugins:Registering plugin: paypal_payment v0.1.0
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.plugins.payment.paypal:Initializing PayPal payment plugin
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce:Registered payment plugin: paypal
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.plugins:Registering plugin: standard_shipping v0.1.0
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.plugins.shipping.standard:Initializing Standard shipping plugin
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce:Registered shipping plugin: standard
+INFO:asgi_wsgi_app:Uvicorn: /home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/pydantic/_internal/_config.py:373: UserWarning: Valid config keys have changed in V2:
+INFO:asgi_wsgi_app:Uvicorn: * 'orm_mode' has been renamed to 'from_attributes'
+INFO:asgi_wsgi_app:Uvicorn: warnings.warn(message, UserWarning)
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.core.db:Initializing database...
+INFO:asgi_wsgi_app:Waiting for uvicorn server (attempt 3/10)
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.core.db:Database initialized successfully.
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.core.db:Initializing database...
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.core.db:Database initialized successfully.
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.migrations:Database migrations initialized
+INFO:asgi_wsgi_app:Uvicorn: INFO:     Started server process [1747]
+INFO:asgi_wsgi_app:Uvicorn: INFO:     Waiting for application startup.
+INFO:asgi_wsgi_app:Uvicorn: INFO:     Application startup complete.
+INFO:asgi_wsgi_app:Uvicorn: INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+INFO:asgi_wsgi_app:Uvicorn: INFO:     127.0.0.1:48894 - "GET /api/health HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET http://127.0.0.1:8000/api/health "HTTP/1.1 200 OK"
+INFO:asgi_wsgi_app:Uvicorn server is running
+INFO:asgi_wsgi_app:Uvicorn: INFO:     127.0.0.1:48898 - "GET /api/health HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET http://127.0.0.1:8000/api/health "HTTP/1.1 200 OK"
+INFO:asgi_wsgi_app:Uvicorn: INFO:     127.0.0.1:48900 - "GET / HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET http://127.0.0.1:8000/ "HTTP/1.1 200 OK"
+INFO:asgi_wsgi_app:Uvicorn: INFO:     127.0.0.1:48908 - "GET /api/health HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET http://127.0.0.1:8000/api/health "HTTP/1.1 200 OK"
+INFO:asgi_wsgi_app:Uvicorn: INFO:     127.0.0.1:48922 - "GET / HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET http://127.0.0.1:8000/ "HTTP/1.1 200 OK"
+[2025-04-06 02:58:02 +0000] [1718] [INFO] Handling signal: winch
+INFO:asgi_wsgi_app:Uvicorn: INFO:     127.0.0.1:44946 - "GET /api/health HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET http://127.0.0.1:8000/api/health "HTTP/1.1 200 OK"
+INFO:asgi_wsgi_app:Uvicorn: INFO:     127.0.0.1:44958 - "GET /admin/dashboard HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET http://127.0.0.1:8000/admin/dashboard "HTTP/1.1 200 OK"
+INFO:asgi_wsgi_app:Uvicorn: INFO:     127.0.0.1:44968 - "GET /api/health HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET http://127.0.0.1:8000/api/health "HTTP/1.1 200 OK"
+INFO:asgi_wsgi_app:Uvicorn: INFO:     127.0.0.1:44984 - "GET /admin/media HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET http://127.0.0.1:8000/admin/media "HTTP/1.1 200 OK"
+INFO:asgi_wsgi_app:Uvicorn: INFO:     127.0.0.1:55266 - "GET /api/health HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET http://127.0.0.1:8000/api/health "HTTP/1.1 200 OK"
+INFO:asgi_wsgi_app:Uvicorn: INFO:httpx:HTTP Request: POST https://api.openai.com/v1/images/generations "HTTP/1.1 200 OK"
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.services.media:Generated image with DALL-E: logo for pycommerce Python Ecommerce SDK
+INFO:asgi_wsgi_app:Uvicorn: INFO:     127.0.0.1:55268 - "POST /admin/media/generate HTTP/1.1" 303 See Other
+INFO:httpx:HTTP Request: POST http://127.0.0.1:8000/admin/media/generate "HTTP/1.1 303 See Other"
+INFO:asgi_wsgi_app:Uvicorn: INFO:     127.0.0.1:55268 - "GET /admin/media?tenant=&status_message=Image+generated+successfully&status_type=success HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET http://127.0.0.1:8000/admin/media?tenant=&status_message=Image+generated+successfully&status_type=success "HTTP/1.1 200 OK"
