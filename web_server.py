@@ -2012,27 +2012,28 @@ async def admin_media(
             except Exception as e:
                 logger.warning(f"Could not get tenant with slug '{selected_tenant_slug}': {str(e)}")
                 
-        # Get media files for the selected tenant
+        # Get media files for the selected tenant or all media if no tenant
         media_files = []
-        if selected_tenant and hasattr(selected_tenant, 'id'):
-            try:
-                # Use the media service to list media files
-                media_list = media_service.list_media(
-                    tenant_id=str(selected_tenant.id),
-                    file_type=file_type,
-                    is_ai_generated=is_ai_generated,
-                    search_term=search
-                )
-                # Handle both dict and list return types
-                if isinstance(media_list, dict):
-                    media_files = media_list.get("media", [])
-                else:
-                    media_files = media_list
-            except Exception as e:
-                logger.error(f"Error fetching media files: {str(e)}")
-                if status_message is None:
-                    status_message = f"Error fetching media files: {str(e)}"
-                    status_type = "danger"
+        try:
+            tenant_id = str(selected_tenant.id) if selected_tenant and hasattr(selected_tenant, 'id') else None
+            
+            # Use the media service to list media files
+            media_list = media_service.list_media(
+                tenant_id=tenant_id,
+                file_type=file_type,
+                is_ai_generated=is_ai_generated,
+                search_term=search
+            )
+            # Handle both dict and list return types
+            if isinstance(media_list, dict):
+                media_files = media_list.get("media", [])
+            else:
+                media_files = media_list
+        except Exception as e:
+            logger.error(f"Error fetching media files: {str(e)}")
+            if status_message is None:
+                status_message = f"Error fetching media files: {str(e)}"
+                status_type = "danger"
         
         # Get cart item count if available
         cart_item_count = 0
@@ -2060,7 +2061,7 @@ async def admin_media(
         "active_page": "media",
         "tenants": tenants,
         "selected_tenant": selected_tenant_slug if selected_tenant_slug else "",
-        "media_files": media_files,
+        "media": media_files,  # Use "media" to match the template's for loop
         "cart_item_count": cart_item_count,
         "status_message": status_message,
         "status_type": status_type,

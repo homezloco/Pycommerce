@@ -99,7 +99,7 @@ class MediaService:
                 "tenant_id": uuid.UUID(tenant_id) if tenant_id else None,
                 "name": os.path.splitext(filename)[0],
                 "file_path": file_path,
-                "file_url": f"/{file_path}",  # URL relative to the application root
+                "file_url": f"/static/media/uploads/{unique_filename}",  # URL relative to the application root
                 "file_type": file_type,
                 "mime_type": mime_type,
                 "file_size": file_size,
@@ -198,7 +198,7 @@ class MediaService:
                 "tenant_id": uuid.UUID(tenant_id) if tenant_id else None,
                 "name": f"DALL-E: {prompt[:50]}{'...' if len(prompt) > 50 else ''}",
                 "file_path": file_path,
-                "file_url": f"/{file_path}",  # URL relative to the application root
+                "file_url": f"/static/media/generated/{unique_filename}",  # URL relative to the application root
                 "file_type": "image",
                 "mime_type": "image/png",
                 "file_size": file_size,
@@ -337,7 +337,7 @@ class MediaService:
                 "tenant_id": media.tenant_id,
                 "name": f"{media.name} (Resized to {width}x{height})",
                 "file_path": file_path,
-                "file_url": f"/{file_path}",  # URL relative to the application root
+                "file_url": f"/static/media/uploads/{unique_filename}",  # URL relative to the application root
                 "file_type": "image",
                 "mime_type": media.mime_type,
                 "file_size": file_size,
@@ -417,7 +417,7 @@ class MediaService:
                 "tenant_id": media.tenant_id,
                 "name": f"{media.name} (Cropped)",
                 "file_path": file_path,
-                "file_url": f"/{file_path}",  # URL relative to the application root
+                "file_url": f"/static/media/uploads/{unique_filename}",  # URL relative to the application root
                 "file_type": "image",
                 "mime_type": media.mime_type,
                 "file_size": file_size,
