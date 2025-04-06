@@ -119,11 +119,30 @@ async def store(
         if in_stock is not None:
             filters_dict["in_stock"] = in_stock
         
-        # Get products for this tenant using the SQLAlchemy model manager
-        tenant_products = product_manager.get_products_by_tenant(
-            tenant_id=tenant_obj.id,
-            filters=filters_dict
-        )
+        # Get products using the appropriate manager method
+        if hasattr(product_manager, 'get_products_by_tenant'):
+            # Use SQLAlchemy manager's method
+            tenant_products = product_manager.get_products_by_tenant(
+                tenant_id=tenant_obj.id,
+                filters=filters_dict
+            )
+        else:
+            # Use SDK manager's method
+            logger.info(f"Using SDK ProductManager to filter products for tenant: {tenant_obj.id}")
+            
+            # For the SDK version, we need to get all products and filter them by tenant_id in the metadata
+            tenant_products = []
+            all_products = product_manager.list(
+                category=filters_dict.get("category"),
+                min_price=filters_dict.get("min_price"),
+                max_price=filters_dict.get("max_price"),
+                in_stock=filters_dict.get("in_stock")
+            )
+            
+            # Filter by tenant ID in metadata
+            for p in all_products:
+                if hasattr(p, 'metadata') and p.metadata.get('tenant_id') == str(tenant_obj.id):
+                    tenant_products.append(p)
         
         # Format products for template
         if tenant_products:
