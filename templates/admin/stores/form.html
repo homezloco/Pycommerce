@@ -1,0 +1,56 @@
+{% extends "admin/base.html" %}
+
+{% block title %}{{ title }} - Admin Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3">{{ title }}</h1>
+        <a href="/admin/stores" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Stores
+        </a>
+    </div>
+
+    {% if error %}
+    <div class="alert alert-danger">
+        {{ error }}
+    </div>
+    {% endif %}
+
+    <div class="card shadow">
+        <div class="card-body">
+            <form method="POST" action="{{ action }}">
+                <div class="mb-3">
+                    <label for="name" class="form-label">Store Name</label>
+                    <input type="text" class="form-control" id="name" name="name" value="{{ tenant.name if tenant else '' }}" required>
+                    <div class="form-text">The name of your store as shown to customers.</div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="slug" class="form-label">URL Slug</label>
+                    <input type="text" class="form-control" id="slug" name="slug" value="{{ tenant.slug if tenant else '' }}" required pattern="[a-z0-9-]+">
+                    <div class="form-text">The URL-friendly identifier for your store. Use only lowercase letters, numbers, and hyphens.</div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="domain" class="form-label">Custom Domain (Optional)</label>
+                    <input type="text" class="form-control" id="domain" name="domain" value="{{ tenant.domain if tenant and tenant.domain else '' }}">
+                    <div class="form-text">Custom domain for your store (e.g., mystore.com).</div>
+                </div>
+
+                <div class="mb-3 form-check">
+                    <input type="checkbox" class="form-check-input" id="active" name="active" {% if tenant and tenant.active %}checked{% endif %}>
+                    <label class="form-check-label" for="active">Active</label>
+                    <div class="form-text">If checked, the store will be accessible to customers.</div>
+                </div>
+
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Save Store
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

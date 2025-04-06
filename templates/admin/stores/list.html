@@ -1,0 +1,67 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Store Management - Admin Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3">Store Management</h1>
+        <a href="/admin/stores/new" class="btn btn-primary">
+            <i class="fas fa-plus"></i> New Store
+        </a>
+    </div>
+
+    {% if tenants %}
+    <div class="card shadow">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Slug</th>
+                            <th>Domain</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for tenant in tenants %}
+                        <tr>
+                            <td>{{ tenant.name }}</td>
+                            <td>{{ tenant.slug }}</td>
+                            <td>{{ tenant.domain or "-" }}</td>
+                            <td>
+                                {% if tenant.active %}
+                                <span class="badge bg-success">Active</span>
+                                {% else %}
+                                <span class="badge bg-secondary">Inactive</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="btn-group">
+                                    <a href="/admin/stores/{{ tenant.id }}/edit" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-edit"></i> Edit
+                                    </a>
+                                    <a href="/admin/stores/{{ tenant.id }}/theme" class="btn btn-sm btn-outline-info">
+                                        <i class="fas fa-paint-brush"></i> Theme
+                                    </a>
+                                    <a href="/store/{{ tenant.slug }}" target="_blank" class="btn btn-sm btn-outline-secondary">
+                                        <i class="fas fa-external-link-alt"></i> View
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="alert alert-info">
+        <p>No stores found. Click the "New Store" button to create your first store.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

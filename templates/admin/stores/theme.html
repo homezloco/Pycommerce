@@ -1,0 +1,135 @@
+{% extends "admin/base.html" %}
+
+{% block title %}{{ title }} - Admin Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3">{{ title }}</h1>
+        <a href="/admin/stores" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Stores
+        </a>
+    </div>
+
+    {% if error %}
+    <div class="alert alert-danger">
+        {{ error }}
+    </div>
+    {% endif %}
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card shadow mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Theme Settings</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ action }}">
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="primary_color" class="form-label">Primary Color</label>
+                                <input type="color" class="form-control form-control-color" id="primary_color" name="primary_color" value="{{ tenant.settings.primary_color if tenant.settings and tenant.settings.primary_color else '#3498db' }}">
+                                <div class="form-text">Primary color for buttons and accents.</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="secondary_color" class="form-label">Secondary Color</label>
+                                <input type="color" class="form-control form-control-color" id="secondary_color" name="secondary_color" value="{{ tenant.settings.secondary_color if tenant.settings and tenant.settings.secondary_color else '#6c757d' }}">
+                                <div class="form-text">Secondary color for additional elements.</div>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="background_color" class="form-label">Background Color</label>
+                                <input type="color" class="form-control form-control-color" id="background_color" name="background_color" value="{{ tenant.settings.background_color if tenant.settings and tenant.settings.background_color else '#ffffff' }}">
+                                <div class="form-text">Main background color for your store.</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="text_color" class="form-label">Text Color</label>
+                                <input type="color" class="form-control form-control-color" id="text_color" name="text_color" value="{{ tenant.settings.text_color if tenant.settings and tenant.settings.text_color else '#212529' }}">
+                                <div class="form-text">Main text color for your store.</div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="font_family" class="form-label">Font Family</label>
+                            <select class="form-select" id="font_family" name="font_family">
+                                <option value="Arial, sans-serif" {% if tenant.settings and tenant.settings.font_family == 'Arial, sans-serif' %}selected{% endif %}>Arial</option>
+                                <option value="'Helvetica Neue', Helvetica, sans-serif" {% if tenant.settings and tenant.settings.font_family == "'Helvetica Neue', Helvetica, sans-serif" %}selected{% endif %}>Helvetica</option>
+                                <option value="'Roboto', sans-serif" {% if tenant.settings and tenant.settings.font_family == "'Roboto', sans-serif" %}selected{% endif %}>Roboto</option>
+                                <option value="'Open Sans', sans-serif" {% if tenant.settings and tenant.settings.font_family == "'Open Sans', sans-serif" %}selected{% endif %}>Open Sans</option>
+                                <option value="'Lato', sans-serif" {% if tenant.settings and tenant.settings.font_family == "'Lato', sans-serif" %}selected{% endif %}>Lato</option>
+                                <option value="Georgia, serif" {% if tenant.settings and tenant.settings.font_family == "Georgia, serif" %}selected{% endif %}>Georgia</option>
+                                <option value="'Playfair Display', serif" {% if tenant.settings and tenant.settings.font_family == "'Playfair Display', serif" %}selected{% endif %}>Playfair Display</option>
+                            </select>
+                            <div class="form-text">The main font family for your store.</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="logo_position" class="form-label">Logo Position</label>
+                            <select class="form-select" id="logo_position" name="logo_position">
+                                <option value="left" {% if tenant.settings and tenant.settings.logo_position == 'left' %}selected{% endif %}>Left</option>
+                                <option value="center" {% if tenant.settings and tenant.settings.logo_position == 'center' %}selected{% endif %}>Center</option>
+                                <option value="right" {% if tenant.settings and tenant.settings.logo_position == 'right' %}selected{% endif %}>Right</option>
+                            </select>
+                            <div class="form-text">Position of your store logo in the header.</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="custom_css" class="form-label">Custom CSS (Advanced)</label>
+                            <textarea class="form-control" id="custom_css" name="custom_css" rows="6">{{ tenant.settings.custom_css if tenant.settings and tenant.settings.custom_css else '' }}</textarea>
+                            <div class="form-text">Add custom CSS to further customize your store's appearance.</div>
+                        </div>
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Save Theme Settings
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card shadow">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Preview</h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <p>Preview functionality will be available soon.</p>
+                    </div>
+                    
+                    <div class="mt-3">
+                        <h6>Current Theme Settings:</h6>
+                        <ul class="list-group">
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Primary Color
+                                <span class="badge" style="background-color: {{ tenant.settings.primary_color if tenant.settings and tenant.settings.primary_color else '#3498db' }}; width: 30px; height: 30px; border-radius: 50%;"></span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Secondary Color
+                                <span class="badge" style="background-color: {{ tenant.settings.secondary_color if tenant.settings and tenant.settings.secondary_color else '#6c757d' }}; width: 30px; height: 30px; border-radius: 50%;"></span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Font Family
+                                <span>{{ tenant.settings.font_family if tenant.settings and tenant.settings.font_family else 'Arial, sans-serif' }}</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Logo Position
+                                <span>{{ tenant.settings.logo_position if tenant.settings and tenant.settings.logo_position else 'Left' }}</span>
+                            </li>
+                        </ul>
+                    </div>
+                    
+                    <div class="mt-3">
+                        <a href="/store/{{ tenant.slug }}" target="_blank" class="btn btn-outline-primary btn-sm w-100">
+                            <i class="fas fa-external-link-alt"></i> View Live Store
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
