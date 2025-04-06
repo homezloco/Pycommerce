@@ -68,6 +68,7 @@ class Product(db.Model):
     
     # Relationships
     tenant = relationship("Tenant", back_populates="products")
+    inventory_records = relationship("InventoryRecord", back_populates="product", cascade="all, delete-orphan")
     
     def __repr__(self):
         return f"<Product {self.name}>"
@@ -128,6 +129,7 @@ class Order(db.Model):
     # Relationships
     items = relationship("OrderItem", back_populates="order", cascade="all, delete-orphan")
     notes = relationship("OrderNote", back_populates="order", cascade="all, delete-orphan")
+    shipments = relationship("Shipment", back_populates="order", cascade="all, delete-orphan")
     
     def __repr__(self):
         return f"<Order {self.id}>"
@@ -165,3 +167,98 @@ class OrderItem(db.Model):
     
     def __repr__(self):
         return f"<OrderItem {self.id}>"
+
+class Shipment(db.Model):
+    """Shipment model."""
+    __tablename__ = "shipments"
+    
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    order_id = Column(String(36), ForeignKey("orders.id"), nullable=False)
+    status = Column(String(50), default="pending")
+    tracking_number = Column(String(100), nullable=True)
+    carrier = Column(String(100), nullable=True)
+    shipping_method = Column(String(100), nullable=True)
+    shipping_address = Column(JSON, nullable=True)
+    shipping_cost = Column(Float, default=0.0)
+    tracking_url = Column(String(255), nullable=True)
+    label_url = Column(String(255), nullable=True)
+    estimated_delivery = Column(DateTime, nullable=True)
+    shipped_at = Column(DateTime, nullable=True)
+    delivered_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    metadata = Column(JSON, nullable=True)
+    
+    # Relationships
+    order = relationship("Order", back_populates="shipments")
+    items = relationship("ShipmentItem", back_populates="shipment", cascade="all, delete-orphan")
+    
+    def __repr__(self):
+        return f"<Shipment {self.id}>"
+
+class ShipmentItem(db.Model):
+    """Shipment item model."""
+    __tablename__ = "shipment_items"
+    
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    shipment_id = Column(String(36), ForeignKey("shipments.id"), nullable=False)
+    order_item_id = Column(String(36), ForeignKey("order_items.id"), nullable=False)
+    product_id = Column(String(36), ForeignKey("products.id"), nullable=False)
+    quantity = Column(Integer, nullable=False, default=1)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Relationships
+    shipment = relationship("Shipment", back_populates="items")
+    order_item = relationship("OrderItem")
+    product = relationship("Product")
+    
+    def __repr__(self):
+        return f"<ShipmentItem {self.id}>"
+
+class InventoryRecord(db.Model):
+    """Inventory record model."""
+    __tablename__ = "inventory_records"
+    
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    tenant_id = Column(String(36), ForeignKey("tenants.id"), nullable=False)
+    product_id = Column(String(36), ForeignKey("products.id"), nullable=False)
+    location = Column(String(100), nullable=True)  # Optional inventory location
+    sku = Column(String(100), nullable=True)
+    quantity = Column(Integer, default=0)
+    available_quantity = Column(Integer, default=0)  # Available for sale (quantity - reserved)
+    reserved_quantity = Column(Integer, default=0)   # Reserved for orders
+    reorder_point = Column(Integer, default=0)       # When to reorder
+    reorder_quantity = Column(Integer, default=0)    # How much to reorder
+    last_counted = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    metadata = Column(JSON, nullable=True)
+    
+    # Relationships
+    product = relationship("Product", back_populates="inventory_records")
+    transactions = relationship("InventoryTransaction", back_populates="inventory_record", cascade="all, delete-orphan")
+    
+    def __repr__(self):
+        return f"<InventoryRecord {self.id} for product {self.product_id}>"
+
+class InventoryTransaction(db.Model):
+    """Inventory transaction model."""
+    __tablename__ = "inventory_transactions"
+    
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    inventory_record_id = Column(String(36), ForeignKey("inventory_records.id"), nullable=False)
+    transaction_type = Column(String(50), nullable=False)
+    quantity = Column(Integer, nullable=False)  # Positive for additions, negative for reductions
+    reference_id = Column(String(100), nullable=True)  # Optional reference (order ID, etc.)
+    reference_type = Column(String(50), nullable=True)  # Type of reference (order, shipment, etc.)
+    notes = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    created_by = Column(String(100), nullable=True)  # User who created the transaction
+    metadata = Column(JSON, nullable=True)
+    
+    # Relationships
+    inventory_record = relationship("InventoryRecord", back_populates="transactions")
+    
+    def __repr__(self):
+        return f"<InventoryTransaction {self.id} of type {self.transaction_type}>"

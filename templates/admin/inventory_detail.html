@@ -1,0 +1,184 @@
+{% extends "admin/base_admin.html" %}
+
+{% block content %}
+<div class="container-fluid px-4">
+    <h1 class="mt-4">Inventory: {{ product.name }}</h1>
+    <ol class="breadcrumb mb-4">
+        <li class="breadcrumb-item"><a href="/admin">Dashboard</a></li>
+        <li class="breadcrumb-item"><a href="/admin/inventory">Inventory</a></li>
+        <li class="breadcrumb-item active">{{ product.name }}</li>
+    </ol>
+    
+    {% if status_message %}
+    <div class="alert alert-{{ status_type }} alert-dismissible fade show" role="alert">
+        {{ status_message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {% endif %}
+    
+    <div class="row">
+        <div class="col-md-5">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-edit me-1"></i>
+                    Update Inventory
+                </div>
+                <div class="card-body">
+                    <form action="/admin/inventory/{{ product.id }}" method="post">
+                        <div class="mb-3">
+                            <label for="quantity" class="form-label">Total Quantity</label>
+                            <input type="number" class="form-control" id="quantity" name="quantity" value="{{ inventory.quantity if inventory else 0 }}" min="0">
+                        </div>
+                        <div class="mb-3">
+                            <label for="sku" class="form-label">SKU (Optional)</label>
+                            <input type="text" class="form-control" id="sku" name="sku" value="{{ inventory.sku if inventory else product.sku }}">
+                            <div class="form-text">Leave blank to use the product SKU</div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="location" class="form-label">Location (Optional)</label>
+                            <input type="text" class="form-control" id="location" name="location" value="{{ inventory.location if inventory else '' }}">
+                        </div>
+                        <div class="mb-3">
+                            <label for="reorderPoint" class="form-label">Reorder Point</label>
+                            <input type="number" class="form-control" id="reorderPoint" name="reorder_point" value="{{ inventory.reorder_point if inventory else 5 }}" min="0">
+                            <div class="form-text">The quantity at which a reorder should be triggered</div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="reorderQuantity" class="form-label">Reorder Quantity</label>
+                            <input type="number" class="form-control" id="reorderQuantity" name="reorder_quantity" value="{{ inventory.reorder_quantity if inventory else 10 }}" min="0">
+                            <div class="form-text">The quantity to order when stock is low</div>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Update Inventory</button>
+                    </form>
+                </div>
+            </div>
+            
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-info-circle me-1"></i>
+                    Current Status
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5>Quantity</h5>
+                            <div class="h2 mb-0 font-weight-bold text-gray-800">{{ inventory.quantity if inventory else 0 }}</div>
+                            <div class="small text-muted">Total units in inventory</div>
+                        </div>
+                        <div class="col-md-6">
+                            <h5>Available</h5>
+                            <div class="h2 mb-0 font-weight-bold text-gray-800">{{ inventory.available_quantity if inventory else 0 }}</div>
+                            <div class="small text-muted">Units available for sale</div>
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5>Reserved</h5>
+                            <div class="h4 mb-0 font-weight-bold text-gray-800">{{ inventory.reserved_quantity if inventory else 0 }}</div>
+                            <div class="small text-muted">Units reserved for orders</div>
+                        </div>
+                        <div class="col-md-6">
+                            <h5>Reorder At</h5>
+                            <div class="h4 mb-0 font-weight-bold text-gray-800">{{ inventory.reorder_point if inventory else 0 }}</div>
+                            <div class="small text-muted">Order more when below this</div>
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5>Last Count</h5>
+                            <div class="h6 mb-0 font-weight-bold text-gray-800">
+                                {{ inventory.last_counted.strftime('%Y-%m-%d %H:%M') if inventory and inventory.last_counted else 'Never' }}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <h5>Status</h5>
+                            <div class="h6 mb-0">
+                                {% if inventory and inventory.quantity <= inventory.reorder_point %}
+                                <span class="badge bg-warning">LOW STOCK</span>
+                                {% elif inventory and inventory.quantity > 0 %}
+                                <span class="badge bg-success">IN STOCK</span>
+                                {% else %}
+                                <span class="badge bg-danger">OUT OF STOCK</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-7">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-history me-1"></i>
+                    Transaction History
+                </div>
+                <div class="card-body">
+                    {% if transactions %}
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Type</th>
+                                    <th>Quantity</th>
+                                    <th>Reference</th>
+                                    <th>Notes</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for tx in transactions %}
+                                <tr>
+                                    <td>{{ tx.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                                    <td>
+                                        <span class="badge 
+                                            {% if tx.transaction_type == 'initial' %}bg-info{% endif %}
+                                            {% if tx.transaction_type == 'purchase' %}bg-success{% endif %}
+                                            {% if tx.transaction_type == 'sale' %}bg-primary{% endif %}
+                                            {% if tx.transaction_type == 'adjustment' %}bg-warning{% endif %}
+                                            {% if tx.transaction_type == 'return' %}bg-info{% endif %}
+                                            {% if tx.transaction_type == 'damaged' %}bg-danger{% endif %}
+                                            {% if tx.transaction_type == 'transfer' %}bg-secondary{% endif %}
+                                        ">
+                                            {{ tx.transaction_type.upper() }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        {% if tx.quantity > 0 %}
+                                        <span class="text-success">+{{ tx.quantity }}</span>
+                                        {% else %}
+                                        <span class="text-danger">{{ tx.quantity }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if tx.reference_id %}
+                                            {% if tx.reference_type == 'order' %}
+                                            <a href="/admin/orders/{{ tx.reference_id }}">Order #{{ tx.reference_id[:8] }}</a>
+                                            {% else %}
+                                            {{ tx.reference_type }}: {{ tx.reference_id[:8] }}
+                                            {% endif %}
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ tx.notes or '-' }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info">No transactions recorded for this product.</div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="mb-4">
+        <a href="/admin/inventory" class="btn btn-secondary">Back to Inventory</a>
+    </div>
+</div>
+{% endblock %}

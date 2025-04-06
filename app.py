@@ -41,6 +41,10 @@ with app.app_context():
     
     db.create_all()
 
+# Register blueprints
+from order_routes import order_routes
+app.register_blueprint(order_routes)
+
 # HTML template for the home page
 HOME_TEMPLATE = """
 <!DOCTYPE html>
@@ -115,6 +119,14 @@ HOME_TEMPLATE = """
                             <li class="list-group-item d-flex justify-content-between align-items-center">
                                 Generate Sample Data
                                 <a href="/generate-sample-data" class="btn btn-sm btn-success">Create</a>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Order Management
+                                <a href="/admin/orders" class="btn btn-sm btn-primary">View</a>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Inventory Management
+                                <a href="/admin/inventory" class="btn btn-sm btn-primary">View</a>
                             </li>
                         </ul>
                     </div>

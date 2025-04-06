@@ -1,0 +1,108 @@
+{% extends "admin/base_admin.html" %}
+
+{% block content %}
+<div class="container-fluid px-4">
+    <h1 class="mt-4">Inventory Management</h1>
+    <ol class="breadcrumb mb-4">
+        <li class="breadcrumb-item"><a href="/admin">Dashboard</a></li>
+        <li class="breadcrumb-item active">Inventory</li>
+    </ol>
+    
+    {% if status_message %}
+    <div class="alert alert-{{ status_type }} alert-dismissible fade show" role="alert">
+        {{ status_message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {% endif %}
+    
+    {% if low_stock_items %}
+    <div class="card mb-4">
+        <div class="card-header bg-warning text-dark">
+            <i class="fas fa-exclamation-triangle me-1"></i>
+            Low Stock Alert
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover">
+                    <thead>
+                        <tr>
+                            <th>Product</th>
+                            <th>SKU</th>
+                            <th>Current Stock</th>
+                            <th>Reorder Point</th>
+                            <th>Reorder Quantity</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in low_stock_items %}
+                        <tr>
+                            <td>{{ item.product_name }}</td>
+                            <td>{{ item.sku }}</td>
+                            <td>{{ item.quantity }}</td>
+                            <td>{{ item.reorder_point }}</td>
+                            <td>{{ item.reorder_quantity }}</td>
+                            <td>
+                                <a href="/admin/inventory/{{ item.product_id }}" class="btn btn-sm btn-primary">Manage</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    <div class="card mb-4">
+        <div class="card-header">
+            <i class="fas fa-box me-1"></i>
+            Current Inventory
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered" id="inventoryTable">
+                    <thead>
+                        <tr>
+                            <th>Product</th>
+                            <th>SKU</th>
+                            <th>Location</th>
+                            <th>Total</th>
+                            <th>Available</th>
+                            <th>Reserved</th>
+                            <th>Reorder Point</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in inventory_items %}
+                        <tr {% if item.quantity <= item.reorder_point %}class="table-warning"{% endif %}>
+                            <td>{{ item.product_name }}</td>
+                            <td>{{ item.sku }}</td>
+                            <td>{{ item.location or 'Default' }}</td>
+                            <td>{{ item.quantity }}</td>
+                            <td>{{ item.available }}</td>
+                            <td>{{ item.reserved }}</td>
+                            <td>{{ item.reorder_point }}</td>
+                            <td>
+                                <a href="/admin/inventory/{{ item.product_id }}" class="btn btn-sm btn-primary">Manage</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    $(document).ready(function() {
+        $('#inventoryTable').DataTable({
+            responsive: true
+        });
+    });
+</script>
+{% endblock %}

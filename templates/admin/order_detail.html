@@ -1,60 +1,153 @@
 {% extends "admin/base_admin.html" %}
 
-{% block title %}Order Details - {{ order.id }}{% endblock %}
-
 {% block content %}
 <div class="container-fluid px-4">
-    <h1 class="mt-4">Order Details</h1>
+    <h1 class="mt-4">Order #{{ order.id }}</h1>
     <ol class="breadcrumb mb-4">
-        <li class="breadcrumb-item"><a href="/admin/dashboard">Dashboard</a></li>
+        <li class="breadcrumb-item"><a href="/admin">Dashboard</a></li>
         <li class="breadcrumb-item"><a href="/admin/orders">Orders</a></li>
-        <li class="breadcrumb-item active">Order {{ order.id }}</li>
+        <li class="breadcrumb-item active">Order Details</li>
     </ol>
     
     {% if status_message %}
-    <div class="alert alert-{{ status_type }}" role="alert">
+    <div class="alert alert-{{ status_type }} alert-dismissible fade show" role="alert">
         {{ status_message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
     {% endif %}
     
     <div class="card mb-4">
-        <div class="card-header d-flex justify-content-between align-items-center">
-            <div>
-                <i class="fas fa-shopping-cart me-1"></i>
-                Order Information
-            </div>
-            <div>
-                <span class="badge 
-                    {% if order.status == 'pending' %}bg-warning{% endif %}
-                    {% if order.status == 'paid' %}bg-info{% endif %}
-                    {% if order.status == 'processing' %}bg-primary{% endif %}
-                    {% if order.status == 'shipped' %}bg-success{% endif %}
-                    {% if order.status == 'delivered' %}bg-success{% endif %}
-                    {% if order.status == 'cancelled' %}bg-danger{% endif %}
-                    {% if order.status == 'refunded' %}bg-secondary{% endif %}
-                ">
-                    {{ order.status|upper }}
-                </span>
+        <div class="card-header">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <i class="fas fa-receipt me-1"></i>
+                    Order Information
+                </div>
+                <div>
+                    <a href="/admin/orders/{{ order.id }}/fulfillment" class="btn btn-primary">
+                        <i class="fas fa-truck me-1"></i> Fulfillment
+                    </a>
+                </div>
             </div>
         </div>
         <div class="card-body">
-            <div class="row">
+            <div class="row mb-4">
                 <div class="col-md-6">
                     <h5>Order Details</h5>
-                    <table class="table table-borderless">
+                    <p><strong>Order Date:</strong> {{ order.created_at.strftime('%Y-%m-%d %H:%M') }}</p>
+                    <p><strong>Customer Email:</strong> {{ order.email }}</p>
+                    <p><strong>Status:</strong> 
+                        <span class="badge 
+                            {% if order.status == 'pending' %}bg-warning{% endif %}
+                            {% if order.status == 'paid' %}bg-info{% endif %}
+                            {% if order.status == 'processing' %}bg-primary{% endif %}
+                            {% if order.status == 'shipped' %}bg-success{% endif %}
+                            {% if order.status == 'delivered' %}bg-success{% endif %}
+                            {% if order.status == 'cancelled' %}bg-danger{% endif %}
+                            {% if order.status == 'refunded' %}bg-secondary{% endif %}
+                        ">
+                            {{ order.status|upper }}
+                        </span>
+                    </p>
+                    <p><strong>Total:</strong> ${{ "%.2f"|format(order.total) }}</p>
+                    <p><strong>Payment Method:</strong> {{ order.payment_method or 'Not specified' }}</p>
+                    <p><strong>Shipping Method:</strong> {{ order.shipping_method or 'Not specified' }}</p>
+                </div>
+                <div class="col-md-6">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5>Shipping Address</h5>
+                            {% if order.shipping_address %}
+                            <address>
+                                {{ order.shipping_address.first_name }} {{ order.shipping_address.last_name }}<br>
+                                {{ order.shipping_address.address_line1 }}<br>
+                                {% if order.shipping_address.address_line2 %}
+                                    {{ order.shipping_address.address_line2 }}<br>
+                                {% endif %}
+                                {{ order.shipping_address.city }}, {{ order.shipping_address.state }} {{ order.shipping_address.postal_code }}<br>
+                                {{ order.shipping_address.country }}<br>
+                                Phone: {{ order.shipping_address.phone }}
+                            </address>
+                            {% else %}
+                            <p>No shipping address provided</p>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <h5>Billing Address</h5>
+                            {% if order.billing_address %}
+                            <address>
+                                {{ order.billing_address.first_name }} {{ order.billing_address.last_name }}<br>
+                                {{ order.billing_address.address_line1 }}<br>
+                                {% if order.billing_address.address_line2 %}
+                                    {{ order.billing_address.address_line2 }}<br>
+                                {% endif %}
+                                {{ order.billing_address.city }}, {{ order.billing_address.state }} {{ order.billing_address.postal_code }}<br>
+                                {{ order.billing_address.country }}<br>
+                                Phone: {{ order.billing_address.phone }}
+                            </address>
+                            {% else %}
+                            <p>No billing address provided</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <h5>Order Items</h5>
+            <div class="table-responsive">
+                <table class="table table-bordered">
+                    <thead>
                         <tr>
-                            <th>Order ID:</th>
-                            <td>{{ order.id }}</td>
+                            <th>Product</th>
+                            <th>SKU</th>
+                            <th>Price</th>
+                            <th>Quantity</th>
+                            <th>Total</th>
                         </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in order.items %}
                         <tr>
-                            <th>Date:</th>
-                            <td>{{ order.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
-                        </tr>
-                        <tr>
-                            <th>Status:</th>
                             <td>
-                                <form action="/admin/orders/update-status/{{ order.id }}" method="get" class="d-flex">
-                                    <select name="status" class="form-select form-select-sm me-2">
+                                {% if item.product %}
+                                    <a href="/admin/products/{{ item.product_id }}">{{ item.product.name }}</a>
+                                {% else %}
+                                    Unknown Product
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if item.product %}
+                                    {{ item.product.sku }}
+                                {% else %}
+                                    --
+                                {% endif %}
+                            </td>
+                            <td>${{ "%.2f"|format(item.price) }}</td>
+                            <td>{{ item.quantity }}</td>
+                            <td>${{ "%.2f"|format(item.price * item.quantity) }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <th colspan="4" class="text-end">Total</th>
+                            <th>${{ "%.2f"|format(order.total) }}</th>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+            
+            <div class="row mt-4">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">Update Order Status</h5>
+                        </div>
+                        <div class="card-body">
+                            <form action="/admin/orders/{{ order.id }}/update" method="post">
+                                <div class="mb-3">
+                                    <label for="orderStatus" class="form-label">Status</label>
+                                    <select class="form-select" id="orderStatus" name="status">
                                         <option value="pending" {% if order.status == 'pending' %}selected{% endif %}>Pending</option>
                                         <option value="paid" {% if order.status == 'paid' %}selected{% endif %}>Paid</option>
                                         <option value="processing" {% if order.status == 'processing' %}selected{% endif %}>Processing</option>
@@ -63,278 +156,61 @@
                                         <option value="cancelled" {% if order.status == 'cancelled' %}selected{% endif %}>Cancelled</option>
                                         <option value="refunded" {% if order.status == 'refunded' %}selected{% endif %}>Refunded</option>
                                     </select>
-                                    <button type="submit" class="btn btn-sm btn-primary">Update</button>
-                                </form>
-                            </td>
-                        </tr>
-                        <tr>
-                            <th>Customer Email:</th>
-                            <td>{{ order.email }}</td>
-                        </tr>
-                        {% if order.user_id %}
-                        <tr>
-                            <th>User ID:</th>
-                            <td>{{ order.user_id }}</td>
-                        </tr>
-                        {% endif %}
-                        <tr>
-                            <th>Payment Method:</th>
-                            <td>{{ order.payment_method|default('Not specified') }}</td>
-                        </tr>
-                        <tr>
-                            <th>Shipping Method:</th>
-                            <td>{{ order.shipping_method|default('Not specified') }}</td>
-                        </tr>
-                    </table>
+                                </div>
+                                <button type="submit" class="btn btn-primary">Update Status</button>
+                            </form>
+                        </div>
+                    </div>
                 </div>
-                
                 <div class="col-md-6">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <h5>Shipping Address</h5>
-                            {% if order.shipping_address %}
-                            <address>
-                                {% if order.shipping_address.name %}{{ order.shipping_address.name }}<br>{% endif %}
-                                {% if order.shipping_address.street %}{{ order.shipping_address.street }}<br>{% endif %}
-                                {% if order.shipping_address.city %}{{ order.shipping_address.city }},{% endif %}
-                                {% if order.shipping_address.state %}{{ order.shipping_address.state }}{% endif %}
-                                {% if order.shipping_address.postal_code %}{{ order.shipping_address.postal_code }}<br>{% endif %}
-                                {% if order.shipping_address.country %}{{ order.shipping_address.country }}{% endif %}
-                            </address>
-                            {% else %}
-                            <p class="text-muted">No shipping address provided</p>
-                            {% endif %}
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">Order Notes</h5>
                         </div>
-                        <div class="col-md-6">
-                            <h5>Billing Address</h5>
-                            {% if order.billing_address %}
-                            <address>
-                                {% if order.billing_address.name %}{{ order.billing_address.name }}<br>{% endif %}
-                                {% if order.billing_address.street %}{{ order.billing_address.street }}<br>{% endif %}
-                                {% if order.billing_address.city %}{{ order.billing_address.city }},{% endif %}
-                                {% if order.billing_address.state %}{{ order.billing_address.state }}{% endif %}
-                                {% if order.billing_address.postal_code %}{{ order.billing_address.postal_code }}<br>{% endif %}
-                                {% if order.billing_address.country %}{{ order.billing_address.country }}{% endif %}
-                            </address>
+                        <div class="card-body">
+                            {% if order.notes %}
+                                <ul class="list-group list-group-flush">
+                                {% for note in order.notes %}
+                                    <li class="list-group-item">
+                                        <div class="d-flex justify-content-between">
+                                            <div>{{ note.content }}</div>
+                                            <small class="text-muted">{{ note.created_at.strftime('%Y-%m-%d %H:%M') }}</small>
+                                        </div>
+                                        <div class="small text-muted">
+                                            {% if note.author %}By: {{ note.author }}{% endif %}
+                                            {% if note.is_customer_visible %} (Customer visible){% endif %}
+                                        </div>
+                                    </li>
+                                {% endfor %}
+                                </ul>
                             {% else %}
-                            <p class="text-muted">No billing address provided</p>
+                                <p class="text-muted">No notes for this order.</p>
                             {% endif %}
+                            
+                            <hr>
+                            
+                            <form action="/admin/orders/{{ order.id }}/notes" method="post">
+                                <div class="mb-3">
+                                    <label for="noteContent" class="form-label">Add a Note</label>
+                                    <textarea class="form-control" id="noteContent" name="content" rows="3" required></textarea>
+                                </div>
+                                <div class="form-check mb-3">
+                                    <input class="form-check-input" type="checkbox" id="isCustomerVisible" name="is_customer_visible">
+                                    <label class="form-check-label" for="isCustomerVisible">
+                                        Visible to customer
+                                    </label>
+                                </div>
+                                <button type="submit" class="btn btn-sm btn-outline-primary">Add Note</button>
+                            </form>
                         </div>
                     </div>
-                    
-                    <h5 class="mt-3">Payment Information</h5>
-                    {% if order.payment_info %}
-                    <table class="table table-borderless">
-                        {% for key, value in order.payment_info.items() %}
-                        <tr>
-                            <th>{{ key|title }}:</th>
-                            <td>{{ value }}</td>
-                        </tr>
-                        {% endfor %}
-                    </table>
-                    {% else %}
-                    <p class="text-muted">No payment information available</p>
-                    {% endif %}
                 </div>
             </div>
-        </div>
-    </div>
-    
-    <div class="card mb-4">
-        <div class="card-header">
-            <i class="fas fa-table me-1"></i>
-            Order Items
-        </div>
-        <div class="card-body">
-            <table class="table table-striped">
-                <thead>
-                    <tr>
-                        <th>Product</th>
-                        <th>SKU</th>
-                        <th>Price</th>
-                        <th>Quantity</th>
-                        <th>Total</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% set order_total = 0 %}
-                    {% for item in order.items %}
-                    {% set item_total = item.price * item.quantity %}
-                    {% set order_total = order_total + item_total %}
-                    <tr>
-                        <td>
-                            {% if item.product %}
-                            <a href="/admin/products/{{ item.product.id }}" target="_blank">
-                                {{ item.product.name }}
-                            </a>
-                            {% else %}
-                            Product #{{ item.product_id }} (deleted)
-                            {% endif %}
-                        </td>
-                        <td>
-                            {% if item.product %}
-                            {{ item.product.sku }}
-                            {% else %}
-                            -
-                            {% endif %}
-                        </td>
-                        <td>${{ "%.2f"|format(item.price) }}</td>
-                        <td>{{ item.quantity }}</td>
-                        <td>${{ "%.2f"|format(item_total) }}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-                <tfoot>
-                    <tr>
-                        <th colspan="4" class="text-end">Subtotal:</th>
-                        <th>${{ "%.2f"|format(order_total) }}</th>
-                    </tr>
-                    <!-- You can add more totals like shipping, tax, etc. here -->
-                    <tr>
-                        <th colspan="4" class="text-end">Total:</th>
-                        <th>${{ "%.2f"|format(order_total) }}</th>
-                    </tr>
-                </tfoot>
-            </table>
-        </div>
-    </div>
-    
-    <div class="row">
-        <div class="col-lg-6">
-            <div class="card mb-4">
-                <div class="card-header">
-                    <i class="fas fa-comments me-1"></i>
-                    Order Notes
-                </div>
-                <div class="card-body">
-                    {% if order.notes %}
-                    <div class="order-notes mb-3" style="max-height: 300px; overflow-y: auto;">
-                        {% for note in order.notes %}
-                        <div class="card mb-2 {% if note.is_customer_visible %}border-primary{% endif %}">
-                            <div class="card-header bg-light d-flex justify-content-between py-1">
-                                <small><strong>{{ note.author }}</strong> at {{ note.created_at.strftime('%Y-%m-%d %H:%M') }}</small>
-                                {% if note.is_customer_visible %}
-                                <span class="badge bg-primary">Customer Visible</span>
-                                {% endif %}
-                            </div>
-                            <div class="card-body py-2">
-                                {{ note.content }}
-                            </div>
-                        </div>
-                        {% endfor %}
-                    </div>
-                    {% else %}
-                    <p class="text-muted">No notes have been added to this order.</p>
-                    {% endif %}
-                    
-                    <form action="/admin/orders/add-note/{{ order.id }}" method="post">
-                        <div class="mb-3">
-                            <textarea class="form-control" name="content" rows="3" placeholder="Add a note..." required></textarea>
-                        </div>
-                        <div class="form-check mb-3">
-                            <input class="form-check-input" type="checkbox" value="1" id="notifyCustomer" name="notify_customer">
-                            <label class="form-check-label" for="notifyCustomer">
-                                Make visible to customer
-                            </label>
-                        </div>
-                        <div class="d-grid">
-                            <button type="submit" class="btn btn-primary">Add Note</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-        
-        <div class="col-lg-6">
-            <div class="card mb-4">
-                <div class="card-header">
-                    <i class="fas fa-history me-1"></i>
-                    Order Timeline
-                </div>
-                <div class="card-body">
-                    <ul class="timeline">
-                        <li class="timeline-item">
-                            <div class="timeline-marker"></div>
-                            <div class="timeline-content">
-                                <h3 class="timeline-title">Order Created</h3>
-                                <p class="timeline-date">{{ order.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</p>
-                                <p>Order was created with status: {{ order.status|title }}</p>
-                            </div>
-                        </li>
-                        
-                        <!-- You would generate more timeline items based on order status changes -->
-                        {% if order.status != 'pending' %}
-                        <li class="timeline-item">
-                            <div class="timeline-marker"></div>
-                            <div class="timeline-content">
-                                <h3 class="timeline-title">Status Updated</h3>
-                                <p class="timeline-date">{{ order.updated_at.strftime('%Y-%m-%d %H:%M:%S') }}</p>
-                                <p>Order status was updated to: {{ order.status|title }}</p>
-                            </div>
-                        </li>
-                        {% endif %}
-                    </ul>
-                </div>
+            
+            <div class="mt-4">
+                <a href="/admin/orders" class="btn btn-secondary">Back to Orders</a>
             </div>
         </div>
     </div>
 </div>
-
-<style>
-/* Timeline styling */
-.timeline {
-    position: relative;
-    list-style: none;
-    padding: 0;
-    margin: 0;
-}
-
-.timeline-item {
-    position: relative;
-    padding-left: 40px;
-    margin-bottom: 20px;
-}
-
-.timeline-marker {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 15px;
-    height: 15px;
-    border-radius: 50%;
-    background-color: #4e73df;
-    border: 3px solid #fff;
-    box-shadow: 0 0 0 3px #4e73df;
-}
-
-.timeline-item::before {
-    content: '';
-    position: absolute;
-    left: 7px;
-    top: 0;
-    height: 100%;
-    width: 1px;
-    background-color: #4e73df;
-}
-
-.timeline-item:last-child::before {
-    display: none;
-}
-
-.timeline-content {
-    position: relative;
-}
-
-.timeline-title {
-    font-size: 1rem;
-    font-weight: bold;
-    margin-bottom: 0;
-}
-
-.timeline-date {
-    font-size: 0.8rem;
-    color: #6c757d;
-    margin-bottom: 0.5rem;
-}
-</style>
 {% endblock %}

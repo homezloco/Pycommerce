@@ -1,0 +1,227 @@
+{% extends "admin/base_admin.html" %}
+
+{% block content %}
+<div class="container-fluid px-4">
+    <h1 class="mt-4">Order Fulfillment</h1>
+    <ol class="breadcrumb mb-4">
+        <li class="breadcrumb-item"><a href="/admin">Dashboard</a></li>
+        <li class="breadcrumb-item"><a href="/admin/orders">Orders</a></li>
+        <li class="breadcrumb-item"><a href="/admin/orders/{{ order.id }}">Order #{{ order.id }}</a></li>
+        <li class="breadcrumb-item active">Fulfillment</li>
+    </ol>
+    
+    {% if status_message %}
+    <div class="alert alert-{{ status_type }} alert-dismissible fade show" role="alert">
+        {{ status_message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {% endif %}
+    
+    <div class="row">
+        <div class="col-md-5">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-truck me-1"></i>
+                    Create New Shipment
+                </div>
+                <div class="card-body">
+                    <form action="/admin/orders/{{ order.id }}/shipments/create" method="post">
+                        <div class="mb-3">
+                            <label for="shippingMethod" class="form-label">Shipping Method</label>
+                            <select class="form-select" id="shippingMethod" name="shipping_method" required>
+                                <option value="">Select shipping method</option>
+                                <option value="standard">Standard</option>
+                                <option value="express">Express</option>
+                                <option value="overnight">Overnight</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="carrier" class="form-label">Carrier</label>
+                            <select class="form-select" id="carrier" name="carrier" required>
+                                <option value="">Select carrier</option>
+                                <option value="USPS">USPS</option>
+                                <option value="UPS">UPS</option>
+                                <option value="FedEx">FedEx</option>
+                                <option value="DHL">DHL</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="trackingNumber" class="form-label">Tracking Number</label>
+                            <input type="text" class="form-control" id="trackingNumber" name="tracking_number">
+                        </div>
+                        <div class="mb-3">
+                            <label for="trackingUrl" class="form-label">Tracking URL</label>
+                            <input type="url" class="form-control" id="trackingUrl" name="tracking_url">
+                        </div>
+                        
+                        <h5 class="mt-4">Items to Ship</h5>
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Include</th>
+                                        <th>Product</th>
+                                        <th>Quantity</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for item in order.items %}
+                                    <tr>
+                                        <td>
+                                            <div class="form-check">
+                                                <input class="form-check-input item-checkbox" type="checkbox" 
+                                                       name="item_ids[]" 
+                                                       value="{{ item.id }}" 
+                                                       id="item_{{ item.id }}">
+                                                <input type="hidden" name="product_ids[{{ item.id }}]" value="{{ item.product_id }}">
+                                            </div>
+                                        </td>
+                                        <td>{{ item.product.name if item.product else 'Unknown Product' }}</td>
+                                        <td>
+                                            <input type="number" class="form-control form-control-sm" 
+                                                   name="quantities[{{ item.id }}]" 
+                                                   value="{{ item.quantity }}" 
+                                                   min="1" 
+                                                   max="{{ item.quantity }}">
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <div class="d-flex justify-content-end mt-3">
+                            <button type="submit" class="btn btn-primary">Create Shipment</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-7">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-box me-1"></i>
+                    Existing Shipments
+                </div>
+                <div class="card-body">
+                    {% if shipments %}
+                    <div class="accordion" id="shipmentAccordion">
+                        {% for shipment in shipments %}
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="heading{{ loop.index }}">
+                                <button class="accordion-button {% if not loop.first %}collapsed{% endif %}" type="button" data-bs-toggle="collapse" data-bs-target="#collapse{{ loop.index }}" aria-expanded="{{ 'true' if loop.first else 'false' }}" aria-controls="collapse{{ loop.index }}">
+                                    Shipment #{{ shipment.id[:8] }} - {{ shipment.carrier }} - {{ shipment.status.upper() }}
+                                </button>
+                            </h2>
+                            <div id="collapse{{ loop.index }}" class="accordion-collapse collapse {% if loop.first %}show{% endif %}" aria-labelledby="heading{{ loop.index }}" data-bs-parent="#shipmentAccordion">
+                                <div class="accordion-body">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <dl class="row">
+                                                <dt class="col-sm-4">Status:</dt>
+                                                <dd class="col-sm-8">
+                                                    <span class="badge 
+                                                        {% if shipment.status == 'pending' %}bg-warning{% endif %}
+                                                        {% if shipment.status == 'ready' %}bg-info{% endif %}
+                                                        {% if shipment.status == 'shipped' %}bg-primary{% endif %}
+                                                        {% if shipment.status == 'delivered' %}bg-success{% endif %}
+                                                        {% if shipment.status == 'returned' %}bg-danger{% endif %}
+                                                    ">
+                                                        {{ shipment.status|upper }}
+                                                    </span>
+                                                </dd>
+                                                <dt class="col-sm-4">Method:</dt>
+                                                <dd class="col-sm-8">{{ shipment.shipping_method }}</dd>
+                                                <dt class="col-sm-4">Carrier:</dt>
+                                                <dd class="col-sm-8">{{ shipment.carrier }}</dd>
+                                                <dt class="col-sm-4">Created:</dt>
+                                                <dd class="col-sm-8">{{ shipment.created_at.strftime('%Y-%m-%d %H:%M') }}</dd>
+                                                {% if shipment.shipped_at %}
+                                                <dt class="col-sm-4">Shipped:</dt>
+                                                <dd class="col-sm-8">{{ shipment.shipped_at.strftime('%Y-%m-%d %H:%M') }}</dd>
+                                                {% endif %}
+                                                {% if shipment.delivered_at %}
+                                                <dt class="col-sm-4">Delivered:</dt>
+                                                <dd class="col-sm-8">{{ shipment.delivered_at.strftime('%Y-%m-%d %H:%M') }}</dd>
+                                                {% endif %}
+                                            </dl>
+                                            
+                                            {% if shipment.tracking_number %}
+                                            <p>
+                                                <strong>Tracking:</strong> 
+                                                {{ shipment.tracking_number }}
+                                                {% if shipment.tracking_url %}
+                                                <a href="{{ shipment.tracking_url }}" target="_blank" class="btn btn-sm btn-outline-secondary ms-2">
+                                                    <i class="fas fa-search"></i> Track
+                                                </a>
+                                                {% endif %}
+                                            </p>
+                                            {% endif %}
+                                        </div>
+                                        <div class="col-md-6">
+                                            <form action="/admin/orders/{{ order.id }}/shipments/{{ shipment.id }}/update" method="post">
+                                                <div class="mb-3">
+                                                    <label for="status{{ loop.index }}" class="form-label">Update Status</label>
+                                                    <select class="form-select" id="status{{ loop.index }}" name="status">
+                                                        <option value="pending" {% if shipment.status == 'pending' %}selected{% endif %}>Pending</option>
+                                                        <option value="ready" {% if shipment.status == 'ready' %}selected{% endif %}>Ready for Pickup</option>
+                                                        <option value="shipped" {% if shipment.status == 'shipped' %}selected{% endif %}>Shipped</option>
+                                                        <option value="delivered" {% if shipment.status == 'delivered' %}selected{% endif %}>Delivered</option>
+                                                        <option value="returned" {% if shipment.status == 'returned' %}selected{% endif %}>Returned</option>
+                                                    </select>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label for="trackingNumber{{ loop.index }}" class="form-label">Tracking Number</label>
+                                                    <input type="text" class="form-control" id="trackingNumber{{ loop.index }}" name="tracking_number" value="{{ shipment.tracking_number or '' }}">
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label for="trackingUrl{{ loop.index }}" class="form-label">Tracking URL</label>
+                                                    <input type="url" class="form-control" id="trackingUrl{{ loop.index }}" name="tracking_url" value="{{ shipment.tracking_url or '' }}">
+                                                </div>
+                                                <button type="submit" class="btn btn-primary">Update Shipment</button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                    
+                                    <h6 class="mt-4">Items in this shipment:</h6>
+                                    <ul class="list-group list-group-flush">
+                                        {% for item in shipment.items %}
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            {{ item.product.name if item.product else 'Unknown Product' }}
+                                            <span class="badge bg-primary rounded-pill">{{ item.quantity }}</span>
+                                        </li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info">No shipments have been created for this order yet.</div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="mb-4">
+        <a href="/admin/orders/{{ order.id }}" class="btn btn-secondary">Back to Order Details</a>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    $(document).ready(function() {
+        // Make sure at least one item is selected to create a shipment
+        $('form').on('submit', function(e) {
+            if ($(this).find('input[name="item_ids[]"]:checked').length === 0) {
+                e.preventDefault();
+                alert('Please select at least one item to include in the shipment.');
+            }
+        });
+    });
+</script>
+{% endblock %}
