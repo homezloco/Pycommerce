@@ -9,8 +9,9 @@ from fastapi import APIRouter, Request, Depends, Query
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 
+# Import the pycommerce SDK managers for now, we'll get the real ones at runtime
 from pycommerce.models.tenant import TenantManager
-from pycommerce.models.product import ProductManager
+from pycommerce.models.product import ProductManager 
 from pycommerce.models.cart import CartManager
 
 # Configure logging
@@ -30,7 +31,12 @@ async def stores(request: Request):
     """List all stores page."""
     tenants = []
     try:
-        tenants_list = tenant_manager.list() or []
+        # Handle both SDK and Flask managers
+        if hasattr(tenant_manager, 'get_all_tenants'):
+            tenants_list = tenant_manager.get_all_tenants() or []
+        else:
+            tenants_list = tenant_manager.list() or []
+            
         tenants = [
             {
                 "id": str(t.id),
@@ -50,10 +56,16 @@ async def stores(request: Request):
     
     if cart_id:
         try:
-            cart = cart_manager.get(cart_id)
-            cart_item_count = sum(item.quantity for item in cart.items)
-        except Exception:
-            pass
+            # Handle both SDK and Flask managers
+            if hasattr(cart_manager, 'get_cart_by_id'):
+                cart = cart_manager.get_cart_by_id(cart_id)
+            else:
+                cart = cart_manager.get(cart_id)
+            
+            if cart and hasattr(cart, 'items'):
+                cart_item_count = sum(item.quantity for item in cart.items)
+        except Exception as e:
+            logger.warning(f"Error getting cart: {str(e)}")
     
     return templates.TemplateResponse(
         "stores.html", 
@@ -76,7 +88,11 @@ async def store(
     """Store detail page showing products for a specific store."""
     tenant_obj = None
     try:
-        tenant_obj = tenant_manager.get_by_slug(slug)
+        # Handle both SDK and Flask managers
+        if hasattr(tenant_manager, 'get_tenant_by_slug'):
+            tenant_obj = tenant_manager.get_tenant_by_slug(slug)
+        else:
+            tenant_obj = tenant_manager.get_by_slug(slug)
     except Exception as e:
         logger.warning(f"Tenant not found with slug '{slug}': {str(e)}")
         # Redirect to stores page if tenant not found
@@ -92,19 +108,22 @@ async def store(
     # Get products for this tenant
     products_list = []
     try:
-        # Get all products with filters
-        all_products = product_manager.list(
-            category=category,
-            min_price=min_price,
-            max_price=max_price,
-            in_stock=in_stock
-        )
+        # Build filters
+        filters_dict = {}
+        if category:
+            filters_dict["category"] = category
+        if min_price is not None:
+            filters_dict["min_price"] = min_price
+        if max_price is not None:
+            filters_dict["max_price"] = max_price
+        if in_stock is not None:
+            filters_dict["in_stock"] = in_stock
         
-        # Filter by tenant
-        tenant_products = []
-        for p in all_products:
-            if hasattr(p, 'metadata') and p.metadata.get('tenant_id') == str(tenant_obj.id):
-                tenant_products.append(p)
+        # Get products for this tenant using the SQLAlchemy model manager
+        tenant_products = product_manager.get_products_by_tenant(
+            tenant_id=tenant_obj.id,
+            filters=filters_dict
+        )
         
         # Format products for template
         if tenant_products:
@@ -137,10 +156,16 @@ async def store(
     
     if cart_id:
         try:
-            cart = cart_manager.get(cart_id)
-            cart_item_count = sum(item.quantity for item in cart.items)
-        except Exception:
-            pass
+            # Handle both SDK and Flask managers
+            if hasattr(cart_manager, 'get_cart_by_id'):
+                cart = cart_manager.get_cart_by_id(cart_id)
+            else:
+                cart = cart_manager.get(cart_id)
+            
+            if cart and hasattr(cart, 'items'):
+                cart_item_count = sum(item.quantity for item in cart.items)
+        except Exception as e:
+            logger.warning(f"Error getting cart: {str(e)}")
     
     # Get theme settings from tenant if available
     theme_settings = {}
@@ -154,7 +179,13 @@ async def store(
     if 'logo_url' not in theme_settings or not theme_settings.get('logo_url'):
         # Refetch the tenant using our improved get_by_slug method that always gets fresh data
         logger.info(f"No logo found in theme settings, re-fetching tenant with slug: {slug}")
-        tenant_obj = tenant_manager.get_by_slug(slug)
+        
+        # Handle both SDK and Flask managers
+        if hasattr(tenant_manager, 'get_tenant_by_slug'):
+            tenant_obj = tenant_manager.get_tenant_by_slug(slug)
+        else:
+            tenant_obj = tenant_manager.get_by_slug(slug)
+            
         if tenant_obj and hasattr(tenant_obj, 'settings') and tenant_obj.settings:
             theme_settings = tenant_obj.settings.get('theme', {})
             logger.info(f"Re-fetched theme settings: {theme_settings}")
@@ -178,6 +209,25 @@ def setup_routes(app_templates):
     Args:
         app_templates: Jinja2Templates instance from the main app
     """
-    global templates
+    global templates, tenant_manager, product_manager, cart_manager
     templates = app_templates
+    
+    # Now that we have the application context, we can import the managers
+    # from the Flask app instead of using the SDK versions
+    try:
+        # Importing here to avoid circular import errors
+        from managers import TenantManager as FlaskTenantManager
+        from managers import ProductManager as FlaskProductManager
+        from managers import CartManager as FlaskCartManager
+        
+        # Replace the SDK managers with the Flask app managers
+        tenant_manager = FlaskTenantManager()
+        product_manager = FlaskProductManager()
+        cart_manager = FlaskCartManager()
+        
+        logger.info("Successfully loaded Flask app managers")
+    except Exception as e:
+        logger.error(f"Error loading Flask app managers: {e}")
+        # We'll keep using the SDK managers as fallback
+    
     return router
