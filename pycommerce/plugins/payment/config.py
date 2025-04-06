@@ -8,7 +8,6 @@ for both environment variables and database-stored settings.
 
 import os
 import logging
-import asyncio
 from typing import Dict, Any
 
 # Configure logging
@@ -30,45 +29,83 @@ ENVIRONMENT = os.environ.get("ENVIRONMENT", "development")
 
 # Try to import settings service for database configuration
 try:
-    from pycommerce.services.settings_service import SettingsService
+    from pycommerce.services.settings_service import SettingsService, db_session
+    from pycommerce.services.settings_service import SystemSetting
     has_settings_service = True
 except ImportError:
     has_settings_service = False
 
-async def _load_settings_from_db():
-    """Load settings from database."""
+def _load_settings_from_db():
+    """Load settings from database using synchronous approach."""
     global STRIPE_API_KEY, STRIPE_PUBLIC_KEY, STRIPE_WEBHOOK_SECRET, STRIPE_ENABLED
     global PAYPAL_CLIENT_ID, PAYPAL_CLIENT_SECRET, PAYPAL_ENABLED, PAYPAL_SANDBOX
     
     if not has_settings_service:
+        logger.warning("Settings service not available, using environment variables")
         return
         
     try:
-        # Load Stripe settings
-        stripe_api_key = await SettingsService.get_setting("payment.stripe.api_key", "")
-        if stripe_api_key:
-            STRIPE_API_KEY = stripe_api_key
-            STRIPE_PUBLIC_KEY = await SettingsService.get_setting("payment.stripe.public_key", "")
-            STRIPE_WEBHOOK_SECRET = await SettingsService.get_setting("payment.stripe.webhook_secret", "")
-            STRIPE_ENABLED = await SettingsService.get_setting("payment.stripe.enabled", False)
-            
-        # Load PayPal settings
-        paypal_client_id = await SettingsService.get_setting("payment.paypal.client_id", "")
-        if paypal_client_id:
-            PAYPAL_CLIENT_ID = paypal_client_id
-            PAYPAL_CLIENT_SECRET = await SettingsService.get_setting("payment.paypal.client_secret", "")
-            PAYPAL_ENABLED = await SettingsService.get_setting("payment.paypal.enabled", False)
-            PAYPAL_SANDBOX = await SettingsService.get_setting("payment.paypal.sandbox", True)
+        session = db_session()
+        try:
+            # Load Stripe settings
+            stripe_api_key_setting = session.query(SystemSetting).filter(
+                SystemSetting.key == "payment.stripe.api_key").first()
+                
+            if stripe_api_key_setting and stripe_api_key_setting.value:
+                STRIPE_API_KEY = stripe_api_key_setting.value
+                
+                # Get other Stripe settings
+                stripe_public_key = session.query(SystemSetting).filter(
+                    SystemSetting.key == "payment.stripe.public_key").first()
+                if stripe_public_key:
+                    STRIPE_PUBLIC_KEY = stripe_public_key.value
+                    
+                stripe_webhook_secret = session.query(SystemSetting).filter(
+                    SystemSetting.key == "payment.stripe.webhook_secret").first()
+                if stripe_webhook_secret:
+                    STRIPE_WEBHOOK_SECRET = stripe_webhook_secret.value
+                    
+                stripe_enabled = session.query(SystemSetting).filter(
+                    SystemSetting.key == "payment.stripe.enabled").first()
+                if stripe_enabled:
+                    STRIPE_ENABLED = stripe_enabled.value.lower() in ("true", "1", "yes")
+                
+            # Load PayPal settings
+            paypal_client_id_setting = session.query(SystemSetting).filter(
+                SystemSetting.key == "payment.paypal.client_id").first()
+                
+            if paypal_client_id_setting and paypal_client_id_setting.value:
+                PAYPAL_CLIENT_ID = paypal_client_id_setting.value
+                
+                # Get other PayPal settings
+                paypal_client_secret = session.query(SystemSetting).filter(
+                    SystemSetting.key == "payment.paypal.client_secret").first()
+                if paypal_client_secret:
+                    PAYPAL_CLIENT_SECRET = paypal_client_secret.value
+                    
+                paypal_enabled = session.query(SystemSetting).filter(
+                    SystemSetting.key == "payment.paypal.enabled").first()
+                if paypal_enabled:
+                    PAYPAL_ENABLED = paypal_enabled.value.lower() in ("true", "1", "yes")
+                    
+                paypal_sandbox = session.query(SystemSetting).filter(
+                    SystemSetting.key == "payment.paypal.sandbox").first()
+                if paypal_sandbox:
+                    PAYPAL_SANDBOX = paypal_sandbox.value.lower() in ("true", "1", "yes")
+                    
+            logger.info("Successfully loaded payment settings from database")
+        except Exception as e:
+            logger.error(f"Error querying database for settings: {str(e)}")
+        finally:
+            session.close()
     except Exception as e:
-        logger.error(f"Error loading payment settings from database: {str(e)}")
+        logger.error(f"Error initializing database session: {str(e)}")
 
 # Try to load settings from the database
 try:
-    asyncio.run(_load_settings_from_db())
-except RuntimeError:
-    # This happens when running inside an existing event loop
-    # We'll fall back to environment variables in this case
-    logger.info("Could not load settings from database (async loop error)")
+    _load_settings_from_db()
+except Exception as e:
+    logger.error(f"Failed to load settings from database: {str(e)}")
 
 # Fall back to environment variables if settings are not in database
 if not STRIPE_API_KEY:
