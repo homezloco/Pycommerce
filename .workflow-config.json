@@ -1,10 +1,8 @@
 {
-  "name": "Start application",
-  "tasks": [
+  "workflows": [
     {
-      "task": "shell.exec",
-      "args": "cd /home/runner/workspace && python -m uvicorn web_server:app --host 0.0.0.0 --port 5000 --reload",
-      "waitForPort": 5000
+      "name": "Start application",
+      "command": "gunicorn --bind 0.0.0.0:5000 --reuse-port --reload main:app"
     }
   ]
 }
