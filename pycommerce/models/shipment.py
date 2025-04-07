@@ -15,6 +15,8 @@ from pycommerce.core.db import Base, engine, get_session
 from sqlalchemy import Column, String, Float, DateTime, ForeignKey, JSON, Boolean, Integer
 from sqlalchemy.orm import relationship, Session
 
+
+
 logger = logging.getLogger("pycommerce.models.shipment")
 
 

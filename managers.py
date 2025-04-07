@@ -8,7 +8,7 @@ import os
 import uuid
 import logging
 from datetime import datetime
-from typing import List, Dict, Any, Optional, Union
+from typing import List, Dict, Any, Optional, Union, TypeVar
 
 from app import db
 from models import (
@@ -18,6 +18,9 @@ from models import (
 
 # NOTE: To prevent circular imports:
 # 1. We don't import Order, OrderItem, Shipment, ShipmentItem here
+# Type variables for type annotations
+T_Shipment = TypeVar('T_Shipment', bound='Shipment')
+T_ShipmentItem = TypeVar('T_ShipmentItem', bound='ShipmentItem')
 # 2. We don't import OrderManager from pycommerce.models.order
 # 3. Instead, those imports are done inside the methods where needed
 
@@ -489,7 +492,7 @@ class ShipmentManager:
         tracking_url: Optional[str] = None,
         label_url: Optional[str] = None,
         metadata: Optional[Dict[str, Any]] = None
-    ) -> "Shipment":
+    ) -> T_Shipment:
         """Create a new shipment for an order."""
         try:
             # Late import to prevent circular imports
@@ -532,13 +535,13 @@ class ShipmentManager:
             logger.error(f"Error creating shipment: {e}")
             raise
     
-    def get_shipment_by_id(self, shipment_id: str) -> Optional["Shipment"]:
+    def get_shipment_by_id(self, shipment_id: str) -> Optional[T_Shipment]:
         """Get a shipment by ID."""
         # Late import to prevent circular imports
         from models import Shipment
         return Shipment.query.filter_by(id=shipment_id).first()
     
-    def get_shipments_by_order(self, order_id: str) -> List["Shipment"]:
+    def get_shipments_by_order(self, order_id: str) -> List[T_Shipment]:
         """Get all shipments for an order."""
         # Late import to prevent circular imports
         from models import Shipment
@@ -550,7 +553,7 @@ class ShipmentManager:
         order_item_id: str,
         product_id: str,
         quantity: int
-    ) -> "ShipmentItem":
+    ) -> T_ShipmentItem:
         """Add an item to a shipment."""
         try:
             # Late import to prevent circular imports
@@ -581,7 +584,7 @@ class ShipmentManager:
         status: str,
         tracking_number: Optional[str] = None,
         tracking_url: Optional[str] = None
-    ) -> Optional["Shipment"]:
+    ) -> Optional[T_Shipment]:
         """Update a shipment's status."""
         shipment = self.get_shipment_by_id(shipment_id)
         if not shipment:
