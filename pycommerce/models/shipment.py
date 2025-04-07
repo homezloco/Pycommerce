@@ -83,7 +83,7 @@ class ShipmentItem(Base):
     shipment = relationship("Shipment", back_populates="items", lazy="selectin")
     order_item = relationship("pycommerce.models.order_item.OrderItem", lazy="selectin")
     # Use string name for Product class to avoid circular imports
-    product = relationship("pycommerce.models.product.Product", lazy="selectin")
+    product = relationship("Product", lazy="selectin")
     
     def __repr__(self):
         return f"<ShipmentItem {self.id}>"

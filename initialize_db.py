@@ -1,142 +1,49 @@
 """
-Database initialization script for PyCommerce.
-
-This script creates the database schema and initializes
-the migrations system for the PyCommerce platform.
+Initialize the database with required tables and initial data.
 """
-
 import os
 import sys
 import logging
-import argparse
-from pycommerce.core.migrations import init_migrations, upgrade_database
-from pycommerce.core.db import init_db, get_db, Tenant, Product
+from contextlib import contextmanager
+from datetime import datetime
 from uuid import uuid4
 
-# Configure logging
+# Set up logging
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger("pycommerce.initialize_db")
+logger = logging.getLogger(__name__)
 
+# Add the project root to the Python path
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+# Import SQLAlchemy models and db
+from database import db
+from models import Tenant, Product
+from app import app
+
+# Create ProductCategory model
+class ProductCategory(db.Model):
+    """Product category model."""
+    __tablename__ = "product_categories"
+
+    id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid4()))
+    tenant_id = db.Column(db.String(36), db.ForeignKey("tenants.id"), nullable=False)
+    name = db.Column(db.String(100), nullable=False)
+    description = db.Column(db.String(500), nullable=True)
+    slug = db.Column(db.String(100), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    def __repr__(self):
+        return f"<ProductCategory {self.name}>"
 
 def initialize_database():
-    """Initialize the database and migrations."""
-    try:
-        # Initialize migrations
-        init_migrations()
-        
-        # Initialize database schema
-        init_db()
-        
-        logger.info("Database initialized successfully")
-        return True
-    except Exception as e:
-        logger.error(f"Error initializing database: {str(e)}")
-        return False
-
-
-def create_sample_tenant(name, slug, domain=None):
-    """
-    Create a sample tenant with products.
+    """Initialize the database."""
+    logger.info("Initializing database...")
     
-    Args:
-        name: The tenant name
-        slug: The tenant slug
-        domain: Optional domain for the tenant
-    """
-    try:
-        # Get database session
-        db = next(get_db())
-        
-        # Create tenant
-        tenant = Tenant(
-            id=uuid4(),
-            name=name,
-            slug=slug,
-            domain=domain,
-            active=True
-        )
-        db.add(tenant)
-        db.commit()
-        
-        # Create products
-        products = [
-            {
-                "sku": "TSHIRT-RED-M",
-                "name": "Red T-Shirt (M)",
-                "description": "A comfortable red t-shirt made of 100% cotton.",
-                "price": 19.99,
-                "stock": 100,
-                "categories": "clothing,t-shirts"
-            },
-            {
-                "sku": "TSHIRT-BLUE-M",
-                "name": "Blue T-Shirt (M)",
-                "description": "A comfortable blue t-shirt made of 100% cotton.",
-                "price": 19.99,
-                "stock": 80,
-                "categories": "clothing,t-shirts"
-            },
-            {
-                "sku": "HOODIE-BLACK-L",
-                "name": "Black Hoodie (L)",
-                "description": "A warm black hoodie perfect for cold days.",
-                "price": 39.99,
-                "stock": 50,
-                "categories": "clothing,hoodies"
-            },
-            {
-                "sku": "JEANS-BLUE-32",
-                "name": "Blue Jeans (32)",
-                "description": "Classic blue jeans with a comfortable fit.",
-                "price": 49.99,
-                "stock": 30,
-                "categories": "clothing,jeans"
-            },
-            {
-                "sku": "SNEAKERS-WHITE-9",
-                "name": "White Sneakers (Size 9)",
-                "description": "Stylish white sneakers for everyday wear.",
-                "price": 59.99,
-                "stock": 25,
-                "categories": "footwear,sneakers"
-            }
-        ]
-        
-        for product_data in products:
-            product = Product(
-                id=uuid4(),
-                tenant_id=tenant.id,
-                **product_data
-            )
-            db.add(product)
-        
-        db.commit()
-        
-        logger.info(f"Created sample tenant: {name} ({slug})")
-        return tenant
-    except Exception as e:
-        logger.error(f"Error creating sample tenant: {str(e)}")
-        return None
-
+    # Create all tables
+    with app.app_context():
+        db.create_all()
+        logger.info("Database tables created successfully")
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Initialize the PyCommerce database")
-    parser.add_argument("--sample", action="store_true", help="Create a sample tenant with products")
-    args = parser.parse_args()
-    
-    # Initialize the database
-    if not initialize_database():
-        sys.exit(1)
-    
-    # Create a sample tenant if requested
-    if args.sample:
-        tenant = create_sample_tenant(
-            name="Demo Store",
-            slug="demo",
-            domain="demo.pycommerce.test"
-        )
-        
-        if not tenant:
-            sys.exit(1)
-    
-    logger.info("Database initialization complete")
+    initialize_database()
