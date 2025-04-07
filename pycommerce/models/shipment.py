@@ -83,8 +83,8 @@ class ShipmentItem(Base):
     
     # Relationships
     shipment = relationship("Shipment", back_populates="items", lazy="selectin")
-    order_item = relationship("OrderItem", lazy="selectin")
-    product = relationship("Product", lazy="selectin")
+    order_item = relationship(OrderItem, lazy="selectin")
+    product = relationship(Product, lazy="selectin")
     
     def __repr__(self):
         return f"<ShipmentItem {self.id}>"

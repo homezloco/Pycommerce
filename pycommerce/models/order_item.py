@@ -30,8 +30,8 @@ class OrderItem(Base):
     
     # Relationships
     order = relationship("Order", back_populates="items", lazy="selectin")
-    # Using string-based references to avoid circular imports
-    product = relationship("Product", lazy="selectin")
+    # Using the directly imported Product class
+    product = relationship(Product, lazy="selectin")
     
     def __repr__(self):
         return f"<OrderItem {self.id}>"
