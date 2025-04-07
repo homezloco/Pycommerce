@@ -53,9 +53,22 @@ def init_db() -> None:
     try:
         logger.info("Initializing database...")
 
-        # Import all models to ensure they are registered with Base
-        from pycommerce.models.db_registry import metadata as model_metadata
-        import pycommerce.models
+        # Import all models directly to ensure they are registered
+        # Avoiding the circular imports through db_registry
+        from pycommerce.models.db_tenant import Tenant
+        from pycommerce.models.db_product import Product
+        from pycommerce.models.db_inventory import InventoryRecord 
+        
+        # Import plugin config separately since we had to add it
+        try:
+            # Try to import from dedicated file first
+            from pycommerce.models.db_plugin_config import PluginConfig
+        except ImportError:
+            # If not available, use the one from registry
+            from pycommerce.models.db_registry import PluginConfig
+            
+        # Import MediaFile only from registry for now
+        from pycommerce.models.db_registry import MediaFile
 
         # Create tables
         Base.metadata.create_all(bind=engine)

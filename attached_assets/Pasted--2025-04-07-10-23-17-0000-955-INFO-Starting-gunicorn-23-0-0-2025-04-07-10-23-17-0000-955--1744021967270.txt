@@ -1,0 +1,143 @@
+[2025-04-07 10:23:17 +0000] [955] [INFO] Starting gunicorn 23.0.0
+[2025-04-07 10:23:17 +0000] [955] [INFO] Listening at: http://0.0.0.0:5000 (955)
+[2025-04-07 10:23:17 +0000] [955] [INFO] Using worker: sync
+[2025-04-07 10:23:17 +0000] [966] [INFO] Booting worker with pid: 966
+[2025-04-07 10:23:17 +0000] [955] [INFO] Handling signal: winch
+[2025-04-07 10:23:18 +0000] [955] [INFO] Handling signal: winch
+[2025-04-07 10:23:18 +0000] [955] [INFO] Handling signal: winch
+[2025-04-07 10:23:18 +0000] [955] [INFO] Handling signal: winch
+[2025-04-07 10:23:19 +0000] [955] [INFO] Handling signal: winch
+INFO:pycommerce.plugins.payment.config:Successfully loaded payment settings from database
+INFO:pycommerce.plugins.payment.config:Using development Stripe credentials
+INFO:pycommerce.plugins.payment.config:Using development PayPal credentials
+[2025-04-07 10:23:19 +0000] [955] [INFO] Handling signal: winch
+[2025-04-07 10:23:19 +0000] [955] [INFO] Handling signal: winch
+[2025-04-07 10:23:19 +0000] [955] [INFO] Handling signal: winch
+INFO:pycommerce.plugins.payment.stripe:Initializing Stripe payment plugin
+INFO:pycommerce.plugins:Registering plugin: stripe_payment v0.1.0
+INFO:pycommerce.plugins.payment.stripe:Initializing Stripe payment plugin
+INFO:pycommerce:Registered payment plugin: stripe
+INFO:pycommerce.plugins.payment.paypal:Initializing PayPal payment plugin
+INFO:pycommerce.plugins:Registering plugin: paypal_payment v0.1.0
+INFO:pycommerce.plugins.payment.paypal:Initializing PayPal payment plugin
+INFO:pycommerce:Registered payment plugin: paypal
+INFO:pycommerce.plugins:Registering plugin: standard_shipping v0.1.0
+INFO:pycommerce.plugins.shipping.standard:Initializing Standard shipping plugin
+INFO:pycommerce:Registered shipping plugin: standard
+[2025-04-07 10:23:19 +0000] [955] [INFO] Handling signal: winch
+[2025-04-07 10:23:19 +0000] [955] [INFO] Handling signal: winch
+INFO:pycommerce.core.db:Initializing database...
+[2025-04-07 10:23:19 +0000] [955] [INFO] Handling signal: winch
+[2025-04-07 10:23:19 +0000] [955] [INFO] Handling signal: winch
+[2025-04-07 10:23:19 +0000] [955] [INFO] Handling signal: winch
+[2025-04-07 10:23:19 +0000] [955] [INFO] Handling signal: winch
+[2025-04-07 10:23:20 +0000] [955] [INFO] Handling signal: winch
+[2025-04-07 10:23:20 +0000] [955] [INFO] Handling signal: winch
+[2025-04-07 10:23:20 +0000] [955] [INFO] Handling signal: winch
+INFO:pycommerce.core.db:Database initialized successfully.
+INFO:pycommerce.core.db:Initializing database...
+INFO:pycommerce.core.db:Database initialized successfully.
+INFO:pycommerce.migrations:Database migrations initialized
+INFO:routes.storefront.stores:Initialized SDK TenantManager
+INFO:routes.storefront.stores:Initialized SDK ProductManager
+INFO:routes.storefront.stores:Initialized SDK CartManager
+INFO:routes.storefront.stores:Finished loading managers
+INFO:routes.storefront.cart:Initialized SDK ProductManager
+INFO:routes.storefront.cart:Initialized SDK CartManager
+INFO:routes.storefront.cart:Initialized SDK TenantManager
+INFO:routes.storefront.cart:Finished loading managers
+INFO:routes.storefront.checkout:Initialized SDK TenantManager
+INFO:routes.storefront.checkout:Initialized SDK ProductManager
+INFO:routes.storefront.checkout:Initialized SDK CartManager
+INFO:routes.storefront.checkout:Initialized SDK OrderManager
+INFO:routes.storefront.checkout:Finished loading Flask app managers
+INFO:asgi_wsgi_app:Starting uvicorn server with command: /nix/store/wqhkxzzlaswkj3gimqign99sshvllcg6-python-wrapped-0.1.0/bin/python3 -m uvicorn web_app:app --host 127.0.0.1 --port 8000 --reload
+INFO:asgi_wsgi_app:Waiting for uvicorn server to start...
+INFO:asgi_wsgi_app:Waiting for uvicorn server (attempt 1/10)
+INFO:asgi_wsgi_app:Uvicorn: INFO:     Will watch for changes in these directories: ['/home/runner/workspace']
+INFO:asgi_wsgi_app:Uvicorn: INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+INFO:asgi_wsgi_app:Uvicorn: INFO:     Started reloader process [983] using WatchFiles
+INFO:asgi_wsgi_app:Waiting for uvicorn server (attempt 2/10)
+INFO:asgi_wsgi_app:Waiting for uvicorn server (attempt 3/10)
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.plugins.payment.config:Successfully loaded payment settings from database
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.plugins.payment.config:Using development Stripe credentials
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.plugins.payment.config:Using development PayPal credentials
+INFO:asgi_wsgi_app:Waiting for uvicorn server (attempt 4/10)
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.plugins.payment.stripe:Initializing Stripe payment plugin
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.plugins:Registering plugin: stripe_payment v0.1.0
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.plugins.payment.stripe:Initializing Stripe payment plugin
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce:Registered payment plugin: stripe
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.plugins.payment.paypal:Initializing PayPal payment plugin
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.plugins:Registering plugin: paypal_payment v0.1.0
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.plugins.payment.paypal:Initializing PayPal payment plugin
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce:Registered payment plugin: paypal
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.plugins:Registering plugin: standard_shipping v0.1.0
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.plugins.shipping.standard:Initializing Standard shipping plugin
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce:Registered shipping plugin: standard
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.core.db:Initializing database...
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.core.db:Database initialized successfully.
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.core.db:Initializing database...
+INFO:asgi_wsgi_app:Waiting for uvicorn server (attempt 5/10)
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.core.db:Database initialized successfully.
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.migrations:Database migrations initialized
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.storefront.stores:Initialized SDK TenantManager
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.storefront.stores:Initialized SDK ProductManager
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.storefront.stores:Initialized SDK CartManager
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.storefront.stores:Finished loading managers
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.storefront.cart:Initialized SDK ProductManager
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.storefront.cart:Initialized SDK CartManager
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.storefront.cart:Initialized SDK TenantManager
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.storefront.cart:Finished loading managers
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.storefront.checkout:Initialized SDK TenantManager
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.storefront.checkout:Initialized SDK ProductManager
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.storefront.checkout:Initialized SDK CartManager
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.storefront.checkout:Initialized SDK OrderManager
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.storefront.checkout:Finished loading Flask app managers
+INFO:asgi_wsgi_app:Uvicorn: INFO:     Started server process [994]
+INFO:asgi_wsgi_app:Uvicorn: INFO:     Waiting for application startup.
+INFO:asgi_wsgi_app:Uvicorn: INFO:     Application startup complete.
+INFO:asgi_wsgi_app:Uvicorn: INFO:     127.0.0.1:41572 - "GET /api/health HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET http://127.0.0.1:8000/api/health "HTTP/1.1 200 OK"
+INFO:asgi_wsgi_app:Uvicorn server is running
+INFO:asgi_wsgi_app:Uvicorn: INFO:     127.0.0.1:41586 - "GET /api/health HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET http://127.0.0.1:8000/api/health "HTTP/1.1 200 OK"
+INFO:asgi_wsgi_app:Uvicorn: INFO:     127.0.0.1:41592 - "GET / HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET http://127.0.0.1:8000/ "HTTP/1.1 200 OK"
+INFO:asgi_wsgi_app:Uvicorn: INFO:     127.0.0.1:41600 - "GET /api/health HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET http://127.0.0.1:8000/api/health "HTTP/1.1 200 OK"
+INFO:asgi_wsgi_app:Uvicorn: INFO:     127.0.0.1:41608 - "GET / HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET http://127.0.0.1:8000/ "HTTP/1.1 200 OK"
+[2025-04-07 10:31:58 +0000] [955] [INFO] Handling signal: winch
+INFO:asgi_wsgi_app:Uvicorn: INFO:     127.0.0.1:48930 - "GET /api/health HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET http://127.0.0.1:8000/api/health "HTTP/1.1 200 OK"
+INFO:asgi_wsgi_app:Uvicorn: INFO:     127.0.0.1:48938 - "GET / HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET http://127.0.0.1:8000/ "HTTP/1.1 200 OK"
+INFO:asgi_wsgi_app:Uvicorn: INFO:     127.0.0.1:48948 - "GET /api/health HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET http://127.0.0.1:8000/api/health "HTTP/1.1 200 OK"
+INFO:asgi_wsgi_app:Uvicorn: ERROR:pycommerce.models.tenant:Error listing tenants: Mapper 'Mapper[Tenant(tenants)]' has no property 'plugin_configs'.  If this property was indicated from other mappers or configure events, ensure registry.configure() has been called.
+INFO:asgi_wsgi_app:Uvicorn: INFO:     127.0.0.1:48952 - "GET /products HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET http://127.0.0.1:8000/products "HTTP/1.1 200 OK"
+INFO:asgi_wsgi_app:Uvicorn: INFO:     127.0.0.1:33456 - "GET /api/health HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET http://127.0.0.1:8000/api/health "HTTP/1.1 200 OK"
+INFO:asgi_wsgi_app:Uvicorn: ERROR:pycommerce.models.tenant:Error listing tenants: One or more mappers failed to initialize - can't proceed with initialization of other mappers. Triggering mapper: 'Mapper[PluginConfig(plugin_configs)]'. Original exception was: Mapper 'Mapper[Tenant(tenants)]' has no property 'plugin_configs'.  If this property was indicated from other mappers or configure events, ensure registry.configure() has been called.
+INFO:asgi_wsgi_app:Uvicorn: ERROR:pycommerce.models.tenant:Error creating tenant: One or more mappers failed to initialize - can't proceed with initialization of other mappers. Triggering mapper: 'Mapper[PluginConfig(plugin_configs)]'. Original exception was: Mapper 'Mapper[Tenant(tenants)]' has no property 'plugin_configs'.  If this property was indicated from other mappers or configure events, ensure registry.configure() has been called.
+INFO:asgi_wsgi_app:Uvicorn: ERROR:routes.storefront.home:Error creating tenant demo1: One or more mappers failed to initialize - can't proceed with initialization of other mappers. Triggering mapper: 'Mapper[PluginConfig(plugin_configs)]'. Original exception was: Mapper 'Mapper[Tenant(tenants)]' has no property 'plugin_configs'.  If this property was indicated from other mappers or configure events, ensure registry.configure() has been called.
+INFO:asgi_wsgi_app:Uvicorn: ERROR:pycommerce.models.tenant:Error creating tenant: One or more mappers failed to initialize - can't proceed with initialization of other mappers. Triggering mapper: 'Mapper[PluginConfig(plugin_configs)]'. Original exception was: Mapper 'Mapper[Tenant(tenants)]' has no property 'plugin_configs'.  If this property was indicated from other mappers or configure events, ensure registry.configure() has been called.
+INFO:asgi_wsgi_app:Uvicorn: ERROR:routes.storefront.home:Error creating tenant demo2: One or more mappers failed to initialize - can't proceed with initialization of other mappers. Triggering mapper: 'Mapper[PluginConfig(plugin_configs)]'. Original exception was: Mapper 'Mapper[Tenant(tenants)]' has no property 'plugin_configs'.  If this property was indicated from other mappers or configure events, ensure registry.configure() has been called.
+INFO:asgi_wsgi_app:Uvicorn: INFO:     127.0.0.1:33464 - "GET /api/generate-sample-data HTTP/1.1" 303 See Other
+INFO:httpx:HTTP Request: GET http://127.0.0.1:8000/api/generate-sample-data "HTTP/1.1 303 See Other"
+INFO:asgi_wsgi_app:Uvicorn: ERROR:pycommerce.models.tenant:Error listing tenants: One or more mappers failed to initialize - can't proceed with initialization of other mappers. Triggering mapper: 'Mapper[PluginConfig(plugin_configs)]'. Original exception was: Mapper 'Mapper[Tenant(tenants)]' has no property 'plugin_configs'.  If this property was indicated from other mappers or configure events, ensure registry.configure() has been called.
+INFO:asgi_wsgi_app:Uvicorn: INFO:     127.0.0.1:33464 - "GET /stores HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET http://127.0.0.1:8000/stores "HTTP/1.1 200 OK"
+INFO:asgi_wsgi_app:Uvicorn: INFO:     127.0.0.1:33470 - "GET /api/health HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET http://127.0.0.1:8000/api/health "HTTP/1.1 200 OK"
+INFO:asgi_wsgi_app:Uvicorn: ERROR:pycommerce.models.tenant:Error listing tenants: One or more mappers failed to initialize - can't proceed with initialization of other mappers. Triggering mapper: 'Mapper[PluginConfig(plugin_configs)]'. Original exception was: Mapper 'Mapper[Tenant(tenants)]' has no property 'plugin_configs'.  If this property was indicated from other mappers or configure events, ensure registry.configure() has been called.
+INFO:asgi_wsgi_app:Uvicorn: ERROR:pycommerce.models.tenant:Error creating tenant: One or more mappers failed to initialize - can't proceed with initialization of other mappers. Triggering mapper: 'Mapper[PluginConfig(plugin_configs)]'. Original exception was: Mapper 'Mapper[Tenant(tenants)]' has no property 'plugin_configs'.  If this property was indicated from other mappers or configure events, ensure registry.configure() has been called.
+INFO:asgi_wsgi_app:Uvicorn: ERROR:routes.storefront.home:Error creating tenant demo1: One or more mappers failed to initialize - can't proceed with initialization of other mappers. Triggering mapper: 'Mapper[PluginConfig(plugin_configs)]'. Original exception was: Mapper 'Mapper[Tenant(tenants)]' has no property 'plugin_configs'.  If this property was indicated from other mappers or configure events, ensure registry.configure() has been called.
+INFO:asgi_wsgi_app:Uvicorn: ERROR:pycommerce.models.tenant:Error creating tenant: One or more mappers failed to initialize - can't proceed with initialization of other mappers. Triggering mapper: 'Mapper[PluginConfig(plugin_configs)]'. Original exception was: Mapper 'Mapper[Tenant(tenants)]' has no property 'plugin_configs'.  If this property was indicated from other mappers or configure events, ensure registry.configure() has been called.
+INFO:asgi_wsgi_app:Uvicorn: ERROR:routes.storefront.home:Error creating tenant demo2: One or more mappers failed to initialize - can't proceed with initialization of other mappers. Triggering mapper: 'Mapper[PluginConfig(plugin_configs)]'. Original exception was: Mapper 'Mapper[Tenant(tenants)]' has no property 'plugin_configs'.  If this property was indicated from other mappers or configure events, ensure registry.configure() has been called.
+INFO:asgi_wsgi_app:Uvicorn: INFO:     127.0.0.1:33476 - "GET /api/generate-sample-data HTTP/1.1" 303 See Other
+INFO:httpx:HTTP Request: GET http://127.0.0.1:8000/api/generate-sample-data "HTTP/1.1 303 See Other"
+INFO:httpx:HTTP Request: GET http://127.0.0.1:8000/stores "HTTP/1.1 200 OK"
+INFO:asgi_wsgi_app:Uvicorn: ERROR:pycommerce.models.tenant:Error listing tenants: One or more mappers failed to initialize - can't proceed with initialization of other mappers. Triggering mapper: 'Mapper[PluginConfig(plugin_configs)]'. Original exception was: Mapper 'Mapper[Tenant(tenants)]' has no property 'plugin_configs'.  If this property was indicated from other mappers or configure events, ensure registry.configure() has been called.
+INFO:asgi_wsgi_app:Uvicorn: INFO:     127.0.0.1:33476 - "GET /stores HTTP/1.1" 200 OK

@@ -22,6 +22,7 @@ logger = logging.getLogger(__name__)
 class Product(Base):
     """SQLAlchemy Product model."""
     __tablename__ = "products"
+    __table_args__ = {'extend_existing': True}
     
     id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     tenant_id = Column(String(36), ForeignKey("tenants.id"), nullable=False)

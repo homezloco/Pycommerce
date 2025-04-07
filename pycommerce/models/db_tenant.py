@@ -19,6 +19,7 @@ logger = logging.getLogger(__name__)
 class Tenant(Base):
     """SQLAlchemy Tenant model."""
     __tablename__ = "tenants"
+    __table_args__ = {'extend_existing': True}
     
     id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     name = Column(String(100), nullable=False)
@@ -31,6 +32,8 @@ class Tenant(Base):
     
     # Relationships
     products = relationship("Product", back_populates="tenant", cascade="all, delete-orphan")
+    plugin_configs = relationship("PluginConfig", back_populates="tenant", cascade="all, delete-orphan")
+    media_files = relationship("MediaFile", back_populates="tenant", cascade="all, delete-orphan")
     
     def __repr__(self):
         return f"<Tenant {self.name}>"
