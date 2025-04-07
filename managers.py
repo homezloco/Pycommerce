@@ -493,7 +493,7 @@ class ShipmentManager:
         """Create a new shipment for an order."""
         try:
             # Late import to prevent circular imports
-            from models import Order, Shipment
+            from models import Order, Shipment, ShipmentItem
             
             # Check if the order exists
             order = Order.query.filter_by(id=order_id).first()
@@ -589,7 +589,7 @@ class ShipmentManager:
         
         try:
             # Late import to prevent circular imports
-            from models import Order, Shipment
+            from models import Order, Shipment, ShipmentItem
             
             # Update status and tracking info
             shipment.status = status
