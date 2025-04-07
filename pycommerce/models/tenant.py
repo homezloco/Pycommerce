@@ -10,34 +10,11 @@ from typing import List, Optional, Dict, Any
 from datetime import datetime
 from uuid import UUID
 
-from sqlalchemy import Column, String, Boolean, DateTime, JSON
-from sqlalchemy.orm import relationship
-
-from pycommerce.core.db import Base, db_session
+from pycommerce.core.db import db_session
+from pycommerce.models.db_tenant import Tenant
 
 # Configure logging
 logger = logging.getLogger("pycommerce.models.tenant")
-
-
-class Tenant(Base):
-    """Tenant model for multi-tenant architecture."""
-    __tablename__ = "tenants"
-
-    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
-    name = Column(String(100), nullable=False)
-    slug = Column(String(100), unique=True, nullable=False)
-    domain = Column(String(255), unique=True, nullable=True)
-    active = Column(Boolean, default=True)
-    settings = Column(JSON, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    
-    # Relationships
-    plugin_configs = relationship("PluginConfig", back_populates="tenant", cascade="all, delete-orphan")
-    media_files = relationship("Media", back_populates="tenant", cascade="all, delete-orphan")
-
-    def __repr__(self):
-        return f"<Tenant {self.name}>"
 
 
 class TenantDTO:
@@ -69,8 +46,8 @@ class TenantDTO:
         self.domain = domain
         self.active = active
         self.settings = settings or {}
-        self.created_at = created_at or datetime.now()
-        self.updated_at = updated_at or datetime.now()
+        self.created_at = created_at or datetime.utcnow()
+        self.updated_at = updated_at or datetime.utcnow()
 
     @classmethod
     def from_model(cls, model: Tenant) -> 'TenantDTO':
@@ -284,7 +261,7 @@ class TenantManager:
                     tenant_model.settings = value
 
             # Update updated_at timestamp
-            tenant_model.updated_at = datetime.now()
+            tenant_model.updated_at = datetime.utcnow()
 
             self.session.commit()
 
@@ -319,7 +296,7 @@ class TenantManager:
             tenant_model.settings.update(settings)
             
             # Update updated_at timestamp
-            tenant_model.updated_at = datetime.now()
+            tenant_model.updated_at = datetime.utcnow()
 
             self.session.commit()
 
@@ -373,7 +350,7 @@ class TenantManager:
             logger.info(f"Updated theme settings: {tenant_model.settings.get('theme', {})}")
             
             # Update updated_at timestamp
-            tenant_model.updated_at = datetime.now()
+            tenant_model.updated_at = datetime.utcnow()
 
             self.session.commit()
 

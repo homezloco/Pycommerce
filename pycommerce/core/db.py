@@ -54,6 +54,7 @@ def init_db() -> None:
         logger.info("Initializing database...")
 
         # Import all models to ensure they are registered with Base
+        from pycommerce.models.db_registry import metadata as model_metadata
         import pycommerce.models
 
         # Create tables
