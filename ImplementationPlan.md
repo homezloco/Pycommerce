@@ -42,7 +42,7 @@ PyCommerce is a scalable, multi-tenant ecommerce platform built with Python. It 
 - ✅ **Settings Management**: Database-backed persistent configuration system
 - ✅ **Payment Configuration**: Payment provider settings persistence and admin UI
 - ✅ **Payment Error Handling**: Enhanced error handling for payment providers with specific error types
-- ✅ **Shipping Options**: Implemented tiered shipping (standard, express, premium) with rate calculation
+- ✅ **Shipping Options**: Implemented tiered shipping (standard, express, premium) with rate calculation and configurable price multipliers
 
 ### In Progress:
 
@@ -109,7 +109,9 @@ PyCommerce is a scalable, multi-tenant ecommerce platform built with Python. It 
 2. **Shipping Options**
    - ✅ Basic shipping integration
    - ✅ Shipping rate calculations
-   - ✅ Multiple shipping methods (standard, express, premium)
+   - ✅ Multiple shipping methods (standard, express) with premium next-day shipping
+   - ✅ Premium shipping with next-day domestic and 3-4 day international delivery
+   - ✅ Configurable shipping rate multipliers (express at 1.75x, premium at 2.5x standard rates)
    - ⏳ Address validation
    - ⏳ Shipping label generation
 
@@ -321,7 +323,7 @@ For existing ecommerce stores looking to migrate to PyCommerce:
 13. ✅ Implement database-backed configuration system - COMPLETED
 14. ✅ Create payment settings UI in admin dashboard - COMPLETED
 15. ✅ Implement enhanced payment error handling with specific error types - COMPLETED
-16. ✅ Implement tiered shipping options (standard, express, premium) - COMPLETED
+16. ✅ Implement tiered shipping options (standard, express, premium) with configurable rates - COMPLETED
 17. 🔄 Finalize payment integrations with proper credentials
 18. 🔄 Optimize system performance and database queries
 19. 🔄 Enhance admin dashboard with analytics
