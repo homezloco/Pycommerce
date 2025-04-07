@@ -58,7 +58,7 @@ class Shipment(Base):
     shipment_metadata = Column(JSON, nullable=True)  # Renamed from metadata to avoid reserved name conflict
     
     # Relationships
-    order = relationship("Order", back_populates="shipments")
+    order = relationship("pycommerce.models.order.Order", back_populates="shipments")
     items = relationship("ShipmentItem", back_populates="shipment", cascade="all, delete-orphan")
     
     def __repr__(self):
@@ -82,8 +82,8 @@ class ShipmentItem(Base):
     # Relationships
     shipment = relationship("Shipment", back_populates="items", lazy="selectin")
     order_item = relationship("pycommerce.models.order_item.OrderItem", lazy="selectin")
-    # Use string name for Product class to avoid circular imports
-    product = relationship("Product", lazy="selectin")
+    # Use fully qualified string name for Product class to avoid circular imports
+    product = relationship("pycommerce.models.product.Product", lazy="selectin")
     
     def __repr__(self):
         return f"<ShipmentItem {self.id}>"

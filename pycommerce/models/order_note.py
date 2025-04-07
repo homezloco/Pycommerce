@@ -26,7 +26,7 @@ class OrderNote(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     
     # Define relationship
-    order = relationship("Order", back_populates="notes")
+    order = relationship("pycommerce.models.order.Order", back_populates="notes")
 
 class OrderNoteManager:
     """Manager class for order notes."""

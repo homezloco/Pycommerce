@@ -83,9 +83,9 @@ class Order(Base):
     delivered_at = Column(DateTime, nullable=True)
     
     # Relationships
-    notes = relationship("OrderNote", back_populates="order", cascade="all, delete-orphan")
-    items = relationship("OrderItem", back_populates="order", cascade="all, delete-orphan")
-    shipments = relationship("Shipment", back_populates="order", cascade="all, delete-orphan")
+    notes = relationship("pycommerce.models.order.OrderNote", back_populates="order", cascade="all, delete-orphan")
+    items = relationship("pycommerce.models.order_item.OrderItem", back_populates="order", cascade="all, delete-orphan")
+    shipments = relationship("pycommerce.models.shipment.Shipment", back_populates="order", cascade="all, delete-orphan")
 
 
 class OrderManager:
