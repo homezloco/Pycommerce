@@ -13,6 +13,8 @@ from sqlalchemy.orm import relationship
 
 from pycommerce.core.db import Base
 from pycommerce.models.db_tenant import Tenant
+# Import inventory record class to resolve circular reference
+from pycommerce.models.db_inventory import InventoryRecord
 
 logger = logging.getLogger(__name__)
 
