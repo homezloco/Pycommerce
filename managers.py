@@ -394,6 +394,88 @@ class UserManager:
         return True
 
 
+class OrderManager:
+    """Manager for order operations."""
+    
+    def create(self, order_data):
+        """Create a new order."""
+        try:
+            # Late import to prevent circular imports
+            from models import Order, OrderItem
+            
+            order_id = str(uuid.uuid4())
+            order_data['id'] = order_id
+            
+            order = Order(**order_data)
+            db.session.add(order)
+            db.session.commit()
+            
+            logger.info(f"Created order {order_id}")
+            return order
+        except Exception as e:
+            db.session.rollback()
+            logger.error(f"Error creating order: {e}")
+            raise
+    
+    def get(self, order_id):
+        """Get an order by ID."""
+        try:
+            # Late import to prevent circular imports
+            from models import Order
+            return Order.query.filter_by(id=order_id).first()
+        except Exception as e:
+            logger.error(f"Error getting order: {e}")
+            return None
+    
+    def update(self, order_id, order_data):
+        """Update an order."""
+        try:
+            order = self.get(order_id)
+            if not order:
+                return None
+            
+            for key, value in order_data.items():
+                if hasattr(order, key) and key != 'id':
+                    setattr(order, key, value)
+            
+            order.updated_at = datetime.utcnow()
+            db.session.commit()
+            
+            logger.info(f"Updated order {order_id}")
+            return order
+        except Exception as e:
+            db.session.rollback()
+            logger.error(f"Error updating order: {e}")
+            raise
+    
+    def delete(self, order_id):
+        """Delete an order."""
+        try:
+            order = self.get(order_id)
+            if not order:
+                return False
+            
+            db.session.delete(order)
+            db.session.commit()
+            
+            logger.info(f"Deleted order {order_id}")
+            return True
+        except Exception as e:
+            db.session.rollback()
+            logger.error(f"Error deleting order: {e}")
+            raise
+    
+    def get_orders_for_tenant(self, tenant_id):
+        """Get all orders for a tenant."""
+        try:
+            # Late import to prevent circular imports
+            from models import Order
+            return Order.query.filter_by(tenant_id=tenant_id).all()
+        except Exception as e:
+            logger.error(f"Error getting orders for tenant: {e}")
+            return []
+
+
 class ShipmentManager:
     """Manager for shipment operations."""
     
@@ -428,7 +510,7 @@ class ShipmentManager:
                 shipping_address=shipping_address or {},
                 tracking_url=tracking_url,
                 label_url=label_url,
-                metadata=metadata or {},
+                shipment_metadata=metadata or {},  # Using shipment_metadata instead of metadata
                 created_at=datetime.utcnow(),
                 updated_at=datetime.utcnow()
             )

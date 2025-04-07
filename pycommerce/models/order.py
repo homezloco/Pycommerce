@@ -84,6 +84,7 @@ class Order(Base):
     
     # Relationships
     notes = relationship("OrderNote", back_populates="order", cascade="all, delete-orphan")
+    shipments = relationship("Shipment", back_populates="order", cascade="all, delete-orphan")
 
 
 class OrderManager:
