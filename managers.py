@@ -16,13 +16,13 @@ from models import (
     InventoryRecord, InventoryTransaction
 )
 
-# NOTE: To prevent circular imports:
-# 1. We don't import Order, OrderItem, Shipment, ShipmentItem here
+# Import the Shipment and ShipmentItem for proper type checking
+from pycommerce.models.shipment import Shipment, ShipmentItem
 # Type variables for type annotations
 from typing import TypeVar
-# Define type variables with forward references as strings to avoid circular imports
-T_Shipment = TypeVar('T_Shipment', bound='Shipment')
-T_ShipmentItem = TypeVar('T_ShipmentItem', bound='ShipmentItem')
+# Define type variables with concrete bound types
+T_Shipment = TypeVar('T_Shipment', bound=Shipment)
+T_ShipmentItem = TypeVar('T_ShipmentItem', bound=ShipmentItem)
 # 2. We don't import OrderManager from pycommerce.models.order
 # 3. Instead, those imports are done inside the methods where needed
 

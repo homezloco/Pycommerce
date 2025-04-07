@@ -14,6 +14,8 @@ from enum import Enum
 from pycommerce.core.db import Base, engine, get_session
 from sqlalchemy import Column, String, Float, DateTime, ForeignKey, JSON, Boolean, Integer
 from sqlalchemy.orm import relationship, Session
+from pycommerce.models.product import Product
+from pycommerce.models.order_item import OrderItem
 
 
 
