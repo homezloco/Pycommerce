@@ -19,6 +19,8 @@ from models import (
 # NOTE: To prevent circular imports:
 # 1. We don't import Order, OrderItem, Shipment, ShipmentItem here
 # Type variables for type annotations
+from typing import TypeVar
+# Define type variables with forward references as strings to avoid circular imports
 T_Shipment = TypeVar('T_Shipment', bound='Shipment')
 T_ShipmentItem = TypeVar('T_ShipmentItem', bound='ShipmentItem')
 # 2. We don't import OrderManager from pycommerce.models.order

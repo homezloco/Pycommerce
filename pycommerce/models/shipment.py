@@ -80,9 +80,10 @@ class ShipmentItem(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     # Relationships
-    shipment = relationship("Shipment", back_populates="items")
-    order_item = relationship("OrderItem")
-    product = relationship("Product")
+    shipment = relationship("Shipment", back_populates="items", lazy="selectin")
+    order_item = relationship("pycommerce.models.order_item.OrderItem", lazy="selectin")
+    # Use string name for Product class to avoid circular imports
+    product = relationship("pycommerce.models.product.Product", lazy="selectin")
     
     def __repr__(self):
         return f"<ShipmentItem {self.id}>"

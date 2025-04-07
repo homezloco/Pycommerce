@@ -28,8 +28,9 @@ class OrderItem(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     
     # Relationships
-    order = relationship("Order", back_populates="items")
-    product = relationship("Product")
+    order = relationship("Order", back_populates="items", lazy="selectin")
+    # Use string name for Product class to avoid circular imports
+    product = relationship("pycommerce.models.product.Product", lazy="selectin")
     
     def __repr__(self):
         return f"<OrderItem {self.id}>"

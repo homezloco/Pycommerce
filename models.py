@@ -209,9 +209,10 @@ class ShipmentItem(db.Model):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     # Relationships
-    shipment = relationship("Shipment", back_populates="items")
-    order_item = relationship("OrderItem")
-    product = relationship("Product")
+    shipment = relationship("Shipment", back_populates="items", lazy="selectin")
+    order_item = relationship("OrderItem", lazy="selectin")
+    # Use string reference for Product to avoid circular imports
+    product = relationship("Product", lazy="selectin")
     
     def __repr__(self):
         return f"<ShipmentItem {self.id}>"
