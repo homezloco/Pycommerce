@@ -16,6 +16,9 @@ from sqlalchemy import Column, String, Float, Integer, Boolean, DateTime, Foreig
 from sqlalchemy.orm import relationship
 
 from pycommerce.core.db import Base, get_session
+from pycommerce.models.order_note import OrderNote
+from pycommerce.models.order_item import OrderItem
+from pycommerce.models.shipment import Shipment
 
 logger = logging.getLogger(__name__)
 
@@ -83,9 +86,9 @@ class Order(Base):
     delivered_at = Column(DateTime, nullable=True)
     
     # Relationships
-    notes = relationship("pycommerce.models.order.OrderNote", back_populates="order", cascade="all, delete-orphan")
-    items = relationship("pycommerce.models.order_item.OrderItem", back_populates="order", cascade="all, delete-orphan")
-    shipments = relationship("pycommerce.models.shipment.Shipment", back_populates="order", cascade="all, delete-orphan")
+    notes = relationship("OrderNote", back_populates="order", cascade="all, delete-orphan")
+    items = relationship("OrderItem", back_populates="order", cascade="all, delete-orphan")
+    shipments = relationship("Shipment", back_populates="order", cascade="all, delete-orphan")
 
 
 class OrderManager:
