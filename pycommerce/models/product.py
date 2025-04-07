@@ -26,8 +26,8 @@ class Product(BaseModel):
     images: List[str] = Field(default_factory=list)
     categories: List[str] = Field(default_factory=list)
     metadata: Dict[str, Any] = Field(default_factory=dict)
-    created_at: datetime = Field(default_factory=datetime.now)
-    updated_at: datetime = Field(default_factory=datetime.now)
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
     
     @validator('price')
     def price_must_be_positive(cls, v):
@@ -150,7 +150,7 @@ class ProductManager:
                 setattr(product, key, value)
             
             # Update timestamp
-            product.updated_at = datetime.now()
+            product.updated_at = datetime.utcnow()
             
             logger.debug(f"Updated product: {product.name} (ID: {product.id})")
             return product
@@ -246,8 +246,37 @@ class ProductManager:
         Returns:
             List of products for the tenant
         """
-        # For now, we don't have tenant associations in the in-memory implementation
-        # In a real database implementation, we would filter by tenant_id
-        # For this demo, we'll return all products
-        logger.info(f"Getting products for tenant: {tenant_id}")
-        return list(self._products.values())
+        # Try to query directly from the database
+        try:
+            from pycommerce.models.db_product import Product as DbProduct
+            from pycommerce.core.db import get_db
+            
+            logger.info(f"Querying database for products of tenant: {tenant_id}")
+            
+            # Get a session for direct database access
+            session = get_db()
+            db_products = session.query(DbProduct).filter(DbProduct.tenant_id == tenant_id).all()
+            
+            # Convert DB products to API products
+            products = []
+            for db_product in db_products:
+                product = Product(
+                    id=UUID(db_product.id) if isinstance(db_product.id, str) else db_product.id,
+                    sku=db_product.sku,
+                    name=db_product.name,
+                    description=db_product.description or "",
+                    price=db_product.price,
+                    stock=db_product.stock,
+                    categories=db_product.categories or [],
+                    metadata={"tenant_id": db_product.tenant_id}
+                )
+                products.append(product)
+                
+            logger.info(f"Found {len(products)} products for tenant {tenant_id} in database")
+            return products
+            
+        except Exception as e:
+            logger.error(f"Error querying database for tenant products: {str(e)}")
+            logger.info(f"Falling back to in-memory products for tenant: {tenant_id}")
+            # Fallback to in-memory implementation
+            return list(self._products.values())
