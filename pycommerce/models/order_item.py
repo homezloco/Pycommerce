@@ -12,7 +12,7 @@ from sqlalchemy import Column, String, Float, Integer, DateTime, ForeignKey
 from sqlalchemy.orm import relationship
 
 from pycommerce.core.db import Base
-from pycommerce.models.product import Product
+from pycommerce.models.db_product import Product
 
 logger = logging.getLogger(__name__)
 
