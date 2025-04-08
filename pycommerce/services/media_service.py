@@ -39,6 +39,19 @@ class MediaService:
         """Initialize the media service."""
         self.media_manager = MediaManager()
         
+    def has_openai_api_key(self) -> bool:
+        """Check if the OpenAI API key is available in the environment.
+        
+        Returns:
+            bool: True if the API key is available, False otherwise
+        """
+        try:
+            api_key = os.environ.get("OPENAI_API_KEY")
+            return bool(api_key)
+        except Exception as e:
+            logger.warning(f"Error checking for OpenAI API key: {str(e)}")
+            return False
+        
     async def upload_file(
         self,
         file: BinaryIO,
@@ -296,6 +309,46 @@ class MediaService:
             The updated media object if found, None otherwise
         """
         return self.media_manager.update(media_id, **kwargs)
+        
+    def get_media_content(self, media_id: str) -> tuple[Optional[Media], Optional[bytes]]:
+        """
+        Get a media's content by ID.
+        
+        Args:
+            media_id: The ID of the media to retrieve
+            
+        Returns:
+            Tuple of (Media object, file content as bytes) if found, (None, None) otherwise
+        """
+        try:
+            media = self.media_manager.get(media_id)
+            if not media or not os.path.exists(media.file_path):
+                return None, None
+                
+            with open(media.file_path, "rb") as f:
+                content = f.read()
+                
+            return media, content
+        except Exception as e:
+            logger.error(f"Error getting media content: {str(e)}")
+            return None, None
+            
+    def generate_image(self, **kwargs) -> Optional[Media]:
+        """
+        Generate an image using OpenAI's DALL-E and create a media record.
+        This is a wrapper around generate_image_with_dalle.
+        
+        Args:
+            **kwargs: Arguments to pass to generate_image_with_dalle
+            
+        Returns:
+            The created media object if successful, None otherwise
+        """
+        try:
+            return self.generate_image_with_dalle(**kwargs)
+        except Exception as e:
+            logger.error(f"Error generating image: {str(e)}")
+            return None
         
     def resize_image(self, media_id: str, width: int, height: int) -> Optional[Media]:
         """

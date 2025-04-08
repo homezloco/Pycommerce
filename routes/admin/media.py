@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 # Create router
 router = APIRouter(prefix="/admin", tags=["admin"])
 
-# Import models and managers for media
+# Initialize services
 try:
     from pycommerce.models.tenant import TenantManager
     from pycommerce.services.media_service import MediaService
@@ -29,6 +29,8 @@ try:
     media_service = MediaService()
 except ImportError as e:
     logger.error(f"Error importing media modules: {str(e)}")
+    tenant_manager = None
+    media_service = None
 
 @router.get("/media", response_class=HTMLResponse)
 async def admin_media(
@@ -75,7 +77,21 @@ async def admin_media(
         filter_criteria["search"] = search
     
     # Get media files for tenant
-    media_files = media_service.get_for_tenant(tenant_obj.id, filter_criteria)
+    file_type = filter_criteria.get("file_type", None)
+    is_ai_generated = filter_criteria.get("is_ai_generated", None)
+    search_term = filter_criteria.get("search", None)
+    
+    # Convert string 'is_ai_generated' to boolean explicitly
+    bool_is_ai_generated = None
+    if isinstance(is_ai_generated, bool):
+        bool_is_ai_generated = is_ai_generated
+    
+    media_files = media_service.list_media(
+        tenant_id=str(tenant_obj.id),
+        file_type=file_type,
+        is_ai_generated=bool_is_ai_generated,
+        search_term=search_term
+    )
     
     # Format media data for template
     media_data = []
@@ -97,7 +113,20 @@ async def admin_media(
     file_types = set(media.file_type for media in media_files)
     
     # Check if we have an OpenAI API key for AI image generation
-    has_openai_key = media_service.has_openai_api_key()
+    has_openai_key = False
+    try:
+        import os
+        has_openai_key = bool(os.environ.get("OPENAI_API_KEY"))
+    except Exception as e:
+        logger.warning(f"Error checking for OpenAI API key: {str(e)}")
+    
+    # Add simple pagination data (can be enhanced later)
+    pagination = {
+        "total": len(media_files),
+        "limit": 12,  # Items per page
+        "page": 1,    # Current page
+        "pages": max(1, (len(media_files) + 11) // 12)  # Total pages (ceiling division)
+    }
     
     return templates.TemplateResponse(
         "admin/media.html",
@@ -116,7 +145,8 @@ async def admin_media(
             "has_openai_key": has_openai_key,
             "status_message": status_message,
             "status_type": status_type,
-            "cart_item_count": request.session.get("cart_item_count", 0)
+            "cart_item_count": request.session.get("cart_item_count", 0),
+            "pagination": pagination
         }
     )
 
@@ -135,10 +165,9 @@ async def admin_upload_media(
         
         # Upload file
         result = media_service.upload_file(
+            file=file_content,
+            filename=file.filename,
             tenant_id=tenant_id,
-            file_name=file.filename,
-            file_content=file_content,
-            file_type=file.content_type,
             alt_text=alt_text,
             description=description
         )
