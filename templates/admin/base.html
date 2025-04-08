@@ -136,9 +136,83 @@
     </nav>
 
     <div class="container-fluid">
-        <!-- Removed desktop navigation sidebar - now using base_admin.html's responsive sidebar only -->
         <div class="row">
-            <main class="col-12 px-md-4 content">
+            <!-- Side Navigation -->
+            <nav id="sidebarMenu" class="col-md-3 col-lg-2 d-md-block bg-dark sidebar collapse">
+                <div class="position-sticky pt-3">
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link {% if active_page == 'dashboard' %}active{% endif %}" href="/admin/dashboard">
+                                <i class="bi bi-speedometer2"></i> Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if active_page == 'products' %}active{% endif %}" href="/admin/products">
+                                <i class="bi bi-box"></i> Products
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if active_page == 'orders' %}active{% endif %}" href="/admin/orders">
+                                <i class="bi bi-cart"></i> Orders
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if active_page == 'customers' %}active{% endif %}" href="/admin/customers">
+                                <i class="bi bi-people"></i> Customers
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if active_page == 'users' %}active{% endif %}" href="/admin/users">
+                                <i class="bi bi-person-badge"></i> Users
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if active_page == 'media' %}active{% endif %}" href="/admin/media">
+                                <i class="bi bi-images"></i> Media
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if active_page == 'marketing' %}active{% endif %}" href="/admin/marketing">
+                                <i class="bi bi-megaphone"></i> Marketing
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if active_page == 'analytics' %}active{% endif %}" href="/admin/analytics">
+                                <i class="bi bi-graph-up"></i> Analytics
+                            </a>
+                        </li>
+                    </ul>
+                    
+                    <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
+                        <span>Store Settings</span>
+                    </h6>
+                    <ul class="nav flex-column mb-2">
+                        <li class="nav-item">
+                            <a class="nav-link {% if active_page == 'store-settings' %}active{% endif %}" href="/admin/store-settings">
+                                <i class="bi bi-gear"></i> General Settings
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if active_page == 'theme-settings' %}active{% endif %}" href="/admin/theme-settings">
+                                <i class="bi bi-brush"></i> Theme Settings
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if active_page == 'plugins' %}active{% endif %}" href="/admin/plugins">
+                                <i class="bi bi-puzzle"></i> Plugins
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if active_page == 'ai-config' %}active{% endif %}" href="/admin/ai-config">
+                                <i class="bi bi-cpu"></i> AI Configuration
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+            
+            <!-- Main Content -->
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 content">
                 {% if status_message %}
                 <div class="alert alert-{{ status_type }} alert-dismissible fade show mt-3" role="alert">
                     {{ status_message }}
@@ -148,8 +222,9 @@
                 
                 {% block content %}{% endblock %}
             </main>
-    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
-    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+            
+            <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+            <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
         </div>
     </div>
 
