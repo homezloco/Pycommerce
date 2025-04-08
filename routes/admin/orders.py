@@ -170,15 +170,24 @@ async def admin_order_detail(
             )
         
         # Get order notes
-        notes = order_note_manager.get_for_order(order_id)
-        notes_data = []
-        for note in notes:
-            notes_data.append({
-                "id": str(note.id),
-                "content": note.content,
-                "created_at": note.created_at,
-                "is_customer_note": note.is_customer_note
-            })
+        try:
+            notes = order_note_manager.get_for_order(order_id)
+            notes_data = []
+            # Check if notes is iterable
+            if hasattr(notes, '__iter__'):
+                for note in notes:
+                    notes_data.append({
+                        "id": str(note.id),
+                        "content": note.content,
+                        "created_at": note.created_at,
+                        "is_customer_note": note.is_customer_note
+                    })
+            else:
+                logger.warning(f"Notes is not an iterable: {type(notes)}")
+                notes_data = []
+        except Exception as note_error:
+            logger.warning(f"Error processing order notes: {note_error}")
+            notes_data = []
         
         # Format items for display - safely handle possibly detached items
         items_data = []
