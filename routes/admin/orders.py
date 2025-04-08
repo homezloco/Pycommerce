@@ -87,6 +87,10 @@ def get_order_items(order_id):
             for item in items:
                 try:
                     # Get product details directly from database to avoid relationship issues
+                    from pycommerce.models.product import Product 
+                    # Import the correct Product model
+                    
+                    # Build a correct SQLAlchemy query
                     product = session.query(Product).filter(
                         Product.id == str(item.product_id)
                     ).first()
@@ -348,6 +352,25 @@ async def admin_order_detail(
         
         # Format order data for template with safe defaults
         logger.info("Preparing order data for template")
+        
+        # Convert the status to a readable string
+        status_value = "pending"
+        if hasattr(order, 'status'):
+            try:
+                # Get the enum value as a string
+                if hasattr(order.status, 'value'):
+                    status_value = order.status.value.lower()
+                elif hasattr(order.status, 'name'):
+                    status_value = order.status.name.lower()
+                else:
+                    # If it's already a string
+                    status_value = str(order.status).lower()
+            except Exception as status_err:
+                logger.error(f"Error getting status: {status_err}")
+                status_value = "pending"
+                
+        logger.info(f"Order status for template: {status_value}")
+        
         order_data = {
             "id": str(order.id),
             "customer_name": getattr(order, 'customer_name', '') or '',
@@ -364,7 +387,7 @@ async def admin_order_detail(
             "tax": getattr(order, 'tax', 0.0),
             "shipping_cost": getattr(order, 'shipping_cost', 0.0),
             "total": getattr(order, 'total', 0.0),
-            "status": getattr(order, 'status', '').value if hasattr(order, 'status') else 'PENDING',
+            "status": status_value,  # Normalized status string
             "payment_id": getattr(order, 'payment_transaction_id', None),
             "created_at": getattr(order, 'created_at', datetime.utcnow()),
             "notes": notes_data or []
@@ -489,6 +512,24 @@ async def admin_order_fulfillment(
         shipping_statuses = ["pending", "ready", "shipped", "delivered", "returned"]
         
         # Format order data for template
+        # Convert the status to a readable string
+        status_value = "pending"
+        if hasattr(order, 'status'):
+            try:
+                # Get the enum value as a string
+                if hasattr(order.status, 'value'):
+                    status_value = order.status.value.lower()
+                elif hasattr(order.status, 'name'):
+                    status_value = order.status.name.lower()
+                else:
+                    # If it's already a string
+                    status_value = str(order.status).lower()
+            except Exception as status_err:
+                logger.error(f"Error getting status: {status_err}")
+                status_value = "pending"
+                
+        logger.info(f"Fulfillment - Order status for template: {status_value}")
+        
         order_data = {
             "id": str(order.id),
             "customer_name": order.customer_name or "",
@@ -505,7 +546,7 @@ async def admin_order_fulfillment(
             "tax": order.tax,
             "shipping_cost": order.shipping_cost,
             "total": order.total,
-            "status": order.status.value,
+            "status": status_value,
             "payment_id": getattr(order, 'payment_transaction_id', None),
             "tracking_number": getattr(order, 'tracking_number', ''),
             "shipping_carrier": getattr(order, 'shipping_carrier', ''),
