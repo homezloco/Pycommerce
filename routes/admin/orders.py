@@ -4,8 +4,9 @@ Admin routes for order management.
 This module contains all the routes for managing orders in the admin interface.
 """
 import logging
-from typing import Optional
+from typing import Optional, List, Dict, Any
 from uuid import UUID
+from datetime import datetime
 
 from fastapi import APIRouter, Depends, Form, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
@@ -229,8 +230,12 @@ async def admin_order_detail(
     status_type: str = "info"
 ):
     """Admin page for viewing order details."""
+    # Add detailed debug logging
+    logger.info(f"Starting admin_order_detail for order_id: {order_id}")
+    
     # Get tenant from session
     selected_tenant_slug = request.session.get("selected_tenant")
+    logger.info(f"Selected tenant slug: {selected_tenant_slug}")
     
     # If no tenant is selected, redirect to dashboard with message
     if not selected_tenant_slug:
@@ -239,75 +244,121 @@ async def admin_order_detail(
             status_code=303
         )
     
-    # Get tenant object
-    tenant = tenant_manager.get_by_slug(selected_tenant_slug)
-    if not tenant:
+    # Get tenant object using tenant_manager
+    try:
+        tenant = tenant_manager.get_by_slug(selected_tenant_slug)
+        logger.info(f"Retrieved tenant: {tenant.id if tenant else 'None'}")
+        if not tenant:
+            return RedirectResponse(
+                url="/admin/dashboard?status_message=Store+not+found&status_type=error", 
+                status_code=303
+            )
+    except Exception as tenant_err:
+        logger.error(f"Error getting tenant: {str(tenant_err)}")
         return RedirectResponse(
-            url="/admin/dashboard?status_message=Store+not+found&status_type=error", 
+            url="/admin/dashboard?status_message=Error+retrieving+store+info&status_type=error", 
             status_code=303
         )
     
+    # Initialize necessary data with safe defaults
+    notes_data = []
+    items_data = []
+    
     try:
-        # Get order
-        order = order_manager.get_by_id(order_id)
+        # Get order by ID
+        logger.info(f"Getting order by ID: {order_id}")
+        order = None
+        try:
+            # Try with order manager
+            logger.info("Using order manager to get order")
+            order = order_manager.get_by_id(order_id)
+        except Exception as order_err:
+            logger.error(f"Error with order_manager.get_by_id: {str(order_err)}")
+            # Try direct database access as fallback
+            try:
+                with get_session() as session:
+                    from pycommerce.models.order import Order
+                    order = session.query(Order).filter(Order.id == str(order_id)).first()
+            except Exception as db_err:
+                logger.error(f"Error with direct order query: {str(db_err)}")
+                
+        # Check if we found an order
         if not order:
+            logger.warning(f"Order {order_id} not found")
             return RedirectResponse(
                 url=f"/admin/orders?status_message=Order+not+found&status_type=error", 
                 status_code=303
             )
         
         # Verify order belongs to the selected tenant
+        logger.info(f"Comparing order.tenant_id: {order.tenant_id} with tenant.id: {tenant.id}")
         if str(order.tenant_id) != str(tenant.id):
+            logger.warning(f"Order {order_id} does not belong to tenant {tenant.id}")
             return RedirectResponse(
                 url=f"/admin/orders?status_message=Order+not+found+for+this+store&status_type=error", 
                 status_code=303
             )
         
-        # Get order notes using our custom function - make sure to capture the result properly
+        # Get order notes directly with the function - not through the manager
+        logger.info(f"Getting notes for order: {order_id}")
         try:
             notes_data = get_notes_for_order(order_id)
-            if notes_data is None:
-                notes_data = []
-        except Exception as e:
-            logger.error(f"Error getting notes: {str(e)}")
+            logger.info(f"Retrieved {len(notes_data) if notes_data else 0} notes")
+        except Exception as notes_err:
+            logger.error(f"Error getting notes: {str(notes_err)}")
+            import traceback
+            logger.error(f"Notes traceback: {traceback.format_exc()}")
             notes_data = []
         
-        # Get items using our session-safe function - make sure to capture the result properly
+        # Get order items directly with the function - not through the manager
+        logger.info(f"Getting items for order: {order_id}")
         try:
             items_data = get_order_items(order_id)
-            if items_data is None:
-                items_data = []
-        except Exception as e:
-            logger.error(f"Error getting items: {str(e)}")
+            logger.info(f"Retrieved {len(items_data) if items_data else 0} items")
+        except Exception as items_err:
+            logger.error(f"Error getting items: {str(items_err)}")
+            import traceback
+            logger.error(f"Items traceback: {traceback.format_exc()}")
             items_data = []
         
-        # Format order data for template
+        # Make sure notes_data and items_data are lists, not function references
+        if not isinstance(notes_data, list):
+            logger.warning(f"notes_data is not a list, it's {type(notes_data)}")
+            notes_data = []
+        
+        if not isinstance(items_data, list):
+            logger.warning(f"items_data is not a list, it's {type(items_data)}")
+            items_data = []
+        
+        # Format order data for template with safe defaults
+        logger.info("Preparing order data for template")
         order_data = {
             "id": str(order.id),
-            "customer_name": order.customer_name or "",
-            "customer_email": order.customer_email or "",
+            "customer_name": getattr(order, 'customer_name', '') or '',
+            "customer_email": getattr(order, 'customer_email', '') or '',
             "shipping_address": {
-                "address_line1": order.shipping_address_line1 or "",
-                "address_line2": order.shipping_address_line2 or "",
-                "city": order.shipping_city or "",
-                "state": order.shipping_state or "",
-                "postal_code": order.shipping_postal_code or "",
-                "country": order.shipping_country or ""
+                "address_line1": getattr(order, 'shipping_address_line1', '') or '',
+                "address_line2": getattr(order, 'shipping_address_line2', '') or '',
+                "city": getattr(order, 'shipping_city', '') or '',
+                "state": getattr(order, 'shipping_state', '') or '',
+                "postal_code": getattr(order, 'shipping_postal_code', '') or '',
+                "country": getattr(order, 'shipping_country', '') or ''
             },
-            "subtotal": order.subtotal,
-            "tax": order.tax,
-            "shipping_cost": order.shipping_cost,
-            "total": order.total,
-            "status": order.status.value,
+            "subtotal": getattr(order, 'subtotal', 0.0),
+            "tax": getattr(order, 'tax', 0.0),
+            "shipping_cost": getattr(order, 'shipping_cost', 0.0),
+            "total": getattr(order, 'total', 0.0),
+            "status": getattr(order, 'status', '').value if hasattr(order, 'status') else 'PENDING',
             "payment_id": getattr(order, 'payment_transaction_id', None),
-            "items": items_data,
-            "created_at": order.created_at,
-            "notes": notes_data
+            "items": items_data or [],
+            "created_at": getattr(order, 'created_at', datetime.utcnow()),
+            "notes": notes_data or []
         }
         
         # Get all possible order statuses for status dropdown
         status_options = [status.value for status in OrderStatus]
         
+        logger.info("Rendering order detail template")
         return templates.TemplateResponse(
             "admin/order_detail.html",
             {
@@ -324,6 +375,8 @@ async def admin_order_detail(
     
     except Exception as e:
         logger.error(f"Error getting order details: {str(e)}")
+        import traceback
+        logger.error(f"Main traceback: {traceback.format_exc()}")
         return RedirectResponse(
             url=f"/admin/orders?status_message=Error+loading+order:+{str(e)}&status_type=error", 
             status_code=303
