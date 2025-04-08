@@ -41,34 +41,12 @@ PyCommerce is a scalable, multi-tenant ecommerce platform built with Python. It 
 - ✅ **Circular Import Resolution**: Fixed circular import issues in managers and route files
 - ✅ **Settings Management**: Database-backed persistent configuration system
 - ✅ **Payment Configuration**: Payment provider settings persistence and admin UI
+- ✅ **Payment Error Handling**: Enhanced error handling for payment providers with specific error types
+- ✅ **Shipping Options**: Implemented tiered shipping (standard, express, premium) with rate calculation and configurable price multipliers
+- ✅ **SQLAlchemy Model Registry**: Resolved model conflicts and circular dependencies with centralized model registry pattern
 
-- ✅ **Database Setup**: PostgreSQL database with migration system using Alembic
-- ✅ **Plugin Architecture**: Implemented modular plugin system
-- ✅ **Payment Integrations**: Added PayPal and Stripe payment providers
-- ✅ **Multi-Tenant Support**: Implemented tenant isolation and management
-- ✅ **Product Management**: Basic product catalog with CRUD operations
-- ✅ **Cart Functionality**: Shopping cart with item management
-- ✅ **Web UI**: Admin portal and storefront templates with consistent navigation
-- ✅ **API Endpoints**: RESTful API for products, cart, and checkout
-- ✅ **Order Management System**: Full order lifecycle management with notes and tracking
-- ✅ **Media Manager**: File uploads and AI-generated content with admin interface
-- ✅ **WYSIWYG Editor**: Rich text editing with Quill.js and AI text generation
-- ✅ **Theme Customization**: Dynamic CSS styling for tenant-specific themes
-- ✅ **Email Service**: Order confirmation email system with template-based emails
-- ✅ **Admin UI Fixes**: Fixed navigation sidebar duplicates and JavaScript errors
-- ✅ **Order Fulfillment**: Complete order fulfillment workflow with shipment tracking
-- ✅ **Inventory Management**: Stock tracking, reservations, and transaction history
-- ✅ **Admin Navigation**: Resolved duplicate menu issue in admin dashboard
-- ✅ **Code Modularization**: Refactored monolithic web_server.py into specialized route modules
-- ✅ **Server Stability**: Fixed Uvicorn server configuration to prevent crashes
-- ✅ **API Compatibility**: Fixed method name inconsistencies between SDK and implementation
-- ✅ **Circular Import Resolution**: Fixed circular import issues in managers and route files
-- ✅ **Settings Management**: Database-backed persistent configuration system
-- ✅ **Payment Configuration**: Payment provider settings persistence and admin UI
 ### In Progress:
 
-- 🔄 **Payment Processing**: Finalizing payment workflow and error handling
-- 🔄 **Shipping Options**: Standard shipping provider implementation with rate calculation
 - 🔄 **Admin Dashboard**: Enhancing admin controls and analytics
 - 🔄 **AI Configuration**: Configurable AI providers for text and image generation
 
@@ -125,12 +103,16 @@ PyCommerce is a scalable, multi-tenant ecommerce platform built with Python. It 
    - ✅ Stripe integration
    - ✅ PayPal integration
    - ✅ Support for multiple payment methods
-   - 🔄 Secure payment processing (development credentials in use)
+   - ✅ Payment configuration UI and persistence
+   - ✅ Enhanced error handling with specific error types
+   - 🔄 Secure payment processing with proper credentials
 
 2. **Shipping Options**
    - ✅ Basic shipping integration
    - ✅ Shipping rate calculations
-   - 🔄 Multiple shipping methods
+   - ✅ Multiple shipping methods (standard, express) with premium next-day shipping
+   - ✅ Premium shipping with next-day domestic and 3-4 day international delivery
+   - ✅ Configurable shipping rate multipliers (express at 1.75x, premium at 2.5x standard rates)
    - ⏳ Address validation
    - ⏳ Shipping label generation
 
@@ -188,7 +170,7 @@ PyCommerce is a scalable, multi-tenant ecommerce platform built with Python. It 
    - ✅ Split monolithic web_server.py into route modules
    - ✅ Fix server stability issues
    - 🔄 Standardize API response formats
-   - 🔄 Improve error handling
+   - 🔄 Improve error handling for other system components
 
 2. **Documentation**
    - 🔄 Update code comments
@@ -301,7 +283,8 @@ For existing ecommerce stores looking to migrate to PyCommerce:
 1. **Payment Integration**
    - Development credentials used for Stripe and PayPal
    - Need to implement proper API key configuration
-   - Handling complex payment workflows and edge cases
+   - ✅ Handling complex payment error cases systematically
+   - Implementing proper credentials management
 
 2. **System Performance**
    - Multiple plugin initializations occurring
@@ -338,14 +321,17 @@ For existing ecommerce stores looking to migrate to PyCommerce:
 10. ✅ Fix admin dashboard duplicate menu issue - COMPLETED
 11. ✅ Modularize application code structure - COMPLETED
 12. ✅ Fix server stability issues - COMPLETED
-13. 🔄 Finalize payment integrations with proper credentials
-14. 🔄 Optimize system performance and database queries
-15. 🔄 Complete shipping provider implementation
-16. 🔄 Enhance admin dashboard with analytics
-17. ✅ Implement order fulfillment workflow - COMPLETED
-18. ✅ Add inventory management - COMPLETED
-19. ⏳ Add return processing workflow
-20. ⏳ Implement shipping notifications
+13. ✅ Implement database-backed configuration system - COMPLETED
+14. ✅ Create payment settings UI in admin dashboard - COMPLETED
+15. ✅ Implement enhanced payment error handling with specific error types - COMPLETED
+16. ✅ Implement tiered shipping options (standard, express, premium) with configurable rates - COMPLETED
+17. ✅ Resolve SQLAlchemy model conflicts with centralized model registry pattern - COMPLETED
+17. ✅ Resolve SQLAlchemy model conflicts with centralized model registry pattern - COMPLETED
+18. 🔄 Finalize payment integrations with proper credentials
+18. 🔄 Optimize system performance and database queries
+19. 🔄 Enhance admin dashboard with analytics
+20. ⏳ Add return processing workflow
+21. ⏳ Implement shipping notifications
 
 ### Future Roadmap
 1. **Marketplace for Plugins**
