@@ -34,23 +34,39 @@ tenant_manager = TenantManager()
 def get_notes_for_order(order_id):
     """Get notes for an order using a fresh session."""
     try:
+        # Make sure order_id is a string
+        order_id_str = str(order_id)
+        
+        # Create a new session and query the notes
         with get_session() as session:
-            notes = session.query(OrderNote).filter(
-                OrderNote.order_id == str(order_id)
-            ).order_by(OrderNote.created_at.desc()).all()
+            # Execute the query directly and fetch all results
+            notes_query = session.query(OrderNote).filter(
+                OrderNote.order_id == order_id_str
+            ).order_by(OrderNote.created_at.desc())
             
-            # Convert to dictionaries to avoid session issues
+            notes = notes_query.all()
+            
+            # Safely convert to dictionaries to avoid session issues
             result = []
             for note in notes:
-                result.append({
-                    "id": str(note.id),
-                    "content": note.content,
-                    "created_at": note.created_at,
-                    "is_customer_note": note.is_customer_note
-                })
+                try:
+                    note_dict = {
+                        "id": str(note.id),
+                        "content": note.content or "",
+                        "created_at": note.created_at,
+                        "is_customer_note": bool(note.is_customer_note)
+                    }
+                    result.append(note_dict)
+                except Exception as note_err:
+                    logger.error(f"Error processing note {getattr(note, 'id', 'unknown')}: {note_err}")
+                    continue
+                    
             return result
     except Exception as e:
-        logger.error(f"Error getting notes for order: {e}")
+        logger.error(f"Error getting notes for order {order_id}: {e}")
+        import traceback
+        logger.error(f"Traceback: {traceback.format_exc()}")
+        # Always return an empty list on error
         return []
 
 def get_order_items(order_id):
@@ -111,15 +127,7 @@ def get_order_items_count(order_id):
         logger.error(f"Error getting item count for order: {e}")
         return 0
 
-# Override OrderNoteManager's get_for_order method
-original_get_for_order = OrderNoteManager.get_for_order
-
-def safe_get_for_order(self, order_id):
-    """Override the original method to use our session-safe implementation."""
-    return get_notes_for_order(order_id)
-
-# Apply the monkey patch
-OrderNoteManager.get_for_order = safe_get_for_order
+# We'll no longer monkey patch the OrderNoteManager, instead we'll use our direct functions
 
 @router.get("/orders", response_class=HTMLResponse)
 async def admin_orders(
@@ -508,12 +516,35 @@ async def admin_add_order_note(
         # Determine if this is a customer note
         is_customer_note = notify_customer is not None
         
-        # Add note to order
-        success = order_note_manager.add_note(
-            order_id=order_id,
-            content=content,
-            is_customer_note=is_customer_note
-        )
+        # Add note to order - first try to use the manager method
+        try:
+            success = order_note_manager.add_note(
+                order_id=order_id,
+                content=content,
+                is_customer_note=is_customer_note
+            )
+        except Exception as note_err:
+            logger.error(f"Error using order_note_manager: {note_err}")
+            # Fallback to direct database operation if manager fails
+            from uuid import uuid4
+            from datetime import datetime
+            
+            success = False
+            try:
+                with get_session() as session:
+                    new_note = OrderNote(
+                        id=str(uuid4()),
+                        order_id=order_id,
+                        content=content,
+                        is_customer_note=is_customer_note,
+                        created_at=datetime.utcnow()
+                    )
+                    session.add(new_note)
+                    session.commit()
+                    success = True
+            except Exception as db_err:
+                logger.error(f"Error adding note directly to database: {db_err}")
+                success = False
         
         if success:
             # If it's a customer note, we could send an email to the customer here
@@ -533,6 +564,8 @@ async def admin_add_order_note(
     
     except Exception as e:
         logger.error(f"Error adding order note: {str(e)}")
+        import traceback
+        logger.error(f"Traceback: {traceback.format_exc()}")
         return RedirectResponse(
             url=f"/admin/orders/{order_id}?status_message=Error+adding+note:+{str(e)}&status_type=error", 
             status_code=303
