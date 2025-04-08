@@ -43,12 +43,26 @@ async def admin_products(
     request: Request,
     tenant: Optional[str] = None,
     category: Optional[str] = None,
-    min_price: Optional[float] = None,
-    max_price: Optional[float] = None,
+    min_price: Optional[str] = None,
+    max_price: Optional[str] = None,
     status_message: Optional[str] = None,
     status_type: str = "info"
 ):
     """Admin page for managing products."""
+    # Convert price strings to float if present and not empty
+    min_price_float = None
+    if min_price and min_price.strip():
+        try:
+            min_price_float = float(min_price)
+        except ValueError:
+            pass
+            
+    max_price_float = None
+    if max_price and max_price.strip():
+        try:
+            max_price_float = float(max_price)
+        except ValueError:
+            pass
     # Get tenant from query parameters or session
     selected_tenant_slug = tenant or request.session.get("selected_tenant")
     
@@ -75,11 +89,11 @@ async def admin_products(
     
     # Apply filters if specified
     if category:
-        products = [p for p in products if category in p.categories]
-    if min_price is not None:
-        products = [p for p in products if p.price >= min_price]
-    if max_price is not None:
-        products = [p for p in products if p.price <= max_price]
+        products = [p for p in products if hasattr(p, 'categories') and category in p.categories]
+    if min_price_float is not None:
+        products = [p for p in products if hasattr(p, 'price') and float(p.price) >= min_price_float]
+    if max_price_float is not None:
+        products = [p for p in products if hasattr(p, 'price') and float(p.price) <= max_price_float]
     
     # Format products for template
     products_list = []
