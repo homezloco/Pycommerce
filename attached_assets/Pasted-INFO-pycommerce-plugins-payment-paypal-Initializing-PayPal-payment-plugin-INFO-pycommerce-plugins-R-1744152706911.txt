@@ -1,0 +1,264 @@
+INFO:pycommerce.plugins.payment.paypal:Initializing PayPal payment plugin
+INFO:pycommerce.plugins:Registering plugin: paypal_payment v0.1.0
+INFO:pycommerce.plugins.payment.paypal:Initializing PayPal payment plugin
+INFO:pycommerce:Registered payment plugin: paypal
+INFO:pycommerce.plugins:Registering plugin: standard_shipping v0.1.0
+INFO:pycommerce.plugins.shipping.standard:Initializing Standard shipping plugin
+INFO:pycommerce:Registered shipping plugin: standard
+INFO:pycommerce.core.db:Initializing database...
+INFO:pycommerce.core.db:Database initialized successfully.
+INFO:pycommerce.core.db:Initializing database...
+INFO:pycommerce.core.db:Database initialized successfully.
+INFO:pycommerce.migrations:Database migrations initialized
+INFO:routes.storefront.stores:Initialized SDK TenantManager
+INFO:routes.storefront.stores:Initialized SDK ProductManager
+INFO:routes.storefront.stores:Initialized SDK CartManager
+INFO:routes.storefront.stores:Finished loading managers
+INFO:routes.storefront.cart:Initialized SDK ProductManager
+INFO:routes.storefront.cart:Initialized SDK CartManager
+INFO:routes.storefront.cart:Initialized SDK TenantManager
+INFO:routes.storefront.cart:Finished loading managers
+INFO:routes.storefront.checkout:Initialized SDK TenantManager
+INFO:routes.storefront.checkout:Initialized SDK ProductManager
+INFO:routes.storefront.checkout:Initialized SDK CartManager
+INFO:routes.storefront.checkout:Initialized SDK OrderManager
+INFO:routes.storefront.checkout:Finished loading Flask app managers
+INFO:asgi_wsgi_app:Starting uvicorn server with command: /nix/store/wqhkxzzlaswkj3gimqign99sshvllcg6-python-wrapped-0.1.0/bin/python3 -m uvicorn web_app:app --host 127.0.0.1 --port 8000 --reload --no-use-colors
+INFO:asgi_wsgi_app:Waiting for uvicorn server to start...
+INFO:asgi_wsgi_app:Waiting for uvicorn server (attempt 1/10)
+INFO:asgi_wsgi_app:Uvicorn: INFO:     Will watch for changes in these directories: ['/home/runner/workspace']
+INFO:asgi_wsgi_app:Uvicorn: INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+INFO:asgi_wsgi_app:Uvicorn: INFO:     Started reloader process [3260] using WatchFiles
+INFO:asgi_wsgi_app:Waiting for uvicorn server (attempt 2/10)
+INFO:asgi_wsgi_app:Waiting for uvicorn server (attempt 3/10)
+INFO:asgi_wsgi_app:Uvicorn: WARNING:  WatchFiles detected changes in 'routes/admin/orders.py'. Reloading...
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.services.mail:Email template directory: /home/runner/workspace/templates/emails
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.plugins.payment.config:Successfully loaded payment settings from database
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.plugins.payment.config:Using development Stripe credentials
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.plugins.payment.config:Using development PayPal credentials
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.plugins.payment.stripe:Initializing Stripe payment plugin
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.plugins:Registering plugin: stripe_payment v0.1.0
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.plugins.payment.stripe:Initializing Stripe payment plugin
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce:Registered payment plugin: stripe
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.plugins.payment.paypal:Initializing PayPal payment plugin
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.plugins:Registering plugin: paypal_payment v0.1.0
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.plugins.payment.paypal:Initializing PayPal payment plugin
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce:Registered payment plugin: paypal
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.plugins:Registering plugin: standard_shipping v0.1.0
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.plugins.shipping.standard:Initializing Standard shipping plugin
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce:Registered shipping plugin: standard
+INFO:asgi_wsgi_app:Waiting for uvicorn server (attempt 4/10)
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.core.db:Initializing database...
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.core.db:Database initialized successfully.
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.core.db:Initializing database...
+INFO:asgi_wsgi_app:Waiting for uvicorn server (attempt 5/10)
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.core.db:Database initialized successfully.
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.migrations:Database migrations initialized
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.storefront.stores:Initialized SDK TenantManager
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.storefront.stores:Initialized SDK ProductManager
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.storefront.stores:Initialized SDK CartManager
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.storefront.stores:Finished loading managers
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.storefront.cart:Initialized SDK ProductManager
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.storefront.cart:Initialized SDK CartManager
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.storefront.cart:Initialized SDK TenantManager
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.storefront.cart:Finished loading managers
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.storefront.checkout:Initialized SDK TenantManager
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.storefront.checkout:Initialized SDK ProductManager
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.storefront.checkout:Initialized SDK CartManager
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.storefront.checkout:Initialized SDK OrderManager
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.storefront.checkout:Finished loading Flask app managers
+INFO:asgi_wsgi_app:Uvicorn: INFO:     Started server process [3267]
+INFO:asgi_wsgi_app:Uvicorn: INFO:     Waiting for application startup.
+INFO:asgi_wsgi_app:Uvicorn: INFO:     Application startup complete.
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.services.mail:Email template directory: /home/runner/workspace/templates/emails
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.plugins.payment.config:Successfully loaded payment settings from database
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.plugins.payment.config:Using development Stripe credentials
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.plugins.payment.config:Using development PayPal credentials
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.plugins.payment.stripe:Initializing Stripe payment plugin
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.plugins:Registering plugin: stripe_payment v0.1.0
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.plugins.payment.stripe:Initializing Stripe payment plugin
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce:Registered payment plugin: stripe
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.plugins.payment.paypal:Initializing PayPal payment plugin
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.plugins:Registering plugin: paypal_payment v0.1.0
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.plugins.payment.paypal:Initializing PayPal payment plugin
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce:Registered payment plugin: paypal
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.plugins:Registering plugin: standard_shipping v0.1.0
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.plugins.shipping.standard:Initializing Standard shipping plugin
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce:Registered shipping plugin: standard
+INFO:asgi_wsgi_app:Uvicorn: WARNING:  WatchFiles detected changes in 'create_test_orders.py'. Reloading...
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.core.db:Initializing database...
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.core.db:Database initialized successfully.
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.core.db:Initializing database...
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.core.db:Database initialized successfully.
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.migrations:Database migrations initialized
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.storefront.stores:Initialized SDK TenantManager
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.storefront.stores:Initialized SDK ProductManager
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.storefront.stores:Initialized SDK CartManager
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.storefront.stores:Finished loading managers
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.storefront.cart:Initialized SDK ProductManager
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.storefront.cart:Initialized SDK CartManager
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.storefront.cart:Initialized SDK TenantManager
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.storefront.cart:Finished loading managers
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.storefront.checkout:Initialized SDK TenantManager
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.storefront.checkout:Initialized SDK ProductManager
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.storefront.checkout:Initialized SDK CartManager
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.storefront.checkout:Initialized SDK OrderManager
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.storefront.checkout:Finished loading Flask app managers
+INFO:asgi_wsgi_app:Uvicorn: INFO:     Started server process [3317]
+INFO:asgi_wsgi_app:Uvicorn: INFO:     Waiting for application startup.
+INFO:asgi_wsgi_app:Uvicorn: INFO:     Application startup complete.
+INFO:asgi_wsgi_app:Waiting for uvicorn server (attempt 6/10)
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.services.mail:Email template directory: /home/runner/workspace/templates/emails
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.plugins.payment.config:Successfully loaded payment settings from database
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.plugins.payment.config:Using development Stripe credentials
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.plugins.payment.config:Using development PayPal credentials
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.plugins.payment.stripe:Initializing Stripe payment plugin
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.plugins:Registering plugin: stripe_payment v0.1.0
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.plugins.payment.stripe:Initializing Stripe payment plugin
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce:Registered payment plugin: stripe
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.plugins.payment.paypal:Initializing PayPal payment plugin
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.plugins:Registering plugin: paypal_payment v0.1.0
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.plugins.payment.paypal:Initializing PayPal payment plugin
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce:Registered payment plugin: paypal
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.plugins:Registering plugin: standard_shipping v0.1.0
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.plugins.shipping.standard:Initializing Standard shipping plugin
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce:Registered shipping plugin: standard
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.core.db:Initializing database...
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.core.db:Database initialized successfully.
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.core.db:Initializing database...
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.core.db:Database initialized successfully.
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.migrations:Database migrations initialized
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.storefront.stores:Initialized SDK TenantManager
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.storefront.stores:Initialized SDK ProductManager
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.storefront.stores:Initialized SDK CartManager
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.storefront.stores:Finished loading managers
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.storefront.cart:Initialized SDK ProductManager
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.storefront.cart:Initialized SDK CartManager
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.storefront.cart:Initialized SDK TenantManager
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.storefront.cart:Finished loading managers
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.storefront.checkout:Initialized SDK TenantManager
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.storefront.checkout:Initialized SDK ProductManager
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.storefront.checkout:Initialized SDK CartManager
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.storefront.checkout:Initialized SDK OrderManager
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.storefront.checkout:Finished loading Flask app managers
+INFO:asgi_wsgi_app:Uvicorn: INFO:     Started server process [3392]
+INFO:asgi_wsgi_app:Uvicorn: INFO:     Waiting for application startup.
+INFO:asgi_wsgi_app:Uvicorn: INFO:     Application startup complete.
+INFO:asgi_wsgi_app:Uvicorn: INFO:     127.0.0.1:55818 - "GET /api/health HTTP/1.1" 200 OK
+INFO:asgi_wsgi_app:Uvicorn: INFO:     127.0.0.1:55832 - "GET /api/health HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET http://127.0.0.1:8000/api/health "HTTP/1.1 200 OK"
+INFO:asgi_wsgi_app:Uvicorn server is running
+INFO:asgi_wsgi_app:Uvicorn: INFO:     127.0.0.1:44604 - "GET /api/health HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET http://127.0.0.1:8000/api/health "HTTP/1.1 200 OK"
+INFO:asgi_wsgi_app:Uvicorn: INFO:     127.0.0.1:44612 - "GET /admin HTTP/1.1" 307 Temporary Redirect
+INFO:httpx:HTTP Request: GET http://127.0.0.1:8000/admin "HTTP/1.1 307 Temporary Redirect"
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.models.tenant:Retrieved tenant by slug tech with theme settings: {}
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.models.product:Querying database for products of tenant: ea6c4bc0-d5aa-4d4f-862c-5d47e7c3f410
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.models.product:Found 6 products for tenant ea6c4bc0-d5aa-4d4f-862c-5d47e7c3f410 in database
+INFO:asgi_wsgi_app:Uvicorn: ERROR:pycommerce.models.order:Error getting orders: (psycopg2.errors.UndefinedColumn) column orders.order_type does not exist
+INFO:asgi_wsgi_app:Uvicorn: LINE 1: ...ers_order_number, orders.status AS orders_status, orders.ord...
+INFO:asgi_wsgi_app:Uvicorn: ^
+INFO:asgi_wsgi_app:Uvicorn: 
+INFO:asgi_wsgi_app:Uvicorn: [SQL: SELECT orders.id AS orders_id, orders.tenant_id AS orders_tenant_id, orders.customer_id AS orders_customer_id, orders.order_number AS orders_order_number, orders.status AS orders_status, orders.order_type AS orders_order_type, orders.total AS orders_total, orders.subtotal AS orders_subtotal, orders.tax AS orders_tax, orders.shipping_cost AS orders_shipping_cost, orders.discount AS orders_discount, orders.created_at AS orders_created_at, orders.updated_at AS orders_updated_at, orders.customer_email AS orders_customer_email, orders.customer_name AS orders_customer_name, orders.customer_phone AS orders_customer_phone, orders.shipping_address_line1 AS orders_shipping_address_line1, orders.shipping_address_line2 AS orders_shipping_address_line2, orders.shipping_city AS orders_shipping_city, orders.shipping_state AS orders_shipping_state, orders.shipping_postal_code AS orders_shipping_postal_code, orders.shipping_country AS orders_shipping_country, orders.billing_address_line1 AS orders_billing_address_line1, orders.billing_address_line2 AS orders_billing_address_line2, orders.billing_city AS orders_billing_city, orders.billing_state AS orders_billing_state, orders.billing_postal_code AS orders_billing_postal_code, orders.billing_country AS orders_billing_country, orders.payment_method AS orders_payment_method, orders.payment_transaction_id AS orders_payment_transaction_id, orders.is_paid AS orders_is_paid, orders.paid_at AS orders_paid_at, orders.tracking_number AS orders_tracking_number, orders.shipping_carrier AS orders_shipping_carrier, orders.shipped_at AS orders_shipped_at, orders.delivered_at AS orders_delivered_at
+INFO:asgi_wsgi_app:Uvicorn: FROM orders
+INFO:asgi_wsgi_app:Uvicorn: WHERE orders.tenant_id = %(tenant_id_1)s ORDER BY orders.created_at DESC]
+INFO:asgi_wsgi_app:Uvicorn: [parameters: {'tenant_id_1': 'ea6c4bc0-d5aa-4d4f-862c-5d47e7c3f410'}]
+INFO:asgi_wsgi_app:Uvicorn: (Background on this error at: https://sqlalche.me/e/20/f405)
+INFO:asgi_wsgi_app:Uvicorn: INFO:     127.0.0.1:44612 - "GET /admin/dashboard HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET http://127.0.0.1:8000/admin/dashboard "HTTP/1.1 200 OK"
+INFO:asgi_wsgi_app:Uvicorn: INFO:     127.0.0.1:44626 - "GET /api/health HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET http://127.0.0.1:8000/api/health "HTTP/1.1 200 OK"
+INFO:asgi_wsgi_app:Uvicorn: INFO:     127.0.0.1:44642 - "GET /admin HTTP/1.1" 307 Temporary Redirect
+INFO:httpx:HTTP Request: GET http://127.0.0.1:8000/admin "HTTP/1.1 307 Temporary Redirect"
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.models.tenant:Retrieved tenant by slug tech with theme settings: {}
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.models.product:Querying database for products of tenant: ea6c4bc0-d5aa-4d4f-862c-5d47e7c3f410
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.models.product:Found 6 products for tenant ea6c4bc0-d5aa-4d4f-862c-5d47e7c3f410 in database
+INFO:asgi_wsgi_app:Uvicorn: ERROR:pycommerce.models.order:Error getting orders: (psycopg2.errors.UndefinedColumn) column orders.order_type does not exist
+INFO:asgi_wsgi_app:Uvicorn: LINE 1: ...ers_order_number, orders.status AS orders_status, orders.ord...
+INFO:asgi_wsgi_app:Uvicorn: ^
+INFO:asgi_wsgi_app:Uvicorn: 
+INFO:asgi_wsgi_app:Uvicorn: [SQL: SELECT orders.id AS orders_id, orders.tenant_id AS orders_tenant_id, orders.customer_id AS orders_customer_id, orders.order_number AS orders_order_number, orders.status AS orders_status, orders.order_type AS orders_order_type, orders.total AS orders_total, orders.subtotal AS orders_subtotal, orders.tax AS orders_tax, orders.shipping_cost AS orders_shipping_cost, orders.discount AS orders_discount, orders.created_at AS orders_created_at, orders.updated_at AS orders_updated_at, orders.customer_email AS orders_customer_email, orders.customer_name AS orders_customer_name, orders.customer_phone AS orders_customer_phone, orders.shipping_address_line1 AS orders_shipping_address_line1, orders.shipping_address_line2 AS orders_shipping_address_line2, orders.shipping_city AS orders_shipping_city, orders.shipping_state AS orders_shipping_state, orders.shipping_postal_code AS orders_shipping_postal_code, orders.shipping_country AS orders_shipping_country, orders.billing_address_line1 AS orders_billing_address_line1, orders.billing_address_line2 AS orders_billing_address_line2, orders.billing_city AS orders_billing_city, orders.billing_state AS orders_billing_state, orders.billing_postal_code AS orders_billing_postal_code, orders.billing_country AS orders_billing_country, orders.payment_method AS orders_payment_method, orders.payment_transaction_id AS orders_payment_transaction_id, orders.is_paid AS orders_is_paid, orders.paid_at AS orders_paid_at, orders.tracking_number AS orders_tracking_number, orders.shipping_carrier AS orders_shipping_carrier, orders.shipped_at AS orders_shipped_at, orders.delivered_at AS orders_delivered_at
+INFO:asgi_wsgi_app:Uvicorn: FROM orders
+INFO:asgi_wsgi_app:Uvicorn: WHERE orders.tenant_id = %(tenant_id_1)s ORDER BY orders.created_at DESC]
+INFO:asgi_wsgi_app:Uvicorn: [parameters: {'tenant_id_1': 'ea6c4bc0-d5aa-4d4f-862c-5d47e7c3f410'}]
+INFO:asgi_wsgi_app:Uvicorn: (Background on this error at: https://sqlalche.me/e/20/f405)
+INFO:asgi_wsgi_app:Uvicorn: INFO:     127.0.0.1:44642 - "GET /admin/dashboard HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET http://127.0.0.1:8000/admin/dashboard "HTTP/1.1 200 OK"
+INFO:asgi_wsgi_app:Uvicorn: WARNING:  WatchFiles detected changes in 'create_test_orders.py'. Reloading...
+INFO:asgi_wsgi_app:Uvicorn: INFO:     Shutting down
+INFO:asgi_wsgi_app:Uvicorn: INFO:     Waiting for application shutdown.
+INFO:asgi_wsgi_app:Uvicorn: INFO:     Application shutdown complete.
+INFO:asgi_wsgi_app:Uvicorn: INFO:     Finished server process [3392]
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.services.mail:Email template directory: /home/runner/workspace/templates/emails
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.plugins.payment.config:Successfully loaded payment settings from database
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.plugins.payment.config:Using development Stripe credentials
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.plugins.payment.config:Using development PayPal credentials
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.plugins.payment.stripe:Initializing Stripe payment plugin
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.plugins:Registering plugin: stripe_payment v0.1.0
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.plugins.payment.stripe:Initializing Stripe payment plugin
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce:Registered payment plugin: stripe
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.plugins.payment.paypal:Initializing PayPal payment plugin
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.plugins:Registering plugin: paypal_payment v0.1.0
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.plugins.payment.paypal:Initializing PayPal payment plugin
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce:Registered payment plugin: paypal
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.plugins:Registering plugin: standard_shipping v0.1.0
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.plugins.shipping.standard:Initializing Standard shipping plugin
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce:Registered shipping plugin: standard
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.core.db:Initializing database...
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.core.db:Database initialized successfully.
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.core.db:Initializing database...
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.core.db:Database initialized successfully.
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.migrations:Database migrations initialized
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.storefront.stores:Initialized SDK TenantManager
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.storefront.stores:Initialized SDK ProductManager
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.storefront.stores:Initialized SDK CartManager
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.storefront.stores:Finished loading managers
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.storefront.cart:Initialized SDK ProductManager
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.storefront.cart:Initialized SDK CartManager
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.storefront.cart:Initialized SDK TenantManager
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.storefront.cart:Finished loading managers
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.storefront.checkout:Initialized SDK TenantManager
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.storefront.checkout:Initialized SDK ProductManager
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.storefront.checkout:Initialized SDK CartManager
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.storefront.checkout:Initialized SDK OrderManager
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.storefront.checkout:Finished loading Flask app managers
+INFO:asgi_wsgi_app:Uvicorn: INFO:     Started server process [3490]
+INFO:asgi_wsgi_app:Uvicorn: INFO:     Waiting for application startup.
+INFO:asgi_wsgi_app:Uvicorn: INFO:     Application startup complete.
+INFO:asgi_wsgi_app:Uvicorn: INFO:     127.0.0.1:57304 - "GET /api/health HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET http://127.0.0.1:8000/api/health "HTTP/1.1 200 OK"
+INFO:asgi_wsgi_app:Uvicorn: INFO:     127.0.0.1:57318 - "GET / HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET http://127.0.0.1:8000/ "HTTP/1.1 200 OK"
+[2025-04-08 22:49:27 +0000] [1600] [INFO] Handling signal: winch
+INFO:asgi_wsgi_app:Uvicorn: INFO:     127.0.0.1:36076 - "GET /api/health HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET http://127.0.0.1:8000/api/health "HTTP/1.1 200 OK"
+INFO:asgi_wsgi_app:Uvicorn: INFO:     127.0.0.1:36084 - "GET /admin HTTP/1.1" 307 Temporary Redirect
+INFO:httpx:HTTP Request: GET http://127.0.0.1:8000/admin "HTTP/1.1 307 Temporary Redirect"
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.models.tenant:Retrieved tenant by slug tech with theme settings: {}
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.models.product:Querying database for products of tenant: ea6c4bc0-d5aa-4d4f-862c-5d47e7c3f410
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.models.product:Found 6 products for tenant ea6c4bc0-d5aa-4d4f-862c-5d47e7c3f410 in database
+INFO:asgi_wsgi_app:Uvicorn: ERROR:pycommerce.models.order:Error getting orders: (psycopg2.errors.UndefinedColumn) column orders.order_type does not exist
+INFO:asgi_wsgi_app:Uvicorn: LINE 1: ...ers_order_number, orders.status AS orders_status, orders.ord...
+INFO:asgi_wsgi_app:Uvicorn: ^
+INFO:asgi_wsgi_app:Uvicorn: 
+INFO:asgi_wsgi_app:Uvicorn: [SQL: SELECT orders.id AS orders_id, orders.tenant_id AS orders_tenant_id, orders.customer_id AS orders_customer_id, orders.order_number AS orders_order_number, orders.status AS orders_status, orders.order_type AS orders_order_type, orders.total AS orders_total, orders.subtotal AS orders_subtotal, orders.tax AS orders_tax, orders.shipping_cost AS orders_shipping_cost, orders.discount AS orders_discount, orders.created_at AS orders_created_at, orders.updated_at AS orders_updated_at, orders.customer_email AS orders_customer_email, orders.customer_name AS orders_customer_name, orders.customer_phone AS orders_customer_phone, orders.shipping_address_line1 AS orders_shipping_address_line1, orders.shipping_address_line2 AS orders_shipping_address_line2, orders.shipping_city AS orders_shipping_city, orders.shipping_state AS orders_shipping_state, orders.shipping_postal_code AS orders_shipping_postal_code, orders.shipping_country AS orders_shipping_country, orders.billing_address_line1 AS orders_billing_address_line1, orders.billing_address_line2 AS orders_billing_address_line2, orders.billing_city AS orders_billing_city, orders.billing_state AS orders_billing_state, orders.billing_postal_code AS orders_billing_postal_code, orders.billing_country AS orders_billing_country, orders.payment_method AS orders_payment_method, orders.payment_transaction_id AS orders_payment_transaction_id, orders.is_paid AS orders_is_paid, orders.paid_at AS orders_paid_at, orders.tracking_number AS orders_tracking_number, orders.shipping_carrier AS orders_shipping_carrier, orders.shipped_at AS orders_shipped_at, orders.delivered_at AS orders_delivered_at
+INFO:asgi_wsgi_app:Uvicorn: FROM orders
+INFO:asgi_wsgi_app:Uvicorn: WHERE orders.tenant_id = %(tenant_id_1)s ORDER BY orders.created_at DESC]
+INFO:asgi_wsgi_app:Uvicorn: [parameters: {'tenant_id_1': 'ea6c4bc0-d5aa-4d4f-862c-5d47e7c3f410'}]
+INFO:asgi_wsgi_app:Uvicorn: (Background on this error at: https://sqlalche.me/e/20/f405)
+INFO:asgi_wsgi_app:Uvicorn: INFO:     127.0.0.1:36084 - "GET /admin/dashboard HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET http://127.0.0.1:8000/admin/dashboard "HTTP/1.1 200 OK"
+INFO:asgi_wsgi_app:Uvicorn: INFO:     127.0.0.1:39884 - "GET /api/health HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET http://127.0.0.1:8000/api/health "HTTP/1.1 200 OK"
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.models.tenant:Retrieved tenant by slug tech with theme settings: {}
+INFO:asgi_wsgi_app:Uvicorn: ERROR:pycommerce.models.order:Error getting orders: (psycopg2.errors.UndefinedColumn) column orders.order_type does not exist
+INFO:asgi_wsgi_app:Uvicorn: LINE 1: ...ers_order_number, orders.status AS orders_status, orders.ord...
+INFO:asgi_wsgi_app:Uvicorn: ^
+INFO:asgi_wsgi_app:Uvicorn: 
+INFO:asgi_wsgi_app:Uvicorn: [SQL: SELECT orders.id AS orders_id, orders.tenant_id AS orders_tenant_id, orders.customer_id AS orders_customer_id, orders.order_number AS orders_order_number, orders.status AS orders_status, orders.order_type AS orders_order_type, orders.total AS orders_total, orders.subtotal AS orders_subtotal, orders.tax AS orders_tax, orders.shipping_cost AS orders_shipping_cost, orders.discount AS orders_discount, orders.created_at AS orders_created_at, orders.updated_at AS orders_updated_at, orders.customer_email AS orders_customer_email, orders.customer_name AS orders_customer_name, orders.customer_phone AS orders_customer_phone, orders.shipping_address_line1 AS orders_shipping_address_line1, orders.shipping_address_line2 AS orders_shipping_address_line2, orders.shipping_city AS orders_shipping_city, orders.shipping_state AS orders_shipping_state, orders.shipping_postal_code AS orders_shipping_postal_code, orders.shipping_country AS orders_shipping_country, orders.billing_address_line1 AS orders_billing_address_line1, orders.billing_address_line2 AS orders_billing_address_line2, orders.billing_city AS orders_billing_city, orders.billing_state AS orders_billing_state, orders.billing_postal_code AS orders_billing_postal_code, orders.billing_country AS orders_billing_country, orders.payment_method AS orders_payment_method, orders.payment_transaction_id AS orders_payment_transaction_id, orders.is_paid AS orders_is_paid, orders.paid_at AS orders_paid_at, orders.tracking_number AS orders_tracking_number, orders.shipping_carrier AS orders_shipping_carrier, orders.shipped_at AS orders_shipped_at, orders.delivered_at AS orders_delivered_at
+INFO:asgi_wsgi_app:Uvicorn: FROM orders
+INFO:asgi_wsgi_app:Uvicorn: WHERE orders.tenant_id = %(tenant_id_1)s ORDER BY orders.created_at DESC]
+INFO:asgi_wsgi_app:Uvicorn: [parameters: {'tenant_id_1': 'ea6c4bc0-d5aa-4d4f-862c-5d47e7c3f410'}]
+INFO:asgi_wsgi_app:Uvicorn: (Background on this error at: https://sqlalche.me/e/20/f405)
+INFO:asgi_wsgi_app:Uvicorn: INFO:     127.0.0.1:39888 - "GET /admin/orders HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET http://127.0.0.1:8000/admin/orders "HTTP/1.1 200 OK"
