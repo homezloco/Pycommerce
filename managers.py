@@ -594,7 +594,7 @@ class ShipmentManager:
         
         try:
             # Late import to prevent circular imports
-            from models import Order, Shipment, ShipmentItem
+            from models import Order, Shipment, ShipmentItem, Customer, Tenant
             
             # Update status and tracking info
             shipment.status = status
@@ -620,6 +620,43 @@ class ShipmentManager:
                     order.updated_at = datetime.utcnow()
                     db.session.commit()
                     logger.info(f"Updated order {order.id} status to shipped")
+                    
+                    # Send shipping notification email when status changes to shipped
+                    try:
+                        # Import email service here to avoid circular imports
+                        from pycommerce.services.mail_service import get_email_service
+                        
+                        # Get customer email from the order
+                        customer = Customer.query.filter_by(id=order.customer_id).first()
+                        if customer and customer.email:
+                            # Get store information from the tenant
+                            tenant = Tenant.query.filter_by(id=order.tenant_id).first()
+                            if tenant:
+                                # Get the email service
+                                email_service = get_email_service()
+                                if email_service:
+                                    # Send the shipping notification
+                                    store_url = f"https://{tenant.domain}" if tenant.domain else f"/{tenant.slug}"
+                                    store_logo_url = tenant.logo_url if hasattr(tenant, 'logo_url') else None
+                                    contact_email = tenant.contact_email if hasattr(tenant, 'contact_email') else None
+                                    
+                                    # Send the notification
+                                    email_service.send_shipping_notification(
+                                        order=order,
+                                        shipment=shipment,
+                                        to_email=customer.email,
+                                        store_name=tenant.name,
+                                        store_url=store_url,
+                                        store_logo_url=store_logo_url,
+                                        contact_email=contact_email
+                                    )
+                                    logger.info(f"Sent shipping notification email for order {order.id}")
+                                else:
+                                    logger.warning("Email service not initialized")
+                    except Exception as email_error:
+                        logger.error(f"Error sending shipping notification email: {email_error}")
+                        # Continue with normal processing even if email fails
+                
                 elif status == "delivered" and order.status != "delivered":
                     order.status = "delivered"
                     order.updated_at = datetime.utcnow()

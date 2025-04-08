@@ -1,0 +1,39 @@
+{{ store_name }} - Shipping Confirmation
+
+YOUR ORDER HAS SHIPPED!
+
+Hi{% if order.shipping_address %} {{ order.shipping_address.first_name }}{% endif %},
+
+Great news! Your order is on its way to you. Your package has been handed over to the shipping carrier.
+
+TRACKING INFORMATION
+Carrier: {{ shipment.carrier }}
+Tracking Number: {{ shipment.tracking_number }}
+{% if shipment.tracking_url %}Track Your Package: {{ shipment.tracking_url }}{% endif %}
+Estimated Delivery: {{ shipment.estimated_delivery.strftime('%B %d, %Y') if shipment.estimated_delivery else 'To be determined' }}
+Shipping Method: {{ shipment.shipping_method }}
+
+ORDER DETAILS
+Order Number: #{{ order.id }}
+Order Date: {{ order.created_at.strftime('%B %d, %Y') }}
+
+ITEMS SHIPPED
+{% for item in shipment.items %}
+- {{ item.product_name }} ({{ item.quantity }})
+{% endfor %}
+
+{% if order.shipping_address %}
+SHIPPING ADDRESS
+{{ order.shipping_address.first_name }} {{ order.shipping_address.last_name }}
+{{ order.shipping_address.address_line1 }}
+{% if order.shipping_address.address_line2 %}{{ order.shipping_address.address_line2 }}{% endif %}
+{{ order.shipping_address.city }}, {{ order.shipping_address.state }} {{ order.shipping_address.postal_code }}
+{{ order.shipping_address.country }}
+{% endif %}
+
+If you have any questions about your shipment, please contact us at {{ contact_email }}.
+
+Visit our store: {{ store_url }}
+
+© {{ year }} {{ store_name }}. All rights reserved.
+This email was sent to notify you about your recent shipment.

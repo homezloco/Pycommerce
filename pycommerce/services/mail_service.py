@@ -340,6 +340,59 @@ class EmailService:
         except Exception as e:
             logger.error(f"Error sending order confirmation: {str(e)}")
             return False
+            
+    def send_shipping_notification(
+        self,
+        order: Any,
+        shipment: Any,
+        to_email: str,
+        store_name: str,
+        store_url: str,
+        store_logo_url: Optional[str] = None,
+        contact_email: Optional[str] = None,
+        from_email: Optional[str] = None
+    ) -> bool:
+        """
+        Send a shipping notification email.
+        
+        Args:
+            order: Order object with details
+            shipment: Shipment object with tracking information
+            to_email: Customer email address
+            store_name: Name of the store
+            store_url: URL of the store
+            store_logo_url: URL of the store logo (optional)
+            contact_email: Contact email for customer inquiries (optional)
+            from_email: Sender email address (optional)
+            
+        Returns:
+            True if email was sent successfully, False otherwise
+        """
+        try:
+            # Prepare template data
+            template_data = {
+                'order': order,
+                'shipment': shipment,
+                'store_name': store_name,
+                'store_url': store_url,
+                'store_logo_url': store_logo_url,
+                'contact_email': contact_email or self.config.default_sender,
+                'year': datetime.now().year
+            }
+            
+            # Send email using template
+            return self.send_template_email(
+                to_email=to_email,
+                subject=f"{store_name} - Your Order Has Shipped! #{order.id}",
+                template_name="shipping_notification",
+                template_data=template_data,
+                from_email=from_email,
+                reply_to=contact_email
+            )
+            
+        except Exception as e:
+            logger.error(f"Error sending shipping notification: {str(e)}")
+            return False
 
 
 # Global instance for convenience
