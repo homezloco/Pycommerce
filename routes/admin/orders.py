@@ -74,9 +74,10 @@ def get_order_items(order_id):
     """Get items for an order using a fresh session to avoid detached object issues."""
     try:
         from pycommerce.models.order import OrderItem
+        from pycommerce.models.product import Product
         
         with get_session() as session:
-            # Get order items - simpler query to avoid Product model issues
+            # Get order items with join to products to ensure we get product details
             items = session.query(OrderItem).filter(
                 OrderItem.order_id == str(order_id)
             ).all()
@@ -84,29 +85,44 @@ def get_order_items(order_id):
             # Convert to dictionaries to avoid session issues
             result = []
             for item in items:
-                # Use the item's properties directly
-                name = getattr(item, 'name', "Unknown Product")
-                sku = getattr(item, 'sku', "N/A")
-                
-                # Safely get the product information if available
                 try:
-                    if hasattr(item, 'product') and item.product is not None:
-                        if not name and hasattr(item.product, 'name'):
-                            name = item.product.name
-                        if not sku and hasattr(item.product, 'sku'):
-                            sku = item.product.sku
-                except Exception:
-                    # If accessing product fails, we'll use the defaults
-                    pass
+                    # Get product details directly from database to avoid relationship issues
+                    product = session.query(Product).filter(
+                        Product.id == str(item.product_id)
+                    ).first()
                     
-                result.append({
-                    "product_id": str(item.product_id),
-                    "name": name or "Unknown Product",
-                    "sku": sku or "N/A",
-                    "quantity": item.quantity,
-                    "price": item.price,
-                    "total": item.price * item.quantity
-                })
+                    name = "Unknown Product"
+                    sku = "N/A"
+                    
+                    if product:
+                        name = product.name
+                        sku = product.sku
+                    
+                    result.append({
+                        "product_id": str(item.product_id),
+                        "name": name,
+                        "sku": sku,
+                        "quantity": item.quantity,
+                        "price": item.price,
+                        "total": item.price * item.quantity,
+                        "product": {
+                            "id": str(item.product_id),
+                            "name": name,
+                            "sku": sku
+                        }
+                    })
+                except Exception as item_err:
+                    logger.error(f"Error processing order item: {item_err}")
+                    # Add a placeholder if we can't get the product
+                    result.append({
+                        "product_id": str(item.product_id),
+                        "name": "Unknown Product",
+                        "sku": "N/A",
+                        "quantity": item.quantity,
+                        "price": item.price,
+                        "total": item.price * item.quantity,
+                        "product": None
+                    })
             return result
     except Exception as e:
         logger.error(f"Error getting items for order: {e}")
