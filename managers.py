@@ -431,6 +431,10 @@ class OrderManager:
         except Exception as e:
             logger.error(f"Error getting order: {e}")
             return None
+            
+    def get_by_id(self, order_id):
+        """Get an order by ID (alias for get method for API compatibility)."""
+        return self.get(order_id)
     
     def update(self, order_id, order_data):
         """Update an order."""
@@ -509,11 +513,13 @@ class OrderManager:
                     if email_service:
                         # Send shipping notification
                         email_service.send_shipping_notification(
-                            order_id=str(order.id),
+                            order=order,
+                            shipment=None,
                             to_email=order.customer_email,
-                            customer_name=order.customer_name,
-                            tracking_number=tracking_number,
-                            carrier=carrier
+                            store_name="PyCommerce Store",
+                            store_url="/",
+                            store_logo_url=None,
+                            contact_email=None
                         )
                         logger.info(f"Sent shipping notification for order {order_id}")
                 except Exception as email_error:
