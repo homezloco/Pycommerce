@@ -56,30 +56,31 @@ def get_notes_for_order(order_id):
 def get_order_items(order_id):
     """Get items for an order using a fresh session to avoid detached object issues."""
     try:
-        from pycommerce.models.order import OrderItem, Order
-        from pycommerce.models.product import Product
+        from pycommerce.models.order import OrderItem
         
         with get_session() as session:
-            # Get order items with joined product information
-            items = session.query(OrderItem).join(
-                Order, OrderItem.order_id == Order.id
-            ).outerjoin(
-                Product, OrderItem.product_id == Product.id
-            ).filter(
+            # Get order items - simpler query to avoid Product model issues
+            items = session.query(OrderItem).filter(
                 OrderItem.order_id == str(order_id)
             ).all()
             
             # Convert to dictionaries to avoid session issues
             result = []
             for item in items:
-                # Get product name and SKU safely
-                name = getattr(item, 'name', None)
-                if name is None and hasattr(item, 'product') and item.product:
-                    name = item.product.name
+                # Use the item's properties directly
+                name = getattr(item, 'name', "Unknown Product")
+                sku = getattr(item, 'sku', "N/A")
                 
-                sku = getattr(item, 'sku', None)
-                if sku is None and hasattr(item, 'product') and item.product:
-                    sku = item.product.sku
+                # Safely get the product information if available
+                try:
+                    if hasattr(item, 'product') and item.product is not None:
+                        if not name and hasattr(item.product, 'name'):
+                            name = item.product.name
+                        if not sku and hasattr(item.product, 'sku'):
+                            sku = item.product.sku
+                except Exception:
+                    # If accessing product fails, we'll use the defaults
+                    pass
                     
                 result.append({
                     "product_id": str(item.product_id),
