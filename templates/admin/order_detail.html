@@ -45,13 +45,13 @@
                     <h5 class="mt-3">Order Status</h5>
                     <p><strong>Status:</strong> 
                         <span class="badge 
-                            {% if order.status == 'pending' %}bg-warning{% endif %}
-                            {% if order.status == 'paid' %}bg-info{% endif %}
-                            {% if order.status == 'processing' %}bg-primary{% endif %}
-                            {% if order.status == 'shipped' %}bg-success{% endif %}
-                            {% if order.status == 'delivered' %}bg-success{% endif %}
-                            {% if order.status == 'cancelled' %}bg-danger{% endif %}
-                            {% if order.status == 'refunded' %}bg-secondary{% endif %}
+                            {% if order.status|string|lower == 'pending' %}bg-warning{% endif %}
+                            {% if order.status|string|lower == 'paid' %}bg-info{% endif %}
+                            {% if order.status|string|lower == 'processing' %}bg-primary{% endif %}
+                            {% if order.status|string|lower == 'shipped' %}bg-success{% endif %}
+                            {% if order.status|string|lower == 'delivered' %}bg-success{% endif %}
+                            {% if order.status|string|lower == 'cancelled' %}bg-danger{% endif %}
+                            {% if order.status|string|lower == 'refunded' %}bg-secondary{% endif %}
                         ">
                             {{ order.status|upper }}
                         </span>
@@ -187,7 +187,7 @@
                     <div class="input-group mb-3">
                         <select class="form-select" id="orderStatus">
                             {% for status in status_options %}
-                            <option value="{{ status }}" {% if order.status and order.status.lower() == status.lower() %}selected{% endif %}>{{ status|upper }}</option>
+                            <option value="{{ status }}" {% if order.status|string|lower == status|string|lower %}selected{% endif %}>{{ status|upper }}</option>
                             {% endfor %}
                         </select>
                         <button class="btn btn-outline-primary" type="button" id="updateStatusBtn" onclick="updateOrderStatus()">Update</button>
