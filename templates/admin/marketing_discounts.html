@@ -1,0 +1,217 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Discounts & Promotions | {{ tenant.name }} Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4">
+    <h1 class="mt-4">Discounts & Promotions</h1>
+    <ol class="breadcrumb mb-4">
+        <li class="breadcrumb-item"><a href="/admin/dashboard">Dashboard</a></li>
+        <li class="breadcrumb-item"><a href="/admin/marketing?tenant={{ selected_tenant }}">Marketing</a></li>
+        <li class="breadcrumb-item active">Discounts & Promotions</li>
+    </ol>
+
+    {% if status_message %}
+    <div class="alert alert-{{ status_type }}" role="alert">
+        {{ status_message }}
+    </div>
+    {% endif %}
+
+    <div class="row">
+        <!-- Marketing tools navigation -->
+        <div class="col-lg-3">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-bullhorn me-1"></i>
+                    Marketing Tools
+                </div>
+                <div class="list-group list-group-flush">
+                    <a class="list-group-item list-group-item-action" href="/admin/marketing?tenant={{ selected_tenant }}">
+                        <i class="fas fa-chart-line me-2"></i> Dashboard
+                    </a>
+                    <a class="list-group-item list-group-item-action active" href="/admin/marketing/discounts?tenant={{ selected_tenant }}">
+                        <i class="fas fa-tags me-2"></i> Discounts & Promotions
+                    </a>
+                    <a class="list-group-item list-group-item-action" href="/admin/marketing/newsletters?tenant={{ selected_tenant }}">
+                        <i class="fas fa-envelope me-2"></i> Email Marketing
+                    </a>
+                    <a class="list-group-item list-group-item-action" href="/admin/analytics?tenant={{ selected_tenant }}">
+                        <i class="fas fa-chart-bar me-2"></i> Analytics
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Discounts content -->
+        <div class="col-lg-9">
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <div>
+                        <i class="fas fa-tags me-1"></i>
+                        Manage Discounts & Promotions
+                    </div>
+                    <a href="/admin/marketing/discounts/create?tenant={{ selected_tenant }}" class="btn btn-primary btn-sm">
+                        <i class="fas fa-plus me-1"></i> Create New Discount
+                    </a>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover" id="discountsTable" width="100%" cellspacing="0">
+                            <thead>
+                                <tr>
+                                    <th>Code</th>
+                                    <th>Type</th>
+                                    <th>Value</th>
+                                    <th>Start Date</th>
+                                    <th>End Date</th>
+                                    <th>Status</th>
+                                    <th>Usage</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>SUMMER23</td>
+                                    <td>Percentage</td>
+                                    <td>20%</td>
+                                    <td>Jun 1, 2023</td>
+                                    <td>Aug 31, 2023</td>
+                                    <td><span class="badge bg-success">Active</span></td>
+                                    <td>142/500</td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <a href="#" class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <button type="button" class="btn btn-sm btn-outline-danger">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>WELCOME10</td>
+                                    <td>Percentage</td>
+                                    <td>10%</td>
+                                    <td>Jan 1, 2023</td>
+                                    <td>Dec 31, 2023</td>
+                                    <td><span class="badge bg-success">Active</span></td>
+                                    <td>375/1000</td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <a href="#" class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <button type="button" class="btn btn-sm btn-outline-danger">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>FREESHIP</td>
+                                    <td>Free Shipping</td>
+                                    <td>-</td>
+                                    <td>May 15, 2023</td>
+                                    <td>Jul 15, 2023</td>
+                                    <td><span class="badge bg-success">Active</span></td>
+                                    <td>89/250</td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <a href="#" class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <button type="button" class="btn btn-sm btn-outline-danger">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>BUNDLE25</td>
+                                    <td>Fixed Amount</td>
+                                    <td>$25.00</td>
+                                    <td>Jun 10, 2023</td>
+                                    <td>Jul 10, 2023</td>
+                                    <td><span class="badge bg-success">Active</span></td>
+                                    <td>42/100</td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <a href="#" class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <button type="button" class="btn btn-sm btn-outline-danger">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>SPRING23</td>
+                                    <td>Percentage</td>
+                                    <td>15%</td>
+                                    <td>Mar 1, 2023</td>
+                                    <td>May 31, 2023</td>
+                                    <td><span class="badge bg-secondary">Expired</span></td>
+                                    <td>203/250</td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <a href="#" class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <button type="button" class="btn btn-sm btn-outline-danger">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Discount Rules -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-cogs me-1"></i>
+                    Discount Rules & Settings
+                </div>
+                <div class="card-body">
+                    <form>
+                        <div class="mb-3">
+                            <label for="maxDiscounts" class="form-label">Maximum Active Discounts</label>
+                            <input type="number" class="form-control" id="maxDiscounts" value="10">
+                            <div class="form-text">Maximum number of active discount codes allowed at once.</div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="discountStacking" class="form-label">Discount Stacking</label>
+                            <select class="form-select" id="discountStacking">
+                                <option value="none" selected>Not Allowed</option>
+                                <option value="limited">Limited (Max 2)</option>
+                                <option value="unlimited">Unlimited</option>
+                            </select>
+                            <div class="form-text">Allow customers to use multiple discount codes on one order.</div>
+                        </div>
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="autoApplyDiscount" checked>
+                            <label class="form-check-label" for="autoApplyDiscount">Auto-apply best discount</label>
+                            <div class="form-text">Automatically apply the best available discount to customer orders.</div>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Save Settings</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize DataTable
+        $('#discountsTable').DataTable();
+    });
+</script>
+{% endblock %}

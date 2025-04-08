@@ -1,0 +1,370 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Analytics Dashboard | {{ tenant.name }} Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4">
+    <h1 class="mt-4">Analytics Dashboard</h1>
+    <ol class="breadcrumb mb-4">
+        <li class="breadcrumb-item"><a href="/admin/dashboard">Dashboard</a></li>
+        <li class="breadcrumb-item active">Analytics</li>
+    </ol>
+
+    {% if status_message %}
+    <div class="alert alert-{{ status_type }}" role="alert">
+        {{ status_message }}
+    </div>
+    {% endif %}
+
+    <!-- Period selector -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <i class="fas fa-calendar me-1"></i>
+            {{ analytics.period_label }}
+        </div>
+        <div class="card-body">
+            <div class="row mb-3">
+                <div class="col-md-9">
+                    <div class="btn-group" role="group" aria-label="Period selector">
+                        <a href="/admin/analytics?tenant={{ selected_tenant }}&period=day" class="btn btn-outline-primary {% if analytics.period == 'day' %}active{% endif %}">Today</a>
+                        <a href="/admin/analytics?tenant={{ selected_tenant }}&period=week" class="btn btn-outline-primary {% if analytics.period == 'week' %}active{% endif %}">This Week</a>
+                        <a href="/admin/analytics?tenant={{ selected_tenant }}&period=month" class="btn btn-outline-primary {% if analytics.period == 'month' %}active{% endif %}">This Month</a>
+                        <a href="/admin/analytics?tenant={{ selected_tenant }}&period=year" class="btn btn-outline-primary {% if analytics.period == 'year' %}active{% endif %}">This Year</a>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <form action="/admin/analytics" method="get" class="row g-3">
+                        <input type="hidden" name="tenant" value="{{ selected_tenant }}">
+                        <div class="col-md-5">
+                            <input type="date" class="form-control form-control-sm" name="start_date" placeholder="Start date">
+                        </div>
+                        <div class="col-md-5">
+                            <input type="date" class="form-control form-control-sm" name="end_date" placeholder="End date">
+                        </div>
+                        <div class="col-md-2">
+                            <button type="submit" class="btn btn-primary btn-sm">Go</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Summary cards -->
+    <div class="row">
+        <div class="col-xl-3 col-md-6">
+            <div class="card bg-primary text-white mb-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="mb-0">{{ analytics.summary.orders }}</h5>
+                            <div class="small">Orders</div>
+                        </div>
+                        <div>
+                            {% if analytics.comparison.orders > 0 %}
+                            <span class="badge bg-success">+{{ analytics.comparison.orders }}%</span>
+                            {% elif analytics.comparison.orders < 0 %}
+                            <span class="badge bg-danger">{{ analytics.comparison.orders }}%</span>
+                            {% else %}
+                            <span class="badge bg-secondary">0%</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer d-flex align-items-center justify-content-between">
+                    <a class="small text-white stretched-link" href="/admin/orders?tenant={{ selected_tenant }}">View Orders</a>
+                    <div class="small text-white"><i class="fas fa-angle-right"></i></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="card bg-success text-white mb-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="mb-0">${{ analytics.summary.revenue }}</h5>
+                            <div class="small">Revenue</div>
+                        </div>
+                        <div>
+                            {% if analytics.comparison.revenue > 0 %}
+                            <span class="badge bg-success">+{{ analytics.comparison.revenue }}%</span>
+                            {% elif analytics.comparison.revenue < 0 %}
+                            <span class="badge bg-danger">{{ analytics.comparison.revenue }}%</span>
+                            {% else %}
+                            <span class="badge bg-secondary">0%</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer d-flex align-items-center justify-content-between">
+                    <a class="small text-white stretched-link" href="/admin/orders?tenant={{ selected_tenant }}">View Orders</a>
+                    <div class="small text-white"><i class="fas fa-angle-right"></i></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="card bg-warning text-white mb-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="mb-0">${{ analytics.summary.avg_order_value }}</h5>
+                            <div class="small">Avg. Order Value</div>
+                        </div>
+                        <div>
+                            {% if analytics.comparison.avg_order_value > 0 %}
+                            <span class="badge bg-success">+{{ analytics.comparison.avg_order_value }}%</span>
+                            {% elif analytics.comparison.avg_order_value < 0 %}
+                            <span class="badge bg-danger">{{ analytics.comparison.avg_order_value }}%</span>
+                            {% else %}
+                            <span class="badge bg-secondary">0%</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer d-flex align-items-center justify-content-between">
+                    <a class="small text-white stretched-link" href="/admin/orders?tenant={{ selected_tenant }}">View Orders</a>
+                    <div class="small text-white"><i class="fas fa-angle-right"></i></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="card bg-info text-white mb-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="mb-0">{{ analytics.summary.conversion_rate }}%</h5>
+                            <div class="small">Conversion Rate</div>
+                        </div>
+                        <div>
+                            {% if analytics.comparison.conversion_rate > 0 %}
+                            <span class="badge bg-success">+{{ analytics.comparison.conversion_rate }}%</span>
+                            {% elif analytics.comparison.conversion_rate < 0 %}
+                            <span class="badge bg-danger">{{ analytics.comparison.conversion_rate }}%</span>
+                            {% else %}
+                            <span class="badge bg-secondary">0%</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer d-flex align-items-center justify-content-between">
+                    <a class="small text-white stretched-link" href="/admin/marketing?tenant={{ selected_tenant }}">View Marketing</a>
+                    <div class="small text-white"><i class="fas fa-angle-right"></i></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts row -->
+    <div class="row">
+        <div class="col-xl-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-chart-area me-1"></i>
+                    Orders and Revenue Over Time
+                </div>
+                <div class="card-body">
+                    <canvas id="ordersChart" width="100%" height="40"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-chart-pie me-1"></i>
+                    Traffic Sources
+                </div>
+                <div class="card-body">
+                    <canvas id="trafficChart" width="100%" height="40"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Top products and device types -->
+    <div class="row">
+        <div class="col-xl-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-table me-1"></i>
+                    Top Products
+                </div>
+                <div class="card-body">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Product</th>
+                                <th>Orders</th>
+                                <th>Revenue</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for product in analytics.top_products %}
+                            <tr>
+                                <td>{{ product.name }}</td>
+                                <td>{{ product.orders }}</td>
+                                <td>${{ product.revenue }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-chart-pie me-1"></i>
+                    Device Types
+                </div>
+                <div class="card-body">
+                    <canvas id="deviceChart" width="100%" height="40"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Customer locations -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-globe me-1"></i>
+                    Customer Locations
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% for country, percentage in analytics.customer_locations.items() %}
+                        <div class="col-md-4 mb-3">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span>{{ country }}</span>
+                                <span class="text-muted">{{ percentage }}%</span>
+                            </div>
+                            <div class="progress">
+                                <div class="progress-bar" role="progressbar" style="width: {{ percentage }}%" 
+                                    aria-valuenow="{{ percentage }}" aria-valuemin="0" aria-valuemax="100"></div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+// Sample data - in a real app, these would be populated from the server-side data
+document.addEventListener('DOMContentLoaded', function() {
+    // Orders chart
+    const ctx = document.getElementById('ordersChart');
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: ['Jun 1', 'Jun 2', 'Jun 3', 'Jun 4', 'Jun 5', 'Jun 6', 'Jun 7'],
+            datasets: [{
+                label: 'Orders',
+                data: [5, 8, 12, 7, 10, 15, 9],
+                borderColor: 'rgba(54, 162, 235, 1)',
+                backgroundColor: 'rgba(54, 162, 235, 0.1)',
+                yAxisID: 'y',
+                tension: 0.1
+            }, {
+                label: 'Revenue',
+                data: [425, 632, 956, 550, 780, 1200, 720],
+                borderColor: 'rgba(75, 192, 192, 1)',
+                backgroundColor: 'rgba(75, 192, 192, 0.1)',
+                yAxisID: 'y1',
+                tension: 0.1
+            }]
+        },
+        options: {
+            responsive: true,
+            interaction: {
+                mode: 'index',
+                intersect: false,
+            },
+            scales: {
+                y: {
+                    type: 'linear',
+                    display: true,
+                    position: 'left',
+                    title: {
+                        display: true,
+                        text: 'Orders'
+                    }
+                },
+                y1: {
+                    type: 'linear',
+                    display: true,
+                    position: 'right',
+                    title: {
+                        display: true,
+                        text: 'Revenue ($)'
+                    },
+                    grid: {
+                        drawOnChartArea: false,
+                    },
+                }
+            }
+        }
+    });
+
+    // Traffic sources chart
+    const trafficChart = document.getElementById('trafficChart');
+    new Chart(trafficChart, {
+        type: 'doughnut',
+        data: {
+            labels: ['Direct', 'Organic', 'Referral', 'Social', 'Email'],
+            datasets: [{
+                data: [35, 25, 15, 20, 5],
+                backgroundColor: [
+                    'rgba(54, 162, 235, 0.8)',
+                    'rgba(75, 192, 192, 0.8)',
+                    'rgba(255, 206, 86, 0.8)',
+                    'rgba(255, 99, 132, 0.8)',
+                    'rgba(153, 102, 255, 0.8)'
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'right',
+                }
+            }
+        }
+    });
+
+    // Device types chart
+    const deviceChart = document.getElementById('deviceChart');
+    new Chart(deviceChart, {
+        type: 'pie',
+        data: {
+            labels: ['Desktop', 'Mobile', 'Tablet'],
+            datasets: [{
+                data: [45, 40, 15],
+                backgroundColor: [
+                    'rgba(54, 162, 235, 0.8)',
+                    'rgba(75, 192, 192, 0.8)',
+                    'rgba(255, 206, 86, 0.8)'
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'right',
+                }
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

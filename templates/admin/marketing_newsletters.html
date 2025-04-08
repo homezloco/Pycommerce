@@ -1,0 +1,459 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Email Marketing | {{ tenant.name }} Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4">
+    <h1 class="mt-4">Email Marketing</h1>
+    <ol class="breadcrumb mb-4">
+        <li class="breadcrumb-item"><a href="/admin/dashboard">Dashboard</a></li>
+        <li class="breadcrumb-item"><a href="/admin/marketing?tenant={{ selected_tenant }}">Marketing</a></li>
+        <li class="breadcrumb-item active">Email Marketing</li>
+    </ol>
+
+    {% if status_message %}
+    <div class="alert alert-{{ status_type }}" role="alert">
+        {{ status_message }}
+    </div>
+    {% endif %}
+
+    <div class="row">
+        <!-- Marketing tools navigation -->
+        <div class="col-lg-3">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-bullhorn me-1"></i>
+                    Marketing Tools
+                </div>
+                <div class="list-group list-group-flush">
+                    <a class="list-group-item list-group-item-action" href="/admin/marketing?tenant={{ selected_tenant }}">
+                        <i class="fas fa-chart-line me-2"></i> Dashboard
+                    </a>
+                    <a class="list-group-item list-group-item-action" href="/admin/marketing/discounts?tenant={{ selected_tenant }}">
+                        <i class="fas fa-tags me-2"></i> Discounts & Promotions
+                    </a>
+                    <a class="list-group-item list-group-item-action active" href="/admin/marketing/newsletters?tenant={{ selected_tenant }}">
+                        <i class="fas fa-envelope me-2"></i> Email Marketing
+                    </a>
+                    <a class="list-group-item list-group-item-action" href="/admin/analytics?tenant={{ selected_tenant }}">
+                        <i class="fas fa-chart-bar me-2"></i> Analytics
+                    </a>
+                </div>
+            </div>
+
+            <!-- Email Lists -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-users me-1"></i>
+                    Email Lists
+                </div>
+                <div class="list-group list-group-flush">
+                    <a href="#" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                        All Subscribers
+                        <span class="badge bg-primary rounded-pill">245</span>
+                    </a>
+                    <a href="#" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                        Active Customers
+                        <span class="badge bg-primary rounded-pill">128</span>
+                    </a>
+                    <a href="#" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                        VIP Customers
+                        <span class="badge bg-primary rounded-pill">36</span>
+                    </a>
+                    <a href="#" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                        Cart Abandoners
+                        <span class="badge bg-primary rounded-pill">52</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Email Marketing content -->
+        <div class="col-lg-9">
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <div>
+                        <i class="fas fa-envelope me-1"></i>
+                        Recent Campaigns
+                    </div>
+                    <a href="/admin/marketing/newsletters/create?tenant={{ selected_tenant }}" class="btn btn-primary btn-sm">
+                        <i class="fas fa-plus me-1"></i> Create New Campaign
+                    </a>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover" id="emailCampaignsTable" width="100%" cellspacing="0">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Subject</th>
+                                    <th>List</th>
+                                    <th>Sent Date</th>
+                                    <th>Opens</th>
+                                    <th>Clicks</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Summer Collection</td>
+                                    <td>New Summer Collection Just Arrived!</td>
+                                    <td>All Subscribers</td>
+                                    <td>Jun 5, 2023</td>
+                                    <td>118 (48.2%)</td>
+                                    <td>52 (21.2%)</td>
+                                    <td><span class="badge bg-success">Sent</span></td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <a href="#" class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-chart-line"></i>
+                                            </a>
+                                            <a href="#" class="btn btn-sm btn-outline-secondary">
+                                                <i class="fas fa-copy"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Father's Day Sale</td>
+                                    <td>20% Off for Father's Day - This Weekend Only!</td>
+                                    <td>All Subscribers</td>
+                                    <td>Jun 15, 2023</td>
+                                    <td>132 (53.9%)</td>
+                                    <td>67 (27.3%)</td>
+                                    <td><span class="badge bg-success">Sent</span></td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <a href="#" class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-chart-line"></i>
+                                            </a>
+                                            <a href="#" class="btn btn-sm btn-outline-secondary">
+                                                <i class="fas fa-copy"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Cart Abandonment</td>
+                                    <td>You left items in your cart!</td>
+                                    <td>Cart Abandoners</td>
+                                    <td>Automated</td>
+                                    <td>28 (53.8%)</td>
+                                    <td>15 (28.8%)</td>
+                                    <td><span class="badge bg-info">Automated</span></td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <a href="#" class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-chart-line"></i>
+                                            </a>
+                                            <a href="#" class="btn btn-sm btn-outline-secondary">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>VIP Exclusive</td>
+                                    <td>Early Access for Our VIP Customers</td>
+                                    <td>VIP Customers</td>
+                                    <td>Jun 20, 2023</td>
+                                    <td>0 (0%)</td>
+                                    <td>0 (0%)</td>
+                                    <td><span class="badge bg-warning">Scheduled</span></td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <a href="#" class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <button type="button" class="btn btn-sm btn-outline-danger">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>May Newsletter</td>
+                                    <td>May Updates and New Arrivals</td>
+                                    <td>All Subscribers</td>
+                                    <td>May 1, 2023</td>
+                                    <td>142 (58.0%)</td>
+                                    <td>78 (31.8%)</td>
+                                    <td><span class="badge bg-success">Sent</span></td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <a href="#" class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-chart-line"></i>
+                                            </a>
+                                            <a href="#" class="btn btn-sm btn-outline-secondary">
+                                                <i class="fas fa-copy"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Email Performance -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-chart-line me-1"></i>
+                    Email Performance
+                </div>
+                <div class="card-body">
+                    <div class="chart-area mb-4">
+                        <canvas id="emailPerformanceChart"></canvas>
+                    </div>
+                    
+                    <!-- Key metrics -->
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="card border-left-primary shadow h-100 py-2">
+                                <div class="card-body">
+                                    <div class="row no-gutters align-items-center">
+                                        <div class="col mr-2">
+                                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                                Average Open Rate</div>
+                                            <div class="h5 mb-0 font-weight-bold text-gray-800">52.5%</div>
+                                        </div>
+                                        <div class="col-auto">
+                                            <i class="fas fa-envelope-open fa-2x text-gray-300"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card border-left-success shadow h-100 py-2">
+                                <div class="card-body">
+                                    <div class="row no-gutters align-items-center">
+                                        <div class="col mr-2">
+                                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                                Average Click Rate</div>
+                                            <div class="h5 mb-0 font-weight-bold text-gray-800">26.8%</div>
+                                        </div>
+                                        <div class="col-auto">
+                                            <i class="fas fa-mouse-pointer fa-2x text-gray-300"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card border-left-info shadow h-100 py-2">
+                                <div class="card-body">
+                                    <div class="row no-gutters align-items-center">
+                                        <div class="col mr-2">
+                                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                                Conversion Rate</div>
+                                            <div class="h5 mb-0 font-weight-bold text-gray-800">5.2%</div>
+                                        </div>
+                                        <div class="col-auto">
+                                            <i class="fas fa-shopping-cart fa-2x text-gray-300"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card border-left-warning shadow h-100 py-2">
+                                <div class="card-body">
+                                    <div class="row no-gutters align-items-center">
+                                        <div class="col mr-2">
+                                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                                Revenue Generated</div>
+                                            <div class="h5 mb-0 font-weight-bold text-gray-800">$3,482</div>
+                                        </div>
+                                        <div class="col-auto">
+                                            <i class="fas fa-dollar-sign fa-2x text-gray-300"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Automated Emails -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-robot me-1"></i>
+                    Automated Email Campaigns
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover" width="100%" cellspacing="0">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Trigger</th>
+                                    <th>Status</th>
+                                    <th>Open Rate</th>
+                                    <th>Click Rate</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Welcome Email</td>
+                                    <td>New signup</td>
+                                    <td><span class="badge bg-success">Active</span></td>
+                                    <td>78.5%</td>
+                                    <td>45.2%</td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <a href="#" class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <button type="button" class="btn btn-sm btn-outline-danger">
+                                                <i class="fas fa-pause"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Cart Abandonment</td>
+                                    <td>Abandoned cart (2 hours)</td>
+                                    <td><span class="badge bg-success">Active</span></td>
+                                    <td>53.8%</td>
+                                    <td>28.8%</td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <a href="#" class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <button type="button" class="btn btn-sm btn-outline-danger">
+                                                <i class="fas fa-pause"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Order Confirmation</td>
+                                    <td>New order</td>
+                                    <td><span class="badge bg-success">Active</span></td>
+                                    <td>92.1%</td>
+                                    <td>38.4%</td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <a href="#" class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <button type="button" class="btn btn-sm btn-outline-danger">
+                                                <i class="fas fa-pause"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Re-engagement</td>
+                                    <td>30 days inactive</td>
+                                    <td><span class="badge bg-success">Active</span></td>
+                                    <td>32.6%</td>
+                                    <td>15.2%</td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <a href="#" class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <button type="button" class="btn btn-sm btn-outline-danger">
+                                                <i class="fas fa-pause"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Email Performance Chart
+    const ctx = document.getElementById('emailPerformanceChart');
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: ['January', 'February', 'March', 'April', 'May', 'June'],
+            datasets: [
+                {
+                    label: 'Open Rate',
+                    data: [48.2, 50.5, 49.8, 51.2, 58.0, 53.9],
+                    borderColor: 'rgba(78, 115, 223, 1)',
+                    backgroundColor: 'rgba(78, 115, 223, 0.05)',
+                    tension: 0.4
+                },
+                {
+                    label: 'Click Rate',
+                    data: [22.5, 24.2, 23.5, 25.8, 31.8, 27.3],
+                    borderColor: 'rgba(28, 200, 138, 1)',
+                    backgroundColor: 'rgba(28, 200, 138, 0.05)',
+                    tension: 0.4
+                }
+            ],
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            layout: {
+                padding: {
+                    left: 10,
+                    right: 25,
+                    top: 25,
+                    bottom: 0
+                }
+            },
+            scales: {
+                x: {
+                    grid: {
+                        display: false,
+                        drawBorder: false
+                    }
+                },
+                y: {
+                    ticks: {
+                        maxTicksLimit: 5,
+                        callback: function(value) {
+                            return value + '%';
+                        }
+                    },
+                    grid: {
+                        color: "rgb(234, 236, 244)",
+                        drawBorder: false,
+                        borderDash: [2],
+                        zeroLineBorderDash: [2]
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'top'
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return context.dataset.label + ": " + context.parsed.y + "%";
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    // Initialize DataTable
+    $('#emailCampaignsTable').DataTable();
+});
+</script>
+{% endblock %}

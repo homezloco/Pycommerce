@@ -74,6 +74,81 @@ async def ai_config_page(
         "dall-e-2",
     ]
     
+    # Define AI providers
+    ai_providers = [
+        {
+            'id': 'openai',
+            'name': 'OpenAI',
+            'description': 'Use OpenAI for AI-powered features',
+            'logo': 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4d/OpenAI_Logo.svg/1280px-OpenAI_Logo.svg.png',
+            'fields': [
+                {
+                    'id': 'api_key',
+                    'name': 'API Key',
+                    'type': 'password',
+                    'description': 'Your OpenAI API key',
+                    'required': True,
+                },
+                {
+                    'id': 'model',
+                    'name': 'Default Model',
+                    'type': 'select',
+                    'options': [{'value': model, 'label': model} for model in openai_models],
+                    'default': 'gpt-4-turbo',
+                    'description': 'Default model to use for text generation',
+                    'required': True,
+                },
+                {
+                    'id': 'image_model',
+                    'name': 'Image Generation Model',
+                    'type': 'select',
+                    'options': [{'value': model, 'label': model} for model in openai_image_models],
+                    'default': 'dall-e-3',
+                    'description': 'Model to use for image generation',
+                    'required': True,
+                }
+            ]
+        },
+        {
+            'id': 'azure',
+            'name': 'Azure OpenAI',
+            'description': 'Use Azure OpenAI for AI-powered features',
+            'fields': [
+                {
+                    'id': 'api_key',
+                    'name': 'API Key',
+                    'type': 'password',
+                    'description': 'Your Azure OpenAI API key',
+                    'required': True,
+                },
+                {
+                    'id': 'endpoint',
+                    'name': 'Endpoint',
+                    'type': 'text',
+                    'description': 'Azure OpenAI endpoint URL',
+                    'required': True,
+                },
+                {
+                    'id': 'deployment_name',
+                    'name': 'Deployment Name',
+                    'type': 'text',
+                    'description': 'Azure OpenAI deployment name',
+                    'required': True,
+                }
+            ]
+        }
+    ]
+    
+    # Get active provider from settings
+    active_provider = ai_settings.get('provider_id', 'openai')
+    
+    # Get selected provider, defaulting to active provider or OpenAI
+    selected_provider_id = active_provider
+    selected_provider = next((p for p in ai_providers if p['id'] == selected_provider_id), ai_providers[0])
+    
+    # Get field values for selected provider
+    field_values = ai_settings.get(selected_provider_id, {})
+    
     return templates.TemplateResponse(
         "admin/ai_config.html",
         {
@@ -86,6 +161,10 @@ async def ai_config_page(
             "has_openai_key": has_openai_key,
             "openai_models": openai_models,
             "openai_image_models": openai_image_models,
+            "ai_providers": ai_providers,
+            "active_provider": active_provider,
+            "selected_provider": selected_provider,
+            "field_values": field_values,
             "status_message": status_message,
             "status_type": status_type
         }

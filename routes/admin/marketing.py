@@ -172,7 +172,7 @@ async def discounts_page(
     ]
     
     return templates.TemplateResponse(
-        "admin/discounts.html",
+        "admin/marketing_discounts.html",
         {
             "request": request,
             "selected_tenant": selected_tenant_slug,
@@ -253,7 +253,7 @@ async def newsletters_page(
     }
     
     return templates.TemplateResponse(
-        "admin/newsletters.html",
+        "admin/marketing_newsletters.html",
         {
             "request": request,
             "selected_tenant": selected_tenant_slug,

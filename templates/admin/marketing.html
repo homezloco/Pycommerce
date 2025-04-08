@@ -1,0 +1,356 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Marketing | {{ tenant.name }} Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4">
+    <h1 class="mt-4">Marketing Dashboard</h1>
+    <ol class="breadcrumb mb-4">
+        <li class="breadcrumb-item"><a href="/admin/dashboard">Dashboard</a></li>
+        <li class="breadcrumb-item active">Marketing</li>
+    </ol>
+
+    {% if status_message %}
+    <div class="alert alert-{{ status_type }}" role="alert">
+        {{ status_message }}
+    </div>
+    {% endif %}
+
+    <div class="row">
+        <!-- Marketing tools navigation -->
+        <div class="col-lg-3">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-bullhorn me-1"></i>
+                    Marketing Tools
+                </div>
+                <div class="list-group list-group-flush">
+                    <a class="list-group-item list-group-item-action active" href="/admin/marketing?tenant={{ selected_tenant }}">
+                        <i class="fas fa-chart-line me-2"></i> Dashboard
+                    </a>
+                    <a class="list-group-item list-group-item-action" href="/admin/marketing/discounts?tenant={{ selected_tenant }}">
+                        <i class="fas fa-tags me-2"></i> Discounts & Promotions
+                    </a>
+                    <a class="list-group-item list-group-item-action" href="/admin/marketing/newsletters?tenant={{ selected_tenant }}">
+                        <i class="fas fa-envelope me-2"></i> Email Marketing
+                    </a>
+                    <a class="list-group-item list-group-item-action" href="/admin/analytics?tenant={{ selected_tenant }}">
+                        <i class="fas fa-chart-bar me-2"></i> Analytics
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Marketing overview -->
+        <div class="col-lg-9">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-bullseye me-1"></i>
+                    Marketing Overview
+                </div>
+                <div class="card-body">
+                    <div class="row mb-4">
+                        <div class="col-md-3">
+                            <div class="card border-left-primary shadow h-100 py-2">
+                                <div class="card-body">
+                                    <div class="row no-gutters align-items-center">
+                                        <div class="col mr-2">
+                                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                                Active Campaigns</div>
+                                            <div class="h5 mb-0 font-weight-bold text-gray-800">3</div>
+                                        </div>
+                                        <div class="col-auto">
+                                            <i class="fas fa-calendar fa-2x text-gray-300"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-3">
+                            <div class="card border-left-success shadow h-100 py-2">
+                                <div class="card-body">
+                                    <div class="row no-gutters align-items-center">
+                                        <div class="col mr-2">
+                                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                                Active Discounts</div>
+                                            <div class="h5 mb-0 font-weight-bold text-gray-800">5</div>
+                                        </div>
+                                        <div class="col-auto">
+                                            <i class="fas fa-dollar-sign fa-2x text-gray-300"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-3">
+                            <div class="card border-left-info shadow h-100 py-2">
+                                <div class="card-body">
+                                    <div class="row no-gutters align-items-center">
+                                        <div class="col mr-2">
+                                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                                Email Subscribers</div>
+                                            <div class="h5 mb-0 font-weight-bold text-gray-800">245</div>
+                                        </div>
+                                        <div class="col-auto">
+                                            <i class="fas fa-clipboard-list fa-2x text-gray-300"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-3">
+                            <div class="card border-left-warning shadow h-100 py-2">
+                                <div class="card-body">
+                                    <div class="row no-gutters align-items-center">
+                                        <div class="col mr-2">
+                                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                                Conversion Rate</div>
+                                            <div class="h5 mb-0 font-weight-bold text-gray-800">3.2%</div>
+                                        </div>
+                                        <div class="col-auto">
+                                            <i class="fas fa-percent fa-2x text-gray-300"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Quick Actions -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="card shadow mb-4">
+                                <div class="card-header py-3">
+                                    <h6 class="m-0 font-weight-bold text-primary">Quick Actions</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <a href="/admin/marketing/discounts/create?tenant={{ selected_tenant }}" class="btn btn-primary btn-block mb-3">
+                                                <i class="fas fa-plus me-1"></i> Create Discount
+                                            </a>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <a href="/admin/marketing/newsletters/create?tenant={{ selected_tenant }}" class="btn btn-success btn-block mb-3">
+                                                <i class="fas fa-paper-plane me-1"></i> Send Newsletter
+                                            </a>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <a href="/admin/analytics?tenant={{ selected_tenant }}" class="btn btn-info btn-block mb-3">
+                                                <i class="fas fa-chart-bar me-1"></i> View Analytics
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Performance Metrics -->
+                    <div class="card shadow mb-4">
+                        <div class="card-header py-3">
+                            <h6 class="m-0 font-weight-bold text-primary">Marketing Performance</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="chart-area mb-4">
+                                <canvas id="marketingPerformanceChart"></canvas>
+                            </div>
+
+                            <div class="mt-4 text-center small">
+                                <span class="mr-2">
+                                    <i class="fas fa-circle text-primary"></i> Direct
+                                </span>
+                                <span class="mr-2">
+                                    <i class="fas fa-circle text-success"></i> Social
+                                </span>
+                                <span class="mr-2">
+                                    <i class="fas fa-circle text-info"></i> Email
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Active Campaigns -->
+                    <div class="card shadow mb-4">
+                        <div class="card-header py-3">
+                            <h6 class="m-0 font-weight-bold text-primary">Active Marketing Campaigns</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-bordered" width="100%" cellspacing="0">
+                                    <thead>
+                                        <tr>
+                                            <th>Campaign</th>
+                                            <th>Type</th>
+                                            <th>Start Date</th>
+                                            <th>End Date</th>
+                                            <th>Status</th>
+                                            <th>Performance</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>Summer Sale</td>
+                                            <td>Discount</td>
+                                            <td>Jun 1, 2023</td>
+                                            <td>Aug 31, 2023</td>
+                                            <td><span class="badge bg-success">Active</span></td>
+                                            <td>
+                                                <div class="progress">
+                                                    <div class="progress-bar bg-success" role="progressbar" style="width: 75%"
+                                                        aria-valuenow="75" aria-valuemin="0" aria-valuemax="100">75%</div>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>New Product Launch</td>
+                                            <td>Email</td>
+                                            <td>Jun 15, 2023</td>
+                                            <td>Jul 15, 2023</td>
+                                            <td><span class="badge bg-success">Active</span></td>
+                                            <td>
+                                                <div class="progress">
+                                                    <div class="progress-bar bg-info" role="progressbar" style="width: 45%"
+                                                        aria-valuenow="45" aria-valuemin="0" aria-valuemax="100">45%</div>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>Referral Program</td>
+                                            <td>Social</td>
+                                            <td>May 1, 2023</td>
+                                            <td>Ongoing</td>
+                                            <td><span class="badge bg-success">Active</span></td>
+                                            <td>
+                                                <div class="progress">
+                                                    <div class="progress-bar bg-warning" role="progressbar" style="width: 60%"
+                                                        aria-valuenow="60" aria-valuemin="0" aria-valuemax="100">60%</div>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Marketing Performance Chart
+    const ctx = document.getElementById('marketingPerformanceChart');
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+            datasets: [
+                {
+                    label: 'Direct',
+                    data: [500, 800, 1200, 1700, 1500, 2000],
+                    borderColor: 'rgba(78, 115, 223, 1)',
+                    backgroundColor: 'rgba(78, 115, 223, 0.05)',
+                    pointRadius: 3,
+                    pointBackgroundColor: 'rgba(78, 115, 223, 1)',
+                    pointBorderColor: 'rgba(78, 115, 223, 1)',
+                    pointHoverRadius: 3,
+                    pointHoverBackgroundColor: 'rgba(78, 115, 223, 1)',
+                    pointHoverBorderColor: 'rgba(78, 115, 223, 1)',
+                    pointHitRadius: 10,
+                    pointBorderWidth: 2,
+                    tension: 0.4
+                },
+                {
+                    label: 'Social',
+                    data: [300, 600, 800, 1200, 1000, 1500],
+                    borderColor: 'rgba(28, 200, 138, 1)',
+                    backgroundColor: 'rgba(28, 200, 138, 0.05)',
+                    pointRadius: 3,
+                    pointBackgroundColor: 'rgba(28, 200, 138, 1)',
+                    pointBorderColor: 'rgba(28, 200, 138, 1)',
+                    pointHoverRadius: 3,
+                    pointHoverBackgroundColor: 'rgba(28, 200, 138, 1)',
+                    pointHoverBorderColor: 'rgba(28, 200, 138, 1)',
+                    pointHitRadius: 10,
+                    pointBorderWidth: 2,
+                    tension: 0.4
+                },
+                {
+                    label: 'Email',
+                    data: [200, 400, 600, 800, 1100, 900],
+                    borderColor: 'rgba(54, 185, 204, 1)',
+                    backgroundColor: 'rgba(54, 185, 204, 0.05)',
+                    pointRadius: 3,
+                    pointBackgroundColor: 'rgba(54, 185, 204, 1)',
+                    pointBorderColor: 'rgba(54, 185, 204, 1)',
+                    pointHoverRadius: 3,
+                    pointHoverBackgroundColor: 'rgba(54, 185, 204, 1)',
+                    pointHoverBorderColor: 'rgba(54, 185, 204, 1)',
+                    pointHitRadius: 10,
+                    pointBorderWidth: 2,
+                    tension: 0.4
+                }
+            ],
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            layout: {
+                padding: {
+                    left: 10,
+                    right: 25,
+                    top: 25,
+                    bottom: 0
+                }
+            },
+            scales: {
+                x: {
+                    grid: {
+                        display: false,
+                        drawBorder: false
+                    }
+                },
+                y: {
+                    ticks: {
+                        maxTicksLimit: 5,
+                    },
+                    grid: {
+                        color: "rgb(234, 236, 244)",
+                        drawBorder: false,
+                        borderDash: [2],
+                        zeroLineBorderDash: [2]
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'top'
+                },
+                tooltip: {
+                    backgroundColor: "rgb(255,255,255)",
+                    bodyColor: "#858796",
+                    titleColor: "#6e707e",
+                    titleFontSize: 14,
+                    borderColor: '#dddfeb',
+                    borderWidth: 1,
+                    xPadding: 15,
+                    yPadding: 15,
+                    displayColors: false,
+                    caretPadding: 10
+                }
+            }
+        }
+    });
+});
+</script>
+{% endblock %}
