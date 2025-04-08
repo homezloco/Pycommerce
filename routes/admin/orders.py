@@ -21,13 +21,37 @@ router = APIRouter(prefix="/admin", tags=["admin"])
 
 # Import models and managers for orders using the correct implementation
 from pycommerce.models.order import OrderManager, OrderStatus
-from pycommerce.models.order_note import OrderNoteManager
+from pycommerce.models.order_note import OrderNoteManager, OrderNote
 from pycommerce.models.tenant import TenantManager
+from pycommerce.core.db import get_session
 
 # Initialize managers
 order_manager = OrderManager()
 order_note_manager = OrderNoteManager()
 tenant_manager = TenantManager()
+
+# Custom functions for notes to avoid SQLAlchemy detached object issues
+def get_notes_for_order(order_id):
+    """Get notes for an order using a fresh session."""
+    try:
+        with get_session() as session:
+            notes = session.query(OrderNote).filter(
+                OrderNote.order_id == str(order_id)
+            ).order_by(OrderNote.created_at.desc()).all()
+            
+            # Convert to dictionaries to avoid session issues
+            result = []
+            for note in notes:
+                result.append({
+                    "id": str(note.id),
+                    "content": note.content,
+                    "created_at": note.created_at,
+                    "is_customer_note": note.is_customer_note
+                })
+            return result
+    except Exception as e:
+        logger.error(f"Error getting notes for order: {e}")
+        return []
 
 @router.get("/orders", response_class=HTMLResponse)
 async def admin_orders(
@@ -169,25 +193,8 @@ async def admin_order_detail(
                 status_code=303
             )
         
-        # Get order notes
-        try:
-            notes = order_note_manager.get_for_order(order_id)
-            notes_data = []
-            # Check if notes is iterable
-            if hasattr(notes, '__iter__'):
-                for note in notes:
-                    notes_data.append({
-                        "id": str(note.id),
-                        "content": note.content,
-                        "created_at": note.created_at,
-                        "is_customer_note": note.is_customer_note
-                    })
-            else:
-                logger.warning(f"Notes is not an iterable: {type(notes)}")
-                notes_data = []
-        except Exception as note_error:
-            logger.warning(f"Error processing order notes: {note_error}")
-            notes_data = []
+        # Get order notes using our custom function
+        notes_data = get_notes_for_order(order_id)
         
         # Format items for display - safely handle possibly detached items
         items_data = []
