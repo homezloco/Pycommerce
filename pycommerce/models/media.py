@@ -1,8 +1,8 @@
 """
 Media management models for PyCommerce.
 
-This module defines models for managing media files (images, videos, etc.)
-in the PyCommerce platform.
+This module uses the MediaFile model from the central registry to avoid
+duplicate model definitions and circular imports.
 """
 
 import os
@@ -10,58 +10,31 @@ import uuid
 from datetime import datetime
 from typing import Dict, Any, Optional, List, Union
 
-from pycommerce.core.db import Base, db_session
+from pycommerce.core.db import db_session
+from pycommerce.models.db_registry import MediaFile as Media  # Alias as Media for compatibility
+
+# Import needed SQLAlchemy components for the manager
 from sqlalchemy import Column, String, DateTime, Boolean, ForeignKey, Text, Integer
 from sqlalchemy.dialects.postgresql import UUID, JSONB
-from sqlalchemy.orm import relationship
 
 
-class Media(Base):
-    """Media model for storing information about uploaded files."""
-    
-    __tablename__ = "media"
-    
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    tenant_id = Column(String(36), ForeignKey("tenants.id"), nullable=True)
-    name = Column(String(255), nullable=False)
-    file_path = Column(String(512), nullable=False)
-    file_url = Column(String(512), nullable=False)
-    file_type = Column(String(50), nullable=False)  # image, video, document, etc.
-    mime_type = Column(String(100), nullable=False)
-    file_size = Column(Integer, nullable=False)  # Size in bytes
-    width = Column(Integer, nullable=True)  # For images and videos
-    height = Column(Integer, nullable=True)  # For images and videos
-    alt_text = Column(String(255), nullable=True)
-    description = Column(Text, nullable=True)
-    meta_data = Column(JSONB, nullable=True)  # For storing extra information
-    is_ai_generated = Column(Boolean, default=False)
-    is_public = Column(Boolean, default=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    
-    tenant = relationship("Tenant", back_populates="media_files")
-    
-    def to_dict(self) -> Dict[str, Any]:
-        """Convert the media object to a dictionary."""
-        return {
-            "id": str(self.id),
-            "tenant_id": str(self.tenant_id) if self.tenant_id else None,
-            "name": self.name,
-            "file_path": self.file_path,
-            "file_url": self.file_url,
-            "file_type": self.file_type,
-            "mime_type": self.mime_type,
-            "file_size": self.file_size,
-            "width": self.width,
-            "height": self.height,
-            "alt_text": self.alt_text,
-            "description": self.description,
-            "meta_data": self.meta_data,
-            "is_ai_generated": self.is_ai_generated,
-            "is_public": self.is_public,
-            "created_at": self.created_at.isoformat() if self.created_at else None,
-            "updated_at": self.updated_at.isoformat() if self.updated_at else None
-        }
+# Add to_dict method to the Media model
+def to_dict_method(self) -> Dict[str, Any]:
+    """Convert the media object to a dictionary."""
+    return {
+        "id": str(self.id),
+        "tenant_id": str(self.tenant_id) if self.tenant_id else None,
+        "name": self.filename if hasattr(self, 'filename') else getattr(self, 'name', 'Unknown'),
+        "file_path": self.file_path,
+        "file_type": self.file_type,
+        "file_size": self.file_size,
+        "description": self.description,
+        "created_at": self.created_at.isoformat() if self.created_at else None,
+        "updated_at": self.updated_at.isoformat() if self.updated_at else None
+    }
+
+# Add the method to the Media class
+Media.to_dict = to_dict_method
 
 
 class MediaManager:
@@ -203,15 +176,24 @@ class MediaManager:
             if file_type:
                 query = query.filter(Media.file_type == file_type)
                 
-            if is_ai_generated is not None:
+            # Skip is_ai_generated filter if it's not in the model
+            if is_ai_generated is not None and hasattr(Media, 'is_ai_generated'):
                 query = query.filter(Media.is_ai_generated == is_ai_generated)
                 
             if search_term:
                 search_pattern = f"%{search_term}%"
-                query = query.filter(
-                    (Media.name.ilike(search_pattern)) | 
-                    (Media.description.ilike(search_pattern))
-                )
+                # Search in filename instead of name if present
+                if hasattr(Media, 'filename'):
+                    query = query.filter(
+                        (Media.filename.ilike(search_pattern)) | 
+                        (Media.description.ilike(search_pattern))
+                    )
+                else:
+                    # Fallback to original query
+                    query = query.filter(
+                        (Media.filename.ilike(search_pattern)) | 
+                        (Media.description.ilike(search_pattern))
+                    )
             
             # Order by most recent first
             query = query.order_by(Media.created_at.desc())
