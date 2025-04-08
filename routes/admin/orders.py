@@ -364,7 +364,7 @@ async def admin_order_detail(
                     status_value = order.status.name.lower()
                 elif isinstance(order.status, int):
                     # If it's an integer, convert to string
-                    from pycommerce.models.order import OrderStatus
+                    # OrderStatus is already imported at the module level
                     status_values = {
                         1: "pending",
                         2: "processing",
@@ -537,7 +537,7 @@ async def admin_order_fulfillment(
                     status_value = order.status.name.lower()
                 elif isinstance(order.status, int):
                     # If it's an integer, convert to string
-                    from pycommerce.models.order import OrderStatus
+                    # OrderStatus is already imported at the module level
                     status_values = {
                         1: "pending",
                         2: "processing",
