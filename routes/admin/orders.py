@@ -255,11 +255,23 @@ async def admin_order_detail(
                 status_code=303
             )
         
-        # Get order notes using our custom function
-        notes_data = get_notes_for_order(order_id)
+        # Get order notes using our custom function - make sure to capture the result properly
+        try:
+            notes_data = get_notes_for_order(order_id)
+            if notes_data is None:
+                notes_data = []
+        except Exception as e:
+            logger.error(f"Error getting notes: {str(e)}")
+            notes_data = []
         
-        # Get items using our session-safe function
-        items_data = get_order_items(order_id)
+        # Get items using our session-safe function - make sure to capture the result properly
+        try:
+            items_data = get_order_items(order_id)
+            if items_data is None:
+                items_data = []
+        except Exception as e:
+            logger.error(f"Error getting items: {str(e)}")
+            items_data = []
         
         # Format order data for template
         order_data = {
@@ -384,8 +396,14 @@ async def admin_order_fulfillment(
                 status_code=303
             )
         
-        # Get items using our session-safe function
-        items_data = get_order_items(order_id)
+        # Get items using our session-safe function - make sure to capture the result properly
+        try:
+            items_data = get_order_items(order_id)
+            if items_data is None:
+                items_data = []
+        except Exception as e:
+            logger.error(f"Error getting items for fulfillment: {str(e)}")
+            items_data = []
         
         # Get available shipping carriers
         carriers = ["FedEx", "UPS", "USPS", "DHL"]
