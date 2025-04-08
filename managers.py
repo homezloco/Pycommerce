@@ -469,6 +469,63 @@ class OrderManager:
             db.session.rollback()
             logger.error(f"Error deleting order: {e}")
             raise
+            
+    def update_shipping(self, order_id, status, tracking_number=None, carrier=None):
+        """Update shipping information for an order."""
+        try:
+            # Get the order
+            order = self.get(order_id)
+            if not order:
+                logger.error(f"Order {order_id} not found")
+                return False
+            
+            # Update shipping information
+            order.tracking_number = tracking_number
+            order.shipping_carrier = carrier
+            
+            # Update shipping dates based on status
+            if status == "shipped" and not order.shipped_at:
+                order.shipped_at = datetime.utcnow()
+                # Also update the order status if it's not already shipped or delivered
+                if order.status.value not in ["SHIPPED", "DELIVERED", "COMPLETED"]:
+                    order.status = "SHIPPED"
+            elif status == "delivered" and not order.delivered_at:
+                order.delivered_at = datetime.utcnow()
+                # Also update the order status if it's not already delivered or completed
+                if order.status.value not in ["DELIVERED", "COMPLETED"]:
+                    order.status = "DELIVERED"
+            
+            order.updated_at = datetime.utcnow()
+            db.session.commit()
+            
+            # If status is shipped, send shipping notification email
+            if status == "shipped":
+                try:
+                    # Import email service here to avoid circular imports
+                    from pycommerce.services.mail_service import get_email_service
+                    
+                    # Get the email service
+                    email_service = get_email_service()
+                    if email_service:
+                        # Send shipping notification
+                        email_service.send_shipping_notification(
+                            order_id=str(order.id),
+                            to_email=order.customer_email,
+                            customer_name=order.customer_name,
+                            tracking_number=tracking_number,
+                            carrier=carrier
+                        )
+                        logger.info(f"Sent shipping notification for order {order_id}")
+                except Exception as email_error:
+                    logger.error(f"Error sending shipping notification email: {email_error}")
+            
+            logger.info(f"Updated shipping information for order {order_id}")
+            return True
+            
+        except Exception as e:
+            db.session.rollback()
+            logger.error(f"Error updating shipping information: {e}")
+            return False
     
     def get_orders_for_tenant(self, tenant_id):
         """Get all orders for a tenant."""
