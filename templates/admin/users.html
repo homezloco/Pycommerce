@@ -1,0 +1,140 @@
+{% extends "admin/base.html" %}
+
+{% block title %}User Management | {{ tenant.name }} Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4">
+    <h1 class="mt-4">User Management</h1>
+    <ol class="breadcrumb mb-4">
+        <li class="breadcrumb-item"><a href="/admin/dashboard">Dashboard</a></li>
+        <li class="breadcrumb-item active">Users</li>
+    </ol>
+
+    {% if status_message %}
+    <div class="alert alert-{{ status_type }}" role="alert">
+        {{ status_message }}
+    </div>
+    {% endif %}
+
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between">
+            <div>
+                <i class="fas fa-users me-1"></i>
+                User Accounts
+            </div>
+            <a href="/admin/users/new" class="btn btn-primary btn-sm">
+                <i class="fas fa-user-plus me-1"></i> Add New User
+            </a>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover" id="users-table" width="100%" cellspacing="0">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Role</th>
+                            <th>Status</th>
+                            <th>Last Login</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in users %}
+                        <tr>
+                            <td>{{ user.id }}</td>
+                            <td>{{ user.name }}</td>
+                            <td>{{ user.email }}</td>
+                            <td>
+                                {% if user.role == 'administrator' %}
+                                <span class="badge bg-danger">Administrator</span>
+                                {% elif user.role == 'manager' %}
+                                <span class="badge bg-warning text-dark">Manager</span>
+                                {% else %}
+                                <span class="badge bg-info">Staff</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if user.active %}
+                                <span class="badge bg-success">Active</span>
+                                {% else %}
+                                <span class="badge bg-secondary">Inactive</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ user.last_login or 'Never' }}</td>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    <a href="/admin/users/{{ user.id }}/edit" class="btn btn-outline-primary btn-sm">
+                                        <i class="fas fa-edit"></i> Edit
+                                    </a>
+                                    <button type="button" class="btn btn-outline-danger btn-sm" data-bs-toggle="modal" data-bs-target="#deleteUserModal{{ user.id }}">
+                                        <i class="fas fa-trash"></i> Delete
+                                    </button>
+                                </div>
+                                
+                                <!-- Delete Modal -->
+                                <div class="modal fade" id="deleteUserModal{{ user.id }}" tabindex="-1" aria-labelledby="deleteUserModalLabel{{ user.id }}" aria-hidden="true">
+                                    <div class="modal-dialog">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title" id="deleteUserModalLabel{{ user.id }}">Confirm Deletion</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                Are you sure you want to delete the user <strong>{{ user.name }}</strong>? This action cannot be undone.
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                                <form action="/admin/users/delete" method="post" style="display: inline;">
+                                                    <input type="hidden" name="user_id" value="{{ user.id }}">
+                                                    <button type="submit" class="btn btn-danger">Delete User</button>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <div class="card mb-4">
+        <div class="card-header">
+            <i class="fas fa-info-circle me-1"></i>
+            User Role Information
+        </div>
+        <div class="card-body">
+            <ul class="list-group">
+                <li class="list-group-item">
+                    <span class="badge bg-danger me-2">Administrator</span>
+                    Full access to all areas of the admin panel, including user management, system settings, and all store operations.
+                </li>
+                <li class="list-group-item">
+                    <span class="badge bg-warning text-dark me-2">Manager</span>
+                    Access to manage products, orders, customers, and basic store settings. Cannot manage other users or access system settings.
+                </li>
+                <li class="list-group-item">
+                    <span class="badge bg-info me-2">Staff</span>
+                    Limited access to view and process orders and manage inventory. Cannot modify store settings or access sensitive areas.
+                </li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    $('#users-table').DataTable({
+        responsive: true,
+        order: [[0, 'asc']]
+    });
+});
+</script>
+{% endblock %}

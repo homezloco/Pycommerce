@@ -1,0 +1,144 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Edit User | {{ tenant.name }} Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4">
+    <h1 class="mt-4">Edit User</h1>
+    <ol class="breadcrumb mb-4">
+        <li class="breadcrumb-item"><a href="/admin/dashboard">Dashboard</a></li>
+        <li class="breadcrumb-item"><a href="/admin/users?tenant={{ selected_tenant }}">Users</a></li>
+        <li class="breadcrumb-item active">Edit User</li>
+    </ol>
+
+    {% if status_message %}
+    <div class="alert alert-{{ status_type }}" role="alert">
+        {{ status_message }}
+    </div>
+    {% endif %}
+
+    <div class="row">
+        <div class="col-xl-12">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-user-edit me-1"></i>
+                    Edit User: {{ user.name }}
+                </div>
+                <div class="card-body">
+                    <form action="/admin/users/update" method="post">
+                        <input type="hidden" name="tenant_id" value="{{ tenant.id }}">
+                        <input type="hidden" name="user_id" value="{{ user.id }}">
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="firstName" class="form-label">First Name</label>
+                                <input type="text" class="form-control" id="firstName" name="first_name" value="{{ user.first_name }}" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="lastName" class="form-label">Last Name</label>
+                                <input type="text" class="form-control" id="lastName" name="last_name" value="{{ user.last_name }}" required>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email Address</label>
+                            <input type="email" class="form-control" id="email" name="email" value="{{ user.email }}" required>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="password" class="form-label">New Password (leave blank to keep current)</label>
+                                <input type="password" class="form-control" id="password" name="password">
+                                <div class="form-text">Password must be at least 8 characters long with at least one uppercase letter, one number, and one special character.</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="confirmPassword" class="form-label">Confirm New Password</label>
+                                <input type="password" class="form-control" id="confirmPassword" name="confirm_password">
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="role" class="form-label">Role</label>
+                            <select class="form-select" id="role" name="role" required>
+                                <option value="administrator" {% if user.role == 'administrator' %}selected{% endif %}>Administrator</option>
+                                <option value="manager" {% if user.role == 'manager' %}selected{% endif %}>Manager</option>
+                                <option value="staff" {% if user.role == 'staff' %}selected{% endif %}>Staff</option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="active" name="active" {% if user.active %}checked{% endif %}>
+                                <label class="form-check-label" for="active">
+                                    Active Account
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <p class="mb-1"><strong>Last Login:</strong></p>
+                                <p>{{ user.last_login or 'Never' }}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <p class="mb-1"><strong>Account Created:</strong></p>
+                                <p>{{ user.created_at }}</p>
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between">
+                            <a href="/admin/users?tenant={{ selected_tenant }}" class="btn btn-secondary">Cancel</a>
+                            <button type="submit" class="btn btn-primary">Update User</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Password validation - only if a new password is entered
+    document.getElementById('password').addEventListener('input', function() {
+        const password = this.value;
+        
+        // If password field is empty, no validation needed
+        if (!password) {
+            this.setCustomValidity('');
+            return;
+        }
+        
+        const hasUpperCase = /[A-Z]/.test(password);
+        const hasNumber = /[0-9]/.test(password);
+        const hasSpecial = /[^A-Za-z0-9]/.test(password);
+        const isLongEnough = password.length >= 8;
+        
+        let feedback = '';
+        if (!isLongEnough) feedback += 'Password must be at least 8 characters. ';
+        if (!hasUpperCase) feedback += 'Include at least one uppercase letter. ';
+        if (!hasNumber) feedback += 'Include at least one number. ';
+        if (!hasSpecial) feedback += 'Include at least one special character. ';
+        
+        this.setCustomValidity(feedback);
+    });
+    
+    // Password confirmation - only if a new password is entered
+    document.getElementById('confirmPassword').addEventListener('input', function() {
+        const password = document.getElementById('password').value;
+        
+        // If password field is empty, no validation needed
+        if (!password) {
+            this.setCustomValidity('');
+            return;
+        }
+        
+        if (this.value !== password) {
+            this.setCustomValidity('Passwords do not match');
+        } else {
+            this.setCustomValidity('');
+        }
+    });
+</script>
+{% endblock %}
