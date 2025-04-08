@@ -594,7 +594,7 @@ class ShipmentManager:
         
         try:
             # Late import to prevent circular imports
-            from models import Order, Shipment, ShipmentItem, Customer, Tenant
+            from models import Order, Shipment, ShipmentItem, User, Tenant
             
             # Update status and tracking info
             shipment.status = status
@@ -626,8 +626,8 @@ class ShipmentManager:
                         # Import email service here to avoid circular imports
                         from pycommerce.services.mail_service import get_email_service
                         
-                        # Get customer email from the order
-                        customer = Customer.query.filter_by(id=order.customer_id).first()
+                        # Get customer email from the order - use user as customer
+                        customer = User.query.filter_by(id=order.user_id).first()
                         if customer and customer.email:
                             # Get store information from the tenant
                             tenant = Tenant.query.filter_by(id=order.tenant_id).first()
