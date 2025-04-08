@@ -264,12 +264,8 @@ def create_test_orders(tenant_slug="tech", user_email="testuser@example.com", nu
                 if has_order_type:
                     logger.info("Database has order_type column, setting order type")
                     try:
-                        # Allow for either enum or string value
-                        if HAS_ORDER_ENUMS and hasattr(OrderType, order_type):
-                            order_args["order_type"] = getattr(OrderType, order_type)
-                        else:
-                            # If we can't use the enum, try with string (may or may not work depending on schema)
-                            order_args["order_type"] = order_type
+                        # Always use string value for order_type since the models.py Order model is using String column
+                        order_args["order_type"] = order_type
                     except (KeyError, AttributeError):
                         logger.warning(f"Couldn't set order_type to {order_type}, field may not exist")
                 else:

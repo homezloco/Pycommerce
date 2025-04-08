@@ -117,6 +117,7 @@ class Order(db.Model):
     customer_id = Column(String(36), ForeignKey("users.id"), nullable=True)
     order_number = Column(String(50), nullable=True)
     status = Column(String(50), default="pending")
+    order_type = Column(String(50), default="STANDARD", nullable=True)  # Added to match DB migration
     total = Column(Float, default=0.0)
     subtotal = Column(Float, default=0.0)
     tax = Column(Float, default=0.0)

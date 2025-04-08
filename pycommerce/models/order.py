@@ -57,9 +57,8 @@ class Order(Base):
     customer_id = Column(String(36), nullable=True)
     order_number = Column(String(50), nullable=False, unique=True)
     status = Column(SQLAlchemyEnum(OrderStatus), default=OrderStatus.PENDING)
-    # Note: order_type is commented out because it's not in the database yet
-    # Uncomment this when performing a proper migration to add this column
-    # order_type = Column(SQLAlchemyEnum(OrderType), default=OrderType.STANDARD)
+    # Added through migration
+    order_type = Column(SQLAlchemyEnum(OrderType), default=OrderType.STANDARD, nullable=True)
     total = Column(Float, nullable=False, default=0.0)
     subtotal = Column(Float, nullable=False, default=0.0)
     tax = Column(Float, nullable=False, default=0.0)
