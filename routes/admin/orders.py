@@ -105,6 +105,7 @@ def get_order_items(order_id):
                     result.append({
                         "product_id": str(item.product_id),
                         "name": name,
+                        "product_name": name,  # Add this field to match template expectation
                         "sku": sku,
                         "quantity": item.quantity,
                         "price": item.price,
@@ -121,6 +122,7 @@ def get_order_items(order_id):
                     result.append({
                         "product_id": str(item.product_id),
                         "name": "Unknown Product",
+                        "product_name": "Unknown Product",  # Add this field to match template expectation
                         "sku": "N/A",
                         "quantity": item.quantity,
                         "price": item.price,
