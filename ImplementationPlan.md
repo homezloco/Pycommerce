@@ -47,6 +47,7 @@ PyCommerce is a scalable, multi-tenant ecommerce platform built with Python. It 
 - ✅ **User Management Interface**: Complete admin UI for creating, editing, and deleting user accounts
 - ✅ **Admin Sidebar Navigation**: Fixed persistent sidebar menu for improved admin panel navigation
 
+- ✅ **Order Detail Enhancement**: Fixed product name display in the order items list to show proper product names instead of SKUs
 ### In Progress:
 
 - 🔄 **Admin Dashboard**: Enhancing admin controls and analytics
@@ -333,11 +334,12 @@ For existing ecommerce stores looking to migrate to PyCommerce:
 17. ✅ Resolve SQLAlchemy model conflicts with centralized model registry pattern - COMPLETED
 18. ✅ Implement complete user management interface with CRUD operations - COMPLETED
 19. ✅ Fix admin sidebar navigation for improved dashboard usability - COMPLETED
-20. 🔄 Finalize payment integrations with proper credentials
-21. 🔄 Optimize system performance and database queries
-22. 🔄 Enhance admin dashboard with analytics
-23. ⏳ Add return processing workflow
-24. ⏳ Implement shipping notifications
+20. ✅ Fix product name display in the order items list - COMPLETED
+21. 🔄 Finalize payment integrations with proper credentials
+22. 🔄 Optimize system performance and database queries
+23. 🔄 Enhance admin dashboard with analytics
+24. ⏳ Add return processing workflow
+25. ⏳ Implement shipping notifications
 
 
 ### Future Roadmap
