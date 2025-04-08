@@ -142,32 +142,32 @@ async def store(
             # First try to access the products directly from the database
             try:
                 # Import Product model directly to query the database
-                from models import Product
-                from app import app
+                from pycommerce.models.db_registry import Product as DbProduct
+                from pycommerce.core.db import get_db
                 
                 logger.info(f"Querying database directly for products of tenant: {tenant_obj.id}")
                 
-                # Build the query
-                with app.app_context():
-                    query = Product.query.filter_by(tenant_id=str(tenant_obj.id))
-                    
-                    # Apply filters
-                    if filters_dict.get("category"):
-                        category = filters_dict["category"]
-                        query = query.filter(Product.categories.contains(f'["{category}"]'))
-                    
-                    if filters_dict.get("min_price") is not None:
-                        query = query.filter(Product.price >= filters_dict["min_price"])
-                    
-                    if filters_dict.get("max_price") is not None:
-                        query = query.filter(Product.price <= filters_dict["max_price"])
-                    
-                    if filters_dict.get("in_stock") is not None and filters_dict["in_stock"]:
-                        query = query.filter(Product.stock > 0)
-                    
-                    # Execute the query
-                    tenant_products = query.all()
-                    logger.info(f"Found {len(tenant_products)} products in database")
+                # Build the query using SQLAlchemy session
+                session = get_db()
+                query = session.query(DbProduct).filter(DbProduct.tenant_id == str(tenant_obj.id))
+                
+                # Apply filters
+                if filters_dict.get("category"):
+                    category = filters_dict["category"]
+                    query = query.filter(DbProduct.categories.contains(f'["{category}"]'))
+                
+                if filters_dict.get("min_price") is not None:
+                    query = query.filter(DbProduct.price >= filters_dict["min_price"])
+                
+                if filters_dict.get("max_price") is not None:
+                    query = query.filter(DbProduct.price <= filters_dict["max_price"])
+                
+                if filters_dict.get("in_stock") is not None and filters_dict["in_stock"]:
+                    query = query.filter(DbProduct.stock > 0)
+                
+                # Execute the query
+                tenant_products = query.all()
+                logger.info(f"Found {len(tenant_products)} products in database")
             
             except Exception as e:
                 logger.error(f"Error querying database directly: {str(e)}")
