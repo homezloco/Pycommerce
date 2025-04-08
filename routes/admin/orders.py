@@ -30,7 +30,7 @@ order_manager = OrderManager()
 order_note_manager = OrderNoteManager()
 tenant_manager = TenantManager()
 
-# Custom functions for notes to avoid SQLAlchemy detached object issues
+# Custom functions to avoid SQLAlchemy detached object issues
 def get_notes_for_order(order_id):
     """Get notes for an order using a fresh session."""
     try:
@@ -52,6 +52,73 @@ def get_notes_for_order(order_id):
     except Exception as e:
         logger.error(f"Error getting notes for order: {e}")
         return []
+
+def get_order_items(order_id):
+    """Get items for an order using a fresh session to avoid detached object issues."""
+    try:
+        from pycommerce.models.order import OrderItem, Order
+        from pycommerce.models.product import Product
+        
+        with get_session() as session:
+            # Get order items with joined product information
+            items = session.query(OrderItem).join(
+                Order, OrderItem.order_id == Order.id
+            ).outerjoin(
+                Product, OrderItem.product_id == Product.id
+            ).filter(
+                OrderItem.order_id == str(order_id)
+            ).all()
+            
+            # Convert to dictionaries to avoid session issues
+            result = []
+            for item in items:
+                # Get product name and SKU safely
+                name = getattr(item, 'name', None)
+                if name is None and hasattr(item, 'product') and item.product:
+                    name = item.product.name
+                
+                sku = getattr(item, 'sku', None)
+                if sku is None and hasattr(item, 'product') and item.product:
+                    sku = item.product.sku
+                    
+                result.append({
+                    "product_id": str(item.product_id),
+                    "name": name or "Unknown Product",
+                    "sku": sku or "N/A",
+                    "quantity": item.quantity,
+                    "price": item.price,
+                    "total": item.price * item.quantity
+                })
+            return result
+    except Exception as e:
+        logger.error(f"Error getting items for order: {e}")
+        import traceback
+        logger.error(f"Traceback: {traceback.format_exc()}")
+        return []
+
+def get_order_items_count(order_id):
+    """Get the count of items for an order using a fresh session."""
+    try:
+        from pycommerce.models.order import OrderItem
+        
+        with get_session() as session:
+            count = session.query(OrderItem).filter(
+                OrderItem.order_id == str(order_id)
+            ).count()
+            return count
+    except Exception as e:
+        logger.error(f"Error getting item count for order: {e}")
+        return 0
+
+# Override OrderNoteManager's get_for_order method
+original_get_for_order = OrderNoteManager.get_for_order
+
+def safe_get_for_order(self, order_id):
+    """Override the original method to use our session-safe implementation."""
+    return get_notes_for_order(order_id)
+
+# Apply the monkey patch
+OrderNoteManager.get_for_order = safe_get_for_order
 
 @router.get("/orders", response_class=HTMLResponse)
 async def admin_orders(
@@ -109,14 +176,8 @@ async def admin_orders(
     # Serialize orders for template
     orders_data = []
     for order in orders:
-        # Get items count safely (order might be detached from session)
-        items_count = 0
-        try:
-            # Try to get items count if available
-            if hasattr(order, 'items') and order.items is not None:
-                items_count = len(order.items)
-        except Exception as e:
-            logger.warning(f"Could not get items count for order {order.id}: {e}")
+        # Get items count using our session-safe function
+        items_count = get_order_items_count(str(order.id))
             
         orders_data.append({
             "id": str(order.id),
@@ -196,33 +257,8 @@ async def admin_order_detail(
         # Get order notes using our custom function
         notes_data = get_notes_for_order(order_id)
         
-        # Format items for display - safely handle possibly detached items
-        items_data = []
-        try:
-            if hasattr(order, 'items') and order.items is not None:
-                for item in order.items:
-                    try:
-                        # Get product name and SKU safely
-                        name = getattr(item, 'name', None)
-                        if name is None and hasattr(item, 'product') and item.product:
-                            name = item.product.name
-                        
-                        sku = getattr(item, 'sku', None)
-                        if sku is None and hasattr(item, 'product') and item.product:
-                            sku = item.product.sku
-                            
-                        items_data.append({
-                            "product_id": str(item.product_id),
-                            "name": name or "Unknown Product",
-                            "sku": sku or "N/A",
-                            "quantity": item.quantity,
-                            "price": item.price,
-                            "total": item.price * item.quantity
-                        })
-                    except Exception as e:
-                        logger.warning(f"Error processing order item: {e}")
-        except Exception as e:
-            logger.warning(f"Could not access order items: {e}")
+        # Get items using our session-safe function
+        items_data = get_order_items(order_id)
         
         # Format order data for template
         order_data = {
@@ -347,33 +383,8 @@ async def admin_order_fulfillment(
                 status_code=303
             )
         
-        # Format items for display - safely handle possibly detached items
-        items_data = []
-        try:
-            if hasattr(order, 'items') and order.items is not None:
-                for item in order.items:
-                    try:
-                        # Get product name and SKU safely
-                        name = getattr(item, 'name', None)
-                        if name is None and hasattr(item, 'product') and item.product:
-                            name = item.product.name
-                        
-                        sku = getattr(item, 'sku', None)
-                        if sku is None and hasattr(item, 'product') and item.product:
-                            sku = item.product.sku
-                            
-                        items_data.append({
-                            "product_id": str(item.product_id),
-                            "name": name or "Unknown Product",
-                            "sku": sku or "N/A",
-                            "quantity": item.quantity,
-                            "price": item.price,
-                            "total": item.price * item.quantity
-                        })
-                    except Exception as e:
-                        logger.warning(f"Error processing order item: {e}")
-        except Exception as e:
-            logger.warning(f"Could not access order items: {e}")
+        # Get items using our session-safe function
+        items_data = get_order_items(order_id)
         
         # Get available shipping carriers
         carriers = ["FedEx", "UPS", "USPS", "DHL"]
