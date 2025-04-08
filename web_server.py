@@ -125,52 +125,6 @@ async def index(request: Request):
         except Exception:
             pass
             
-    # Default shipping config
-    shipping_config = {
-        "store_country": "US",
-        "store_postal_code": "",
-        "free_shipping_threshold": 100,
-        "dimensional_weight_factor": 5000,
-        "express_multiplier": 1.75,
-        "flat_rate_domestic": 5.99,
-        "flat_rate_international": 19.99,
-        "weight_rates": {
-            "domestic": {"base_rate": 5.99, "per_kg": 1.5, "min_weight_kg": 0.1},
-            "continental": {"base_rate": 12.99, "per_kg": 3.5, "min_weight_kg": 0.1},
-            "international_close": {"base_rate": 18.99, "per_kg": 5.0, "min_weight_kg": 0.1},
-            "international_far": {"base_rate": 29.99, "per_kg": 8.0, "min_weight_kg": 0.1}
-        }
-    }
-    
-    # Get current tenant from request or default to None
-    selected_tenant = None
-    try:
-        # Try to get tenant from domain or query parameter
-        tenant_slug = request.query_params.get('tenant')
-        if tenant_slug:
-            tenant = tenant_manager.get_by_slug(tenant_slug)
-            if tenant:
-                selected_tenant = {
-                    "id": str(tenant.id),
-                    "name": tenant.name,
-                    "slug": tenant.slug
-                }
-    except Exception as e:
-        logger.error(f"Error determining current tenant: {e}")
-    
-    # Get shipping config if tenant is selected
-    if selected_tenant:
-        try:
-            from pycommerce.plugins import get_plugin_registry
-            plugin_registry = get_plugin_registry()
-            shipping_plugin = plugin_registry.get_shipping_plugin('standard')
-            
-            if shipping_plugin:
-                tenant_shipping_config = shipping_plugin.get_shipping_config(str(selected_tenant["id"]))
-                if tenant_shipping_config:
-                    shipping_config.update(tenant_shipping_config)
-        except Exception as e:
-            logger.error(f"Error loading shipping configuration: {e}")
     return templates.TemplateResponse(
         "index.html", 
         {
@@ -400,19 +354,7 @@ async def store(
     theme_settings = {}
     if tenant_obj and hasattr(tenant_obj, 'settings') and tenant_obj.settings:
         theme_settings = tenant_obj.settings.get('theme', {})
-        logger.info(f"Theme settings for tenant {tenant_obj.name}: {theme_settings}")
-    else:
-        logger.warning(f"No theme settings found for tenant {tenant_obj.name if tenant_obj else 'unknown'}")
-        
-    # Check if logo_url exists
-    if 'logo_url' not in theme_settings or not theme_settings.get('logo_url'):
-        # Refetch the tenant using our improved get_by_slug method that always gets fresh data
-        logger.info(f"No logo found in theme settings, re-fetching tenant with slug: {slug}")
-        tenant_obj = tenant_manager.get_by_slug(slug)
-        if tenant_obj and hasattr(tenant_obj, 'settings') and tenant_obj.settings:
-            theme_settings = tenant_obj.settings.get('theme', {})
-            logger.info(f"Re-fetched theme settings: {theme_settings}")
-            
+    
     return templates.TemplateResponse(
         "store/index.html", 
         {
@@ -676,37 +618,6 @@ async def admin_store_settings(
                 status_message = f"Error loading AI configuration: {str(e)}"
                 status_type = "danger"
     
-    # Default shipping config
-    shipping_config = {
-        "store_country": "US",
-        "store_postal_code": "",
-        "free_shipping_threshold": 100,
-        "dimensional_weight_factor": 5000,
-        "express_multiplier": 1.75,
-        "flat_rate_domestic": 5.99,
-        "flat_rate_international": 19.99,
-        "weight_rates": {
-            "domestic": {"base_rate": 5.99, "per_kg": 1.5, "min_weight_kg": 0.1},
-            "continental": {"base_rate": 12.99, "per_kg": 3.5, "min_weight_kg": 0.1},
-            "international_close": {"base_rate": 18.99, "per_kg": 5.0, "min_weight_kg": 0.1},
-            "international_far": {"base_rate": 29.99, "per_kg": 8.0, "min_weight_kg": 0.1}
-        }
-    }
-    
-    # Get shipping config if tenant is selected
-    if selected_tenant:
-        try:
-            from pycommerce.plugins import get_plugin_registry
-            plugin_registry = get_plugin_registry()
-            shipping_plugin = plugin_registry.get_shipping_plugin('standard')
-            
-            if shipping_plugin:
-                tenant_shipping_config = shipping_plugin.get_shipping_config(str(selected_tenant["id"]))
-                if tenant_shipping_config:
-                    shipping_config.update(tenant_shipping_config)
-        except Exception as e:
-            logger.error(f"Error loading shipping configuration: {e}")
-            
     return templates.TemplateResponse(
         "admin/store_settings.html", 
         {
@@ -724,9 +635,7 @@ async def admin_store_settings(
             "ai_providers": ai_providers,
             "active_provider": active_provider,
             "selected_provider": selected_provider,
-            "field_values": field_values,
-            # Shipping config data
-            "config": shipping_config
+            "field_values": field_values
         }
     )
 
@@ -773,255 +682,6 @@ async def admin_store_settings_update(
         error_message = str(e).replace(" ", "+")
         return RedirectResponse(
             url=f"/admin/store-settings?tenant={store_slug}&status_message={error_message}&status_type=danger", 
-            status_code=303
-        )
-
-# Admin shipping settings
-@app.get("/admin/shipping-settings", response_class=HTMLResponse)
-async def admin_shipping_settings(request: Request, status_message: Optional[str] = None, status_type: str = "info"):
-    """Admin page for managing shipping settings."""
-    # Get all tenants for the store selector
-    tenants = []
-    try:
-        tenants_list = tenant_manager.list() or []
-        tenants = [
-            {
-                "id": str(t.id),
-                "name": t.name,
-                "slug": t.slug,
-                "domain": t.domain if hasattr(t, 'domain') else None,
-                "active": t.active if hasattr(t, 'active') else True
-            }
-            for t in tenants_list if t and hasattr(t, 'id')
-        ]
-        
-        # Get selected tenant from query param
-        selected_tenant_slug = request.query_params.get('tenant')
-        if not selected_tenant_slug and tenants:
-            selected_tenant_slug = tenants[0]["slug"]
-            
-        # Get the tenant details
-        tenant = None
-        shipping_config = {}
-        if selected_tenant_slug:
-            tenant_obj = tenant_manager.get_by_slug(selected_tenant_slug)
-            if tenant_obj:
-                tenant = {
-                    "id": str(tenant_obj.id),
-                    "name": tenant_obj.name,
-                    "slug": tenant_obj.slug,
-                    "domain": tenant_obj.domain,
-                    "active": tenant_obj.active
-                }
-                
-                # Get shipping configuration
-                try:
-                    # Get shipping plugin from the registry
-                    from pycommerce.plugins import get_plugin_registry
-                    plugin_registry = get_plugin_registry()
-                    shipping_plugin = plugin_registry.get_shipping_plugin('standard')
-                    if shipping_plugin:
-                        # Get configuration for this tenant
-                        shipping_config = shipping_plugin.get_shipping_config(str(tenant_obj.id))
-                        
-                        # Ensure the weight_rates dictionary is properly structured
-                        # This is a safety check in case the config is missing some expected values
-                        if "weight_rates" not in shipping_config:
-                            shipping_config["weight_rates"] = {}
-                        
-                        # Ensure all required zones exist
-                        zones = ['domestic', 'continental', 'international_close', 'international_far']
-                        for zone in zones:
-                            if zone not in shipping_config["weight_rates"]:
-                                shipping_config["weight_rates"][zone] = {
-                                    "base_rate": 5.99 if zone == 'domestic' else 19.99,
-                                    "per_kg": 0.5 if zone == 'domestic' else 2.0,
-                                    "min_weight_kg": 0.1
-                                }
-                    else:
-                        raise ValueError("Standard shipping plugin not found")
-                except Exception as e:
-                    logger.error(f"Error loading shipping configuration: {str(e)}")
-                    if status_message is None:
-                        status_message = f"Error loading shipping configuration: {str(e)}"
-                        status_type = "danger"
-                        
-                    # Provide a default configuration in case of error
-                    shipping_config = {
-                        "store_country": "US",
-                        "store_postal_code": "",
-                        "free_shipping_threshold": 50.00,
-                        "flat_rate_domestic": 5.99,
-                        "flat_rate_international": 19.99,
-                        "dimensional_weight_factor": 200,
-                        "express_multiplier": 1.75,
-                        "weight_rates": {
-                            "domestic": {
-                                "base_rate": 5.99,
-                                "per_kg": 0.5,
-                                "min_weight_kg": 0.1
-                            },
-                            "continental": {
-                                "base_rate": 12.99,
-                                "per_kg": 2.0,
-                                "min_weight_kg": 0.1
-                            },
-                            "international_close": {
-                                "base_rate": 19.99,
-                                "per_kg": 4.0,
-                                "min_weight_kg": 0.1
-                            },
-                            "international_far": {
-                                "base_rate": 29.99,
-                                "per_kg": 6.0,
-                                "min_weight_kg": 0.1
-                            }
-                        }
-                    }
-        
-        # Get cart item count if available
-        cart_item_count = 0
-        session = request.session
-        if 'cart_id' in session:
-            try:
-                cart_id = session['cart_id']
-                cart = cart_manager.get(cart_id)
-                cart_item_count = sum(item.quantity for item in cart.items)
-            except Exception:
-                pass
-                
-    except Exception as e:
-        logger.error(f"Error loading shipping settings: {str(e)}")
-        if status_message is None:
-            status_message = f"Error loading shipping settings: {str(e)}"
-            status_type = "danger"
-    
-    return templates.TemplateResponse(
-        "admin/shipping_settings.html", 
-        {
-            "request": request,
-            "active_page": "shipping_settings",
-            "tenants": tenants,
-            "tenant": tenant,
-            "config": shipping_config,
-            "cart_item_count": cart_item_count,
-            "success": status_message if status_type == "success" else None,
-            "error": status_message if status_type == "danger" else None
-        }
-    )
-
-@app.post("/admin/shipping-settings", response_class=RedirectResponse)
-async def admin_save_shipping_settings(request: Request):
-    """Save shipping settings for a tenant."""
-    try:
-        form_data = await request.form()
-        
-        # Get the selected tenant from the query parameters
-        selected_tenant_slug = request.query_params.get('tenant')
-        
-        if not selected_tenant_slug:
-            raise ValueError("No tenant selected")
-        
-        # Get the tenant
-        tenant_obj = tenant_manager.get_by_slug(selected_tenant_slug)
-        if not tenant_obj:
-            raise ValueError(f"Tenant not found: {selected_tenant_slug}")
-        
-        # Create shipping settings dictionary
-        store_country = form_data.get("store_country", "US")
-        shipping_config = {
-            # Basic configuration (backwards compatibility)
-            "flat_rate_domestic": float(form_data.get("flat_rate_domestic", 5.99)),
-            "flat_rate_international": float(form_data.get("flat_rate_international", 19.99)),
-            "free_shipping_threshold": float(form_data.get("free_shipping_threshold", 50.00)),
-            
-            # Advanced configuration
-            "store_country": store_country,
-            "store_postal_code": form_data.get("store_postal_code", ""),
-            "dimensional_weight_factor": float(form_data.get("dimensional_weight_factor", 200)),
-            "express_multiplier": float(form_data.get("express_multiplier", 1.75)),
-            
-            # Weight-based rates
-            "weight_rates": {}
-        }
-        
-        # Process weight rates for each zone
-        zones = ['domestic', 'continental', 'international_close', 'international_far']
-        
-        # Debug log form data keys to see what we're getting
-        logger.info(f"Form data keys: {form_data.keys()}")
-        
-        for zone in zones:
-            # Handle form data that may have special formatting for nested keys
-            # Try multiple formats to handle different ways browsers might encode form data
-            possible_base_rate_keys = [
-                f"weight_rates[{zone}][base_rate]",  # Standard format
-                f"weight_rates.{zone}.base_rate",    # Dot notation
-                f"weight_rates_{zone}_base_rate"     # Underscore notation
-            ]
-            
-            possible_per_kg_keys = [
-                f"weight_rates[{zone}][per_kg]",
-                f"weight_rates.{zone}.per_kg",
-                f"weight_rates_{zone}_per_kg"
-            ]
-            
-            possible_min_weight_keys = [
-                f"weight_rates[{zone}][min_weight_kg]",
-                f"weight_rates.{zone}.min_weight_kg",
-                f"weight_rates_{zone}_min_weight_kg"
-            ]
-            
-            # Find the first key that exists in form_data
-            base_rate_key = next((key for key in possible_base_rate_keys if key in form_data), None)
-            per_kg_key = next((key for key in possible_per_kg_keys if key in form_data), None)
-            min_weight_key = next((key for key in possible_min_weight_keys if key in form_data), None)
-            
-            # Default values if specific zone rates aren't found
-            default_base_rate = 5.99 if zone == 'domestic' else (
-                12.99 if zone == 'continental' else (
-                    19.99 if zone == 'international_close' else 29.99
-                )
-            )
-            default_per_kg = 0.5 if zone == 'domestic' else (
-                2.0 if zone == 'continental' else (
-                    4.0 if zone == 'international_close' else 6.0
-                )
-            )
-            
-            # Set values with fallbacks
-            shipping_config["weight_rates"][zone] = {
-                "base_rate": float(form_data.get(base_rate_key, default_base_rate)) if base_rate_key else default_base_rate,
-                "per_kg": float(form_data.get(per_kg_key, default_per_kg)) if per_kg_key else default_per_kg,
-                "min_weight_kg": float(form_data.get(min_weight_key, 0.1)) if min_weight_key else 0.1,
-            }
-            
-            # Log the values being saved
-            logger.info(f"Saving weight rates for zone {zone}: {shipping_config['weight_rates'][zone]}")
-        
-        # Save configuration to plugin settings
-        from pycommerce.core import PluginConfigManager
-        config_manager = PluginConfigManager()
-        config_manager.save_config("standard-shipping", str(tenant_obj.id), shipping_config)
-        
-        logger.info(f"Saved shipping settings for tenant {selected_tenant_slug}")
-        
-        # Redirect back to the shipping settings page with success message
-        return RedirectResponse(
-            url=f"/admin/shipping-settings?tenant={selected_tenant_slug}&status_message=Shipping+settings+saved+successfully&status_type=success", 
-            status_code=303
-        )
-        
-    except Exception as e:
-        logger.error(f"Error saving shipping settings: {str(e)}")
-        
-        # Redirect with error message
-        error_message = f"Error saving shipping settings: {str(e)}"
-        tenant_param = request.query_params.get('tenant', '')
-        tenant_query = f"tenant={tenant_param}" if tenant_param else ""
-        
-        return RedirectResponse(
-            url=f"/admin/shipping-settings?{tenant_query}&status_message={error_message}&status_type=danger", 
             status_code=303
         )
 
@@ -1104,10 +764,9 @@ async def admin_save_theme_settings(request: Request):
     """Save theme settings for a tenant."""
     try:
         form_data = await request.form()
-        logger.info(f"Form data received: {dict(form_data)}")
         
-        # Get the selected tenant from the query parameters
-        selected_tenant_slug = request.query_params.get('tenant')
+        # Get the selected tenant from form data or query parameters as fallback
+        selected_tenant_slug = form_data.get('tenant_slug') or request.query_params.get('tenant')
         
         if not selected_tenant_slug:
             raise ValueError("No tenant selected")
@@ -1116,17 +775,6 @@ async def admin_save_theme_settings(request: Request):
         tenant_obj = tenant_manager.get_by_slug(selected_tenant_slug)
         if not tenant_obj:
             raise ValueError(f"Tenant not found: {selected_tenant_slug}")
-        
-        # Log tenant data before update
-        logger.info(f"Current tenant settings before update: {tenant_obj.settings}")
-        
-        # Explicitly get logo URL and log it
-        logo_url = form_data.get("logo_url", "")
-        logo_position = form_data.get("logo_position", "left")
-        logger.info(f"Saving theme settings for tenant {selected_tenant_slug}:")
-        logger.info(f"Logo URL: '{logo_url}'")
-        logger.info(f"Logo Position: '{logo_position}'")
-        logger.info(f"Custom CSS: '{form_data.get('custom_css', '')}'")
         
         # Create theme settings dictionary
         theme_settings = {
@@ -1152,10 +800,6 @@ async def admin_save_theme_settings(request: Request):
             "product_card_style": form_data.get("product_card_style", "standard"),
             "button_style": form_data.get("button_style", "standard"),
             
-            # IMPORTANT: Logo settings
-            "logo_url": logo_url,
-            "logo_position": logo_position,
-            
             # Custom CSS
             "custom_css": form_data.get("custom_css", ""),
             
@@ -1163,24 +807,8 @@ async def admin_save_theme_settings(request: Request):
             "updated_at": datetime.now().isoformat()
         }
         
-        # Add debugging to verify logo_url is in the theme_settings
-        logger.info(f"Theme settings being sent to update_theme: {theme_settings}")
-        logger.info(f"logo_url key exists in theme_settings: {'logo_url' in theme_settings}")
-        logger.info(f"logo_url value in theme_settings: '{theme_settings.get('logo_url', 'NOT FOUND')}'")
-        
         # Update tenant theme settings
-        updated_tenant = tenant_manager.update_theme(tenant_obj.id, theme_settings)
-        
-        # Log the saved theme settings from the returned tenant
-        if updated_tenant and hasattr(updated_tenant, 'settings') and updated_tenant.settings:
-            logger.info(f"Theme settings after update (from returned tenant): {updated_tenant.settings.get('theme', {})}")
-            logger.info(f"logo_url in returned settings: '{updated_tenant.settings.get('theme', {}).get('logo_url', 'NOT FOUND')}'")
-        
-        # Force a fresh fetch to verify the changes were saved to the database
-        fresh_tenant = tenant_manager.get_by_slug(selected_tenant_slug)
-        if fresh_tenant and hasattr(fresh_tenant, 'settings') and fresh_tenant.settings:
-            logger.info(f"Fresh theme settings after update: {fresh_tenant.settings.get('theme', {})}")
-            logger.info(f"logo_url in fresh settings: '{fresh_tenant.settings.get('theme', {}).get('logo_url', 'NOT FOUND')}'")
+        tenant_manager.update_theme(tenant_obj.id, theme_settings)
         
         status_message = "Theme settings saved successfully"
         status_type = "success"
@@ -2602,12 +2230,12 @@ async def admin_download_media(
         )
 
 @app.delete("/admin/media/{media_id}", response_class=RedirectResponse)
-async def admin_delete_media_via_api(
+async def admin_delete_media(
     request: Request,
     media_id: str,
     tenant_id: str = Form(...)
 ):
-    """Delete a media file via API (DELETE request)."""
+    """Delete a media file."""
     try:
         # Use the media service to delete the media
         result = media_service.delete_media(media_id)
@@ -2626,49 +2254,7 @@ async def admin_delete_media_via_api(
         logger.error(f"Error deleting media: {str(e)}")
         error_message = f"Error deleting media: {str(e)}"
         return RedirectResponse(
-            url=f"/admin/media?tenant={tenant_id if tenant_id else ''}&status_message={error_message}&status_type=danger", 
-            status_code=303
-        )
-@app.get("/admin/media/delete/{media_id}", response_class=RedirectResponse)
-async def admin_delete_media(
-    request: Request,
-    media_id: str
-):
-    """Delete a media file via browser link (GET request)."""
-    try:
-        # Get tenant ID from session or query params if available
-        selected_tenant_slug = None
-        tenant_id = None
-        
-        if "selected_tenant" in request.session:
-            selected_tenant_slug = request.session.get("selected_tenant")
-        
-        if selected_tenant_slug:
-            try:
-                selected_tenant = tenant_manager.get_by_slug(selected_tenant_slug)
-                if selected_tenant and hasattr(selected_tenant, 'id'):
-                    tenant_id = str(selected_tenant.id)
-            except Exception as e:
-                logger.warning(f"Could not get tenant with slug '{selected_tenant_slug}': {str(e)}")
-        
-        # Use the media service to delete the media
-        result = media_service.delete_media(media_id)
-        if result:
-            return RedirectResponse(
-                url=f"/admin/media?tenant={tenant_id if tenant_id else ''}&status_message=Media+deleted+successfully&status_type=success", 
-                status_code=303
-            )
-        else:
-            error_message = "Deletion failed. Please try again."
-            return RedirectResponse(
-                url=f"/admin/media?tenant={tenant_id if tenant_id else ''}&status_message={error_message}&status_type=danger", 
-                status_code=303
-            )
-    except Exception as e:
-        logger.error(f"Error deleting media: {str(e)}")
-        error_message = f"Error deleting media: {str(e)}"
-        return RedirectResponse(
-            url=f"/admin/media?status_message={error_message}&status_type=danger",
+            url=f"/admin/media?tenant={tenant_id}&status_message={error_message}&status_type=danger", 
             status_code=303
         )
 

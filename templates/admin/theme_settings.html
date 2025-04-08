@@ -42,7 +42,8 @@
             </div>
         </div>
         <div class="card-body">
-            <form method="POST" action="/admin/theme-settings?tenant={{ tenant.slug }}">
+            <form method="POST" action="/admin/theme-settings">
+                <input type="hidden" name="tenant_slug" value="{{ tenant.slug }}">
                 <div class="row">
                     <div class="col-md-6 mb-4">
                         <div class="card h-100">
