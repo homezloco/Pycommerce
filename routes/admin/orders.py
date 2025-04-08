@@ -87,8 +87,8 @@ def get_order_items(order_id):
             for item in items:
                 try:
                     # Get product details directly from database to avoid relationship issues
-                    from pycommerce.models.product import Product 
-                    # Import the correct Product model
+                    from pycommerce.models.db_registry import Product
+                    # Import the correct SQLAlchemy Product model from db_registry
                     
                     # Build a correct SQLAlchemy query
                     product = session.query(Product).filter(
@@ -362,6 +362,20 @@ async def admin_order_detail(
                     status_value = order.status.value.lower()
                 elif hasattr(order.status, 'name'):
                     status_value = order.status.name.lower()
+                elif isinstance(order.status, int):
+                    # If it's an integer, convert to string
+                    from pycommerce.models.order import OrderStatus
+                    status_values = {
+                        1: "pending",
+                        2: "processing",
+                        3: "paid",
+                        4: "shipped",
+                        5: "delivered",
+                        6: "completed",
+                        7: "cancelled",
+                        8: "refunded"
+                    }
+                    status_value = status_values.get(order.status, "pending")
                 else:
                     # If it's already a string
                     status_value = str(order.status).lower()
@@ -521,6 +535,20 @@ async def admin_order_fulfillment(
                     status_value = order.status.value.lower()
                 elif hasattr(order.status, 'name'):
                     status_value = order.status.name.lower()
+                elif isinstance(order.status, int):
+                    # If it's an integer, convert to string
+                    from pycommerce.models.order import OrderStatus
+                    status_values = {
+                        1: "pending",
+                        2: "processing",
+                        3: "paid",
+                        4: "shipped",
+                        5: "delivered",
+                        6: "completed",
+                        7: "cancelled",
+                        8: "refunded"
+                    }
+                    status_value = status_values.get(order.status, "pending")
                 else:
                     # If it's already a string
                     status_value = str(order.status).lower()
