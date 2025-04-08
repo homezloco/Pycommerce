@@ -387,8 +387,12 @@ async def admin_order_detail(
         
         order_data = {
             "id": str(order.id),
+            "order_number": getattr(order, 'order_number', '') or '',
+            # Customer information
             "customer_name": getattr(order, 'customer_name', '') or '',
             "customer_email": getattr(order, 'customer_email', '') or '',
+            "customer_phone": getattr(order, 'customer_phone', '') or '',
+            # Shipping address
             "shipping_address": {
                 "address_line1": getattr(order, 'shipping_address_line1', '') or '',
                 "address_line2": getattr(order, 'shipping_address_line2', '') or '',
@@ -397,13 +401,36 @@ async def admin_order_detail(
                 "postal_code": getattr(order, 'shipping_postal_code', '') or '',
                 "country": getattr(order, 'shipping_country', '') or ''
             },
+            # Billing address
+            "billing_address": {
+                "address_line1": getattr(order, 'billing_address_line1', '') or '',
+                "address_line2": getattr(order, 'billing_address_line2', '') or '',
+                "city": getattr(order, 'billing_city', '') or '',
+                "state": getattr(order, 'billing_state', '') or '',
+                "postal_code": getattr(order, 'billing_postal_code', '') or '',
+                "country": getattr(order, 'billing_country', '') or ''
+            },
+            # Order financial details
             "subtotal": getattr(order, 'subtotal', 0.0),
             "tax": getattr(order, 'tax', 0.0),
             "shipping_cost": getattr(order, 'shipping_cost', 0.0),
+            "discount": getattr(order, 'discount', 0.0),
             "total": getattr(order, 'total', 0.0),
+            # Order status, type, and payment
             "status": status_value,  # Normalized status string
-            "payment_id": getattr(order, 'payment_transaction_id', None),
+            "order_type": _get_order_type_string(order),  # Get order type as string
+            "payment_method": getattr(order, 'payment_method', '') or '',
+            "payment_id": getattr(order, 'payment_transaction_id', '') or '',
+            "is_paid": getattr(order, 'is_paid', False),
+            "paid_at": getattr(order, 'paid_at', None),
+            # Shipping information
+            "tracking_number": getattr(order, 'tracking_number', '') or '',
+            "shipping_carrier": getattr(order, 'shipping_carrier', '') or '',
+            "shipped_at": getattr(order, 'shipped_at', None),
+            "delivered_at": getattr(order, 'delivered_at', None),
+            # Timestamps and notes
             "created_at": getattr(order, 'created_at', datetime.utcnow()),
+            "updated_at": getattr(order, 'updated_at', datetime.utcnow()),
             "notes": notes_data or []
         }
         
@@ -560,28 +587,51 @@ async def admin_order_fulfillment(
         
         order_data = {
             "id": str(order.id),
-            "customer_name": order.customer_name or "",
-            "customer_email": order.customer_email or "",
+            "order_number": getattr(order, 'order_number', '') or '',
+            # Customer information
+            "customer_name": getattr(order, 'customer_name', '') or '',
+            "customer_email": getattr(order, 'customer_email', '') or '',
+            "customer_phone": getattr(order, 'customer_phone', '') or '',
+            # Shipping address
             "shipping_address": {
-                "address_line1": order.shipping_address_line1 or "",
-                "address_line2": order.shipping_address_line2 or "",
-                "city": order.shipping_city or "",
-                "state": order.shipping_state or "",
-                "postal_code": order.shipping_postal_code or "",
-                "country": order.shipping_country or ""
+                "address_line1": getattr(order, 'shipping_address_line1', '') or '',
+                "address_line2": getattr(order, 'shipping_address_line2', '') or '',
+                "city": getattr(order, 'shipping_city', '') or '',
+                "state": getattr(order, 'shipping_state', '') or '',
+                "postal_code": getattr(order, 'shipping_postal_code', '') or '',
+                "country": getattr(order, 'shipping_country', '') or ''
             },
-            "subtotal": order.subtotal,
-            "tax": order.tax,
-            "shipping_cost": order.shipping_cost,
-            "total": order.total,
+            # Billing address
+            "billing_address": {
+                "address_line1": getattr(order, 'billing_address_line1', '') or '',
+                "address_line2": getattr(order, 'billing_address_line2', '') or '',
+                "city": getattr(order, 'billing_city', '') or '',
+                "state": getattr(order, 'billing_state', '') or '',
+                "postal_code": getattr(order, 'billing_postal_code', '') or '',
+                "country": getattr(order, 'billing_country', '') or ''
+            },
+            # Order financial details
+            "subtotal": getattr(order, 'subtotal', 0.0),
+            "tax": getattr(order, 'tax', 0.0),
+            "shipping_cost": getattr(order, 'shipping_cost', 0.0),
+            "discount": getattr(order, 'discount', 0.0),
+            "total": getattr(order, 'total', 0.0),
+            # Order status, type, and payment
             "status": status_value,
-            "payment_id": getattr(order, 'payment_transaction_id', None),
-            "tracking_number": getattr(order, 'tracking_number', ''),
-            "shipping_carrier": getattr(order, 'shipping_carrier', ''),
+            "order_type": _get_order_type_string(order),  # Get order type as string
+            "payment_method": getattr(order, 'payment_method', '') or '',
+            "payment_id": getattr(order, 'payment_transaction_id', '') or '',
+            "is_paid": getattr(order, 'is_paid', False),
+            "paid_at": getattr(order, 'paid_at', None),
+            # Shipping information
+            "tracking_number": getattr(order, 'tracking_number', '') or '',
+            "shipping_carrier": getattr(order, 'shipping_carrier', '') or '',
             "shipped_at": getattr(order, 'shipped_at', None),
             "delivered_at": getattr(order, 'delivered_at', None),
+            # Items and timestamps
             "items": items_data,
-            "created_at": order.created_at
+            "created_at": getattr(order, 'created_at', datetime.utcnow()),
+            "updated_at": getattr(order, 'updated_at', datetime.utcnow())
         }
         
         return templates.TemplateResponse(
@@ -709,6 +759,44 @@ async def admin_add_order_note(
             url=f"/admin/orders/{order_id}?status_message=Error+adding+note:+{str(e)}&status_type=error", 
             status_code=303
         )
+
+def _get_order_type_string(order):
+    """
+    Get the order type as a string.
+    
+    Args:
+        order: The order object
+        
+    Returns:
+        The order type as a string (TEST, STANDARD, etc.)
+    """
+    try:
+        if hasattr(order, 'order_type'):
+            order_type = order.order_type
+            # If it's an enum, get the name
+            if hasattr(order_type, 'name'):
+                return order_type.name
+            # If it's an integer, map to a name
+            elif isinstance(order_type, int):
+                order_type_values = {
+                    1: "STANDARD",
+                    2: "TEST",
+                    3: "SUBSCRIPTION",
+                    4: "WHOLESALE",
+                    5: "BACKORDER",
+                    6: "PREORDER",
+                    7: "GIFT",
+                    8: "EXPEDITED",
+                    9: "INTERNATIONAL"
+                }
+                return order_type_values.get(order_type, "STANDARD")
+            # Otherwise, convert to string
+            return str(order_type).upper()
+    except Exception as e:
+        logger.error(f"Error getting order type: {e}")
+    
+    # Default to STANDARD if anything goes wrong
+    return "STANDARD"
 
 def setup_routes(app_templates):
     """

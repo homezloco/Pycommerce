@@ -35,6 +35,19 @@ class OrderStatus(Enum):
     REFUNDED = auto()
 
 
+class OrderType(Enum):
+    """Order type enumeration."""
+    STANDARD = auto()  # Regular customer order
+    TEST = auto()      # Test order for development/testing
+    SUBSCRIPTION = auto()  # Recurring subscription order
+    WHOLESALE = auto()  # Bulk order from wholesale customer
+    BACKORDER = auto()  # Order for items currently out of stock
+    PREORDER = auto()  # Order for items not yet released
+    GIFT = auto()      # Gift order with special handling
+    EXPEDITED = auto() # Order with expedited shipping priority
+    INTERNATIONAL = auto() # International order with customs handling
+
+
 class Order(Base):
     """Order model."""
     __tablename__ = "orders"
@@ -44,6 +57,7 @@ class Order(Base):
     customer_id = Column(String(36), nullable=True)
     order_number = Column(String(50), nullable=False, unique=True)
     status = Column(SQLAlchemyEnum(OrderStatus), default=OrderStatus.PENDING)
+    order_type = Column(SQLAlchemyEnum(OrderType), default=OrderType.STANDARD)
     total = Column(Float, nullable=False, default=0.0)
     subtotal = Column(Float, nullable=False, default=0.0)
     tax = Column(Float, nullable=False, default=0.0)
@@ -253,6 +267,49 @@ class OrderManager:
             logger.error(f"Error updating order status: {str(e)}")
             return False
 
+    def update_shipping(self, order_id: str, status: str, tracking_number: Optional[str] = None, carrier: Optional[str] = None) -> bool:
+        """
+        Update shipping information for an order.
+        
+        Args:
+            order_id: The ID of the order
+            status: The shipping status (pending, ready, shipped, delivered, returned)
+            tracking_number: Optional tracking number
+            carrier: Optional shipping carrier
+            
+        Returns:
+            True if the shipping info was updated successfully, False otherwise
+        """
+        try:
+            with get_session() as session:
+                order = session.query(Order).filter(Order.id == order_id).first()
+                if not order:
+                    return False
+                
+                # Update shipping fields
+                if tracking_number:
+                    order.tracking_number = tracking_number
+                
+                if carrier:
+                    order.shipping_carrier = carrier
+                
+                # Update status based on shipping status
+                if status == "shipped":
+                    order.status = OrderStatus.SHIPPED
+                    order.shipped_at = datetime.utcnow()
+                elif status == "delivered":
+                    order.status = OrderStatus.DELIVERED
+                    order.delivered_at = datetime.utcnow()
+                elif status == "returned":
+                    # We could add a RETURNED status to OrderStatus if needed
+                    pass
+                
+                session.commit()
+                return True
+        except Exception as e:
+            logger.error(f"Error updating shipping information: {str(e)}")
+            return False
+    
     def delete_order(self, order_id: str) -> bool:
         """
         Delete an order.

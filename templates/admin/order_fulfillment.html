@@ -32,17 +32,27 @@
                         <div class="col-md-6">
                             <h6>Order Information</h6>
                             <p><strong>Order ID:</strong> {{ order.id }}</p>
+                            <p><strong>Order Number:</strong> {{ order.order_number }}</p>
                             <p><strong>Customer:</strong> {{ order.customer_name }}</p>
+                            <p><strong>Email:</strong> {{ order.customer_email }}</p>
+                            <p><strong>Phone:</strong> {{ order.customer_phone or 'Not provided' }}</p>
                             <p><strong>Date:</strong> {{ order.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</p>
                             <p><strong>Status:</strong> <span class="badge bg-{{ 'success' if order.status == 'COMPLETED' else 'primary' if order.status == 'SHIPPED' else 'warning' if order.status == 'PROCESSING' else 'info' }}">{{ order.status }}</span></p>
+                            <p><strong>Payment Status:</strong> 
+                                <span class="badge {% if order.is_paid %}bg-success{% else %}bg-warning{% endif %}">
+                                    {% if order.is_paid %}PAID{% else %}UNPAID{% endif %}
+                                </span>
+                            </p>
                         </div>
                         <div class="col-md-6">
                             <h6>Shipping Address</h6>
                             <address>
+                                {{ order.customer_name }}<br>
                                 {{ order.shipping_address.address_line1 }}<br>
                                 {% if order.shipping_address.address_line2 %}{{ order.shipping_address.address_line2 }}<br>{% endif %}
                                 {{ order.shipping_address.city }}, {{ order.shipping_address.state }} {{ order.shipping_address.postal_code }}<br>
-                                {{ order.shipping_address.country }}
+                                {{ order.shipping_address.country }}<br>
+                                Phone: {{ order.customer_phone or 'Not provided' }}
                             </address>
                         </div>
                     </div>
@@ -66,11 +76,11 @@
                                     <tbody>
                                         {% for item in order_items %}
                                         <tr>
-                                            <td>{{ item.name }}</td>
+                                            <td>{{ item.product_name }}</td>
                                             <td>{{ item.sku }}</td>
                                             <td>{{ item.quantity }}</td>
                                             <td>${{ "%.2f"|format(item.price) }}</td>
-                                            <td>${{ "%.2f"|format(item.total) }}</td>
+                                            <td>${{ "%.2f"|format(item.price * item.quantity) }}</td>
                                         </tr>
                                         {% endfor %}
                                     </tbody>
@@ -87,9 +97,15 @@
                                             <td colspan="4" class="text-end"><strong>Tax:</strong></td>
                                             <td>${{ "%.2f"|format(order.tax) }}</td>
                                         </tr>
+                                        {% if order.discount > 0 %}
+                                        <tr>
+                                            <td colspan="4" class="text-end"><strong>Discount:</strong></td>
+                                            <td>-${{ "%.2f"|format(order.discount) }}</td>
+                                        </tr>
+                                        {% endif %}
                                         <tr>
                                             <td colspan="4" class="text-end"><strong>Total:</strong></td>
-                                            <td>${{ "%.2f"|format(order.total) }}</td>
+                                            <td><strong>${{ "%.2f"|format(order.total) }}</strong></td>
                                         </tr>
                                     </tfoot>
                                 </table>
@@ -102,65 +118,34 @@
                     <div class="row">
                         <div class="col-md-12">
                             <h6>Shipping Information</h6>
-                            <form action="/admin/orders/{{ order.id }}/fulfillment" method="post" class="mt-3">
+                            <form method="POST" action="/admin/orders/{{ order.id }}/fulfillment">
                                 <div class="row mb-3">
                                     <div class="col-md-4">
                                         <label for="shipping_status" class="form-label">Shipping Status</label>
-                                        <select class="form-select" id="shipping_status" name="shipping_status" required>
+                                        <select class="form-select" id="shipping_status" name="shipping_status">
                                             {% for status in shipping_statuses %}
-                                            <option value="{{ status }}" {% if order.status == status|upper %}selected{% endif %}>
-                                                {{ status|capitalize }}
-                                            </option>
+                                            <option value="{{ status }}" {% if order.tracking_number and status == 'shipped' %}selected{% elif not order.tracking_number and status == 'pending' %}selected{% endif %}>{{ status|title }}</option>
                                             {% endfor %}
                                         </select>
                                     </div>
                                     <div class="col-md-4">
                                         <label for="shipping_carrier" class="form-label">Shipping Carrier</label>
                                         <select class="form-select" id="shipping_carrier" name="shipping_carrier">
-                                            <option value="">Select carrier</option>
+                                            <option value="">Select a carrier</option>
                                             {% for carrier in carriers %}
-                                            <option value="{{ carrier }}" {% if order.shipping_carrier == carrier %}selected{% endif %}>
-                                                {{ carrier }}
-                                            </option>
+                                            <option value="{{ carrier }}" {% if order.shipping_carrier == carrier %}selected{% endif %}>{{ carrier }}</option>
                                             {% endfor %}
                                         </select>
                                     </div>
                                     <div class="col-md-4">
                                         <label for="tracking_number" class="form-label">Tracking Number</label>
-                                        <input 
-                                            type="text" 
-                                            class="form-control" 
-                                            id="tracking_number" 
-                                            name="tracking_number" 
-                                            value="{{ order.tracking_number }}"
-                                        >
+                                        <input type="text" class="form-control" id="tracking_number" name="tracking_number" value="{{ order.tracking_number or '' }}">
                                     </div>
                                 </div>
-
-                                <div class="row">
-                                    <div class="col-md-12">
-                                        <div class="alert alert-info" id="shipment_info">
-                                            <i class="bi bi-info-circle me-2"></i>
-                                            {% if order.shipped_at %}
-                                            <span>Order shipped on {{ order.shipped_at.strftime('%Y-%m-%d %H:%M:%S') }}.</span>
-                                            {% elif order.status == 'SHIPPED' %}
-                                            <span>Order is marked as shipped, but no shipping date is recorded.</span>
-                                            {% elif order.status == 'DELIVERED' %}
-                                            <span>Order delivered on {{ order.delivered_at.strftime('%Y-%m-%d %H:%M:%S') }}.</span>
-                                            {% else %}
-                                            <span>Setting status to "shipped" will send a shipping notification email to the customer.</span>
-                                            {% endif %}
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="d-flex justify-content-between mt-3">
-                                    <a href="/admin/orders/{{ order.id }}" class="btn btn-secondary">
-                                        <i class="bi bi-arrow-left me-1"></i>Back to Order
-                                    </a>
-                                    <button type="submit" class="btn btn-primary">
-                                        <i class="bi bi-save me-1"></i>Update Shipping Information
-                                    </button>
+                                
+                                <div class="mb-3">
+                                    <button type="submit" class="btn btn-primary">Update Shipping</button>
+                                    <a href="/admin/orders/{{ order.id }}" class="btn btn-secondary">Back to Order</a>
                                 </div>
                             </form>
                         </div>
@@ -170,28 +155,4 @@
         </div>
     </div>
 </div>
-
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const shippingStatusSelect = document.getElementById('shipping_status');
-        const shipmentInfo = document.getElementById('shipment_info');
-        
-        shippingStatusSelect.addEventListener('change', function() {
-            const status = this.value;
-            if (status === 'shipped') {
-                shipmentInfo.innerHTML = '<i class="bi bi-info-circle me-2"></i><span>Setting status to "shipped" will send a shipping notification email to the customer.</span>';
-                shipmentInfo.classList.remove('alert-warning', 'alert-success');
-                shipmentInfo.classList.add('alert-info');
-            } else if (status === 'delivered') {
-                shipmentInfo.innerHTML = '<i class="bi bi-info-circle me-2"></i><span>Setting status to "delivered" will mark the order as delivered.</span>';
-                shipmentInfo.classList.remove('alert-info', 'alert-warning');
-                shipmentInfo.classList.add('alert-success');
-            } else if (status === 'pending') {
-                shipmentInfo.innerHTML = '<i class="bi bi-exclamation-triangle me-2"></i><span>Setting status to "pending" will reset the shipping process.</span>';
-                shipmentInfo.classList.remove('alert-info', 'alert-success');
-                shipmentInfo.classList.add('alert-warning');
-            }
-        });
-    });
-</script>
 {% endblock %}
