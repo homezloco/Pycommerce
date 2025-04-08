@@ -20,8 +20,8 @@ start_uvicorn_server()
 app = proxy_to_uvicorn
 
 if __name__ == "__main__":
-    from web_app import app as fastapi_app
     import uvicorn
     
     # Run with uvicorn directly when file is executed
-    uvicorn.run(fastapi_app, host="0.0.0.0", port=5000, reload=True)
+    # Pass application as an import string to enable 'reload' or 'workers'
+    uvicorn.run("web_app:app", host="0.0.0.0", port=5000, reload=True)

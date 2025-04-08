@@ -42,7 +42,7 @@ def start_uvicorn_server():
     cmd = [
         sys.executable, "-m", "uvicorn", "web_app:app",
         "--host", UVICORN_HOST, "--port", str(UVICORN_PORT),
-        "--reload"
+        "--reload", "--no-use-colors"
     ]
     logger.info(f"Starting uvicorn server with command: {' '.join(cmd)}")
     
