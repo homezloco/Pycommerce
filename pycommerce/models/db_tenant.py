@@ -16,24 +16,5 @@ from pycommerce.core.db import Base
 logger = logging.getLogger(__name__)
 
 
-class Tenant(Base):
-    """SQLAlchemy Tenant model."""
-    __tablename__ = "tenants"
-    __table_args__ = {'extend_existing': True}
-    
-    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
-    name = Column(String(100), nullable=False)
-    slug = Column(String(100), unique=True, nullable=False)
-    domain = Column(String(255), unique=True, nullable=True)
-    active = Column(Boolean, default=True)
-    settings = Column(JSON, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    
-    # Relationships
-    products = relationship("Product", back_populates="tenant", cascade="all, delete-orphan")
-    plugin_configs = relationship("PluginConfig", back_populates="tenant", cascade="all, delete-orphan")
-    media_files = relationship("MediaFile", back_populates="tenant", cascade="all, delete-orphan")
-    
-    def __repr__(self):
-        return f"<Tenant {self.name}>"
+# Import from central registry to avoid circular imports
+from pycommerce.models.db_registry import Tenant

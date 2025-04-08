@@ -15,39 +15,12 @@ from sqlalchemy import Column, String, Boolean, Text, ForeignKey, UniqueConstrai
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import relationship
 
-from pycommerce.core.db import Base, SessionLocal
+from pycommerce.core.db import SessionLocal
 from pycommerce.core.exceptions import ConfigError
+# Import from central registry to avoid circular imports
+from pycommerce.models.db_registry import PluginConfig
 
 logger = logging.getLogger(__name__)
-
-
-class PluginConfig(Base):
-    """
-    Database model for storing plugin configurations.
-    
-    This model allows for both global configurations and
-    tenant-specific configurations for plugins.
-    """
-    __tablename__ = "plugin_configs"
-    
-    id = Column(String(36), primary_key=True)
-    plugin_id = Column(String(50), nullable=False, index=True)
-    tenant_id = Column(String(36), ForeignKey("tenants.id", ondelete="CASCADE"), nullable=True, index=True)
-    enabled = Column(Boolean, default=True)
-    config_data = Column(JSONB, nullable=True)
-    created_at = Column(Text, nullable=True)
-    updated_at = Column(Text, nullable=True)
-    
-    # Define a unique constraint for plugin_id and tenant_id to prevent duplicates
-    __table_args__ = (
-        UniqueConstraint('plugin_id', 'tenant_id', name='uix_plugin_tenant'),
-    )
-    
-    # Relationship with tenant (optional)
-    tenant = relationship("Tenant", back_populates="plugin_configs")
-    
-    def __repr__(self):
-        return f"<PluginConfig(plugin_id='{self.plugin_id}', tenant_id='{self.tenant_id}')>"
 
 
 class PluginConfigManager:

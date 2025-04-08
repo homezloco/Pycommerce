@@ -12,23 +12,7 @@ from sqlalchemy import Column, String, Integer, DateTime, ForeignKey, Text
 from sqlalchemy.orm import relationship
 
 from pycommerce.core.db import Base
+# Import from central registry to avoid circular imports
+from pycommerce.models.db_registry import InventoryRecord
 
 logger = logging.getLogger(__name__)
-
-
-class InventoryRecord(Base):
-    """SQLAlchemy InventoryRecord model for tracking inventory changes."""
-    __tablename__ = "inventory_records"
-    __table_args__ = {'extend_existing': True}
-    
-    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
-    product_id = Column(String(36), ForeignKey("products.id"), nullable=False)
-    quantity_change = Column(Integer, nullable=False)
-    reason = Column(Text, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    
-    # Relationships
-    product = relationship("Product", back_populates="inventory_records")
-    
-    def __repr__(self):
-        return f"<InventoryRecord {self.id}: {self.quantity_change}>"

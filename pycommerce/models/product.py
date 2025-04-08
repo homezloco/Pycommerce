@@ -248,7 +248,7 @@ class ProductManager:
         """
         # Try to query directly from the database
         try:
-            from pycommerce.models.db_product import Product as DbProduct
+            from pycommerce.models.db_registry import Product as DbProduct
             from pycommerce.core.db import get_db
             
             logger.info(f"Querying database for products of tenant: {tenant_id}")

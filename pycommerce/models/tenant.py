@@ -11,7 +11,7 @@ from datetime import datetime
 from uuid import UUID
 
 from pycommerce.core.db import db_session
-from pycommerce.models.db_tenant import Tenant
+from pycommerce.models.db_registry import Tenant
 
 # Configure logging
 logger = logging.getLogger("pycommerce.models.tenant")
