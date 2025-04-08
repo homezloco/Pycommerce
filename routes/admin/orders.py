@@ -85,13 +85,22 @@ async def admin_orders(
     # Serialize orders for template
     orders_data = []
     for order in orders:
+        # Get items count safely (order might be detached from session)
+        items_count = 0
+        try:
+            # Try to get items count if available
+            if hasattr(order, 'items') and order.items is not None:
+                items_count = len(order.items)
+        except Exception as e:
+            logger.warning(f"Could not get items count for order {order.id}: {e}")
+            
         orders_data.append({
             "id": str(order.id),
             "customer_name": order.customer_name or "",
             "customer_email": order.customer_email or "",
             "total": order.total,
             "status": order.status.value,
-            "items_count": len(order.items),
+            "items_count": items_count,
             "created_at": order.created_at
         })
     
@@ -171,17 +180,33 @@ async def admin_order_detail(
                 "is_customer_note": note.is_customer_note
             })
         
-        # Format items for display
+        # Format items for display - safely handle possibly detached items
         items_data = []
-        for item in order.items:
-            items_data.append({
-                "product_id": str(item.product_id),
-                "name": item.name,
-                "sku": item.sku,
-                "quantity": item.quantity,
-                "price": item.price,
-                "total": item.price * item.quantity
-            })
+        try:
+            if hasattr(order, 'items') and order.items is not None:
+                for item in order.items:
+                    try:
+                        # Get product name and SKU safely
+                        name = getattr(item, 'name', None)
+                        if name is None and hasattr(item, 'product') and item.product:
+                            name = item.product.name
+                        
+                        sku = getattr(item, 'sku', None)
+                        if sku is None and hasattr(item, 'product') and item.product:
+                            sku = item.product.sku
+                            
+                        items_data.append({
+                            "product_id": str(item.product_id),
+                            "name": name or "Unknown Product",
+                            "sku": sku or "N/A",
+                            "quantity": item.quantity,
+                            "price": item.price,
+                            "total": item.price * item.quantity
+                        })
+                    except Exception as e:
+                        logger.warning(f"Error processing order item: {e}")
+        except Exception as e:
+            logger.warning(f"Could not access order items: {e}")
         
         # Format order data for template
         order_data = {
