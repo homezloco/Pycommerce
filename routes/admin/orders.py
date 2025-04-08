@@ -87,8 +87,8 @@ async def admin_orders(
     for order in orders:
         orders_data.append({
             "id": str(order.id),
-            "customer_name": f"{order.shipping_address.get('first_name', '')} {order.shipping_address.get('last_name', '')}",
-            "customer_email": order.shipping_address.get('email', ''),
+            "customer_name": order.customer_name or "",
+            "customer_email": order.customer_email or "",
             "total": order.total,
             "status": order.status.value,
             "items_count": len(order.items),
@@ -186,15 +186,22 @@ async def admin_order_detail(
         # Format order data for template
         order_data = {
             "id": str(order.id),
-            "customer_name": f"{order.shipping_address.get('first_name', '')} {order.shipping_address.get('last_name', '')}",
-            "customer_email": order.shipping_address.get('email', ''),
-            "shipping_address": order.shipping_address,
+            "customer_name": order.customer_name or "",
+            "customer_email": order.customer_email or "",
+            "shipping_address": {
+                "address_line1": order.shipping_address_line1 or "",
+                "address_line2": order.shipping_address_line2 or "",
+                "city": order.shipping_city or "",
+                "state": order.shipping_state or "",
+                "postal_code": order.shipping_postal_code or "",
+                "country": order.shipping_country or ""
+            },
             "subtotal": order.subtotal,
             "tax": order.tax,
             "shipping_cost": order.shipping_cost,
             "total": order.total,
             "status": order.status.value,
-            "payment_id": order.payment_id,
+            "payment_id": getattr(order, 'payment_transaction_id', None),
             "items": items_data,
             "created_at": order.created_at,
             "notes": notes_data
