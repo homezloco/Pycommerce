@@ -12,6 +12,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 
 from pycommerce.models.tenant import TenantManager
+from pycommerce.services.analytics_service import AnalyticsService
 
 logger = logging.getLogger(__name__)
 
@@ -21,8 +22,9 @@ router = APIRouter(prefix="/admin", tags=["admin"])
 # Template setup will be passed from main app
 templates = None
 
-# Initialize managers
+# Initialize managers and services
 tenant_manager = TenantManager()
+analytics_service = AnalyticsService()
 
 @router.get("/analytics", response_class=HTMLResponse)
 async def analytics_dashboard(
@@ -97,59 +99,69 @@ async def analytics_dashboard(
                   else today.replace(year=today.year + 1, month=1, day=1)) - timedelta(days=1)
             period_label = start.strftime('%B %Y')
     
-    # In a real app, fetch analytics data from a database or analytics service
-    # For demo purposes, we'll use placeholder data
-    analytics_data = {
-        "period": period,
-        "period_label": period_label,
-        "date_range": {
+    # Convert dates to datetime objects for the analytics service
+    start_datetime = datetime.combine(start, datetime.min.time())
+    end_datetime = datetime.combine(end, datetime.max.time())
+    
+    # Get analytics data from our service
+    try:
+        analytics_data = analytics_service.get_order_analytics(
+            tenant_id=tenant_obj.id,
+            start_date=start_datetime,
+            end_date=end_datetime,
+            previous_period=True
+        )
+        
+        # Add period information to the analytics data
+        analytics_data["period"] = period
+        analytics_data["period_label"] = period_label
+        analytics_data["date_range"] = {
             "start": start.isoformat(),
             "end": end.isoformat(),
-        },
-        "summary": {
-            "orders": 156,
-            "revenue": 12485.75,
-            "avg_order_value": 80.04,
-            "conversion_rate": 3.25,
-        },
-        "comparison": {
-            "orders": +12.5,  # percent change from previous period
-            "revenue": +8.3,
-            "avg_order_value": -2.1,
-            "conversion_rate": +0.5,
-        },
-        "orders_by_day": [
-            {"date": "2023-06-01", "orders": 5, "revenue": 425.80},
-            {"date": "2023-06-02", "orders": 8, "revenue": 632.40},
-            {"date": "2023-06-03", "orders": 12, "revenue": 956.76},
-            # ... more days ...
-        ],
-        "top_products": [
-            {"name": "Product A", "orders": 45, "revenue": 3150.75},
-            {"name": "Product B", "orders": 38, "revenue": 2678.50},
-            {"name": "Product C", "orders": 29, "revenue": 1885.00},
-            # ... more products ...
-        ],
-        "traffic_sources": {
-            "direct": 35,
-            "organic": 25,
-            "referral": 15,
-            "social": 20,
-            "email": 5,
-        },
-        "device_types": {
-            "desktop": 45,
-            "mobile": 40,
-            "tablet": 15,
-        },
-        "customer_locations": {
-            "United States": 65,
-            "Canada": 15,
-            "United Kingdom": 10,
-            "Australia": 5,
-            "Other": 5,
         }
-    }
+    except Exception as e:
+        logger.error(f"Error getting analytics data: {str(e)}")
+        # Provide fallback data structure to avoid template errors
+        analytics_data = {
+            "period": period,
+            "period_label": period_label,
+            "date_range": {
+                "start": start.isoformat(),
+                "end": end.isoformat(),
+            },
+            "summary": {
+                "orders": 0,
+                "revenue": 0.0,
+                "avg_order_value": 0.0,
+                "conversion_rate": 0.0,
+            },
+            "comparison": {
+                "orders": 0.0,
+                "revenue": 0.0,
+                "avg_order_value": 0.0,
+                "conversion_rate": 0.0,
+            },
+            "orders_by_day": [],
+            "top_products": [],
+            "traffic_sources": {
+                "direct": 0,
+                "organic": 0,
+                "referral": 0,
+                "social": 0,
+                "email": 0,
+            },
+            "device_types": {
+                "desktop": 0,
+                "mobile": 0,
+                "tablet": 0,
+            },
+            "customer_locations": {
+                "United States": 0,
+                "Other": 0,
+            }
+        }
+        status_message = f"Error loading analytics data: {str(e)}"
+        status_type = "error"
     
     return templates.TemplateResponse(
         "admin/analytics.html",

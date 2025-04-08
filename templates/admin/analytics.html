@@ -256,115 +256,145 @@
 {% block scripts %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script>
-// Sample data - in a real app, these would be populated from the server-side data
 document.addEventListener('DOMContentLoaded', function() {
-    // Orders chart
-    const ctx = document.getElementById('ordersChart');
-    new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: ['Jun 1', 'Jun 2', 'Jun 3', 'Jun 4', 'Jun 5', 'Jun 6', 'Jun 7'],
-            datasets: [{
-                label: 'Orders',
-                data: [5, 8, 12, 7, 10, 15, 9],
-                borderColor: 'rgba(54, 162, 235, 1)',
-                backgroundColor: 'rgba(54, 162, 235, 0.1)',
-                yAxisID: 'y',
-                tension: 0.1
-            }, {
-                label: 'Revenue',
-                data: [425, 632, 956, 550, 780, 1200, 720],
-                borderColor: 'rgba(75, 192, 192, 1)',
-                backgroundColor: 'rgba(75, 192, 192, 0.1)',
-                yAxisID: 'y1',
-                tension: 0.1
-            }]
-        },
-        options: {
-            responsive: true,
-            interaction: {
-                mode: 'index',
-                intersect: false,
+    // Process order data from server
+    const orderData = {{ analytics.orders_by_day | tojson }};
+    
+    // Only create charts if we have data
+    if (orderData && orderData.length > 0) {
+        // Format the data for the charts
+        const labels = orderData.map(item => {
+            const date = new Date(item.date);
+            return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        });
+        
+        const orderCounts = orderData.map(item => item.orders);
+        const revenues = orderData.map(item => item.revenue);
+        
+        // Orders chart
+        const ctx = document.getElementById('ordersChart');
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Orders',
+                    data: orderCounts,
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    backgroundColor: 'rgba(54, 162, 235, 0.1)',
+                    yAxisID: 'y',
+                    tension: 0.1
+                }, {
+                    label: 'Revenue',
+                    data: revenues,
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    backgroundColor: 'rgba(75, 192, 192, 0.1)',
+                    yAxisID: 'y1',
+                    tension: 0.1
+                }]
             },
-            scales: {
-                y: {
-                    type: 'linear',
-                    display: true,
-                    position: 'left',
-                    title: {
-                        display: true,
-                        text: 'Orders'
-                    }
+            options: {
+                responsive: true,
+                interaction: {
+                    mode: 'index',
+                    intersect: false,
                 },
-                y1: {
-                    type: 'linear',
-                    display: true,
-                    position: 'right',
-                    title: {
+                scales: {
+                    y: {
+                        type: 'linear',
                         display: true,
-                        text: 'Revenue ($)'
+                        position: 'left',
+                        title: {
+                            display: true,
+                            text: 'Orders'
+                        }
                     },
-                    grid: {
-                        drawOnChartArea: false,
-                    },
+                    y1: {
+                        type: 'linear',
+                        display: true,
+                        position: 'right',
+                        title: {
+                            display: true,
+                            text: 'Revenue ($)'
+                        },
+                        grid: {
+                            drawOnChartArea: false,
+                        },
+                    }
                 }
             }
-        }
-    });
+        });
+    } else {
+        // Handle empty data by displaying a message
+        const ordersChartContainer = document.getElementById('ordersChart').parentNode;
+        ordersChartContainer.innerHTML = '<div class="text-center p-5">No order data available for this period</div>';
+    }
 
-    // Traffic sources chart
-    const trafficChart = document.getElementById('trafficChart');
-    new Chart(trafficChart, {
-        type: 'doughnut',
-        data: {
-            labels: ['Direct', 'Organic', 'Referral', 'Social', 'Email'],
-            datasets: [{
-                data: [35, 25, 15, 20, 5],
-                backgroundColor: [
-                    'rgba(54, 162, 235, 0.8)',
-                    'rgba(75, 192, 192, 0.8)',
-                    'rgba(255, 206, 86, 0.8)',
-                    'rgba(255, 99, 132, 0.8)',
-                    'rgba(153, 102, 255, 0.8)'
-                ],
-                borderWidth: 1
-            }]
-        },
-        options: {
-            responsive: true,
-            plugins: {
-                legend: {
-                    position: 'right',
+    // Traffic sources chart data from server
+    const trafficSources = {{ analytics.traffic_sources | tojson }};
+    if (trafficSources) {
+        const trafficLabels = Object.keys(trafficSources);
+        const trafficData = Object.values(trafficSources);
+        
+        const trafficChart = document.getElementById('trafficChart');
+        new Chart(trafficChart, {
+            type: 'doughnut',
+            data: {
+                labels: trafficLabels.map(label => label.charAt(0).toUpperCase() + label.slice(1)), // Capitalize first letter
+                datasets: [{
+                    data: trafficData,
+                    backgroundColor: [
+                        'rgba(54, 162, 235, 0.8)',
+                        'rgba(75, 192, 192, 0.8)',
+                        'rgba(255, 206, 86, 0.8)',
+                        'rgba(255, 99, 132, 0.8)',
+                        'rgba(153, 102, 255, 0.8)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'right',
+                    }
                 }
             }
-        }
-    });
+        });
+    }
 
-    // Device types chart
-    const deviceChart = document.getElementById('deviceChart');
-    new Chart(deviceChart, {
-        type: 'pie',
-        data: {
-            labels: ['Desktop', 'Mobile', 'Tablet'],
-            datasets: [{
-                data: [45, 40, 15],
-                backgroundColor: [
-                    'rgba(54, 162, 235, 0.8)',
-                    'rgba(75, 192, 192, 0.8)',
-                    'rgba(255, 206, 86, 0.8)'
-                ],
-                borderWidth: 1
-            }]
-        },
-        options: {
-            responsive: true,
-            plugins: {
-                legend: {
-                    position: 'right',
+    // Device types chart data from server
+    const deviceTypes = {{ analytics.device_types | tojson }};
+    if (deviceTypes) {
+        const deviceLabels = Object.keys(deviceTypes);
+        const deviceData = Object.values(deviceTypes);
+        
+        const deviceChart = document.getElementById('deviceChart');
+        new Chart(deviceChart, {
+            type: 'pie',
+            data: {
+                labels: deviceLabels.map(label => label.charAt(0).toUpperCase() + label.slice(1)), // Capitalize first letter
+                datasets: [{
+                    data: deviceData,
+                    backgroundColor: [
+                        'rgba(54, 162, 235, 0.8)',
+                        'rgba(75, 192, 192, 0.8)',
+                        'rgba(255, 206, 86, 0.8)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'right',
+                    }
                 }
             }
-        }
-    });
+        });
+    }
 });
 </script>
 {% endblock %}
