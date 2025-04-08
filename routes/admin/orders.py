@@ -350,7 +350,6 @@ async def admin_order_detail(
             "total": getattr(order, 'total', 0.0),
             "status": getattr(order, 'status', '').value if hasattr(order, 'status') else 'PENDING',
             "payment_id": getattr(order, 'payment_transaction_id', None),
-            "items": items_data or [],
             "created_at": getattr(order, 'created_at', datetime.utcnow()),
             "notes": notes_data or []
         }
@@ -364,6 +363,7 @@ async def admin_order_detail(
             {
                 "request": request,
                 "order": order_data,
+                "order_items": items_data,  # Pass items separately to avoid conflict with dictionary's items() method
                 "selected_tenant": selected_tenant_slug,
                 "tenant": tenant,
                 "status_options": status_options,
@@ -504,6 +504,7 @@ async def admin_order_fulfillment(
             {
                 "request": request,
                 "order": order_data,
+                "order_items": items_data,  # Pass items separately to avoid conflict with dictionary's items() method
                 "selected_tenant": selected_tenant_slug,
                 "tenant": tenant,
                 "carriers": carriers,
