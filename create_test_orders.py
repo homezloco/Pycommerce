@@ -98,11 +98,11 @@ def create_test_orders(tenant_slug="tech", user_email="testuser@example.com", nu
             order = Order(
                 id=order_id,
                 tenant_id=tenant.id,
-                customer_id=user.id,  # Use customer_id instead of user_id
+                customer_id=user.id,
                 order_number=f"ORD-{str(uuid.uuid4())[:8].upper()}",
-                status="paid",  # Start as paid so it's ready for shipment
+                status="PAID",  # Start as paid so it's ready for shipment (must be uppercase to match enum)
                 customer_email=user.email,
-                customer_name=f"{user.first_name} {user.last_name}",
+                customer_name=f"{user.first_name} {user.last_name}" if user.first_name and user.last_name else user.username,
                 customer_phone="555-123-4567",
                 shipping_address_line1=shipping_address["address1"],
                 shipping_address_line2=shipping_address["address2"],
@@ -121,6 +121,10 @@ def create_test_orders(tenant_slug="tech", user_email="testuser@example.com", nu
                 created_at=datetime.utcnow(),
                 updated_at=datetime.utcnow(),
                 total=0.0,  # Will calculate below
+                subtotal=0.0,  # Will calculate below
+                tax=0.0,
+                shipping_cost=10.0,  # Default shipping cost
+                discount=0.0,
                 is_paid=True,
                 paid_at=datetime.utcnow()
             )
@@ -151,11 +155,18 @@ def create_test_orders(tenant_slug="tech", user_email="testuser@example.com", nu
                 
                 db.session.add(order_item)
             
-            # Update order total
-            order.total = order_total
+            # Update order subtotal and total
+            order.subtotal = order_total
+            # Calculate tax (let's assume 8% tax rate)
+            tax_rate = 0.08
+            tax_amount = round(order_total * tax_rate, 2)
+            order.tax = tax_amount
+            
+            # Total includes subtotal, tax, and shipping, minus discounts
+            order.total = order.subtotal + order.tax + order.shipping_cost - order.discount
             
             db.session.commit()
-            logger.info(f"Created order {order.id} with {len(order_products)} items, total: ${order_total:.2f}")
+            logger.info(f"Created order {order.id} with {len(order_products)} items, subtotal: ${order.subtotal:.2f}, total: ${order.total:.2f}")
             created_orders.append(order)
         
         return created_orders
@@ -164,14 +175,36 @@ if __name__ == "__main__":
     try:
         # Create test user
         user = create_test_user()
+        if not user:
+            logger.error("Failed to create or retrieve test user")
+            exit(1)
+            
         user_email = user.email  # Store the email as a string
         
         # Create test orders - use the email string, not the user object
-        orders = create_test_orders(tenant_slug="tech", user_email=user_email, num_orders=3)
-        
-        if orders:
-            logger.info(f"Successfully created {len(orders)} test orders")
-            for order in orders:
-                logger.info(f"Order ID: {order.id}, Total: ${order.total:.2f}")
+        try:
+            orders = create_test_orders(tenant_slug="tech", user_email=user_email, num_orders=3)
+            
+            if orders:
+                # Get only the IDs to avoid session issues
+                order_count = len(orders)
+                try:
+                    # Try to safely extract IDs
+                    order_ids = []
+                    for order in orders:
+                        try:
+                            order_ids.append(str(order.id))
+                        except:
+                            pass
+                    
+                    logger.info(f"Successfully created {order_count} test orders")
+                    if order_ids:
+                        logger.info(f"Order IDs: {', '.join(order_ids)}")
+                except Exception as e:
+                    # Even if this fails, we know orders were created from earlier logs
+                    logger.info(f"Successfully created {order_count} test orders (IDs not available)")
+                    logger.debug(f"Error accessing order details: {e}")
+        except Exception as e:
+            logger.error(f"Error during order creation: {e}")
     except Exception as e:
-        logger.error(f"Error creating test orders: {e}")
+        logger.error(f"Error in main process: {e}")

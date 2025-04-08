@@ -114,15 +114,49 @@ class Order(db.Model):
     
     id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     tenant_id = Column(String(36), ForeignKey("tenants.id"), nullable=False)
-    user_id = Column(String(36), ForeignKey("users.id"), nullable=True)
+    customer_id = Column(String(36), ForeignKey("users.id"), nullable=True)
+    order_number = Column(String(50), nullable=True)
     status = Column(String(50), default="pending")
     total = Column(Float, default=0.0)
-    email = Column(String(120), nullable=False)
-    shipping_address = Column(JSON, nullable=True)
-    billing_address = Column(JSON, nullable=True)
-    payment_info = Column(JSON, nullable=True)
-    shipping_method = Column(String(100), nullable=True)
+    subtotal = Column(Float, default=0.0)
+    tax = Column(Float, default=0.0)
+    shipping_cost = Column(Float, default=0.0)
+    discount = Column(Float, default=0.0)
+    
+    # Customer information
+    customer_email = Column(String(120), nullable=True)
+    customer_name = Column(String(100), nullable=True)
+    customer_phone = Column(String(20), nullable=True)
+    
+    # Shipping address fields
+    shipping_address_line1 = Column(String(255), nullable=True)
+    shipping_address_line2 = Column(String(255), nullable=True)
+    shipping_city = Column(String(100), nullable=True)
+    shipping_state = Column(String(100), nullable=True)
+    shipping_postal_code = Column(String(20), nullable=True)
+    shipping_country = Column(String(100), nullable=True)
+    
+    # Billing address fields
+    billing_address_line1 = Column(String(255), nullable=True)
+    billing_address_line2 = Column(String(255), nullable=True)
+    billing_city = Column(String(100), nullable=True)
+    billing_state = Column(String(100), nullable=True)
+    billing_postal_code = Column(String(20), nullable=True)
+    billing_country = Column(String(100), nullable=True)
+    
+    # Payment information
     payment_method = Column(String(100), nullable=True)
+    payment_transaction_id = Column(String(100), nullable=True)
+    is_paid = Column(Boolean, default=False)
+    paid_at = Column(DateTime, nullable=True)
+    
+    # Shipping information
+    tracking_number = Column(String(100), nullable=True)
+    shipping_carrier = Column(String(100), nullable=True)
+    shipped_at = Column(DateTime, nullable=True)
+    delivered_at = Column(DateTime, nullable=True)
+    
+    # Timestamps
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
