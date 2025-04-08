@@ -209,12 +209,43 @@ async def admin_orders(
         # Get items count using our session-safe function
         items_count = get_order_items_count(str(order.id))
             
+        # Try to extract both customer_name and customer_email safely
+        customer_name = ""
+        customer_email = ""
+        status_value = ""
+        
+        # Safe extraction with error handling for better stability
+        try:
+            customer_name = order.customer_name if order.customer_name else ""
+        except:
+            pass
+            
+        try:
+            customer_email = order.customer_email if order.customer_email else ""
+        except:
+            pass
+            
+        # Handle status whether it's an enum value, string, or int
+        try:
+            if hasattr(order.status, 'value'):
+                # It's an enum
+                status_value = order.status.value
+            elif isinstance(order.status, int):
+                # It's already an int
+                status_value = order.status
+            else:
+                # It's a string or something else
+                status_value = order.status
+        except:
+            # Default to a safe value if all fails
+            status_value = 1  # PENDING
+        
         orders_data.append({
             "id": str(order.id),
-            "customer_name": order.customer_name or "",
-            "customer_email": order.customer_email or "",
+            "customer_name": customer_name,
+            "customer_email": customer_email,
             "total": order.total,
-            "status": order.status.value,
+            "status": status_value,
             "items_count": items_count,
             "created_at": order.created_at
         })

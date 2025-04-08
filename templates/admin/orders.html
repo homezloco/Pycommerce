@@ -38,19 +38,37 @@
                         <tr>
                             <td>{{ order.id }}</td>
                             <td>{{ order.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
-                            <td>{{ order.email }}</td>
+                            <td>
+                                {% if order.customer_name %}
+                                    {{ order.customer_name }}
+                                {% elif order.customer_email %}
+                                    {{ order.customer_email }}
+                                {% else %}
+                                    <span class="text-muted">No customer info</span>
+                                {% endif %}
+                            </td>
                             <td>${{ "%.2f"|format(order.total) }}</td>
                             <td>
                                 <span class="badge 
-                                    {% if order.status == 'pending' %}bg-warning{% endif %}
-                                    {% if order.status == 'paid' %}bg-info{% endif %}
-                                    {% if order.status == 'processing' %}bg-primary{% endif %}
-                                    {% if order.status == 'shipped' %}bg-success{% endif %}
-                                    {% if order.status == 'delivered' %}bg-success{% endif %}
-                                    {% if order.status == 'cancelled' %}bg-danger{% endif %}
-                                    {% if order.status == 'refunded' %}bg-secondary{% endif %}
+                                    {% if order.status == 1 %}bg-warning{% elif order.status == 'PENDING' %}bg-warning{% endif %}
+                                    {% if order.status == 3 %}bg-info{% elif order.status == 'PAID' %}bg-info{% endif %}
+                                    {% if order.status == 2 %}bg-primary{% elif order.status == 'PROCESSING' %}bg-primary{% endif %}
+                                    {% if order.status == 4 %}bg-success{% elif order.status == 'SHIPPED' %}bg-success{% endif %}
+                                    {% if order.status == 5 %}bg-success{% elif order.status == 'DELIVERED' %}bg-success{% endif %}
+                                    {% if order.status == 6 %}bg-success{% elif order.status == 'COMPLETED' %}bg-success{% endif %}
+                                    {% if order.status == 7 %}bg-danger{% elif order.status == 'CANCELLED' %}bg-danger{% endif %}
+                                    {% if order.status == 8 %}bg-secondary{% elif order.status == 'REFUNDED' %}bg-secondary{% endif %}
                                 ">
-                                    {{ order.status|upper }}
+                                    {% if order.status == 1 %}PENDING
+                                    {% elif order.status == 2 %}PROCESSING
+                                    {% elif order.status == 3 %}PAID
+                                    {% elif order.status == 4 %}SHIPPED
+                                    {% elif order.status == 5 %}DELIVERED
+                                    {% elif order.status == 6 %}COMPLETED
+                                    {% elif order.status == 7 %}CANCELLED
+                                    {% elif order.status == 8 %}REFUNDED
+                                    {% else %}{{ order.status }}
+                                    {% endif %}
                                 </span>
                             </td>
                             <td>

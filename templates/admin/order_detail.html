@@ -187,7 +187,7 @@
                     <div class="input-group mb-3">
                         <select class="form-select" id="orderStatus">
                             {% for status in status_options %}
-                            <option value="{{ status }}" {% if order.status == status.lower() %}selected{% endif %}>{{ status|upper }}</option>
+                            <option value="{{ status }}" {% if order.status and order.status.lower() == status.lower() %}selected{% endif %}>{{ status|upper }}</option>
                             {% endfor %}
                         </select>
                         <button class="btn btn-outline-primary" type="button" id="updateStatusBtn" onclick="updateOrderStatus()">Update</button>
