@@ -253,7 +253,7 @@ async def admin_orders(
         })
     
     # Get all possible order statuses for filter dropdown
-    status_options = [status.value for status in OrderStatus]
+    status_options = ["PENDING", "PROCESSING", "PAID", "SHIPPED", "DELIVERED", "COMPLETED", "CANCELLED", "REFUNDED"]
     
     return templates.TemplateResponse(
         "admin/orders.html",
@@ -467,8 +467,8 @@ async def admin_order_detail(
             "notes": notes_data or []
         }
         
-        # Get all possible order statuses for status dropdown
-        status_options = [status.value for status in OrderStatus]
+        # Get all possible order statuses for status dropdown as string values
+        status_options = ["PENDING", "PROCESSING", "PAID", "SHIPPED", "DELIVERED", "COMPLETED", "CANCELLED", "REFUNDED"]
         
         logger.info("Rendering order detail template")
         return templates.TemplateResponse(
@@ -499,14 +499,16 @@ async def admin_order_detail(
 async def admin_update_order_status(request: Request, order_id: str, status: str):
     """Update order status and redirect back to order details."""
     try:
-        # Validate status
-        try:
-            order_status = OrderStatus(status)
-        except ValueError:
+        # Validate status - now we're using string values, so validate against allowed values
+        allowed_statuses = ["PENDING", "PROCESSING", "PAID", "SHIPPED", "DELIVERED", "COMPLETED", "CANCELLED", "REFUNDED"]
+        if status.upper() not in allowed_statuses:
             return RedirectResponse(
                 url=f"/admin/orders/{order_id}?status_message=Invalid+order+status&status_type=error", 
                 status_code=303
             )
+        
+        # Use the string value directly
+        order_status = status.upper()
         
         # Get the current tenant for store information
         selected_tenant_slug = request.session.get("selected_tenant")
@@ -528,7 +530,7 @@ async def admin_update_order_status(request: Request, order_id: str, status: str
         success = order_manager.update_status(order_id, order_status)
         if success:
             # If status changed to SHIPPED, send shipping notification email
-            if order_status == OrderStatus.SHIPPED and (not hasattr(previous_status, 'value') or previous_status != OrderStatus.SHIPPED):
+            if order_status == "SHIPPED" and previous_status != "SHIPPED":
                 logger.info(f"Order status changed to SHIPPED, sending shipping notification email")
                 try:
                     # Get updated order after status change
