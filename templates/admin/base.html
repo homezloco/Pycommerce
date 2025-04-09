@@ -48,6 +48,26 @@
             border-bottom: 2px solid var(--bs-primary);
         }
         
+        /* Mobile store selector styling */
+        .store-selector-mobile {
+            max-width: 130px;
+        }
+        
+        .store-selector-mobile select {
+            font-size: 0.8rem;
+            height: 31px;
+            background-color: rgba(255, 255, 255, 0.1);
+            color: white;
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+        
+        .store-selector-mobile select:focus {
+            background-color: rgba(255, 255, 255, 0.2);
+            color: white;
+            border-color: rgba(255, 255, 255, 0.3);
+            box-shadow: 0 0 0 0.2rem rgba(255, 255, 255, 0.1);
+        }
+        
         /* Mobile sidebar improvements */
         @media (max-width: 767.98px) {
             .sidebar {
@@ -102,14 +122,29 @@
             <a class="navbar-brand" href="/admin">
                 <i class="bi bi-shop me-2"></i>PyCommerce Admin
             </a>
+            
+            <!-- Mobile Store Selector - Only visible on small screens -->
+            <div class="d-lg-none ms-auto me-2">
+                <form action="/admin/change-store" method="GET" class="d-flex store-selector-mobile">
+                    <select class="form-select form-select-sm me-1" name="tenant" onchange="this.form.submit()">
+                        <option value="">Store</option>
+                        {% for tenant in tenants %}
+                        <option value="{{ tenant.slug }}" {% if selected_tenant == tenant.slug %}selected{% endif %}>
+                            {{ tenant.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </form>
+            </div>
+            
             <!-- This button will now toggle the sidebar menu -->
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#sidebarMenu" aria-controls="sidebarMenu" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
             
             <div class="collapse navbar-collapse" id="navbarNav">
-                <!-- Store Selector Dropdown -->
-                <div class="mx-auto">
+                <!-- Desktop Store Selector Dropdown - Only visible on large screens -->
+                <div class="mx-auto d-none d-lg-block">
                     <form action="/admin/change-store" method="GET" class="d-flex store-selector">
                         <select class="form-select form-select-sm me-2" name="tenant" onchange="this.form.submit()">
                             <option value="">Select Store</option>
