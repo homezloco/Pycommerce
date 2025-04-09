@@ -145,26 +145,32 @@ async def admin_products(
     except Exception as e:
         logger.error(f"Error fetching tenants: {str(e)}")
     
-    return templates.TemplateResponse(
-        "admin/products.html",
-        {
-            "request": request,
-            "active_page": "products",
-            "products": products_list,
-            "tenant": tenant_obj,
-            "selected_tenant": selected_tenant_slug,
-            "tenants": tenants,
-            "categories": categories,
-            "filters": {
-                "category": category,
-                "min_price": min_price,
-                "max_price": max_price
-            },
-            "status_message": status_message,
-            "status_type": status_type,
-            "cart_item_count": request.session.get("cart_item_count", 0)
-        }
-    )
+    # Debug the context being passed to the template
+    context = {
+        "request": request,
+        "active_page": "products",
+        "products": products_list,
+        "tenant": tenant_obj,
+        "selected_tenant": selected_tenant_slug,
+        "tenants": tenants,
+        "categories": categories,
+        "filters": {
+            "category": category,
+            "min_price": min_price,
+            "max_price": max_price
+        },
+        "status_message": status_message,
+        "status_type": status_type,
+        "cart_item_count": request.session.get("cart_item_count", 0)
+    }
+    
+    # Add debugging for the products in the context
+    logger.info(f"Context products type: {type(context['products'])}")
+    logger.info(f"Context products length: {len(context['products'])}")
+    if context['products']:
+        logger.info(f"First product in context: {context['products'][0]}")
+    
+    return templates.TemplateResponse("admin/products.html", context)
 
 
 @router.get("/products/add", response_class=HTMLResponse)
