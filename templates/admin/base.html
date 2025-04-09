@@ -147,6 +147,11 @@
                             </a>
                         </li>
                         <li class="nav-item">
+                            <a class="nav-link {% if active_page == 'stores' %}active{% endif %}" href="/admin/stores">
+                                <i class="bi bi-shop"></i> Stores
+                            </a>
+                        </li>
+                        <li class="nav-item">
                             <a class="nav-link {% if active_page == 'products' %}active{% endif %}" href="/admin/products">
                                 <i class="bi bi-box"></i> Products
                             </a>
@@ -157,23 +162,29 @@
                             </a>
                         </li>
                         <li class="nav-item">
+                            <a class="nav-link {% if active_page == 'shipping' %}active{% endif %}" href="/admin/shipping">
+                                <i class="bi bi-truck"></i> Shipping
+                            </a>
+                        </li>
+                        <li class="nav-item">
                             <a class="nav-link {% if active_page == 'customers' %}active{% endif %}" href="/admin/customers">
                                 <i class="bi bi-people"></i> Customers
                             </a>
                         </li>
-                        <li class="nav-item">
-                            <a class="nav-link {% if active_page == 'users' %}active{% endif %}" href="/admin/users">
-                                <i class="bi bi-person-badge"></i> Users
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link {% if active_page == 'media' %}active{% endif %}" href="/admin/media">
-                                <i class="bi bi-images"></i> Media
-                            </a>
-                        </li>
+                    </ul>
+                    
+                    <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
+                        <span>Marketing</span>
+                    </h6>
+                    <ul class="nav flex-column mb-2">
                         <li class="nav-item">
                             <a class="nav-link {% if active_page == 'marketing' %}active{% endif %}" href="/admin/marketing">
                                 <i class="bi bi-megaphone"></i> Marketing
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if active_page == 'newsletters' %}active{% endif %}" href="/admin/newsletters">
+                                <i class="bi bi-envelope"></i> Newsletters
                             </a>
                         </li>
                         <li class="nav-item">
@@ -181,15 +192,30 @@
                                 <i class="bi bi-graph-up"></i> Analytics
                             </a>
                         </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if active_page == 'reports' %}active{% endif %}" href="/admin/reports">
+                                <i class="bi bi-file-earmark-bar-graph"></i> Reports
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if active_page == 'media' %}active{% endif %}" href="/admin/media">
+                                <i class="bi bi-images"></i> Media Manager
+                            </a>
+                        </li>
                     </ul>
                     
                     <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
-                        <span>Store Settings</span>
+                        <span>Settings</span>
                     </h6>
                     <ul class="nav flex-column mb-2">
                         <li class="nav-item">
+                            <a class="nav-link {% if active_page == 'settings' %}active{% endif %}" href="/admin/settings">
+                                <i class="bi bi-sliders"></i> Global Settings
+                            </a>
+                        </li>
+                        <li class="nav-item">
                             <a class="nav-link {% if active_page == 'store-settings' %}active{% endif %}" href="/admin/store-settings">
-                                <i class="bi bi-gear"></i> General Settings
+                                <i class="bi bi-gear"></i> Store Settings
                             </a>
                         </li>
                         <li class="nav-item">
@@ -205,6 +231,11 @@
                         <li class="nav-item">
                             <a class="nav-link {% if active_page == 'ai-config' %}active{% endif %}" href="/admin/ai-config">
                                 <i class="bi bi-cpu"></i> AI Configuration
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if active_page == 'users' %}active{% endif %}" href="/admin/users">
+                                <i class="bi bi-person-lock"></i> Users & Permissions
                             </a>
                         </li>
                     </ul>

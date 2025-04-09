@@ -23,6 +23,8 @@ from routes.admin.users import setup_routes as setup_users_routes
 from routes.admin.customers import setup_routes as setup_customers_routes
 from routes.admin.marketing import setup_routes as setup_marketing_routes
 from routes.admin.analytics import setup_routes as setup_analytics_routes
+from routes.admin.shipping import shipping_bp as shipping_routes
+from routes.admin.reports import reports_bp as reports_routes
 
 # Import storefront routes
 from routes.storefront.cart import setup_routes as setup_cart_routes
@@ -56,6 +58,9 @@ def register_routes(app: FastAPI, templates: Jinja2Templates):
     app.include_router(setup_customers_routes(templates))
     app.include_router(setup_marketing_routes(templates))
     app.include_router(setup_analytics_routes(templates))
+    
+    # Note: We're using the Flask blueprint approach for the shipping and reports routes.
+    # The routing for these will be handled in the main application registration.
     
     # Register storefront routes
     app.include_router(setup_home_routes(templates))
