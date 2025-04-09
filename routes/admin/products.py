@@ -85,7 +85,13 @@ async def admin_products(
         )
     
     # Get products for tenant
+    logger.info(f"Fetching products for tenant: {tenant_obj.name} (ID: {tenant_obj.id})")
     products = product_manager.get_by_tenant(str(tenant_obj.id))
+    logger.info(f"Found {len(products)} products for tenant {tenant_obj.name}")
+    
+    # Log product details for debugging
+    for idx, p in enumerate(products):
+        logger.info(f"Product {idx+1}: ID={p.id}, Name={p.name}, Price={p.price}")
     
     # Apply filters if specified
     if category:
@@ -98,7 +104,7 @@ async def admin_products(
     # Format products for template
     products_list = []
     for product in products:
-        products_list.append({
+        product_dict = {
             "id": str(product.id),
             "name": product.name,
             "description": product.description if hasattr(product, "description") else "",
@@ -108,7 +114,11 @@ async def admin_products(
             "categories": product.categories if hasattr(product, "categories") else [],
             "image_url": product.image_url if hasattr(product, "image_url") else None,
             "tenant_name": tenant_obj.name
-        })
+        }
+        products_list.append(product_dict)
+        logger.info(f"Added product to template: {product_dict['name']} with tenant_name={product_dict['tenant_name']}")
+    
+    logger.info(f"Total products for template: {len(products_list)}")
     
     # Get categories for filter
     categories = []
