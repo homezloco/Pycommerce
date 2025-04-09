@@ -132,3 +132,65 @@ async def debug_products(request: Request):
     """
     
     return HTMLResponse(content=debug_html)
+    
+# Template debug route for products
+@app.get("/debug/products/template", response_class=HTMLResponse)
+async def debug_products_template(request: Request):
+    """Debug page for products using the Jinja template."""
+    from pycommerce.models.tenant import TenantManager
+    from pycommerce.models.product import ProductManager
+    
+    tenant_manager = TenantManager()
+    product_manager = ProductManager()
+    
+    selected_tenant_slug = "tech"  # Use Tech Gadgets store
+    tenant_obj = tenant_manager.get_by_slug(selected_tenant_slug)
+    
+    # Get products for tenant
+    products = product_manager.get_by_tenant(str(tenant_obj.id)) if tenant_obj else []
+    
+    # Format products for template
+    products_list = []
+    for product in products:
+        product_dict = {
+            "id": str(product.id),
+            "name": product.name,
+            "description": product.description if hasattr(product, "description") else "",
+            "price": product.price,
+            "stock": product.stock if hasattr(product, "stock") else 0,
+            "sku": product.sku if hasattr(product, "sku") else "",
+            "categories": product.categories if hasattr(product, "categories") else [],
+            "image_url": product.image_url if hasattr(product, "image_url") else None,
+            "tenant_name": tenant_obj.name if tenant_obj else "Unknown"
+        }
+        products_list.append(product_dict)
+    
+    # Get all tenants for the store selector
+    tenants = []
+    try:
+        tenants_list = tenant_manager.list() or []
+        tenants = [
+            {
+                "id": str(t.id),
+                "name": t.name,
+                "slug": t.slug,
+                "domain": t.domain if hasattr(t, 'domain') else None,
+                "active": t.active if hasattr(t, 'active') else True
+            }
+            for t in tenants_list if t and hasattr(t, 'id')
+        ]
+    except Exception as e:
+        print(f"Error fetching tenants: {str(e)}")
+    
+    # Use the template directly
+    context = {
+        "request": request,
+        "active_page": "products",
+        "products": products_list,
+        "tenant": tenant_obj,
+        "selected_tenant": selected_tenant_slug,
+        "tenants": tenants,
+        "cart_item_count": request.session.get("cart_item_count", 0)
+    }
+    
+    return templates.TemplateResponse("admin/products_debug.html", context)
