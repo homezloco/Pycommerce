@@ -106,7 +106,8 @@ async def admin_products(
             "stock": product.stock if hasattr(product, "stock") else 0,
             "sku": product.sku if hasattr(product, "sku") else "",
             "categories": product.categories if hasattr(product, "categories") else [],
-            "image_url": product.image_url if hasattr(product, "image_url") else None
+            "image_url": product.image_url if hasattr(product, "image_url") else None,
+            "tenant_name": tenant_obj.name
         })
     
     # Get categories for filter
