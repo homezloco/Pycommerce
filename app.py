@@ -39,12 +39,6 @@ with app.app_context():
 from order_routes import order_routes
 app.register_blueprint(order_routes)
 
-# Register shipping and reports routes
-from routes.admin.shipping import shipping_bp
-from routes.admin.reports import reports_bp
-app.register_blueprint(shipping_bp)
-app.register_blueprint(reports_bp)
-
 # HTML template for the home page
 HOME_TEMPLATE = """
 <!DOCTYPE html>

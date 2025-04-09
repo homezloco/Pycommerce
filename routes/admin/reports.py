@@ -5,17 +5,36 @@ This module provides routes for generating and viewing sales, products, customer
 and tax reports.
 """
 
-from flask import Blueprint, render_template, request, jsonify, redirect, url_for, flash
-# Note: The login_required decorator will be added when the authentication system is fully implemented
-# For now we'll keep routes accessible without login for testing
+from fastapi import APIRouter, Request, Depends
+from fastapi.templating import Jinja2Templates
+from fastapi.responses import HTMLResponse
 
-# Create a blueprint
-reports_bp = Blueprint('admin_reports', __name__)
-
-@reports_bp.route('/admin/reports', methods=['GET'])
-def reports():
-    """Reports dashboard."""
-    return render_template('admin/reports.html',
-                          active_page='reports',
-                          status_message=request.args.get('status_message'),
-                          status_type=request.args.get('status_type', 'info'))
+def setup_routes(templates: Jinja2Templates):
+    """
+    Set up reports management routes.
+    
+    Args:
+        templates: Jinja2Templates for rendering
+        
+    Returns:
+        APIRouter: FastAPI router with reports routes
+    """
+    router = APIRouter()
+    
+    @router.get("/admin/reports", response_class=HTMLResponse)
+    async def reports(request: Request):
+        """Reports dashboard."""
+        status_message = request.query_params.get('status_message')
+        status_type = request.query_params.get('status_type', 'info')
+        
+        return templates.TemplateResponse(
+            "admin/reports.html",
+            {
+                "request": request,
+                "active_page": "reports",
+                "status_message": status_message,
+                "status_type": status_type
+            }
+        )
+        
+    return router
