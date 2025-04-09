@@ -1,0 +1,130 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}Test Products - Dark Theme{% endblock %}
+
+{% block admin_content %}
+<div class="container py-4">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <h1 class="text-light">Product Management</h1>
+            <p class="text-secondary">Manage the products for {{ tenant.name }}</p>
+
+            {% if status_message %}
+            <div class="alert alert-{{ status_type }}">
+                {{ status_message }}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Filter products -->
+    <div class="card bg-dark border-secondary mb-4">
+        <div class="card-header bg-dark text-light border-secondary">
+            <h5>Filter Products</h5>
+        </div>
+        <div class="card-body">
+            <form action="/admin/test_products" method="get" class="row g-3">
+                <input type="hidden" name="tenant" value="{{ selected_tenant_slug }}">
+                
+                <div class="col-md-3">
+                    <label for="category" class="form-label text-light">Category</label>
+                    <select name="category" id="category" class="form-select bg-dark text-light border-secondary">
+                        <option value="">All Categories</option>
+                        {% for cat in categories %}
+                        <option value="{{ cat.slug }}" {% if category == cat.slug %}selected{% endif %}>{{ cat.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="col-md-3">
+                    <label for="min_price" class="form-label text-light">Min Price</label>
+                    <input type="number" class="form-control bg-dark text-light border-secondary" id="min_price" name="min_price" value="{{ min_price or '' }}" step="0.01">
+                </div>
+                
+                <div class="col-md-3">
+                    <label for="max_price" class="form-label text-light">Max Price</label>
+                    <input type="number" class="form-control bg-dark text-light border-secondary" id="max_price" name="max_price" value="{{ max_price or '' }}" step="0.01">
+                </div>
+                
+                <div class="col-md-3">
+                    <label for="in_stock" class="form-label text-light">Stock Status</label>
+                    <select name="in_stock" id="in_stock" class="form-select bg-dark text-light border-secondary">
+                        <option value="">All Stock Status</option>
+                        <option value="true" {% if in_stock == True %}selected{% endif %}>In Stock</option>
+                        <option value="false" {% if in_stock == False %}selected{% endif %}>Out of Stock</option>
+                    </select>
+                </div>
+                
+                <div class="col-12 mt-3">
+                    <button type="submit" class="btn btn-primary">Apply Filters</button>
+                    <a href="/admin/test_products?tenant={{ selected_tenant_slug }}" class="btn btn-secondary">Clear Filters</a>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Products table -->
+    <div class="card bg-dark border-secondary">
+        <div class="card-header bg-dark text-light border-secondary d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Products ({{ products|length }})</h5>
+            <a href="#" class="btn btn-success">Add New Product</a>
+        </div>
+        <div class="card-body">
+            {% if products %}
+            <div class="table-responsive">
+                <table class="table table-dark table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>SKU</th>
+                            <th>Price</th>
+                            <th>Stock</th>
+                            <th>Categories</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for product in products %}
+                        <tr>
+                            <td>
+                                {% if product.image_url %}
+                                <img src="{{ product.image_url }}" alt="{{ product.name }}" class="img-thumbnail me-2" style="width: 50px; height: 50px; object-fit: cover;">
+                                {% else %}
+                                <div class="bg-secondary me-2 d-inline-block" style="width: 50px; height: 50px; text-align: center; line-height: 50px;">
+                                    <i class="bi bi-box"></i>
+                                </div>
+                                {% endif %}
+                                {{ product.name }}
+                            </td>
+                            <td>{{ product.sku }}</td>
+                            <td>${{ product.price }}</td>
+                            <td>
+                                <span class="badge {{ 'bg-success' if product.stock > 0 else 'bg-danger' }}">
+                                    {{ product.stock if product.stock > 0 else 'Out of stock' }}
+                                </span>
+                            </td>
+                            <td>
+                                {% for category in product.categories %}
+                                <span class="badge bg-info text-dark">{{ category }}</span>
+                                {% endfor %}
+                            </td>
+                            <td>
+                                <div class="btn-group">
+                                    <a href="#" class="btn btn-sm btn-primary">Edit</a>
+                                    <a href="#" class="btn btn-sm btn-danger">Delete</a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="alert alert-info">
+                No products found matching your criteria.
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

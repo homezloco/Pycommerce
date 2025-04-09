@@ -25,6 +25,7 @@ from routes.admin.marketing import setup_routes as setup_marketing_routes
 from routes.admin.analytics import setup_routes as setup_analytics_routes
 from routes.admin.shipping import setup_routes as setup_shipping_routes
 from routes.admin.reports import setup_routes as setup_reports_routes
+from routes.admin.test_products import setup_routes as setup_test_products_routes
 
 # Import storefront routes
 from routes.storefront.cart import setup_routes as setup_cart_routes
@@ -62,6 +63,7 @@ def register_routes(app: FastAPI, templates: Jinja2Templates):
     # Register shipping and reports routes
     app.include_router(setup_shipping_routes(templates))
     app.include_router(setup_reports_routes(templates))
+    app.include_router(setup_test_products_routes(templates))
     
     # Register storefront routes
     app.include_router(setup_home_routes(templates))
