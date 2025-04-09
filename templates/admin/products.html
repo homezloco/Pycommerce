@@ -46,6 +46,14 @@
                 </form>
             </div>
             
+            <!-- Debug information -->
+            <div class="alert alert-info">
+                <p>Debug Info:</p>
+                <p>Number of products: {{ products|length if products else 0 }}</p>
+                <p>Selected tenant: {{ selected_tenant }}</p>
+                <p>Products data type: {{ products.__class__.__name__ }}</p>
+            </div>
+            
             <div class="table-responsive">
                 <table class="table table-hover">
                     <thead>
