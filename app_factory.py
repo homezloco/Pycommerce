@@ -32,7 +32,13 @@ logger = logging.getLogger(__name__)
 
 # Define template directory
 templates_dir = Path("templates")
+# Disable template caching for development
 templates = Jinja2Templates(directory=str(templates_dir))
+templates.env.globals.update({
+    "DEBUG": True,
+})
+templates.env.auto_reload = True
+templates.env.cache_size = 0  # Disable caching completely
 
 def create_app():
     """
@@ -50,6 +56,7 @@ def create_app():
         title="PyCommerce",
         description="A modular Python e-commerce platform",
         version="0.1.0",
+        debug=True,  # Enable debug mode
     )
     
     # Mount static files

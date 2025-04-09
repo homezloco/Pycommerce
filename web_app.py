@@ -46,3 +46,89 @@ async def index(request: Request):
 async def admin_redirect():
     """Redirect /admin to /admin/dashboard."""
     return RedirectResponse(url="/admin/dashboard")
+
+# Debug route for products
+@app.get("/debug/products", response_class=HTMLResponse)
+async def debug_products(request: Request):
+    """Debug page for products."""
+    from pycommerce.models.tenant import TenantManager
+    from pycommerce.models.product import ProductManager
+    
+    tenant_manager = TenantManager()
+    product_manager = ProductManager()
+    
+    selected_tenant_slug = "tech"  # Use Tech Gadgets store
+    tenant_obj = tenant_manager.get_by_slug(selected_tenant_slug)
+    
+    # Get products for tenant
+    products = product_manager.get_by_tenant(str(tenant_obj.id)) if tenant_obj else []
+    
+    # Format products for template
+    products_list = []
+    for product in products:
+        product_dict = {
+            "id": str(product.id),
+            "name": product.name,
+            "description": product.description if hasattr(product, "description") else "",
+            "price": product.price,
+            "stock": product.stock if hasattr(product, "stock") else 0,
+            "sku": product.sku if hasattr(product, "sku") else "",
+            "categories": product.categories if hasattr(product, "categories") else [],
+            "image_url": product.image_url if hasattr(product, "image_url") else None,
+            "tenant_name": tenant_obj.name if tenant_obj else "Unknown"
+        }
+        products_list.append(product_dict)
+    
+    # Create debug html directly
+    debug_html = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Debug Products</title>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    </head>
+    <body>
+        <div class="container py-4">
+            <h1>Debug Products Page</h1>
+            
+            <div class="alert alert-info">
+                <h3>Debug Information</h3>
+                <p>Tenant: {selected_tenant_slug}</p>
+                <p>Products count: {len(products_list)}</p>
+            </div>
+            
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h3>All Products</h3>
+                </div>
+                <div class="card-body">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Name</th>
+                                <th>Tenant Name</th>
+                                <th>Price</th>
+                                <th>Stock</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {"".join([f'''
+                            <tr>
+                                <td>{p["id"]}</td>
+                                <td>{p["name"]}</td>
+                                <td>{p["tenant_name"]}</td>
+                                <td>${p["price"]}</td>
+                                <td>{p["stock"]}</td>
+                            </tr>
+                            ''' for p in products_list]) if products_list else "<tr><td colspan='5'>No products found</td></tr>"}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </body>
+    </html>
+    """
+    
+    return HTMLResponse(content=debug_html)
