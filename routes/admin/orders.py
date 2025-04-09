@@ -508,9 +508,138 @@ async def admin_update_order_status(request: Request, order_id: str, status: str
                 status_code=303
             )
         
+        # Get the current tenant for store information
+        selected_tenant_slug = request.session.get("selected_tenant")
+        tenant = tenant_manager.get_by_slug(selected_tenant_slug)
+        if not tenant:
+            logger.warning(f"No tenant selected when updating order status")
+
+        # Get the order before status update to check previous status
+        order = order_manager.get_by_id(order_id)
+        if not order:
+            return RedirectResponse(
+                url=f"/admin/orders?status_message=Order+not+found&status_type=error", 
+                status_code=303
+            )
+        
+        previous_status = order.status
+        
         # Update order status
         success = order_manager.update_status(order_id, order_status)
         if success:
+            # If status changed to SHIPPED, send shipping notification email
+            if order_status == OrderStatus.SHIPPED and (not hasattr(previous_status, 'value') or previous_status != OrderStatus.SHIPPED):
+                logger.info(f"Order status changed to SHIPPED, sending shipping notification email")
+                try:
+                    # Get updated order after status change
+                    updated_order = order_manager.get_by_id(order_id)
+                    
+                    # Import needed services
+                    from pycommerce.services.mail_service import get_email_service, init_email_service, EmailConfig
+                    from pycommerce.models.shipment import ShipmentManager, Shipment
+                    
+                    # Get shipment manager and find or create shipment
+                    shipment_manager = ShipmentManager()
+                    shipments = shipment_manager.get_shipments_for_order(order_id)
+                    
+                    # Use first shipment or create a new one if none exists
+                    if shipments and len(shipments) > 0:
+                        shipment = shipments[0]
+                        logger.info(f"Using existing shipment {shipment.id}")
+                    else:
+                        # Create a new shipment with basic information
+                        try:
+                            shipping_method = "Standard Shipping"
+                            if hasattr(updated_order, 'shipping_method') and updated_order.shipping_method:
+                                shipping_method = updated_order.shipping_method
+                                
+                            # Create shipment
+                            shipment = shipment_manager.create_shipment(
+                                order_id=order_id,
+                                shipping_method=shipping_method,
+                                tracking_number=getattr(updated_order, 'tracking_number', None),
+                                carrier=getattr(updated_order, 'shipping_carrier', "Default Carrier")
+                            )
+                            logger.info(f"Created new shipment {shipment.id}")
+                            
+                            # Add order items to shipment
+                            order_items = get_order_items(order_id) 
+                            for item in order_items:
+                                shipment_manager.add_items_to_shipment(
+                                    shipment_id=shipment.id,
+                                    items=[{
+                                        "order_item_id": str(item.get("id", item.get("order_item_id"))),
+                                        "product_id": str(item.get("product_id")),
+                                        "quantity": item.get("quantity", 1)
+                                    }]
+                                )
+                        except Exception as ship_err:
+                            logger.error(f"Error creating shipment: {str(ship_err)}")
+                            # Continue even if shipment creation fails, use a mock shipment for the email
+                            shipment = Shipment(
+                                id="default",
+                                order_id=order_id,
+                                shipping_method="Standard Shipping",
+                                carrier=getattr(updated_order, 'shipping_carrier', "Default Carrier"),
+                                tracking_number=getattr(updated_order, 'tracking_number', "Not available")
+                            )
+                    
+                    # Initialize email service
+                    email_service = get_email_service()
+                    if not email_service:
+                        email_service = init_email_service()
+                    
+                    # Default to test mode if SMTP is not configured
+                    if not email_service.config.enabled:
+                        email_service.enable_test_mode()
+                        logger.warning("Email service in test mode, emails will not be sent")
+                    
+                    # Get customer email
+                    customer_email = getattr(updated_order, 'customer_email', None)
+                    if not customer_email:
+                        logger.warning(f"No customer email available for order {order_id}")
+                        return RedirectResponse(
+                            url=f"/admin/orders/{order_id}?status_message=Order+status+updated+but+no+customer+email+available+for+notification&status_type=warning", 
+                            status_code=303
+                        )
+                    
+                    # Get store information
+                    store_name = tenant.name if tenant else "Our Store"
+                    store_url = tenant.domain if tenant and tenant.domain else f"https://{request.headers.get('host')}"
+                    
+                    # Send shipping notification email
+                    email_sent = email_service.send_shipping_notification(
+                        order=updated_order,
+                        shipment=shipment,
+                        to_email=customer_email,
+                        store_name=store_name,
+                        store_url=store_url,
+                        contact_email=None  # Use default from config
+                    )
+                    
+                    if email_sent:
+                        logger.info(f"Shipping notification email sent to {customer_email}")
+                        return RedirectResponse(
+                            url=f"/admin/orders/{order_id}?status_message=Order+status+updated+and+shipping+notification+email+sent&status_type=success", 
+                            status_code=303
+                        )
+                    else:
+                        logger.warning(f"Failed to send shipping notification email")
+                        return RedirectResponse(
+                            url=f"/admin/orders/{order_id}?status_message=Order+status+updated+but+shipping+notification+email+failed&status_type=warning", 
+                            status_code=303
+                        )
+                        
+                except Exception as email_err:
+                    logger.error(f"Error sending shipping notification: {str(email_err)}")
+                    import traceback
+                    logger.error(f"Traceback: {traceback.format_exc()}")
+                    return RedirectResponse(
+                        url=f"/admin/orders/{order_id}?status_message=Order+status+updated+but+shipping+email+failed:+{str(email_err)}&status_type=warning", 
+                        status_code=303
+                    )
+            
+            # Default success response
             return RedirectResponse(
                 url=f"/admin/orders/{order_id}?status_message=Order+status+updated+successfully&status_type=success", 
                 status_code=303
@@ -523,6 +652,8 @@ async def admin_update_order_status(request: Request, order_id: str, status: str
     
     except Exception as e:
         logger.error(f"Error updating order status: {str(e)}")
+        import traceback
+        logger.error(f"Traceback: {traceback.format_exc()}")
         return RedirectResponse(
             url=f"/admin/orders/{order_id}?status_message=Error+updating+order+status:+{str(e)}&status_type=error", 
             status_code=303

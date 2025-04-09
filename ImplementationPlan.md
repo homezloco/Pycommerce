@@ -56,7 +56,7 @@ PyCommerce is a scalable, multi-tenant ecommerce platform built with Python. It 
 ### To Do:
 
 - ⏳ **Return Processing**: Customer return and refund workflow
-- ⏳ **Shipping Notifications**: Email notifications for shipment status changes
+- ✅ **Shipping Notifications**: Email notifications for shipment status changes
 - ⏳ **Advanced Analytics**: Sales and customer behavior tracking
 - ⏳ **Performance Optimization**: Caching and query optimization
 - ⏳ **Documentation**: API documentation and developer guides
@@ -123,7 +123,7 @@ PyCommerce is a scalable, multi-tenant ecommerce platform built with Python. It 
    - ✅ Order status updates
    - ✅ Order notes for internal communication
    - ✅ Inventory management
-   - ⏳ Shipping notifications
+   - ✅ Shipping notifications
    - ⏳ Return processing
 
 ### Phase 4: Tenant Management and Scaling (Partially Completed)
@@ -339,7 +339,7 @@ For existing ecommerce stores looking to migrate to PyCommerce:
 22. 🔄 Optimize system performance and database queries
 23. 🔄 Enhance admin dashboard with analytics
 24. ⏳ Add return processing workflow
-25. ⏳ Implement shipping notifications
+25. ✅ Implement shipping notifications
 
 
 ### Future Roadmap

@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Multi-tenant ecommerce platform with plugin-based architecture
 - Product management with categories and variants
+- Shipping notification emails when order status changes to "shipped"
 - Shopping cart and checkout functionality
 - Order management with order notes and status tracking
 - Payment processing with Stripe and PayPal plugins
