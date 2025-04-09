@@ -101,22 +101,53 @@ async def admin_products(
     if max_price_float is not None:
         products = [p for p in products if hasattr(p, 'price') and float(p.price) <= max_price_float]
     
-    # Format products for template
+    # Format products for HTML
+    products_html_rows = ""
     products_list = []
     for product in products:
+        product_id = str(product.id)
+        name = product.name
+        description = product.description if hasattr(product, "description") else ""
+        price = product.price
+        stock = product.stock if hasattr(product, "stock") else 0
+        sku = product.sku if hasattr(product, "sku") else ""
+        tenant_name = tenant_obj.name
+        categories = product.categories if hasattr(product, "categories") else []
+        
+        # Create HTML table row for this product
+        products_html_rows += f"""
+        <tr>
+            <td>{product_id}</td>
+            <td>{name}</td>
+            <td>{tenant_name}</td>
+            <td>${price}</td>
+            <td>{stock}</td>
+            <td>
+                <a href="/admin/products/edit/{product_id}" class="btn btn-sm btn-primary">Edit</a>
+                <a href="/admin/products/delete/{product_id}" class="btn btn-sm btn-danger" 
+                   onclick="return confirm('Are you sure you want to delete this product?')">Delete</a>
+            </td>
+        </tr>
+        """
+        
+        # Also store in list for potential future template use
         product_dict = {
-            "id": str(product.id),
-            "name": product.name,
-            "description": product.description if hasattr(product, "description") else "",
-            "price": product.price,
-            "stock": product.stock if hasattr(product, "stock") else 0,
-            "sku": product.sku if hasattr(product, "sku") else "",
-            "categories": product.categories if hasattr(product, "categories") else [],
+            "id": product_id,
+            "name": name,
+            "description": description,
+            "price": price,
+            "stock": stock,
+            "sku": sku,
+            "categories": categories,
             "image_url": product.image_url if hasattr(product, "image_url") else None,
-            "tenant_name": tenant_obj.name
+            "tenant_name": tenant_name
         }
         products_list.append(product_dict)
         logger.info(f"Added product to template: {product_dict['name']} with tenant_name={product_dict['tenant_name']}")
+    
+    # If no products found
+    if not products_html_rows:
+        products_html_rows = '<tr><td colspan="6" class="text-center">No products found for this tenant</td></tr>'
     
     logger.info(f"Total products for template: {len(products_list)}")
     
@@ -127,6 +158,12 @@ async def admin_products(
             categories = category_manager.get_by_tenant(str(tenant_obj.id))
         except Exception as e:
             logger.warning(f"Error getting categories: {str(e)}")
+    
+    # Format categories for dropdown
+    categories_options = ""
+    for cat in categories:
+        cat_name = cat.name if hasattr(cat, "name") else str(cat)
+        categories_options += f'<option value="{cat_name}" {"selected" if category == cat_name else ""}>{cat_name}</option>'
     
     # Get all tenants for the store selector
     tenants = []
@@ -145,32 +182,169 @@ async def admin_products(
     except Exception as e:
         logger.error(f"Error fetching tenants: {str(e)}")
     
-    # Debug the context being passed to the template
-    context = {
-        "request": request,
-        "active_page": "products",
-        "products": products_list,
-        "tenant": tenant_obj,
-        "selected_tenant": selected_tenant_slug,
-        "tenants": tenants,
-        "categories": categories,
-        "filters": {
-            "category": category,
-            "min_price": min_price,
-            "max_price": max_price
-        },
-        "status_message": status_message,
-        "status_type": status_type,
-        "cart_item_count": request.session.get("cart_item_count", 0)
-    }
+    # Format tenants for dropdown
+    tenant_options = ""
+    for t in tenants:
+        if t["slug"] != selected_tenant_slug:  # Skip current store
+            tenant_options += f'<option value="{t["slug"]}">{t["name"]}</option>'
     
-    # Add debugging for the products in the context
-    logger.info(f"Context products type: {type(context['products'])}")
-    logger.info(f"Context products length: {len(context['products'])}")
-    if context['products']:
-        logger.info(f"First product in context: {context['products'][0]}")
+    # Status message display
+    status_alert = ""
+    if status_message:
+        status_alert = f"""
+        <div class="alert alert-{status_type} alert-dismissible fade show" role="alert">
+            {status_message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        """
     
-    return templates.TemplateResponse("admin/products.html", context)
+    # Generate direct HTML output
+    html = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>PyCommerce - Product Management</title>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="/static/css/admin.css">
+        <style>
+            body {{ padding-top: 56px; }}
+            .product-actions {{ white-space: nowrap; }}
+            .navbar-nav .nav-item {{ margin-right: 15px; }}
+            .store-selector {{ 
+                display: inline-block;
+                margin-left: 20px;
+                margin-right: 20px;
+            }}
+            .store-selector select {{
+                background-color: #343a40;
+                color: white;
+                border-color: #6c757d;
+                font-weight: 500;
+            }}
+        </style>
+    </head>
+    <body>
+        <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+            <div class="container-fluid">
+                <a class="navbar-brand" href="/">PyCommerce</a>
+                
+                <!-- Store selector in navbar -->
+                <div class="store-selector">
+                    <select class="form-select form-select-sm" id="storeSelector" onchange="window.location='/admin/products?tenant='+this.value">
+                        <option value="{selected_tenant_slug}" selected>{tenant_obj.name}</option>
+                        {tenant_options}
+                    </select>
+                </div>
+                
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <ul class="navbar-nav">
+                        <li class="nav-item">
+                            <a class="nav-link" href="/admin/dashboard">Dashboard</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link active" href="/admin/products">Products</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/admin/orders">Orders</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/admin/shipping">Shipping</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/admin/reports">Reports</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/admin/settings">Settings</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+
+        <div class="container py-4 mt-4">
+            <h1>Product Management</h1>
+            
+            {status_alert}
+            
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5>Filter Products</h5>
+                </div>
+                <div class="card-body">
+                    <form action="/admin/products" method="get" class="row g-3">
+                        <input type="hidden" name="tenant" value="{selected_tenant_slug}">
+                        
+                        <div class="col-md-3">
+                            <label for="category" class="form-label">Category</label>
+                            <select name="category" id="category" class="form-select">
+                                <option value="">All Categories</option>
+                                {categories_options}
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-3">
+                            <label for="min_price" class="form-label">Min Price</label>
+                            <input type="number" class="form-control" id="min_price" name="min_price" 
+                                   value="{min_price if min_price else ''}" step="0.01" min="0">
+                        </div>
+                        
+                        <div class="col-md-3">
+                            <label for="max_price" class="form-label">Max Price</label>
+                            <input type="number" class="form-control" id="max_price" name="max_price" 
+                                   value="{max_price if max_price else ''}" step="0.01" min="0">
+                        </div>
+                        
+                        <div class="col-md-3 d-flex align-items-end">
+                            <button type="submit" class="btn btn-primary me-2">Filter</button>
+                            <a href="/admin/products?tenant={selected_tenant_slug}" class="btn btn-outline-secondary">Clear</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h3>Products</h3>
+                    <a href="/admin/products/add" class="btn btn-success">Add New Product</a>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Name</th>
+                                    <th>Store</th>
+                                    <th>Price</th>
+                                    <th>Stock</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {products_html_rows}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    </body>
+    </html>
+    """
+    
+    # Add debugging
+    logger.info(f"Context products type: {type(products_list)}")
+    logger.info(f"Context products length: {len(products_list)}")
+    if products_list:
+        logger.info(f"First product in context: {products_list[0]}")
+    
+    # Return the HTML directly instead of using a template
+    return HTMLResponse(content=html)
 
 
 @router.get("/products/add", response_class=HTMLResponse)
