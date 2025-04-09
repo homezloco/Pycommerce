@@ -117,15 +117,28 @@ async def admin_products(
         # Create HTML table row for this product
         products_html_rows += f"""
         <tr>
-            <td>{product_id}</td>
-            <td>{name}</td>
-            <td>{tenant_name}</td>
-            <td>${price}</td>
-            <td>{stock}</td>
+            <td class="text-muted small">{product_id[:8]}...</td>
             <td>
-                <a href="/admin/products/edit/{product_id}" class="btn btn-sm btn-primary">Edit</a>
+                <strong>{name}</strong>
+                <div class="small text-muted">SKU: {sku}</div>
+            </td>
+            <td>
+                <span class="badge bg-dark rounded-pill">{tenant_name}</span>
+            </td>
+            <td><span class="fw-bold">${price}</span></td>
+            <td>
+                <span class="badge {stock > 10 and 'bg-success' or (stock > 0 and 'bg-warning' or 'bg-danger')} rounded-pill">
+                    {stock} {stock == 1 and 'unit' or 'units'}
+                </span>
+            </td>
+            <td class="text-end">
+                <a href="/admin/products/edit/{product_id}" class="btn btn-sm btn-primary me-1">
+                    <i class="fas fa-edit"></i> Edit
+                </a>
                 <a href="/admin/products/delete/{product_id}" class="btn btn-sm btn-danger" 
-                   onclick="return confirm('Are you sure you want to delete this product?')">Delete</a>
+                   onclick="return confirm('Are you sure you want to delete this product?')">
+                    <i class="fas fa-trash"></i> Delete
+                </a>
             </td>
         </tr>
         """
@@ -205,28 +218,17 @@ async def admin_products(
     <head>
         <title>PyCommerce - Product Management</title>
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
         <link rel="stylesheet" href="/static/css/admin.css">
-        <style>
-            body {{ padding-top: 56px; }}
-            .product-actions {{ white-space: nowrap; }}
-            .navbar-nav .nav-item {{ margin-right: 15px; }}
-            .store-selector {{ 
-                display: inline-block;
-                margin-left: 20px;
-                margin-right: 20px;
-            }}
-            .store-selector select {{
-                background-color: #343a40;
-                color: white;
-                border-color: #6c757d;
-                font-weight: 500;
-            }}
-        </style>
+        <link rel="icon" href="/static/favicon.ico" type="image/x-icon">
     </head>
     <body>
+        <!-- Top Navigation Bar -->
         <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
             <div class="container-fluid">
-                <a class="navbar-brand" href="/">PyCommerce</a>
+                <a class="navbar-brand" href="/">
+                    <i class="fas fa-shopping-cart me-2"></i>PyCommerce
+                </a>
                 
                 <!-- Store selector in navbar -->
                 <div class="store-selector">
@@ -240,40 +242,76 @@ async def admin_products(
                     <span class="navbar-toggler-icon"></span>
                 </button>
                 <div class="collapse navbar-collapse" id="navbarNav">
+                    <ul class="navbar-nav me-auto">
+                        <li class="nav-item">
+                            <a class="nav-link" href="/admin/dashboard">
+                                <i class="fas fa-tachometer-alt me-1"></i>Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link active" href="/admin/products">
+                                <i class="fas fa-box me-1"></i>Products
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/admin/orders">
+                                <i class="fas fa-shopping-bag me-1"></i>Orders
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/admin/shipping">
+                                <i class="fas fa-truck me-1"></i>Shipping
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/admin/reports">
+                                <i class="fas fa-chart-bar me-1"></i>Reports
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/admin/settings">
+                                <i class="fas fa-cog me-1"></i>Settings
+                            </a>
+                        </li>
+                    </ul>
                     <ul class="navbar-nav">
                         <li class="nav-item">
-                            <a class="nav-link" href="/admin/dashboard">Dashboard</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link active" href="/admin/products">Products</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="/admin/orders">Orders</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="/admin/shipping">Shipping</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="/admin/reports">Reports</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="/admin/settings">Settings</a>
+                            <a class="nav-link" href="/" target="_blank">
+                                <i class="fas fa-external-link-alt me-1"></i>View Store
+                            </a>
                         </li>
                     </ul>
                 </div>
             </div>
         </nav>
 
-        <div class="container py-4 mt-4">
-            <h1>Product Management</h1>
+        <!-- Main Content -->
+        <div class="container-fluid py-4 mt-4">
+            <div class="row mb-4">
+                <div class="col">
+                    <h1 class="display-6">Product Management</h1>
+                    <nav aria-label="breadcrumb">
+                        <ol class="breadcrumb">
+                            <li class="breadcrumb-item"><a href="/admin/dashboard">Admin</a></li>
+                            <li class="breadcrumb-item active" aria-current="page">Products</li>
+                        </ol>
+                    </nav>
+                    
+                    {status_alert}
+                </div>
+            </div>
             
-            {status_alert}
-            
+            <!-- Filter Panel -->
             <div class="card mb-4">
                 <div class="card-header">
-                    <h5>Filter Products</h5>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5><i class="fas fa-filter me-2"></i>Filter Products</h5>
+                        <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#filterCollapse">
+                            <i class="fas fa-chevron-down"></i>
+                        </button>
+                    </div>
                 </div>
-                <div class="card-body">
+                <div class="card-body collapse show" id="filterCollapse">
                     <form action="/admin/products" method="get" class="row g-3">
                         <input type="hidden" name="tenant" value="{selected_tenant_slug}">
                         
@@ -287,40 +325,55 @@ async def admin_products(
                         
                         <div class="col-md-3">
                             <label for="min_price" class="form-label">Min Price</label>
-                            <input type="number" class="form-control" id="min_price" name="min_price" 
-                                   value="{min_price if min_price else ''}" step="0.01" min="0">
+                            <div class="input-group">
+                                <span class="input-group-text">$</span>
+                                <input type="number" class="form-control" id="min_price" name="min_price" 
+                                       value="{min_price if min_price else ''}" step="0.01" min="0">
+                            </div>
                         </div>
                         
                         <div class="col-md-3">
                             <label for="max_price" class="form-label">Max Price</label>
-                            <input type="number" class="form-control" id="max_price" name="max_price" 
-                                   value="{max_price if max_price else ''}" step="0.01" min="0">
+                            <div class="input-group">
+                                <span class="input-group-text">$</span>
+                                <input type="number" class="form-control" id="max_price" name="max_price" 
+                                       value="{max_price if max_price else ''}" step="0.01" min="0">
+                            </div>
                         </div>
                         
                         <div class="col-md-3 d-flex align-items-end">
-                            <button type="submit" class="btn btn-primary me-2">Filter</button>
-                            <a href="/admin/products?tenant={selected_tenant_slug}" class="btn btn-outline-secondary">Clear</a>
+                            <button type="submit" class="btn btn-primary me-2">
+                                <i class="fas fa-search me-1"></i>Filter
+                            </button>
+                            <a href="/admin/products?tenant={selected_tenant_slug}" class="btn btn-outline-secondary">
+                                <i class="fas fa-times me-1"></i>Clear
+                            </a>
                         </div>
                     </form>
                 </div>
             </div>
             
+            <!-- Products Table -->
             <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h3>Products</h3>
-                    <a href="/admin/products/add" class="btn btn-success">Add New Product</a>
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h3><i class="fas fa-boxes me-2"></i>Products</h3>
+                        <a href="/admin/products/add" class="btn btn-success">
+                            <i class="fas fa-plus me-1"></i>Add New Product
+                        </a>
+                    </div>
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">
                         <table class="table table-striped table-hover">
                             <thead>
                                 <tr>
-                                    <th>ID</th>
-                                    <th>Name</th>
-                                    <th>Store</th>
-                                    <th>Price</th>
-                                    <th>Stock</th>
-                                    <th>Actions</th>
+                                    <th width="5%">ID</th>
+                                    <th width="30%">Name</th>
+                                    <th width="20%">Store</th>
+                                    <th width="10%">Price</th>
+                                    <th width="10%">Stock</th>
+                                    <th width="25%" class="text-end">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -329,8 +382,24 @@ async def admin_products(
                         </table>
                     </div>
                 </div>
+                <div class="card-footer text-muted">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>Showing {len(products_list)} products</div>
+                        <div>
+                            <a href="/admin/products/add" class="btn btn-sm btn-success">
+                                <i class="fas fa-plus me-1"></i>Add Product
+                            </a>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
+
+        <footer class="bg-light mt-5 py-3 text-center text-muted">
+            <div class="container">
+                <p class="mb-0">PyCommerce Admin Panel</p>
+            </div>
+        </footer>
 
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
     </body>
