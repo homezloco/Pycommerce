@@ -263,7 +263,6 @@ async def admin_orders(
             "selected_tenant": selected_tenant_slug,
             "tenant": tenant,
             "status_options": status_options,
-            "active_page": "orders",
             "filters": {
                 "status": status,
                 "date_from": date_from,
@@ -481,7 +480,6 @@ async def admin_order_detail(
                 "selected_tenant": selected_tenant_slug,
                 "tenant": tenant,
                 "status_options": status_options,
-                "active_page": "orders",
                 "status_message": status_message,
                 "status_type": status_type,
                 "cart_item_count": request.session.get("cart_item_count", 0)
@@ -812,7 +810,6 @@ async def admin_order_fulfillment(
                 "tenant": tenant,
                 "carriers": carriers,
                 "shipping_statuses": shipping_statuses,
-                "active_page": "orders",
                 "status_message": status_message,
                 "status_type": status_type,
                 "cart_item_count": request.session.get("cart_item_count", 0)

@@ -1,8 +1,8 @@
-{% extends 'admin/base.html' %}
+{% extends 'admin/base_admin.html' %}
 
-{% block title %}PyCommerce - Admin Dashboard{% endblock title %}
+{% block title %}PyCommerce - Admin Dashboard{% endblock %}
 
-{% block content %}
+{% block admin_content %}
 <div class="container-fluid py-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h1 class="h2">Dashboard</h1>
@@ -260,7 +260,7 @@
         </div>
     </div>
 </div>
-{% endblock content %}
+{% endblock %}
 
 {% block scripts %}
 <script>
@@ -309,4 +309,4 @@
         }
     });
 </script>
-{% endblock scripts %}
+{% endblock %}

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}PyCommerce Admin{% endblock title %}</title>
+    <title>{% block title %}PyCommerce Admin{% endblock %}</title>
     <link rel="stylesheet" href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
     <link href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" rel="stylesheet">
@@ -66,60 +66,10 @@
         .status-inactive {
             background-color: var(--bs-danger);
         }
-        /* Icon Sidebar Styles */
-        #iconSidebar {
-            min-height: 100vh;
-            width: 70px;
-            background-color: #1e2a38 !important;
-            border-right: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        #iconSidebar .nav-link {
-            color: rgba(255, 255, 255, 0.65);
-            border-radius: 8px;
-            transition: all 0.2s ease;
-            padding: 10px;
-            margin: 0 auto;
-            width: 44px;
-            height: 44px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        #iconSidebar .nav-link:hover {
-            color: rgba(255, 255, 255, 0.95);
-            background-color: rgba(255, 255, 255, 0.1);
-            transform: translateY(-2px);
-        }
-        #iconSidebar .nav-link.active {
-            color: #fff;
-            background-color: rgba(255, 255, 255, 0.15);
-        }
-        .content {
-            padding-top: 1.5rem;
-            padding-bottom: 1.5rem;
-        }
-        @media (max-width: 767.98px) {
-            #iconSidebar {
-                width: 100%;
-                height: auto;
-                min-height: auto;
-                padding-bottom: 0 !important;
-            }
-            #iconSidebar .nav {
-                display: flex;
-                flex-direction: row;
-                overflow-x: auto;
-                padding: 0.5rem;
-            }
-            #iconSidebar .nav-item {
-                margin-right: 0.5rem;
-                margin-bottom: 0 !important;
-            }
-        }
     </style>
 </head>
-<body style="background-color: #131e2c;">
-    <nav class="navbar navbar-expand-lg navbar-dark shadow-sm" style="background-color: #1e2a38;">
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm">
         <div class="container-fluid">
             <a class="navbar-brand" href="/admin">
                 <i class="bi bi-shop me-2"></i>PyCommerce Admin
@@ -187,73 +137,74 @@
 
     <div class="container-fluid">
         <div class="row">
-            <!-- Icon Side Navigation -->
-            <nav id="iconSidebar" class="col-auto d-none d-md-block sidebar py-3" style="background-color: #1e2a38;">
-                <div class="position-sticky">
-                    <ul class="nav flex-column text-center">
-                        <li class="nav-item mb-3">
-                            <a class="nav-link py-2 px-3 {% if active_page == 'dashboard' %}active{% endif %}" href="/admin/dashboard" title="Dashboard">
-                                <i class="bi bi-speedometer2 fs-4"></i>
+            <!-- Side Navigation -->
+            <nav id="sidebarMenu" class="col-md-3 col-lg-2 d-md-block bg-dark sidebar collapse">
+                <div class="position-sticky pt-3">
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link {% if active_page == 'dashboard' %}active{% endif %}" href="/admin/dashboard">
+                                <i class="bi bi-speedometer2"></i> Dashboard
                             </a>
                         </li>
-                        <li class="nav-item mb-3">
-                            <a class="nav-link py-2 px-3 {% if active_page == 'stores' %}active{% endif %}" href="/admin/stores" title="Stores">
-                                <i class="bi bi-shop fs-4"></i>
+                        <li class="nav-item">
+                            <a class="nav-link {% if active_page == 'products' %}active{% endif %}" href="/admin/products">
+                                <i class="bi bi-box"></i> Products
                             </a>
                         </li>
-                        <li class="nav-item mb-3">
-                            <a class="nav-link py-2 px-3 {% if active_page == 'products' %}active{% endif %}" href="/admin/products" title="Products">
-                                <i class="bi bi-box fs-4"></i>
+                        <li class="nav-item">
+                            <a class="nav-link {% if active_page == 'orders' %}active{% endif %}" href="/admin/orders">
+                                <i class="bi bi-cart"></i> Orders
                             </a>
                         </li>
-                        <li class="nav-item mb-3">
-                            <a class="nav-link py-2 px-3 {% if active_page == 'orders' %}active{% endif %}" href="/admin/orders" title="Orders">
-                                <i class="bi bi-cart fs-4"></i>
+                        <li class="nav-item">
+                            <a class="nav-link {% if active_page == 'customers' %}active{% endif %}" href="/admin/customers">
+                                <i class="bi bi-people"></i> Customers
                             </a>
                         </li>
-                        <li class="nav-item mb-3">
-                            <a class="nav-link py-2 px-3 {% if active_page == 'customers' %}active{% endif %}" href="/admin/customers" title="Customers">
-                                <i class="bi bi-people fs-4"></i>
+                        <li class="nav-item">
+                            <a class="nav-link {% if active_page == 'users' %}active{% endif %}" href="/admin/users">
+                                <i class="bi bi-person-badge"></i> Users
                             </a>
                         </li>
-                        <li class="nav-item mb-3">
-                            <a class="nav-link py-2 px-3 {% if active_page == 'marketing' %}active{% endif %}" href="/admin/marketing" title="Marketing">
-                                <i class="bi bi-graph-up fs-4"></i>
+                        <li class="nav-item">
+                            <a class="nav-link {% if active_page == 'media' %}active{% endif %}" href="/admin/media">
+                                <i class="bi bi-images"></i> Media
                             </a>
                         </li>
-                        <li class="nav-item mb-3">
-                            <a class="nav-link py-2 px-3 {% if active_page == 'emails' %}active{% endif %}" href="/admin/newsletters" title="Emails & Newsletters">
-                                <i class="bi bi-envelope fs-4"></i>
+                        <li class="nav-item">
+                            <a class="nav-link {% if active_page == 'marketing' %}active{% endif %}" href="/admin/marketing">
+                                <i class="bi bi-megaphone"></i> Marketing
                             </a>
                         </li>
-                        <li class="nav-item mb-3">
-                            <a class="nav-link py-2 px-3 {% if active_page == 'analytics' %}active{% endif %}" href="/admin/analytics" title="Analytics">
-                                <i class="bi bi-bar-chart fs-4"></i>
+                        <li class="nav-item">
+                            <a class="nav-link {% if active_page == 'analytics' %}active{% endif %}" href="/admin/analytics">
+                                <i class="bi bi-graph-up"></i> Analytics
                             </a>
                         </li>
-                        <li class="nav-item mb-3">
-                            <a class="nav-link py-2 px-3 {% if active_page == 'media' %}active{% endif %}" href="/admin/media" title="Media">
-                                <i class="bi bi-images fs-4"></i>
+                    </ul>
+                    
+                    <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
+                        <span>Store Settings</span>
+                    </h6>
+                    <ul class="nav flex-column mb-2">
+                        <li class="nav-item">
+                            <a class="nav-link {% if active_page == 'store-settings' %}active{% endif %}" href="/admin/store-settings">
+                                <i class="bi bi-gear"></i> General Settings
                             </a>
                         </li>
-                        <li class="nav-item mb-3">
-                            <a class="nav-link py-2 px-3 {% if active_page == 'settings' %}active{% endif %}" href="/admin/settings" title="Settings">
-                                <i class="bi bi-gear fs-4"></i>
+                        <li class="nav-item">
+                            <a class="nav-link {% if active_page == 'theme-settings' %}active{% endif %}" href="/admin/theme-settings">
+                                <i class="bi bi-brush"></i> Theme Settings
                             </a>
                         </li>
-                        <li class="nav-item mb-3">
-                            <a class="nav-link py-2 px-3 {% if active_page == 'store-settings' %}active{% endif %}" href="/admin/store-settings" title="Store Settings">
-                                <i class="bi bi-sliders fs-4"></i>
+                        <li class="nav-item">
+                            <a class="nav-link {% if active_page == 'plugins' %}active{% endif %}" href="/admin/plugins">
+                                <i class="bi bi-puzzle"></i> Plugins
                             </a>
                         </li>
-                        <li class="nav-item mb-3">
-                            <a class="nav-link py-2 px-3 {% if active_page == 'plugins' %}active{% endif %}" href="/admin/plugins" title="Plugins">
-                                <i class="bi bi-puzzle fs-4"></i>
-                            </a>
-                        </li>
-                        <li class="nav-item mb-3">
-                            <a class="nav-link py-2 px-3 {% if active_page == 'ai-config' %}active{% endif %}" href="/admin/ai-config" title="AI Configuration">
-                                <i class="bi bi-cpu fs-4"></i>
+                        <li class="nav-item">
+                            <a class="nav-link {% if active_page == 'ai-config' %}active{% endif %}" href="/admin/ai-config">
+                                <i class="bi bi-cpu"></i> AI Configuration
                             </a>
                         </li>
                     </ul>
@@ -261,7 +212,7 @@
             </nav>
             
             <!-- Main Content -->
-            <main class="col px-md-4 content">
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 content">
                 {% if status_message %}
                 <div class="alert alert-{{ status_type }} alert-dismissible fade show mt-3" role="alert">
                     {{ status_message }}
@@ -269,7 +220,7 @@
                 </div>
                 {% endif %}
                 
-                {% block content %}{% endblock content %}
+                {% block content %}{% endblock %}
             </main>
             
             <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
@@ -291,6 +242,6 @@
             });
         });
     </script>
-    {% block scripts %}{% endblock scripts %}
+    {% block scripts %}{% endblock %}
 </body>
 </html>
