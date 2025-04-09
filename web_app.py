@@ -194,3 +194,133 @@ async def debug_products_template(request: Request):
     }
     
     return templates.TemplateResponse("admin/products_debug.html", context)
+
+# Direct HTML rendering for products (no template)
+@app.get("/debug/products/inline", response_class=HTMLResponse)
+async def debug_products_inline(request: Request):
+    """Debug page for products with direct HTML output (no template)."""
+    from pycommerce.models.tenant import TenantManager
+    from pycommerce.models.product import ProductManager
+    
+    tenant_manager = TenantManager()
+    product_manager = ProductManager()
+    
+    selected_tenant_slug = "tech"  # Use Tech Gadgets store
+    tenant_obj = tenant_manager.get_by_slug(selected_tenant_slug)
+    
+    # Get products for tenant
+    products = product_manager.get_by_tenant(str(tenant_obj.id)) if tenant_obj else []
+    
+    # Format products for HTML
+    products_html_rows = ""
+    for product in products:
+        product_id = str(product.id)
+        name = product.name
+        description = product.description if hasattr(product, "description") else ""
+        price = product.price
+        stock = product.stock if hasattr(product, "stock") else 0
+        sku = product.sku if hasattr(product, "sku") else ""
+        tenant_name = tenant_obj.name if tenant_obj else "Unknown"
+        
+        # Create HTML table row for this product
+        products_html_rows += f"""
+        <tr>
+            <td>{product_id}</td>
+            <td>{name}</td>
+            <td>{tenant_name}</td>
+            <td>${price}</td>
+            <td>{stock}</td>
+            <td>
+                <a href="/admin/products/edit/{product_id}" class="btn btn-sm btn-primary">Edit</a>
+                <a href="/admin/products/delete/{product_id}" class="btn btn-sm btn-danger" 
+                   onclick="return confirm('Are you sure you want to delete this product?')">Delete</a>
+            </td>
+        </tr>
+        """
+    
+    # If no products found
+    if not products_html_rows:
+        products_html_rows = '<tr><td colspan="6" class="text-center">No products found for this tenant</td></tr>'
+    
+    # Complete HTML document
+    html = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Products Direct HTML</title>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+        <style>
+            body {{ padding: 20px; }}
+            .navbar {{ margin-bottom: 20px; }}
+        </style>
+    </head>
+    <body>
+        <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+            <div class="container">
+                <a class="navbar-brand" href="/">PyCommerce</a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <ul class="navbar-nav">
+                        <li class="nav-item">
+                            <a class="nav-link" href="/admin/dashboard">Dashboard</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link active" href="/admin/products">Products</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/admin/orders">Orders</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/admin/settings">Settings</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+
+        <div class="container">
+            <h1>Product Management (Inline HTML)</h1>
+            
+            <div class="alert alert-info">
+                <h3>Debug Information</h3>
+                <p>Tenant: {selected_tenant_slug}</p>
+                <p>Products count: {len(products)}</p>
+            </div>
+            
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h3>All Products</h3>
+                </div>
+                <div class="card-body">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Name</th>
+                                <th>Tenant</th>
+                                <th>Price</th>
+                                <th>Stock</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {products_html_rows}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <div class="mt-4">
+                <a href="/admin/products/add" class="btn btn-success">Add New Product</a>
+                <a href="/admin/dashboard" class="btn btn-secondary">Back to Dashboard</a>
+            </div>
+        </div>
+
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    </body>
+    </html>
+    """
+    
+    return HTMLResponse(content=html)
