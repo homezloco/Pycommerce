@@ -132,7 +132,9 @@
             <div class="d-lg-none ms-auto me-2">
                 <form action="/admin/change-store" method="GET" class="d-flex store-selector-mobile">
                     <select class="form-select form-select-sm me-1" name="tenant" onchange="this.form.submit()">
-                        <option value="">Store</option>
+                        {% if not selected_tenant %}
+                        <option value="" selected>Select</option>
+                        {% endif %}
                         {% for tenant in tenants %}
                         <option value="{{ tenant.slug }}" {% if selected_tenant == tenant.slug %}selected{% endif %}>
                             {{ tenant.name }}
@@ -152,7 +154,9 @@
                 <div class="mx-auto d-none d-lg-block">
                     <form action="/admin/change-store" method="GET" class="d-flex store-selector">
                         <select class="form-select form-select-sm me-2" name="tenant" onchange="this.form.submit()">
-                            <option value="">Select Store</option>
+                            {% if not selected_tenant %}
+                            <option value="" selected>Select Store</option>
+                            {% endif %}
                             {% for tenant in tenants %}
                             <option value="{{ tenant.slug }}" {% if selected_tenant == tenant.slug %}selected{% endif %}>
                                 <span class="store-status-indicator {% if tenant.active %}status-active{% else %}status-inactive{% endif %}"></span>
