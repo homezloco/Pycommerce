@@ -1,8 +1,8 @@
-{% extends "admin/base.html" %}
+{% extends "admin/base_admin.html" %}
 
 {% block title %}Email Marketing | {{ tenant.name }} Admin{% endblock %}
 
-{% block content %}
+{% block dashboard_content %}
 <div class="container-fluid px-4">
     <h1 class="mt-4">Email Marketing</h1>
     <ol class="breadcrumb mb-4">
@@ -374,7 +374,7 @@
         </div>
     </div>
 </div>
-{% endblock %}
+{% endblock dashboard_content %}
 
 {% block scripts %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
@@ -456,4 +456,4 @@ document.addEventListener('DOMContentLoaded', function() {
     $('#emailCampaignsTable').DataTable();
 });
 </script>
-{% endblock %}
+{% endblock scripts %}
