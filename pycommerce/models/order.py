@@ -56,7 +56,7 @@ class Order(Base):
     tenant_id = Column(String(36), nullable=False, index=True)
     customer_id = Column(String(36), nullable=True)
     order_number = Column(String(50), nullable=False, unique=True)
-    status = Column(SQLAlchemyEnum(OrderStatus), default=OrderStatus.PENDING)
+    status = Column(String(50), default="PENDING")
     # Added through migration
     order_type = Column(SQLAlchemyEnum(OrderType), default=OrderType.STANDARD, nullable=True)
     total = Column(Float, nullable=False, default=0.0)
@@ -234,13 +234,13 @@ class OrderManager:
             logger.error(f"Error updating order: {str(e)}")
             return None
 
-    def update_status(self, order_id: str, status: OrderStatus) -> bool:
+    def update_status(self, order_id: str, status: str) -> bool:
         """
         Update an order's status.
         
         Args:
             order_id: The ID of the order
-            status: The new status
+            status: The new status as string ("PENDING", "PROCESSING", "PAID", etc.)
             
         Returns:
             True if the status was updated successfully, False otherwise
@@ -254,12 +254,12 @@ class OrderManager:
                 order.status = status
                 
                 # Update timestamps based on status
-                if status == OrderStatus.PAID:
+                if status == "PAID":
                     order.is_paid = True
                     order.paid_at = datetime.utcnow()
-                elif status == OrderStatus.SHIPPED:
+                elif status == "SHIPPED":
                     order.shipped_at = datetime.utcnow()
-                elif status == OrderStatus.DELIVERED:
+                elif status == "DELIVERED":
                     order.delivered_at = datetime.utcnow()
                 
                 session.commit()
@@ -296,14 +296,14 @@ class OrderManager:
                 
                 # Update status based on shipping status
                 if status == "shipped":
-                    order.status = OrderStatus.SHIPPED
+                    order.status = "SHIPPED"
                     order.shipped_at = datetime.utcnow()
                 elif status == "delivered":
-                    order.status = OrderStatus.DELIVERED
+                    order.status = "DELIVERED"
                     order.delivered_at = datetime.utcnow()
                 elif status == "returned":
-                    # We could add a RETURNED status to OrderStatus if needed
-                    pass
+                    # We could add a RETURNED status if needed
+                    order.status = "RETURNED"
                 
                 session.commit()
                 return True

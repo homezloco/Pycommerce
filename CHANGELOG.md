@@ -18,6 +18,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Admin dashboard for store management
 - User management interface with CRUD operations
 - Media manager with AI-generated content
+
+### Changed
+- Updated order status to use string values instead of integers for improved readability and better display in the admin interface
 - Email notifications for order confirmations
 - Theme customization with dynamic CSS styling
 

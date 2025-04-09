@@ -48,6 +48,8 @@ PyCommerce is a scalable, multi-tenant ecommerce platform built with Python. It 
 - ✅ **Admin Sidebar Navigation**: Fixed persistent sidebar menu for improved admin panel navigation
 
 - ✅ **Order Detail Enhancement**: Fixed product name display in the order items list to show proper product names instead of SKUs
+- ✅ **Order Status Improvements**: Updated order status to use string values instead of integers for improved readability and better display in the admin interface
+- ✅ **Shipping Notifications**: Added email notification system for shipping status updates
 ### In Progress:
 
 - 🔄 **Admin Dashboard**: Enhancing admin controls and analytics
