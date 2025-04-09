@@ -365,7 +365,7 @@ async def admin_products(
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">
-                        <table class="table table-striped table-hover">
+                        <table class="table table-striped table-hover table-dark">
                             <thead>
                                 <tr>
                                     <th width="5%">ID</th>
@@ -395,9 +395,9 @@ async def admin_products(
             </div>
         </div>
 
-        <footer class="bg-light mt-5 py-3 text-center text-muted">
+        <footer class="mt-5 py-3 text-center">
             <div class="container">
-                <p class="mb-0">PyCommerce Admin Panel</p>
+                <p class="mb-0 text-muted">PyCommerce Admin Panel &copy; 2025</p>
             </div>
         </footer>
 
