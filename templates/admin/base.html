@@ -47,6 +47,34 @@
         .card-header-tabs .nav-link.active {
             border-bottom: 2px solid var(--bs-primary);
         }
+        
+        /* Mobile sidebar improvements */
+        @media (max-width: 767.98px) {
+            .sidebar {
+                position: fixed;
+                top: 56px;
+                left: 0;
+                width: 100%;
+                z-index: 999;
+                max-height: calc(100vh - 56px);
+                overflow-y: auto;
+            }
+            
+            .sidebar .nav-link {
+                padding: 0.75rem 1rem;
+                font-size: 1.1rem;
+            }
+            
+            .sidebar .nav-link i {
+                font-size: 1.2rem;
+            }
+            
+            /* Ensure main content is pushed down when sidebar is visible */
+            .sidebar.show + .main-content {
+                margin-top: 100%;
+            }
+        }
+        
         .notification-badge {
             position: absolute;
             top: -5px;
@@ -74,7 +102,8 @@
             <a class="navbar-brand" href="/admin">
                 <i class="bi bi-shop me-2"></i>PyCommerce Admin
             </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <!-- This button will now toggle the sidebar menu -->
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#sidebarMenu" aria-controls="sidebarMenu" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
             
@@ -243,7 +272,7 @@
             </nav>
             
             <!-- Main Content -->
-            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 content">
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 content main-content">
                 {% if status_message %}
                 <div class="alert alert-{{ status_type }} alert-dismissible fade show mt-3" role="alert">
                     {{ status_message }}
@@ -271,6 +300,21 @@
                     link.classList.add('active');
                 }
             });
+            
+            // Handle mobile menu clicks - close sidebar when a menu item is clicked
+            if (window.innerWidth < 768) {
+                const mobileMenuLinks = document.querySelectorAll('#sidebarMenu .nav-link');
+                mobileMenuLinks.forEach(link => {
+                    link.addEventListener('click', function() {
+                        // Use the Bootstrap collapse API to hide the sidebar
+                        const sidebar = document.getElementById('sidebarMenu');
+                        const bsCollapse = new bootstrap.Collapse(sidebar, {
+                            toggle: false
+                        });
+                        bsCollapse.hide();
+                    });
+                });
+            }
         });
     </script>
     {% block scripts %}{% endblock %}
