@@ -1,0 +1,164 @@
+{% extends 'admin/base_admin.html' %}
+
+{% block title %}PyCommerce - Customer Management{% endblock %}
+
+{% block dashboard_content %}
+<div class="container py-4">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <h1 class="text-light">Customer Management</h1>
+            <p class="text-secondary">Manage the customers for {{ tenant.name }}</p>
+
+            {% if status_message %}
+            <div class="alert alert-{{ status_type }}">
+                {{ status_message }}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Customers table -->
+    <div class="card bg-dark border-secondary">
+        <div class="card-header bg-dark text-light border-secondary d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Customers ({{ customers|length }})</h5>
+            <button class="btn btn-success" disabled>Add New Customer</button>
+        </div>
+        <div class="card-body">
+            {% if customers %}
+            <div class="table-responsive">
+                <table class="table table-dark table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Phone</th>
+                            <th>Location</th>
+                            <th>Orders</th>
+                            <th>Total Spent</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for customer in customers %}
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="bg-secondary me-2 rounded-circle d-flex justify-content-center align-items-center" style="width: 40px; height: 40px;">
+                                        <i class="bi bi-person-fill text-light"></i>
+                                    </div>
+                                    {{ customer.name }}
+                                </div>
+                            </td>
+                            <td>{{ customer.email }}</td>
+                            <td>{{ customer.phone }}</td>
+                            <td>{{ customer.city }}, {{ customer.state }}</td>
+                            <td>
+                                <span class="badge bg-info text-dark">
+                                    {{ customer.orders_count }} orders
+                                </span>
+                            </td>
+                            <td>${{ customer.total_spent }}</td>
+                            <td>
+                                <div class="btn-group">
+                                    <a href="/admin/customers/{{ customer.id }}?tenant={{ selected_tenant }}" class="btn btn-sm btn-primary">View</a>
+                                    <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal{{ customer.id }}">Delete</button>
+                                </div>
+                                
+                                <!-- Delete Modal -->
+                                <div class="modal fade" id="deleteModal{{ customer.id }}" tabindex="-1" aria-labelledby="deleteModalLabel{{ customer.id }}" aria-hidden="true">
+                                    <div class="modal-dialog">
+                                        <div class="modal-content bg-dark text-light">
+                                            <div class="modal-header bg-dark border-secondary">
+                                                <h5 class="modal-title" id="deleteModalLabel{{ customer.id }}">Confirm Delete</h5>
+                                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                Are you sure you want to delete customer <strong>{{ customer.name }}</strong>? This action cannot be undone.
+                                            </div>
+                                            <div class="modal-footer bg-dark border-secondary">
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                                <form action="/admin/customers/{{ customer.id }}/delete" method="post" style="display: inline;">
+                                                    <input type="hidden" name="tenant" value="{{ selected_tenant }}">
+                                                    <button type="submit" class="btn btn-danger">Delete</button>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="alert alert-info">
+                No customers found for this store.
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Customer information card -->
+    <div class="card bg-dark border-secondary mt-4">
+        <div class="card-header bg-dark text-light border-secondary">
+            <h5>Customer Information</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <div class="card bg-primary text-white h-100">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="text-uppercase fw-bold mb-1">Total Customers</h6>
+                                    <h2 class="mb-0">{{ customers|length }}</h2>
+                                </div>
+                                <i class="bi bi-people-fill" style="font-size: 3rem;"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <div class="card bg-success text-white h-100">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="text-uppercase fw-bold mb-1">Total Orders</h6>
+                                    <h2 class="mb-0">
+                                        {% set total_orders = 0 %}
+                                        {% for customer in customers %}
+                                            {% set total_orders = total_orders + customer.orders_count %}
+                                        {% endfor %}
+                                        {{ total_orders }}
+                                    </h2>
+                                </div>
+                                <i class="bi bi-bag-check-fill" style="font-size: 3rem;"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <div class="card bg-info text-dark h-100">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="text-uppercase fw-bold mb-1">Total Revenue</h6>
+                                    <h2 class="mb-0">$
+                                        {% set total_revenue = 0 %}
+                                        {% for customer in customers %}
+                                            {% set total_revenue = total_revenue + customer.total_spent %}
+                                        {% endfor %}
+                                        {{ total_revenue }}
+                                    </h2>
+                                </div>
+                                <i class="bi bi-currency-dollar" style="font-size: 3rem;"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

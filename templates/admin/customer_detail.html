@@ -1,0 +1,223 @@
+{% extends 'admin/base_admin.html' %}
+
+{% block title %}PyCommerce - Customer Details{% endblock %}
+
+{% block dashboard_content %}
+<div class="container py-4">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="/admin/dashboard" class="text-light">Dashboard</a></li>
+                    <li class="breadcrumb-item"><a href="/admin/customers?tenant={{ selected_tenant }}" class="text-light">Customers</a></li>
+                    <li class="breadcrumb-item active text-light" aria-current="page">{{ customer.name }}</li>
+                </ol>
+            </nav>
+            
+            <h1 class="text-light">Customer Details</h1>
+            <p class="text-secondary">View and manage customer information</p>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Customer Profile -->
+        <div class="col-md-4 mb-4">
+            <div class="card bg-dark border-secondary h-100">
+                <div class="card-header bg-dark text-light border-secondary">
+                    <h5>Customer Profile</h5>
+                </div>
+                <div class="card-body text-center">
+                    <div class="bg-secondary mb-3 rounded-circle d-flex justify-content-center align-items-center mx-auto" style="width: 100px; height: 100px;">
+                        <i class="bi bi-person-fill" style="font-size: 3rem;"></i>
+                    </div>
+                    <h4 class="text-light">{{ customer.name }}</h4>
+                    <p class="text-secondary">Customer since {{ customer.created_at[:10] }}</p>
+                    
+                    <div class="text-start mt-4">
+                        <table class="table table-dark">
+                            <tr>
+                                <th class="ps-0 border-0"><i class="bi bi-envelope me-2"></i> Email:</th>
+                                <td class="pe-0 border-0 text-end">{{ customer.email }}</td>
+                            </tr>
+                            <tr>
+                                <th class="ps-0 border-0"><i class="bi bi-telephone me-2"></i> Phone:</th>
+                                <td class="pe-0 border-0 text-end">{{ customer.phone }}</td>
+                            </tr>
+                            <tr>
+                                <th class="ps-0 border-0"><i class="bi bi-geo-alt me-2"></i> Address:</th>
+                                <td class="pe-0 border-0 text-end">{{ customer.address }}</td>
+                            </tr>
+                            <tr>
+                                <th class="ps-0 border-0"></th>
+                                <td class="pe-0 border-0 text-end">{{ customer.city }}, {{ customer.state }} {{ customer.postal_code }}</td>
+                            </tr>
+                            <tr>
+                                <th class="ps-0 border-0"></th>
+                                <td class="pe-0 border-0 text-end">{{ customer.country }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+                <div class="card-footer bg-dark border-secondary">
+                    <button class="btn btn-primary w-100" disabled>Edit Customer Info</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Customer Stats -->
+        <div class="col-md-8 mb-4">
+            <div class="card bg-dark border-secondary">
+                <div class="card-header bg-dark text-light border-secondary">
+                    <h5>Order History</h5>
+                </div>
+                <div class="card-body">
+                    {% if customer.orders and customer.orders|length > 0 %}
+                    <div class="table-responsive">
+                        <table class="table table-dark table-striped table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Order ID</th>
+                                    <th>Date</th>
+                                    <th>Total</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for order in customer.orders %}
+                                <tr>
+                                    <td>{{ order.id }}</td>
+                                    <td>{{ order.date }}</td>
+                                    <td>${{ order.total }}</td>
+                                    <td>
+                                        {% if order.status == 'delivered' %}
+                                        <span class="badge bg-success">Delivered</span>
+                                        {% elif order.status == 'processing' %}
+                                        <span class="badge bg-warning text-dark">Processing</span>
+                                        {% elif order.status == 'shipped' %}
+                                        <span class="badge bg-info text-dark">Shipped</span>
+                                        {% elif order.status == 'cancelled' %}
+                                        <span class="badge bg-danger">Cancelled</span>
+                                        {% else %}
+                                        <span class="badge bg-secondary">{{ order.status }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <a href="/admin/orders/{{ order.id }}?tenant={{ selected_tenant }}" class="btn btn-sm btn-primary">View</a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info">
+                        No orders found for this customer.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Customer Activity -->
+            <div class="row mt-4">
+                <div class="col-md-4 mb-3">
+                    <div class="card bg-primary text-white h-100">
+                        <div class="card-body">
+                            <h6 class="text-uppercase fw-bold mb-1">Total Orders</h6>
+                            <h2 class="mb-0">{{ customer.orders|length }}</h2>
+                            <i class="bi bi-cart-fill position-absolute bottom-0 end-0 me-3 mb-3" style="font-size: 2.5rem; opacity: 0.4;"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <div class="card bg-success text-white h-100">
+                        <div class="card-body">
+                            <h6 class="text-uppercase fw-bold mb-1">Total Spent</h6>
+                            <h2 class="mb-0">$
+                                {% set total = 0 %}
+                                {% for order in customer.orders %}
+                                    {% set total = total + order.total %}
+                                {% endfor %}
+                                {{ total }}
+                            </h2>
+                            <i class="bi bi-cash-stack position-absolute bottom-0 end-0 me-3 mb-3" style="font-size: 2.5rem; opacity: 0.4;"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <div class="card bg-info text-dark h-100">
+                        <div class="card-body">
+                            <h6 class="text-uppercase fw-bold mb-1">Last Order</h6>
+                            <h2 class="mb-0">
+                                {% if customer.orders and customer.orders|length > 0 %}
+                                    {{ customer.orders[0].date }}
+                                {% else %}
+                                    None
+                                {% endif %}
+                            </h2>
+                            <i class="bi bi-calendar-check position-absolute bottom-0 end-0 me-3 mb-3" style="font-size: 2.5rem; opacity: 0.4;"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card bg-dark border-secondary">
+                <div class="card-header bg-dark text-light border-secondary">
+                    <h5>Customer Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <button class="btn btn-outline-primary w-100" disabled>
+                                <i class="bi bi-envelope-fill me-2"></i> Send Email
+                            </button>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <button class="btn btn-outline-success w-100" disabled>
+                                <i class="bi bi-cart-plus me-2"></i> Create Order
+                            </button>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <button class="btn btn-outline-warning w-100" disabled>
+                                <i class="bi bi-tags-fill me-2"></i> Add Discount
+                            </button>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <button class="btn btn-outline-danger w-100" data-bs-toggle="modal" data-bs-target="#deleteCustomerModal">
+                                <i class="bi bi-trash-fill me-2"></i> Delete Customer
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Modal -->
+<div class="modal fade" id="deleteCustomerModal" tabindex="-1" aria-labelledby="deleteCustomerModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content bg-dark text-light">
+            <div class="modal-header bg-dark border-secondary">
+                <h5 class="modal-title" id="deleteCustomerModalLabel">Confirm Delete</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                Are you sure you want to delete customer <strong>{{ customer.name }}</strong>? This will remove all of their information, including order history. This action cannot be undone.
+            </div>
+            <div class="modal-footer bg-dark border-secondary">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form action="/admin/customers/{{ customer.id }}/delete" method="post">
+                    <input type="hidden" name="tenant" value="{{ selected_tenant }}">
+                    <button type="submit" class="btn btn-danger">Delete Customer</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
