@@ -115,6 +115,7 @@ async def admin_dashboard(request: Request, status_message: Optional[str] = None
             "tenants": tenants_data,
             "selected_tenant": selected_tenant.slug if selected_tenant else None,
             "dashboard": dashboard_data,
+            "active_page": "dashboard",
             "status_message": status_message,
             "status_type": status_type,
             "cart_item_count": request.session.get("cart_item_count", 0)
