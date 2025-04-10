@@ -7,16 +7,15 @@
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h1 class="h2">Dashboard</h1>
         <div class="d-flex">
-            <select class="form-select form-select-sm me-2">
-                <option value="today">Today</option>
-                <option value="yesterday">Yesterday</option>
-                <option value="last7days" selected>Last 7 Days</option>
-                <option value="last30days">Last 30 Days</option>
-                <option value="thismonth">This Month</option>
-                <option value="lastmonth">Last Month</option>
-                <option value="custom">Custom Range</option>
+            <select class="form-select form-select-sm me-2" id="time-period">
+                <option value="today" {% if dashboard.time_period == 'today' %}selected{% endif %}>Today</option>
+                <option value="yesterday" {% if dashboard.time_period == 'yesterday' %}selected{% endif %}>Yesterday</option>
+                <option value="last7days" {% if dashboard.time_period == 'last7days' %}selected{% endif %}>Last 7 Days</option>
+                <option value="last30days" {% if dashboard.time_period == 'last30days' %}selected{% endif %}>Last 30 Days</option>
+                <option value="thismonth" {% if dashboard.time_period == 'thismonth' %}selected{% endif %}>This Month</option>
+                <option value="lastmonth" {% if dashboard.time_period == 'lastmonth' %}selected{% endif %}>Last Month</option>
             </select>
-            <button class="btn btn-sm btn-outline-secondary">
+            <button class="btn btn-sm btn-outline-secondary" id="refresh-dashboard">
                 <i class="bi bi-arrow-repeat"></i> Refresh
             </button>
         </div>
@@ -30,8 +29,11 @@
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
                             <h6 class="text-muted">Revenue</h6>
-                            <h2 class="mb-0">$1,754</h2>
-                            <small class="text-success"><i class="bi bi-arrow-up"></i> 12% from last week</small>
+                            <h2 class="mb-0">${{ dashboard.revenue|default(0)|round(2) }}</h2>
+                            <small class="text-muted">
+                                <i class="bi bi-info-circle"></i> 
+                                For {{ dashboard.time_period }} period
+                            </small>
                         </div>
                         <div>
                             <i class="bi bi-currency-dollar text-primary"></i>
@@ -46,8 +48,11 @@
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
                             <h6 class="text-muted">Orders</h6>
-                            <h2 class="mb-0">24</h2>
-                            <small class="text-success"><i class="bi bi-arrow-up"></i> 8% from last week</small>
+                            <h2 class="mb-0">{{ dashboard.orders_count|default(0) }}</h2>
+                            <small class="text-muted">
+                                <i class="bi bi-clock"></i> 
+                                {{ dashboard.orders_pending|default(0) }} pending
+                            </small>
                         </div>
                         <div>
                             <i class="bi bi-cart text-success"></i>
@@ -62,8 +67,11 @@
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
                             <h6 class="text-muted">Customers</h6>
-                            <h2 class="mb-0">328</h2>
-                            <small class="text-success"><i class="bi bi-arrow-up"></i> 5% from last week</small>
+                            <h2 class="mb-0">{{ dashboard.customers_count|default(0) }}</h2>
+                            <small class="text-muted">
+                                <i class="bi bi-person-check"></i> 
+                                Total registered
+                            </small>
                         </div>
                         <div>
                             <i class="bi bi-people text-info"></i>
@@ -78,8 +86,11 @@
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
                             <h6 class="text-muted">Products</h6>
-                            <h2 class="mb-0">64</h2>
-                            <small class="text-muted"><i class="bi bi-dash"></i> No change</small>
+                            <h2 class="mb-0">{{ dashboard.products_count|default(0) }}</h2>
+                            <small class="text-muted">
+                                <i class="bi bi-box"></i> 
+                                In catalog
+                            </small>
                         </div>
                         <div>
                             <i class="bi bi-box-seam text-warning"></i>
@@ -115,38 +126,41 @@
                 </div>
                 <div class="card-body p-0">
                     <div class="list-group list-group-flush">
-                        <a href="#" class="list-group-item list-group-item-action">
+                        {% for order in dashboard.recent_orders %}
+                        <a href="/admin/orders/{{ order.id }}" class="list-group-item list-group-item-action">
                             <div class="d-flex w-100 justify-content-between">
-                                <h6 class="mb-1">Order #1234</h6>
-                                <small class="text-muted">3 hours ago</small>
+                                <h6 class="mb-1">Order #{{ order.id|truncate(8, true, '') }}</h6>
+                                <small class="text-muted">{{ order.created_at|default('N/A')|string|truncate(16, true, '') }}</small>
                             </div>
-                            <p class="mb-1">$258.00 - 3 items</p>
-                            <small><span class="badge bg-success">Paid</span> Jane Doe</small>
+                            <p class="mb-1">${{ order.total|default(0)|round(2) }}</p>
+                            <small>
+                                {% if order.status == 'PENDING' %}
+                                <span class="badge bg-warning">Pending</span>
+                                {% elif order.status == 'PROCESSING' %}
+                                <span class="badge bg-info">Processing</span>
+                                {% elif order.status == 'PAID' %}
+                                <span class="badge bg-success">Paid</span>
+                                {% elif order.status == 'SHIPPED' %}
+                                <span class="badge bg-primary">Shipped</span>
+                                {% elif order.status == 'DELIVERED' %}
+                                <span class="badge bg-primary">Delivered</span>
+                                {% elif order.status == 'COMPLETED' %}
+                                <span class="badge bg-success">Completed</span>
+                                {% elif order.status == 'CANCELLED' %}
+                                <span class="badge bg-danger">Cancelled</span>
+                                {% elif order.status == 'REFUNDED' %}
+                                <span class="badge bg-danger">Refunded</span>
+                                {% else %}
+                                <span class="badge bg-secondary">{{ order.status }}</span>
+                                {% endif %}
+                                {{ order.customer_name|default('Customer')|truncate(20, true, '...') }}
+                            </small>
                         </a>
-                        <a href="#" class="list-group-item list-group-item-action">
-                            <div class="d-flex w-100 justify-content-between">
-                                <h6 class="mb-1">Order #1233</h6>
-                                <small class="text-muted">5 hours ago</small>
-                            </div>
-                            <p class="mb-1">$129.95 - 2 items</p>
-                            <small><span class="badge bg-warning">Processing</span> John Smith</small>
-                        </a>
-                        <a href="#" class="list-group-item list-group-item-action">
-                            <div class="d-flex w-100 justify-content-between">
-                                <h6 class="mb-1">Order #1232</h6>
-                                <small class="text-muted">Yesterday</small>
-                            </div>
-                            <p class="mb-1">$89.99 - 1 item</p>
-                            <small><span class="badge bg-info">Shipped</span> Mike Johnson</small>
-                        </a>
-                        <a href="#" class="list-group-item list-group-item-action">
-                            <div class="d-flex w-100 justify-content-between">
-                                <h6 class="mb-1">Order #1231</h6>
-                                <small class="text-muted">Yesterday</small>
-                            </div>
-                            <p class="mb-1">$345.50 - 4 items</p>
-                            <small><span class="badge bg-info">Shipped</span> Sarah Williams</small>
-                        </a>
+                        {% else %}
+                        <div class="list-group-item">
+                            <p class="text-center text-muted my-3">No recent orders found</p>
+                        </div>
+                        {% endfor %}
                     </div>
                 </div>
                 <div class="card-footer text-center">
@@ -175,36 +189,18 @@
                                 </tr>
                             </thead>
                             <tbody>
+                                {% for product in dashboard.sales_data.top_products %}
                                 <tr>
-                                    <td>Premium T-Shirt</td>
-                                    <td>$29.99</td>
-                                    <td>18</td>
-                                    <td>$539.82</td>
+                                    <td>{{ product.name|default('Unknown')|truncate(30, true, '...') }}</td>
+                                    <td>${{ product.price|default(0)|round(2) }}</td>
+                                    <td>{{ product.quantity|default(0) }}</td>
+                                    <td>${{ product.revenue|default(0)|round(2) }}</td>
                                 </tr>
+                                {% else %}
                                 <tr>
-                                    <td>Wireless Earbuds</td>
-                                    <td>$89.95</td>
-                                    <td>5</td>
-                                    <td>$449.75</td>
+                                    <td colspan="4" class="text-center py-3">No product data available for this period</td>
                                 </tr>
-                                <tr>
-                                    <td>Smartwatch X3</td>
-                                    <td>$119.99</td>
-                                    <td>3</td>
-                                    <td>$359.97</td>
-                                </tr>
-                                <tr>
-                                    <td>Phone Case</td>
-                                    <td>$14.99</td>
-                                    <td>21</td>
-                                    <td>$314.79</td>
-                                </tr>
-                                <tr>
-                                    <td>USB-C Cable (3-pack)</td>
-                                    <td>$19.99</td>
-                                    <td>14</td>
-                                    <td>$279.86</td>
-                                </tr>
+                                {% endfor %}
                             </tbody>
                         </table>
                     </div>
@@ -264,18 +260,28 @@
 
 {% block scripts %}
 <script>
-    // Initialize Sales Chart
+    // Initialize Sales Chart with dynamic data
     document.addEventListener('DOMContentLoaded', function() {
         const ctx = document.getElementById('salesChart');
+        let salesChart;
+        let chartType = 'revenue'; // Default to revenue view
         
+        // Initial data from server
+        const salesData = {
+            labels: {{ dashboard.sales_data.dates|tojson }},
+            revenueData: {{ dashboard.sales_data.revenue_data|tojson }},
+            ordersData: {{ dashboard.sales_data.orders_data|tojson }}
+        };
+        
+        // Initialize chart
         if (ctx) {
-            const salesChart = new Chart(ctx, {
+            salesChart = new Chart(ctx, {
                 type: 'line',
                 data: {
-                    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                    labels: salesData.labels,
                     datasets: [{
                         label: 'Revenue',
-                        data: [350, 290, 410, 320, 560, 480, 320],
+                        data: salesData.revenueData,
                         borderColor: '#0d6efd',
                         backgroundColor: 'rgba(13, 110, 253, 0.1)',
                         borderWidth: 2,
@@ -289,6 +295,17 @@
                     plugins: {
                         legend: {
                             display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    if (chartType === 'revenue') {
+                                        return '$ ' + context.raw.toFixed(2);
+                                    } else {
+                                        return context.raw + ' orders';
+                                    }
+                                }
+                            }
                         }
                     },
                     scales: {
@@ -296,6 +313,15 @@
                             beginAtZero: true,
                             grid: {
                                 drawBorder: false
+                            },
+                            ticks: {
+                                callback: function(value) {
+                                    if (chartType === 'revenue') {
+                                        return '$ ' + value;
+                                    } else {
+                                        return value;
+                                    }
+                                }
                             }
                         },
                         x: {
@@ -305,6 +331,61 @@
                         }
                     }
                 }
+            });
+        }
+        
+        // Toggle between revenue and orders view
+        const revenueBtn = document.querySelector('.btn-group .btn:first-child');
+        const ordersBtn = document.querySelector('.btn-group .btn:last-child');
+        
+        if (revenueBtn && ordersBtn) {
+            revenueBtn.addEventListener('click', function() {
+                if (!this.classList.contains('active')) {
+                    // Update UI
+                    this.classList.add('active');
+                    ordersBtn.classList.remove('active');
+                    
+                    // Update chart
+                    chartType = 'revenue';
+                    salesChart.data.datasets[0].label = 'Revenue';
+                    salesChart.data.datasets[0].data = salesData.revenueData;
+                    salesChart.data.datasets[0].borderColor = '#0d6efd';
+                    salesChart.data.datasets[0].backgroundColor = 'rgba(13, 110, 253, 0.1)';
+                    salesChart.update();
+                }
+            });
+            
+            ordersBtn.addEventListener('click', function() {
+                if (!this.classList.contains('active')) {
+                    // Update UI
+                    this.classList.add('active');
+                    revenueBtn.classList.remove('active');
+                    
+                    // Update chart
+                    chartType = 'orders';
+                    salesChart.data.datasets[0].label = 'Orders';
+                    salesChart.data.datasets[0].data = salesData.ordersData;
+                    salesChart.data.datasets[0].borderColor = '#198754';
+                    salesChart.data.datasets[0].backgroundColor = 'rgba(25, 135, 84, 0.1)';
+                    salesChart.update();
+                }
+            });
+        }
+        
+        // Time period selector functionality
+        const timePeriodSelect = document.getElementById('time-period');
+        const refreshButton = document.getElementById('refresh-dashboard');
+        
+        if (timePeriodSelect) {
+            timePeriodSelect.addEventListener('change', function() {
+                window.location.href = `/admin/dashboard?time_period=${this.value}`;
+            });
+        }
+        
+        if (refreshButton) {
+            refreshButton.addEventListener('click', function() {
+                const selectedPeriod = timePeriodSelect ? timePeriodSelect.value : 'last7days';
+                window.location.href = `/admin/dashboard?time_period=${selectedPeriod}`;
             });
         }
     });
