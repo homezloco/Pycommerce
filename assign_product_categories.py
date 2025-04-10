@@ -8,6 +8,7 @@ correctly in the market analysis dashboard.
 
 import logging
 import sys
+import os
 from uuid import uuid4
 from typing import Dict, List, Optional, Tuple
 
