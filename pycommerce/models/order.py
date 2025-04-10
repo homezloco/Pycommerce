@@ -104,6 +104,7 @@ class Order(Base):
     notes = relationship("OrderNote", back_populates="order", cascade="all, delete-orphan")
     items = relationship("OrderItem", back_populates="order", cascade="all, delete-orphan")
     shipments = relationship("Shipment", back_populates="order", cascade="all, delete-orphan")
+    returns = relationship("ReturnRequest", back_populates="order", cascade="all, delete-orphan")
 
 
 class OrderManager:
