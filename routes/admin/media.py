@@ -89,8 +89,11 @@ async def admin_media(
     if isinstance(is_ai_generated, bool):
         bool_is_ai_generated = is_ai_generated
     
+    # If tenant_id is specified, filter by it, otherwise show all media
+    tenant_id_param = str(tenant_obj.id) if tenant_id else None
+    
     media_files = media_service.list_media(
-        tenant_id=str(tenant_obj.id),
+        tenant_id=tenant_id_param,
         file_type=file_type,
         is_ai_generated=bool_is_ai_generated,
         search_term=search_term

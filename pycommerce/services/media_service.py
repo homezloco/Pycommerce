@@ -133,7 +133,7 @@ class MediaService:
             logger.error(f"Error uploading file: {str(e)}")
             raise
             
-    def generate_image_with_dalle(
+    async def generate_image_with_dalle(
         self,
         prompt: str,
         tenant_id: Optional[str] = None,
@@ -285,7 +285,7 @@ class MediaService:
             offset=offset
         )
         
-    def delete_media(self, media_id: str) -> bool:
+    async def delete_media(self, media_id: str) -> bool:
         """
         Delete a media by ID.
         
@@ -310,7 +310,7 @@ class MediaService:
         """
         return self.media_manager.update(media_id, **kwargs)
         
-    def get_media_content(self, media_id: str) -> tuple[Optional[Media], Optional[bytes]]:
+    async def get_media_content(self, media_id: str) -> tuple[Optional[Media], Optional[bytes]]:
         """
         Get a media's content by ID.
         
@@ -333,7 +333,7 @@ class MediaService:
             logger.error(f"Error getting media content: {str(e)}")
             return None, None
             
-    def generate_image(self, **kwargs) -> Optional[Media]:
+    async def generate_image(self, **kwargs) -> Optional[Media]:
         """
         Generate an image using OpenAI's DALL-E and create a media record.
         This is a wrapper around generate_image_with_dalle.
@@ -345,7 +345,7 @@ class MediaService:
             The created media object if successful, None otherwise
         """
         try:
-            return self.generate_image_with_dalle(**kwargs)
+            return await self.generate_image_with_dalle(**kwargs)
         except Exception as e:
             logger.error(f"Error generating image: {str(e)}")
             return None
