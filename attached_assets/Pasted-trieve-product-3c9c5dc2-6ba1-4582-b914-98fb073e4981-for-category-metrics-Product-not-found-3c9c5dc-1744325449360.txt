@@ -1,0 +1,140 @@
+trieve product 3c9c5dc2-6ba1-4582-b914-98fb073e4981 for category metrics: Product not found: 3c9c5dc2-6ba1-4582-b914-98fb073e4981
+INFO:asgi_wsgi_app:Uvicorn: INFO:     127.0.0.1:40178 - "GET /admin/market-analysis HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET http://127.0.0.1:8000/admin/market-analysis "HTTP/1.1 200 OK"
+INFO:asgi_wsgi_app:Uvicorn: INFO:     127.0.0.1:43078 - "GET /api/health HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET http://127.0.0.1:8000/api/health "HTTP/1.1 200 OK"
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.models.product:Querying database for products of tenant: None
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.models.product:Found 0 products for tenant None in database
+INFO:asgi_wsgi_app:Uvicorn: WARNING:pycommerce.services.market_analysis:Could not retrieve product daed01d6-a91f-40d7-81f6-16ecfedd53d6 for category metrics: Product not found: daed01d6-a91f-40d7-81f6-16ecfedd53d6
+INFO:asgi_wsgi_app:Uvicorn: WARNING:pycommerce.services.market_analysis:Could not retrieve product 7bc186c5-8fe5-4f93-ba8a-8d7948ba764a for category metrics: Product not found: 7bc186c5-8fe5-4f93-ba8a-8d7948ba764a
+INFO:asgi_wsgi_app:Uvicorn: WARNING:pycommerce.services.market_analysis:Could not retrieve product 31b390c8-7337-4036-aa6c-73ee223953b6 for category metrics: Product not found: 31b390c8-7337-4036-aa6c-73ee223953b6
+INFO:asgi_wsgi_app:Uvicorn: WARNING:pycommerce.services.market_analysis:Could not retrieve product d7074a30-b13c-4eb9-b301-6eee91c94b5d for category metrics: Product not found: d7074a30-b13c-4eb9-b301-6eee91c94b5d
+INFO:asgi_wsgi_app:Uvicorn: WARNING:pycommerce.services.market_analysis:Could not retrieve product 8f03fe76-e753-4dd5-852c-096b589a66b5 for category metrics: Product not found: 8f03fe76-e753-4dd5-852c-096b589a66b5
+INFO:asgi_wsgi_app:Uvicorn: WARNING:pycommerce.services.market_analysis:Could not retrieve product a3d8f462-798e-4098-8b20-22f019f3d64d for category metrics: Product not found: a3d8f462-798e-4098-8b20-22f019f3d64d
+INFO:asgi_wsgi_app:Uvicorn: WARNING:pycommerce.services.market_analysis:Could not retrieve product 8285a63d-9589-4928-9eba-373834fa4014 for category metrics: Product not found: 8285a63d-9589-4928-9eba-373834fa4014
+INFO:asgi_wsgi_app:Uvicorn: WARNING:pycommerce.services.market_analysis:Could not retrieve product 94f6ec67-45c0-4a69-970f-5a12f3174922 for category metrics: Product not found: 94f6ec67-45c0-4a69-970f-5a12f3174922
+INFO:asgi_wsgi_app:Uvicorn: WARNING:pycommerce.services.market_analysis:Could not retrieve product 9f12243c-ebe3-4995-a5eb-9aa16ae18a35 for category metrics: Product not found: 9f12243c-ebe3-4995-a5eb-9aa16ae18a35
+INFO:asgi_wsgi_app:Uvicorn: WARNING:pycommerce.services.market_analysis:Could not retrieve product caa4e7ca-3fb7-4577-b701-323f1196a640 for category metrics: Product not found: caa4e7ca-3fb7-4577-b701-323f1196a640
+INFO:asgi_wsgi_app:Uvicorn: WARNING:pycommerce.services.market_analysis:Could not retrieve product 63d63aca-5b6b-4672-a72b-b1483f036ef6 for category metrics: Product not found: 63d63aca-5b6b-4672-a72b-b1483f036ef6
+INFO:asgi_wsgi_app:Uvicorn: WARNING:pycommerce.services.market_analysis:Could not retrieve product b03b63cc-6c45-45cd-a7d8-8b5cc844f144 for category metrics: Product not found: b03b63cc-6c45-45cd-a7d8-8b5cc844f144
+INFO:asgi_wsgi_app:Uvicorn: WARNING:pycommerce.services.market_analysis:Could not retrieve product 077ce386-36eb-4ff4-a9e4-022b11e90de4 for category metrics: Product not found: 077ce386-36eb-4ff4-a9e4-022b11e90de4
+INFO:asgi_wsgi_app:Uvicorn: WARNING:pycommerce.services.market_analysis:Could not retrieve product 61c6630d-d865-48d7-819a-de3d17880eb5 for category metrics: Product not found: 61c6630d-d865-48d7-819a-de3d17880eb5
+INFO:asgi_wsgi_app:Uvicorn: WARNING:pycommerce.services.market_analysis:Could not retrieve product abd3687d-0cf7-481d-a7b0-e4302160a6eb for category metrics: Product not found: abd3687d-0cf7-481d-a7b0-e4302160a6eb
+INFO:asgi_wsgi_app:Uvicorn: WARNING:pycommerce.services.market_analysis:Could not retrieve product 561e087e-9fba-4b51-8768-d8fb0a0a00a4 for category metrics: Product not found: 561e087e-9fba-4b51-8768-d8fb0a0a00a4
+INFO:asgi_wsgi_app:Uvicorn: WARNING:pycommerce.services.market_analysis:Could not retrieve product f82f6825-5ded-4aee-8326-6af524646104 for category metrics: Product not found: f82f6825-5ded-4aee-8326-6af524646104
+INFO:asgi_wsgi_app:Uvicorn: WARNING:pycommerce.services.market_analysis:Could not retrieve product 883f8b38-0dc9-47a2-b6c5-91091300e5f2 for category metrics: Product not found: 883f8b38-0dc9-47a2-b6c5-91091300e5f2
+INFO:asgi_wsgi_app:Uvicorn: WARNING:pycommerce.services.market_analysis:Could not retrieve product d048f66a-f8e1-44dc-8d84-61a884f70990 for category metrics: Product not found: d048f66a-f8e1-44dc-8d84-61a884f70990
+INFO:asgi_wsgi_app:Uvicorn: WARNING:pycommerce.services.market_analysis:Could not retrieve product 98d7dcd4-c8fd-40e8-ab03-516ee563c78b for category metrics: Product not found: 98d7dcd4-c8fd-40e8-ab03-516ee563c78b
+INFO:asgi_wsgi_app:Uvicorn: WARNING:pycommerce.services.market_analysis:Could not retrieve product 2d7441ba-36f3-476b-92bc-571243abb42d for category metrics: Product not found: 2d7441ba-36f3-476b-92bc-571243abb42d
+INFO:asgi_wsgi_app:Uvicorn: WARNING:pycommerce.services.market_analysis:Could not retrieve product 3c9c5dc2-6ba1-4582-b914-98fb073e4981 for category metrics: Product not found: 3c9c5dc2-6ba1-4582-b914-98fb073e4981
+INFO:asgi_wsgi_app:Uvicorn: INFO:     127.0.0.1:43082 - "GET /admin/market-analysis HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET http://127.0.0.1:8000/admin/market-analysis "HTTP/1.1 200 OK"
+INFO:asgi_wsgi_app:Uvicorn: INFO:     127.0.0.1:60120 - "GET /api/health HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET http://127.0.0.1:8000/api/health "HTTP/1.1 200 OK"
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.models.product:Querying database for products of tenant: None
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.models.product:Found 0 products for tenant None in database
+INFO:asgi_wsgi_app:Uvicorn: WARNING:pycommerce.services.market_analysis:Could not retrieve product daed01d6-a91f-40d7-81f6-16ecfedd53d6 for category metrics: Product not found: daed01d6-a91f-40d7-81f6-16ecfedd53d6
+INFO:asgi_wsgi_app:Uvicorn: WARNING:pycommerce.services.market_analysis:Could not retrieve product 7bc186c5-8fe5-4f93-ba8a-8d7948ba764a for category metrics: Product not found: 7bc186c5-8fe5-4f93-ba8a-8d7948ba764a
+INFO:asgi_wsgi_app:Uvicorn: WARNING:pycommerce.services.market_analysis:Could not retrieve product 31b390c8-7337-4036-aa6c-73ee223953b6 for category metrics: Product not found: 31b390c8-7337-4036-aa6c-73ee223953b6
+INFO:asgi_wsgi_app:Uvicorn: WARNING:pycommerce.services.market_analysis:Could not retrieve product d7074a30-b13c-4eb9-b301-6eee91c94b5d for category metrics: Product not found: d7074a30-b13c-4eb9-b301-6eee91c94b5d
+INFO:asgi_wsgi_app:Uvicorn: WARNING:pycommerce.services.market_analysis:Could not retrieve product 8f03fe76-e753-4dd5-852c-096b589a66b5 for category metrics: Product not found: 8f03fe76-e753-4dd5-852c-096b589a66b5
+INFO:asgi_wsgi_app:Uvicorn: WARNING:pycommerce.services.market_analysis:Could not retrieve product a3d8f462-798e-4098-8b20-22f019f3d64d for category metrics: Product not found: a3d8f462-798e-4098-8b20-22f019f3d64d
+INFO:asgi_wsgi_app:Uvicorn: WARNING:pycommerce.services.market_analysis:Could not retrieve product 8285a63d-9589-4928-9eba-373834fa4014 for category metrics: Product not found: 8285a63d-9589-4928-9eba-373834fa4014
+INFO:asgi_wsgi_app:Uvicorn: WARNING:pycommerce.services.market_analysis:Could not retrieve product 94f6ec67-45c0-4a69-970f-5a12f3174922 for category metrics: Product not found: 94f6ec67-45c0-4a69-970f-5a12f3174922
+INFO:asgi_wsgi_app:Uvicorn: WARNING:pycommerce.services.market_analysis:Could not retrieve product 9f12243c-ebe3-4995-a5eb-9aa16ae18a35 for category metrics: Product not found: 9f12243c-ebe3-4995-a5eb-9aa16ae18a35
+INFO:asgi_wsgi_app:Uvicorn: WARNING:pycommerce.services.market_analysis:Could not retrieve product caa4e7ca-3fb7-4577-b701-323f1196a640 for category metrics: Product not found: caa4e7ca-3fb7-4577-b701-323f1196a640
+INFO:asgi_wsgi_app:Uvicorn: WARNING:pycommerce.services.market_analysis:Could not retrieve product 63d63aca-5b6b-4672-a72b-b1483f036ef6 for category metrics: Product not found: 63d63aca-5b6b-4672-a72b-b1483f036ef6
+INFO:asgi_wsgi_app:Uvicorn: WARNING:pycommerce.services.market_analysis:Could not retrieve product b03b63cc-6c45-45cd-a7d8-8b5cc844f144 for category metrics: Product not found: b03b63cc-6c45-45cd-a7d8-8b5cc844f144
+INFO:asgi_wsgi_app:Uvicorn: WARNING:pycommerce.services.market_analysis:Could not retrieve product 077ce386-36eb-4ff4-a9e4-022b11e90de4 for category metrics: Product not found: 077ce386-36eb-4ff4-a9e4-022b11e90de4
+INFO:asgi_wsgi_app:Uvicorn: WARNING:pycommerce.services.market_analysis:Could not retrieve product 61c6630d-d865-48d7-819a-de3d17880eb5 for category metrics: Product not found: 61c6630d-d865-48d7-819a-de3d17880eb5
+INFO:asgi_wsgi_app:Uvicorn: WARNING:pycommerce.services.market_analysis:Could not retrieve product abd3687d-0cf7-481d-a7b0-e4302160a6eb for category metrics: Product not found: abd3687d-0cf7-481d-a7b0-e4302160a6eb
+INFO:asgi_wsgi_app:Uvicorn: WARNING:pycommerce.services.market_analysis:Could not retrieve product 561e087e-9fba-4b51-8768-d8fb0a0a00a4 for category metrics: Product not found: 561e087e-9fba-4b51-8768-d8fb0a0a00a4
+INFO:asgi_wsgi_app:Uvicorn: WARNING:pycommerce.services.market_analysis:Could not retrieve product f82f6825-5ded-4aee-8326-6af524646104 for category metrics: Product not found: f82f6825-5ded-4aee-8326-6af524646104
+INFO:asgi_wsgi_app:Uvicorn: WARNING:pycommerce.services.market_analysis:Could not retrieve product 883f8b38-0dc9-47a2-b6c5-91091300e5f2 for category metrics: Product not found: 883f8b38-0dc9-47a2-b6c5-91091300e5f2
+INFO:asgi_wsgi_app:Uvicorn: WARNING:pycommerce.services.market_analysis:Could not retrieve product d048f66a-f8e1-44dc-8d84-61a884f70990 for category metrics: Product not found: d048f66a-f8e1-44dc-8d84-61a884f70990
+INFO:asgi_wsgi_app:Uvicorn: WARNING:pycommerce.services.market_analysis:Could not retrieve product 98d7dcd4-c8fd-40e8-ab03-516ee563c78b for category metrics: Product not found: 98d7dcd4-c8fd-40e8-ab03-516ee563c78b
+INFO:asgi_wsgi_app:Uvicorn: WARNING:pycommerce.services.market_analysis:Could not retrieve product 2d7441ba-36f3-476b-92bc-571243abb42d for category metrics: Product not found: 2d7441ba-36f3-476b-92bc-571243abb42d
+INFO:asgi_wsgi_app:Uvicorn: WARNING:pycommerce.services.market_analysis:Could not retrieve product 3c9c5dc2-6ba1-4582-b914-98fb073e4981 for category metrics: Product not found: 3c9c5dc2-6ba1-4582-b914-98fb073e4981
+INFO:asgi_wsgi_app:Uvicorn: INFO:     127.0.0.1:60130 - "GET /admin/market-analysis HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET http://127.0.0.1:8000/admin/market-analysis "HTTP/1.1 200 OK"
+INFO:asgi_wsgi_app:Uvicorn: INFO:     127.0.0.1:59282 - "GET /api/health HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET http://127.0.0.1:8000/api/health "HTTP/1.1 200 OK"
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.models.product:Querying database for products of tenant: None
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.models.product:Found 0 products for tenant None in database
+INFO:asgi_wsgi_app:Uvicorn: WARNING:pycommerce.services.market_analysis:Could not retrieve product daed01d6-a91f-40d7-81f6-16ecfedd53d6 for category metrics: Product not found: daed01d6-a91f-40d7-81f6-16ecfedd53d6
+INFO:asgi_wsgi_app:Uvicorn: WARNING:pycommerce.services.market_analysis:Could not retrieve product 7bc186c5-8fe5-4f93-ba8a-8d7948ba764a for category metrics: Product not found: 7bc186c5-8fe5-4f93-ba8a-8d7948ba764a
+INFO:asgi_wsgi_app:Uvicorn: WARNING:pycommerce.services.market_analysis:Could not retrieve product 31b390c8-7337-4036-aa6c-73ee223953b6 for category metrics: Product not found: 31b390c8-7337-4036-aa6c-73ee223953b6
+INFO:asgi_wsgi_app:Uvicorn: WARNING:pycommerce.services.market_analysis:Could not retrieve product d7074a30-b13c-4eb9-b301-6eee91c94b5d for category metrics: Product not found: d7074a30-b13c-4eb9-b301-6eee91c94b5d
+INFO:asgi_wsgi_app:Uvicorn: WARNING:pycommerce.services.market_analysis:Could not retrieve product 8f03fe76-e753-4dd5-852c-096b589a66b5 for category metrics: Product not found: 8f03fe76-e753-4dd5-852c-096b589a66b5
+INFO:asgi_wsgi_app:Uvicorn: WARNING:pycommerce.services.market_analysis:Could not retrieve product a3d8f462-798e-4098-8b20-22f019f3d64d for category metrics: Product not found: a3d8f462-798e-4098-8b20-22f019f3d64d
+INFO:asgi_wsgi_app:Uvicorn: WARNING:pycommerce.services.market_analysis:Could not retrieve product 8285a63d-9589-4928-9eba-373834fa4014 for category metrics: Product not found: 8285a63d-9589-4928-9eba-373834fa4014
+INFO:asgi_wsgi_app:Uvicorn: WARNING:pycommerce.services.market_analysis:Could not retrieve product 94f6ec67-45c0-4a69-970f-5a12f3174922 for category metrics: Product not found: 94f6ec67-45c0-4a69-970f-5a12f3174922
+INFO:asgi_wsgi_app:Uvicorn: WARNING:pycommerce.services.market_analysis:Could not retrieve product 9f12243c-ebe3-4995-a5eb-9aa16ae18a35 for category metrics: Product not found: 9f12243c-ebe3-4995-a5eb-9aa16ae18a35
+INFO:asgi_wsgi_app:Uvicorn: WARNING:pycommerce.services.market_analysis:Could not retrieve product caa4e7ca-3fb7-4577-b701-323f1196a640 for category metrics: Product not found: caa4e7ca-3fb7-4577-b701-323f1196a640
+INFO:asgi_wsgi_app:Uvicorn: WARNING:pycommerce.services.market_analysis:Could not retrieve product 63d63aca-5b6b-4672-a72b-b1483f036ef6 for category metrics: Product not found: 63d63aca-5b6b-4672-a72b-b1483f036ef6
+INFO:asgi_wsgi_app:Uvicorn: WARNING:pycommerce.services.market_analysis:Could not retrieve product b03b63cc-6c45-45cd-a7d8-8b5cc844f144 for category metrics: Product not found: b03b63cc-6c45-45cd-a7d8-8b5cc844f144
+INFO:asgi_wsgi_app:Uvicorn: WARNING:pycommerce.services.market_analysis:Could not retrieve product 077ce386-36eb-4ff4-a9e4-022b11e90de4 for category metrics: Product not found: 077ce386-36eb-4ff4-a9e4-022b11e90de4
+INFO:asgi_wsgi_app:Uvicorn: WARNING:pycommerce.services.market_analysis:Could not retrieve product 61c6630d-d865-48d7-819a-de3d17880eb5 for category metrics: Product not found: 61c6630d-d865-48d7-819a-de3d17880eb5
+INFO:asgi_wsgi_app:Uvicorn: WARNING:pycommerce.services.market_analysis:Could not retrieve product abd3687d-0cf7-481d-a7b0-e4302160a6eb for category metrics: Product not found: abd3687d-0cf7-481d-a7b0-e4302160a6eb
+INFO:asgi_wsgi_app:Uvicorn: WARNING:pycommerce.services.market_analysis:Could not retrieve product 561e087e-9fba-4b51-8768-d8fb0a0a00a4 for category metrics: Product not found: 561e087e-9fba-4b51-8768-d8fb0a0a00a4
+INFO:asgi_wsgi_app:Uvicorn: WARNING:pycommerce.services.market_analysis:Could not retrieve product f82f6825-5ded-4aee-8326-6af524646104 for category metrics: Product not found: f82f6825-5ded-4aee-8326-6af524646104
+INFO:asgi_wsgi_app:Uvicorn: WARNING:pycommerce.services.market_analysis:Could not retrieve product 883f8b38-0dc9-47a2-b6c5-91091300e5f2 for category metrics: Product not found: 883f8b38-0dc9-47a2-b6c5-91091300e5f2
+INFO:asgi_wsgi_app:Uvicorn: WARNING:pycommerce.services.market_analysis:Could not retrieve product d048f66a-f8e1-44dc-8d84-61a884f70990 for category metrics: Product not found: d048f66a-f8e1-44dc-8d84-61a884f70990
+INFO:asgi_wsgi_app:Uvicorn: WARNING:pycommerce.services.market_analysis:Could not retrieve product 98d7dcd4-c8fd-40e8-ab03-516ee563c78b for category metrics: Product not found: 98d7dcd4-c8fd-40e8-ab03-516ee563c78b
+INFO:asgi_wsgi_app:Uvicorn: WARNING:pycommerce.services.market_analysis:Could not retrieve product 2d7441ba-36f3-476b-92bc-571243abb42d for category metrics: Product not found: 2d7441ba-36f3-476b-92bc-571243abb42d
+INFO:asgi_wsgi_app:Uvicorn: WARNING:pycommerce.services.market_analysis:Could not retrieve product 3c9c5dc2-6ba1-4582-b914-98fb073e4981 for category metrics: Product not found: 3c9c5dc2-6ba1-4582-b914-98fb073e4981
+INFO:asgi_wsgi_app:Uvicorn: INFO:     127.0.0.1:59286 - "GET /admin/market-analysis HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET http://127.0.0.1:8000/admin/market-analysis "HTTP/1.1 200 OK"
+INFO:asgi_wsgi_app:Uvicorn: INFO:     127.0.0.1:58330 - "GET /api/health HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET http://127.0.0.1:8000/api/health "HTTP/1.1 200 OK"
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.models.product:Querying database for products of tenant: None
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.models.product:Found 0 products for tenant None in database
+INFO:asgi_wsgi_app:Uvicorn: WARNING:pycommerce.services.market_analysis:Could not retrieve product daed01d6-a91f-40d7-81f6-16ecfedd53d6 for category metrics: Product not found: daed01d6-a91f-40d7-81f6-16ecfedd53d6
+INFO:asgi_wsgi_app:Uvicorn: WARNING:pycommerce.services.market_analysis:Could not retrieve product 7bc186c5-8fe5-4f93-ba8a-8d7948ba764a for category metrics: Product not found: 7bc186c5-8fe5-4f93-ba8a-8d7948ba764a
+INFO:asgi_wsgi_app:Uvicorn: WARNING:pycommerce.services.market_analysis:Could not retrieve product 31b390c8-7337-4036-aa6c-73ee223953b6 for category metrics: Product not found: 31b390c8-7337-4036-aa6c-73ee223953b6
+INFO:asgi_wsgi_app:Uvicorn: WARNING:pycommerce.services.market_analysis:Could not retrieve product d7074a30-b13c-4eb9-b301-6eee91c94b5d for category metrics: Product not found: d7074a30-b13c-4eb9-b301-6eee91c94b5d
+INFO:asgi_wsgi_app:Uvicorn: WARNING:pycommerce.services.market_analysis:Could not retrieve product 8f03fe76-e753-4dd5-852c-096b589a66b5 for category metrics: Product not found: 8f03fe76-e753-4dd5-852c-096b589a66b5
+INFO:asgi_wsgi_app:Uvicorn: WARNING:pycommerce.services.market_analysis:Could not retrieve product a3d8f462-798e-4098-8b20-22f019f3d64d for category metrics: Product not found: a3d8f462-798e-4098-8b20-22f019f3d64d
+INFO:asgi_wsgi_app:Uvicorn: WARNING:pycommerce.services.market_analysis:Could not retrieve product 8285a63d-9589-4928-9eba-373834fa4014 for category metrics: Product not found: 8285a63d-9589-4928-9eba-373834fa4014
+INFO:asgi_wsgi_app:Uvicorn: WARNING:pycommerce.services.market_analysis:Could not retrieve product 94f6ec67-45c0-4a69-970f-5a12f3174922 for category metrics: Product not found: 94f6ec67-45c0-4a69-970f-5a12f3174922
+INFO:asgi_wsgi_app:Uvicorn: WARNING:pycommerce.services.market_analysis:Could not retrieve product 9f12243c-ebe3-4995-a5eb-9aa16ae18a35 for category metrics: Product not found: 9f12243c-ebe3-4995-a5eb-9aa16ae18a35
+INFO:asgi_wsgi_app:Uvicorn: WARNING:pycommerce.services.market_analysis:Could not retrieve product caa4e7ca-3fb7-4577-b701-323f1196a640 for category metrics: Product not found: caa4e7ca-3fb7-4577-b701-323f1196a640
+INFO:asgi_wsgi_app:Uvicorn: WARNING:pycommerce.services.market_analysis:Could not retrieve product 63d63aca-5b6b-4672-a72b-b1483f036ef6 for category metrics: Product not found: 63d63aca-5b6b-4672-a72b-b1483f036ef6
+INFO:asgi_wsgi_app:Uvicorn: WARNING:pycommerce.services.market_analysis:Could not retrieve product b03b63cc-6c45-45cd-a7d8-8b5cc844f144 for category metrics: Product not found: b03b63cc-6c45-45cd-a7d8-8b5cc844f144
+INFO:asgi_wsgi_app:Uvicorn: WARNING:pycommerce.services.market_analysis:Could not retrieve product 077ce386-36eb-4ff4-a9e4-022b11e90de4 for category metrics: Product not found: 077ce386-36eb-4ff4-a9e4-022b11e90de4
+INFO:asgi_wsgi_app:Uvicorn: WARNING:pycommerce.services.market_analysis:Could not retrieve product 61c6630d-d865-48d7-819a-de3d17880eb5 for category metrics: Product not found: 61c6630d-d865-48d7-819a-de3d17880eb5
+INFO:asgi_wsgi_app:Uvicorn: WARNING:pycommerce.services.market_analysis:Could not retrieve product abd3687d-0cf7-481d-a7b0-e4302160a6eb for category metrics: Product not found: abd3687d-0cf7-481d-a7b0-e4302160a6eb
+INFO:asgi_wsgi_app:Uvicorn: WARNING:pycommerce.services.market_analysis:Could not retrieve product 561e087e-9fba-4b51-8768-d8fb0a0a00a4 for category metrics: Product not found: 561e087e-9fba-4b51-8768-d8fb0a0a00a4
+INFO:asgi_wsgi_app:Uvicorn: WARNING:pycommerce.services.market_analysis:Could not retrieve product f82f6825-5ded-4aee-8326-6af524646104 for category metrics: Product not found: f82f6825-5ded-4aee-8326-6af524646104
+INFO:asgi_wsgi_app:Uvicorn: WARNING:pycommerce.services.market_analysis:Could not retrieve product 883f8b38-0dc9-47a2-b6c5-91091300e5f2 for category metrics: Product not found: 883f8b38-0dc9-47a2-b6c5-91091300e5f2
+INFO:asgi_wsgi_app:Uvicorn: WARNING:pycommerce.services.market_analysis:Could not retrieve product d048f66a-f8e1-44dc-8d84-61a884f70990 for category metrics: Product not found: d048f66a-f8e1-44dc-8d84-61a884f70990
+INFO:asgi_wsgi_app:Uvicorn: WARNING:pycommerce.services.market_analysis:Could not retrieve product 98d7dcd4-c8fd-40e8-ab03-516ee563c78b for category metrics: Product not found: 98d7dcd4-c8fd-40e8-ab03-516ee563c78b
+INFO:asgi_wsgi_app:Uvicorn: WARNING:pycommerce.services.market_analysis:Could not retrieve product 2d7441ba-36f3-476b-92bc-571243abb42d for category metrics: Product not found: 2d7441ba-36f3-476b-92bc-571243abb42d
+INFO:asgi_wsgi_app:Uvicorn: WARNING:pycommerce.services.market_analysis:Could not retrieve product 3c9c5dc2-6ba1-4582-b914-98fb073e4981 for category metrics: Product not found: 3c9c5dc2-6ba1-4582-b914-98fb073e4981
+INFO:asgi_wsgi_app:Uvicorn: INFO:     127.0.0.1:58346 - "GET /admin/market-analysis HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET http://127.0.0.1:8000/admin/market-analysis "HTTP/1.1 200 OK"
+INFO:asgi_wsgi_app:Uvicorn: INFO:     127.0.0.1:36470 - "GET /api/health HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET http://127.0.0.1:8000/api/health "HTTP/1.1 200 OK"
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.models.product:Querying database for products of tenant: None
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.models.product:Found 0 products for tenant None in database
+INFO:asgi_wsgi_app:Uvicorn: WARNING:pycommerce.services.market_analysis:Could not retrieve product daed01d6-a91f-40d7-81f6-16ecfedd53d6 for category metrics: Product not found: daed01d6-a91f-40d7-81f6-16ecfedd53d6
+INFO:asgi_wsgi_app:Uvicorn: WARNING:pycommerce.services.market_analysis:Could not retrieve product 7bc186c5-8fe5-4f93-ba8a-8d7948ba764a for category metrics: Product not found: 7bc186c5-8fe5-4f93-ba8a-8d7948ba764a
+INFO:asgi_wsgi_app:Uvicorn: WARNING:pycommerce.services.market_analysis:Could not retrieve product 31b390c8-7337-4036-aa6c-73ee223953b6 for category metrics: Product not found: 31b390c8-7337-4036-aa6c-73ee223953b6
+INFO:asgi_wsgi_app:Uvicorn: WARNING:pycommerce.services.market_analysis:Could not retrieve product d7074a30-b13c-4eb9-b301-6eee91c94b5d for category metrics: Product not found: d7074a30-b13c-4eb9-b301-6eee91c94b5d
+INFO:asgi_wsgi_app:Uvicorn: WARNING:pycommerce.services.market_analysis:Could not retrieve product 8f03fe76-e753-4dd5-852c-096b589a66b5 for category metrics: Product not found: 8f03fe76-e753-4dd5-852c-096b589a66b5
+INFO:asgi_wsgi_app:Uvicorn: WARNING:pycommerce.services.market_analysis:Could not retrieve product a3d8f462-798e-4098-8b20-22f019f3d64d for category metrics: Product not found: a3d8f462-798e-4098-8b20-22f019f3d64d
+INFO:asgi_wsgi_app:Uvicorn: WARNING:pycommerce.services.market_analysis:Could not retrieve product 8285a63d-9589-4928-9eba-373834fa4014 for category metrics: Product not found: 8285a63d-9589-4928-9eba-373834fa4014
+INFO:asgi_wsgi_app:Uvicorn: WARNING:pycommerce.services.market_analysis:Could not retrieve product 94f6ec67-45c0-4a69-970f-5a12f3174922 for category metrics: Product not found: 94f6ec67-45c0-4a69-970f-5a12f3174922
+INFO:asgi_wsgi_app:Uvicorn: WARNING:pycommerce.services.market_analysis:Could not retrieve product 9f12243c-ebe3-4995-a5eb-9aa16ae18a35 for category metrics: Product not found: 9f12243c-ebe3-4995-a5eb-9aa16ae18a35
+INFO:asgi_wsgi_app:Uvicorn: WARNING:pycommerce.services.market_analysis:Could not retrieve product caa4e7ca-3fb7-4577-b701-323f1196a640 for category metrics: Product not found: caa4e7ca-3fb7-4577-b701-323f1196a640
+INFO:asgi_wsgi_app:Uvicorn: WARNING:pycommerce.services.market_analysis:Could not retrieve product 63d63aca-5b6b-4672-a72b-b1483f036ef6 for category metrics: Product not found: 63d63aca-5b6b-4672-a72b-b1483f036ef6
+INFO:asgi_wsgi_app:Uvicorn: WARNING:pycommerce.services.market_analysis:Could not retrieve product b03b63cc-6c45-45cd-a7d8-8b5cc844f144 for category metrics: Product not found: b03b63cc-6c45-45cd-a7d8-8b5cc844f144
+INFO:asgi_wsgi_app:Uvicorn: WARNING:pycommerce.services.market_analysis:Could not retrieve product 077ce386-36eb-4ff4-a9e4-022b11e90de4 for category metrics: Product not found: 077ce386-36eb-4ff4-a9e4-022b11e90de4
+INFO:asgi_wsgi_app:Uvicorn: WARNING:pycommerce.services.market_analysis:Could not retrieve product 61c6630d-d865-48d7-819a-de3d17880eb5 for category metrics: Product not found: 61c6630d-d865-48d7-819a-de3d17880eb5
+INFO:asgi_wsgi_app:Uvicorn: WARNING:pycommerce.services.market_analysis:Could not retrieve product abd3687d-0cf7-481d-a7b0-e4302160a6eb for category metrics: Product not found: abd3687d-0cf7-481d-a7b0-e4302160a6eb
+INFO:asgi_wsgi_app:Uvicorn: WARNING:pycommerce.services.market_analysis:Could not retrieve product 561e087e-9fba-4b51-8768-d8fb0a0a00a4 for category metrics: Product not found: 561e087e-9fba-4b51-8768-d8fb0a0a00a4
+INFO:asgi_wsgi_app:Uvicorn: WARNING:pycommerce.services.market_analysis:Could not retrieve product f82f6825-5ded-4aee-8326-6af524646104 for category metrics: Product not found: f82f6825-5ded-4aee-8326-6af524646104
+INFO:asgi_wsgi_app:Uvicorn: WARNING:pycommerce.services.market_analysis:Could not retrieve product 883f8b38-0dc9-47a2-b6c5-91091300e5f2 for category metrics: Product not found: 883f8b38-0dc9-47a2-b6c5-91091300e5f2
+INFO:asgi_wsgi_app:Uvicorn: WARNING:pycommerce.services.market_analysis:Could not retrieve product d048f66a-f8e1-44dc-8d84-61a884f70990 for category metrics: Product not found: d048f66a-f8e1-44dc-8d84-61a884f70990
+INFO:asgi_wsgi_app:Uvicorn: WARNING:pycommerce.services.market_analysis:Could not retrieve product 98d7dcd4-c8fd-40e8-ab03-516ee563c78b for category metrics: Product not found: 98d7dcd4-c8fd-40e8-ab03-516ee563c78b
+INFO:asgi_wsgi_app:Uvicorn: WARNING:pycommerce.services.market_analysis:Could not retrieve product 2d7441ba-36f3-476b-92bc-571243abb42d for category metrics: Product not found: 2d7441ba-36f3-476b-92bc-571243abb42d
