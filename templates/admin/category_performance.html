@@ -1,0 +1,418 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block head %}
+{{ super() }}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.css">
+<style>
+  .category-performance-container {
+    padding: 1.5rem;
+  }
+  .metrics-card {
+    background-color: #fff;
+    border-radius: 0.5rem;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+  .metrics-card h3 {
+    margin-top: 0;
+    color: #333;
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+  }
+  .chart-container {
+    position: relative;
+    height: 400px;
+    margin-bottom: 1.5rem;
+  }
+  .period-selector {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+  }
+  .period-selector .btn {
+    padding: 0.35rem 0.75rem;
+    font-size: 0.875rem;
+  }
+  .cat-performance-table {
+    width: 100%;
+  }
+  .cat-performance-table th,
+  .cat-performance-table td {
+    padding: 0.75rem;
+    border-bottom: 1px solid #dee2e6;
+  }
+  .cat-performance-table th {
+    text-align: left;
+    font-weight: 600;
+    color: #495057;
+  }
+  .cat-performance-table tr:last-child td {
+    border-bottom: none;
+  }
+  .cat-performance-table .category-name {
+    font-weight: 500;
+  }
+  .bar-container {
+    width: 100%;
+    background-color: #f8f9fa;
+    height: 0.5rem;
+    border-radius: 0.25rem;
+    overflow: hidden;
+  }
+  .bar {
+    height: 100%;
+    background-color: #007bff;
+  }
+  .period-label {
+    display: inline-block;
+    padding: 0.35rem 0.75rem;
+    background-color: #f8f9fa;
+    border-radius: 0.25rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    margin-bottom: 1rem;
+  }
+  .kpi-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+  .kpi-card {
+    background-color: #f8f9fa;
+    border-radius: 0.5rem;
+    padding: 1rem;
+    flex: 1;
+    min-width: 200px;
+    text-align: center;
+  }
+  .kpi-value {
+    font-size: 1.5rem;
+    font-weight: bold;
+    margin-bottom: 0.25rem;
+    color: #007bff;
+  }
+  .kpi-label {
+    font-size: 0.875rem;
+    color: #6c757d;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid category-performance-container">
+  <div class="row">
+    <div class="col-12">
+      <h1 class="mb-4">Category Performance</h1>
+      
+      <!-- Period Selector -->
+      <div class="period-selector">
+        <span class="mr-2">Time period:</span>
+        <a href="/admin/market-analysis/category-performance?period=week" class="btn btn-sm btn-outline-primary {% if selected_period == 'week' %}active{% endif %}">Last Week</a>
+        <a href="/admin/market-analysis/category-performance?period=month" class="btn btn-sm btn-outline-primary {% if selected_period == 'month' %}active{% endif %}">Last Month</a>
+        <a href="/admin/market-analysis/category-performance?period=quarter" class="btn btn-sm btn-outline-primary {% if selected_period == 'quarter' %}active{% endif %}">Last Quarter</a>
+        <a href="/admin/market-analysis/category-performance?period=year" class="btn btn-sm btn-outline-primary {% if selected_period == 'year' %}active{% endif %}">Last Year</a>
+      </div>
+      
+      <div class="period-label">
+        {% if selected_period == 'week' %}
+          Last 7 days
+        {% elif selected_period == 'month' %}
+          Last 30 days
+        {% elif selected_period == 'quarter' %}
+          Last 90 days
+        {% elif selected_period == 'year' %}
+          Last 365 days
+        {% endif %}
+      </div>
+      
+      <!-- Main content -->
+      <div class="row">
+        <div class="col-md-8">
+          <!-- Revenue by Category Chart -->
+          <div class="metrics-card">
+            <h3>Revenue by Category</h3>
+            <div class="chart-container">
+              <canvas id="revenueByCategoryChart"></canvas>
+            </div>
+          </div>
+          
+          <!-- Units Sold by Category Chart -->
+          <div class="metrics-card">
+            <h3>Units Sold by Category</h3>
+            <div class="chart-container">
+              <canvas id="unitsByCategoryChart"></canvas>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <!-- Performance Metrics -->
+          <div class="metrics-card">
+            <h3>Performance Metrics</h3>
+            {% if category_performance.categories and category_performance.categories|length > 0 %}
+              <div class="kpi-container">
+                {% set total_revenue = 0 %}
+                {% set total_units = 0 %}
+                {% set total_orders = 0 %}
+                {% for category in category_performance.categories %}
+                  {% set total_revenue = total_revenue + category.revenue %}
+                  {% set total_units = total_units + category.units_sold %}
+                  {% set total_orders = total_orders + category.orders %}
+                {% endfor %}
+                
+                <div class="kpi-card">
+                  <div class="kpi-value">${{ total_revenue|round(2) }}</div>
+                  <div class="kpi-label">Total Revenue</div>
+                </div>
+                <div class="kpi-card">
+                  <div class="kpi-value">{{ total_units }}</div>
+                  <div class="kpi-label">Units Sold</div>
+                </div>
+                <div class="kpi-card">
+                  <div class="kpi-value">{{ total_orders }}</div>
+                  <div class="kpi-label">Total Orders</div>
+                </div>
+                <div class="kpi-card">
+                  <div class="kpi-value">{{ category_performance.categories|length }}</div>
+                  <div class="kpi-label">Categories</div>
+                </div>
+              </div>
+              
+              <h4 class="h5 mt-4">Category Breakdown</h4>
+              <div class="table-responsive">
+                <table class="cat-performance-table">
+                  <thead>
+                    <tr>
+                      <th>Category</th>
+                      <th>Revenue</th>
+                      <th>% of Total</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for category in category_performance.categories %}
+                      <tr>
+                        <td class="category-name">{{ category.category }}</td>
+                        <td>${{ category.revenue|round(2) }}</td>
+                        <td>
+                          {% set percentage = (category.revenue / total_revenue * 100)|round %}
+                          <div class="bar-container">
+                            <div class="bar" style="width: {{ percentage }}%;"></div>
+                          </div>
+                          <small>{{ percentage }}%</small>
+                        </td>
+                      </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            {% else %}
+              <p class="text-muted">No category data available for the selected period.</p>
+            {% endif %}
+            
+            <div class="mt-4">
+              <a href="/admin/market-analysis" class="btn btn-outline-primary">Back to Analytics</a>
+            </div>
+          </div>
+          
+          <!-- Average Prices -->
+          {% if category_performance.categories and category_performance.categories|length > 0 %}
+            <div class="metrics-card">
+              <h3>Average Price by Category</h3>
+              <div class="chart-container" style="height: 300px;">
+                <canvas id="avgPriceChart"></canvas>
+              </div>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+      
+      <!-- Detailed Category Table -->
+      <div class="metrics-card">
+        <h3>Detailed Category Performance</h3>
+        {% if category_performance.categories and category_performance.categories|length > 0 %}
+          <div class="table-responsive">
+            <table class="table table-striped">
+              <thead>
+                <tr>
+                  <th>Category</th>
+                  <th>Revenue</th>
+                  <th>Orders</th>
+                  <th>Units Sold</th>
+                  <th>Avg. Price</th>
+                  <th>Avg. Units per Order</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for category in category_performance.categories %}
+                  <tr>
+                    <td>{{ category.category }}</td>
+                    <td>${{ category.revenue|round(2) }}</td>
+                    <td>{{ category.orders }}</td>
+                    <td>{{ category.units_sold }}</td>
+                    <td>${{ category.avg_price|round(2) }}</td>
+                    <td>{{ (category.units_sold / category.orders)|round(1) if category.orders > 0 else 0 }}</td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <p class="text-muted">No category data available for the selected period.</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Parse JSON data from template
+    const categoryData = {{ category_performance_json|safe }};
+    
+    if (categoryData && categoryData.categories && categoryData.categories.length > 0) {
+      const categories = categoryData.categories;
+      
+      // Sort categories by revenue (descending)
+      categories.sort((a, b) => b.revenue - a.revenue);
+      
+      // Get category names, revenues, and units sold
+      const categoryNames = categories.map(cat => cat.category);
+      const revenues = categories.map(cat => cat.revenue);
+      const unitsSold = categories.map(cat => cat.units_sold);
+      const avgPrices = categories.map(cat => cat.avg_price);
+      
+      // Create color palette for charts
+      const colorPalette = [
+        'rgba(54, 162, 235, 0.7)',
+        'rgba(255, 99, 132, 0.7)',
+        'rgba(255, 206, 86, 0.7)',
+        'rgba(75, 192, 192, 0.7)',
+        'rgba(153, 102, 255, 0.7)',
+        'rgba(255, 159, 64, 0.7)',
+        'rgba(199, 199, 199, 0.7)',
+        'rgba(83, 102, 255, 0.7)',
+        'rgba(40, 167, 69, 0.7)',
+        'rgba(220, 53, 69, 0.7)'
+      ];
+      
+      // Repeat the color palette if we have more categories than colors
+      const colors = categoryNames.map((_, i) => colorPalette[i % colorPalette.length]);
+      
+      // Revenue by Category Chart
+      const revenueCtx = document.getElementById('revenueByCategoryChart').getContext('2d');
+      new Chart(revenueCtx, {
+        type: 'bar',
+        data: {
+          labels: categoryNames,
+          datasets: [{
+            label: 'Revenue',
+            data: revenues,
+            backgroundColor: colors,
+            borderColor: colors.map(color => color.replace('0.7', '1')),
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              display: false
+            },
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  return '$' + context.parsed.y.toFixed(2);
+                }
+              }
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: {
+                callback: function(value) {
+                  return '$' + value;
+                }
+              }
+            }
+          }
+        }
+      });
+      
+      // Units Sold by Category Chart
+      const unitsCtx = document.getElementById('unitsByCategoryChart').getContext('2d');
+      new Chart(unitsCtx, {
+        type: 'bar',
+        data: {
+          labels: categoryNames,
+          datasets: [{
+            label: 'Units Sold',
+            data: unitsSold,
+            backgroundColor: colors.map(color => color.replace('0.7', '0.5')),
+            borderColor: colors.map(color => color.replace('0.7', '0.8')),
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              display: false
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true
+            }
+          }
+        }
+      });
+      
+      // Average Price Chart
+      const avgPriceCtx = document.getElementById('avgPriceChart').getContext('2d');
+      new Chart(avgPriceCtx, {
+        type: 'polarArea',
+        data: {
+          labels: categoryNames,
+          datasets: [{
+            data: avgPrices,
+            backgroundColor: colors
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'right',
+              labels: {
+                boxWidth: 10,
+                font: {
+                  size: 10
+                }
+              }
+            },
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  return context.label + ': $' + context.raw.toFixed(2);
+                }
+              }
+            }
+          }
+        }
+      });
+    }
+  });
+</script>
+{% endblock %}

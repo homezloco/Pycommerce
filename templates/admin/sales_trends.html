@@ -1,0 +1,377 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block head %}
+{{ super() }}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<style>
+  .sales-trends-container {
+    padding: 1.5rem;
+  }
+  .metrics-card {
+    background-color: #fff;
+    border-radius: 0.5rem;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    height: 100%;
+  }
+  .metrics-card h3 {
+    margin-top: 0;
+    color: #333;
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+  }
+  .chart-container {
+    position: relative;
+    height: 350px;
+    margin-bottom: 1.5rem;
+  }
+  .metric-value {
+    font-size: 2rem;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+    color: #28a745;
+  }
+  .metric-label {
+    font-size: 0.875rem;
+    color: #6c757d;
+    margin-bottom: 0.75rem;
+  }
+  .filters-card {
+    background-color: #f8f9fa;
+    border-radius: 0.5rem;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+  .date-range-picker {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    margin-bottom: 1rem;
+  }
+  .date-input {
+    flex: 1;
+  }
+  .category-filter {
+    margin-top: 1rem;
+  }
+  .top-products-table {
+    width: 100%;
+  }
+  .top-products-table th,
+  .top-products-table td {
+    padding: 0.75rem;
+    border-bottom: 1px solid #dee2e6;
+  }
+  .top-products-table th {
+    text-align: left;
+    font-weight: 600;
+    color: #495057;
+  }
+  .top-products-table tr:last-child td {
+    border-bottom: none;
+  }
+  .top-products-table .product-name {
+    font-weight: 500;
+  }
+  .summary-row {
+    margin-bottom: 1.5rem;
+  }
+  .preset-dates {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 1rem;
+  }
+  .preset-dates .btn {
+    font-size: 0.8rem;
+    padding: 0.25rem 0.75rem;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid sales-trends-container">
+  <div class="row">
+    <div class="col-12">
+      <h1 class="mb-4">Sales Trends Analysis</h1>
+      
+      <!-- Filters Card -->
+      <div class="filters-card">
+        <form id="salesFiltersForm" action="/admin/market-analysis/sales-trends" method="get">
+          <div class="row">
+            <div class="col-md-8">
+              <label for="dateRange">Date Range</label>
+              <div class="date-range-picker">
+                <input type="text" id="startDate" name="start_date" class="form-control date-input" placeholder="Start Date" value="{{ start_date }}" required>
+                <span>to</span>
+                <input type="text" id="endDate" name="end_date" class="form-control date-input" placeholder="End Date" value="{{ end_date }}" required>
+                <button type="submit" class="btn btn-primary">Apply</button>
+              </div>
+              <div class="preset-dates">
+                <button type="button" class="btn btn-sm btn-outline-secondary" data-days="7">Last 7 days</button>
+                <button type="button" class="btn btn-sm btn-outline-secondary" data-days="30">Last 30 days</button>
+                <button type="button" class="btn btn-sm btn-outline-secondary" data-days="90">Last 90 days</button>
+                <button type="button" class="btn btn-sm btn-outline-secondary" data-days="180">Last 6 months</button>
+                <button type="button" class="btn btn-sm btn-outline-secondary" data-days="365">Last year</button>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="category-filter">
+                <label for="categorySelect">Filter by Category</label>
+                <select id="categorySelect" name="category" class="form-control">
+                  <option value="">All Categories</option>
+                  {% for category in categories %}
+                    <option value="{{ category }}" {% if selected_category == category %}selected{% endif %}>{{ category }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+      
+      <!-- Summary Metrics -->
+      <div class="row summary-row">
+        <div class="col-md-4">
+          <div class="metrics-card">
+            <h3>Total Revenue</h3>
+            <div class="metric-value">${{ sales_trends.total_revenue|default(0)|round(2) }}</div>
+            <div class="metric-label">{{ start_date }} to {{ end_date }}</div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="metrics-card">
+            <h3>Total Orders</h3>
+            <div class="metric-value">{{ sales_trends.total_orders|default(0) }}</div>
+            <div class="metric-label">{{ start_date }} to {{ end_date }}</div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="metrics-card">
+            <h3>Average Order Value</h3>
+            <div class="metric-value">${{ sales_trends.avg_order_value|default(0)|round(2) }}</div>
+            <div class="metric-label">{{ start_date }} to {{ end_date }}</div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Sales Trends Chart -->
+      <div class="row">
+        <div class="col-12">
+          <div class="metrics-card">
+            <h3>Daily Sales Trends</h3>
+            <div class="chart-container">
+              <canvas id="salesTrendsChart"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Categories and Top Products -->
+      <div class="row">
+        <div class="col-md-5">
+          <div class="metrics-card">
+            <h3>Top Categories</h3>
+            <div class="chart-container" style="height: 300px;">
+              <canvas id="categoriesChart"></canvas>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-7">
+          <div class="metrics-card">
+            <h3>Top Selling Products</h3>
+            {% if sales_trends.top_products and sales_trends.top_products|length > 0 %}
+              <div class="table-responsive">
+                <table class="top-products-table">
+                  <thead>
+                    <tr>
+                      <th>Product</th>
+                      <th>Qty Sold</th>
+                      <th>Revenue</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for product in sales_trends.top_products %}
+                      <tr>
+                        <td class="product-name">{{ product.name }}</td>
+                        <td>{{ product.quantity }}</td>
+                        <td>${{ product.revenue }}</td>
+                        <td>
+                          <a href="/admin/market-analysis/demand-forecast/{{ product.id }}" class="btn btn-sm btn-outline-info">Forecast</a>
+                          <a href="/admin/products/edit/{{ product.id }}" class="btn btn-sm btn-outline-secondary">View</a>
+                        </td>
+                      </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            {% else %}
+              <p class="text-muted">No product data available for the selected period.</p>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Parse JSON data from template
+    const salesTrendsData = {{ sales_trends_json|safe }};
+    
+    // Initialize date pickers
+    flatpickr("#startDate", {
+      dateFormat: "Y-m-d",
+      maxDate: document.getElementById('endDate').value || "today"
+    });
+    
+    flatpickr("#endDate", {
+      dateFormat: "Y-m-d",
+      maxDate: "today"
+    });
+    
+    // Handle preset date buttons
+    document.querySelectorAll('.preset-dates .btn').forEach(button => {
+      button.addEventListener('click', function() {
+        const days = parseInt(this.dataset.days);
+        const endDate = new Date();
+        const startDate = new Date();
+        startDate.setDate(startDate.getDate() - days);
+        
+        // Format dates for inputs (YYYY-MM-DD)
+        document.getElementById('startDate').value = formatDate(startDate);
+        document.getElementById('endDate').value = formatDate(endDate);
+        
+        // Update the flatpickr instances
+        document.getElementById('startDate')._flatpickr.setDate(startDate);
+        document.getElementById('endDate')._flatpickr.setDate(endDate);
+        
+        // Submit the form
+        document.getElementById('salesFiltersForm').submit();
+      });
+    });
+    
+    // Helper function to format date as YYYY-MM-DD
+    function formatDate(date) {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
+    
+    // Handle category select change
+    document.getElementById('categorySelect').addEventListener('change', function() {
+      document.getElementById('salesFiltersForm').submit();
+    });
+    
+    // Sales Trends Chart
+    if (salesTrendsData && salesTrendsData.trends) {
+      const ctx = document.getElementById('salesTrendsChart').getContext('2d');
+      
+      new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: salesTrendsData.trends.map(item => item.date),
+          datasets: [{
+            label: 'Daily Revenue',
+            data: salesTrendsData.trends.map(item => item.revenue),
+            backgroundColor: 'rgba(54, 162, 235, 0.2)',
+            borderColor: 'rgba(54, 162, 235, 1)',
+            borderWidth: 2,
+            tension: 0.3,
+            pointRadius: 3
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            x: {
+              grid: {
+                display: false
+              }
+            },
+            y: {
+              beginAtZero: true,
+              ticks: {
+                callback: function(value) {
+                  return '$' + value;
+                }
+              }
+            }
+          },
+          plugins: {
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  return '$' + context.parsed.y.toFixed(2);
+                }
+              }
+            }
+          }
+        }
+      });
+    }
+    
+    // Categories Chart
+    if (salesTrendsData && salesTrendsData.top_categories && salesTrendsData.top_categories.length > 0) {
+      const ctx = document.getElementById('categoriesChart').getContext('2d');
+      
+      new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: salesTrendsData.top_categories.map(item => item.category),
+          datasets: [{
+            data: salesTrendsData.top_categories.map(item => item.revenue),
+            backgroundColor: [
+              'rgba(255, 99, 132, 0.7)',
+              'rgba(54, 162, 235, 0.7)',
+              'rgba(255, 206, 86, 0.7)',
+              'rgba(75, 192, 192, 0.7)',
+              'rgba(153, 102, 255, 0.7)'
+            ],
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'right',
+              labels: {
+                boxWidth: 15,
+                font: {
+                  size: 11
+                }
+              }
+            },
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  const value = context.parsed;
+                  const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                  const percentage = Math.round((value / total) * 100);
+                  return context.label + ': $' + value.toFixed(2) + ' (' + percentage + '%)';
+                }
+              }
+            }
+          }
+        }
+      });
+    }
+  });
+</script>
+{% endblock %}

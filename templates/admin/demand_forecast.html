@@ -1,0 +1,319 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block head %}
+{{ super() }}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.css">
+<style>
+  .demand-forecast-container {
+    padding: 1.5rem;
+  }
+  .metrics-card {
+    background-color: #fff;
+    border-radius: 0.5rem;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    height: 100%;
+  }
+  .metrics-card h3 {
+    margin-top: 0;
+    color: #333;
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+  }
+  .chart-container {
+    position: relative;
+    height: 300px;
+    margin-bottom: 1.5rem;
+  }
+  .metric-value {
+    font-size: 2rem;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+  }
+  .metric-value.good {
+    color: #28a745;
+  }
+  .metric-value.warning {
+    color: #ffc107;
+  }
+  .metric-value.danger {
+    color: #dc3545;
+  }
+  .metric-label {
+    font-size: 0.875rem;
+    color: #6c757d;
+    margin-bottom: 0.75rem;
+  }
+  .product-header {
+    display: flex;
+    align-items: flex-start;
+    margin-bottom: 1.5rem;
+  }
+  .product-info {
+    flex: 1;
+  }
+  .forecast-days-selector {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+  }
+  .forecast-days-selector .btn {
+    padding: 0.35rem 0.75rem;
+    font-size: 0.875rem;
+  }
+  .stock-status {
+    display: inline-block;
+    padding: 0.35rem 0.75rem;
+    border-radius: 0.25rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    margin-top: 0.5rem;
+  }
+  .stock-status.sufficient {
+    background-color: rgba(40, 167, 69, 0.15);
+    color: #28a745;
+  }
+  .stock-status.insufficient {
+    background-color: rgba(255, 193, 7, 0.15);
+    color: #ffc107;
+  }
+  .stock-status.out {
+    background-color: rgba(220, 53, 69, 0.15);
+    color: #dc3545;
+  }
+  .restock-recommendation {
+    margin-top: 1rem;
+    padding: 1rem;
+    background-color: #f8f9fa;
+    border-radius: 0.25rem;
+    border-left: 4px solid #17a2b8;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid demand-forecast-container">
+  <div class="row">
+    <div class="col-12">
+      <div class="product-header">
+        <div class="product-info">
+          <h1 class="mb-2">{{ product.name }}</h1>
+          <p class="text-muted">SKU: {{ product.sku }} | Current Stock: <strong>{{ product.stock if product.stock is not none else "Unknown" }}</strong></p>
+          {% if forecast.stock_status == "Sufficient" %}
+            <div class="stock-status sufficient">Sufficient Stock</div>
+          {% elif forecast.stock_status == "Insufficient" %}
+            <div class="stock-status insufficient">Insufficient Stock</div>
+          {% elif forecast.stock_status == "Out of Stock" %}
+            <div class="stock-status out">Out of Stock</div>
+          {% else %}
+            <div class="stock-status">{{ forecast.stock_status }}</div>
+          {% endif %}
+        </div>
+        <div class="product-actions">
+          <a href="/admin/products/edit/{{ product.id }}" class="btn btn-outline-primary">Edit Product</a>
+        </div>
+      </div>
+      
+      <!-- Forecast Period Selector -->
+      <div class="forecast-days-selector">
+        <span class="mr-2">Forecast period:</span>
+        <a href="/admin/market-analysis/demand-forecast/{{ product.id }}?forecast_days=7" class="btn btn-sm btn-outline-primary {% if forecast_days == 7 %}active{% endif %}">7 days</a>
+        <a href="/admin/market-analysis/demand-forecast/{{ product.id }}?forecast_days=30" class="btn btn-sm btn-outline-primary {% if forecast_days == 30 %}active{% endif %}">30 days</a>
+        <a href="/admin/market-analysis/demand-forecast/{{ product.id }}?forecast_days=60" class="btn btn-sm btn-outline-primary {% if forecast_days == 60 %}active{% endif %}">60 days</a>
+        <a href="/admin/market-analysis/demand-forecast/{{ product.id }}?forecast_days=90" class="btn btn-sm btn-outline-primary {% if forecast_days == 90 %}active{% endif %}">90 days</a>
+      </div>
+      
+      <!-- Forecast Metrics -->
+      <div class="row">
+        <div class="col-md-4">
+          <div class="metrics-card">
+            <h3>Forecast Period</h3>
+            <div class="metric-value good">{{ forecast.forecast_days }} days</div>
+            <div class="metric-label">from today</div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="metrics-card">
+            <h3>Daily Forecast</h3>
+            <div class="metric-value {% if forecast.daily_forecast > 0 %}good{% else %}warning{% endif %}">
+              {{ forecast.daily_forecast }} units
+            </div>
+            <div class="metric-label">avg per day</div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="metrics-card">
+            <h3>Total Demand</h3>
+            <div class="metric-value {% if forecast.total_forecast > 0 %}good{% else %}warning{% endif %}">
+              {{ forecast.total_forecast }} units
+            </div>
+            <div class="metric-label">total for period</div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Forecast Visualization -->
+      <div class="row">
+        <div class="col-md-8">
+          <div class="metrics-card">
+            <h3>Demand Forecast Visualization</h3>
+            <div class="chart-container">
+              <canvas id="forecastChart"></canvas>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="metrics-card">
+            <h3>Stock vs. Demand</h3>
+            <div class="chart-container">
+              <canvas id="stockDemandChart"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Restock Recommendation -->
+      {% if forecast.restock_recommendation > 0 %}
+        <div class="restock-recommendation">
+          <h4>Restock Recommendation</h4>
+          <p class="mb-0">Based on the forecast, we recommend ordering <strong>{{ forecast.restock_recommendation }} additional units</strong> to meet demand for the selected period.</p>
+        </div>
+      {% endif %}
+      
+      <!-- Back to Sales Trends -->
+      <div class="mt-4">
+        <a href="/admin/market-analysis/sales-trends" class="btn btn-outline-secondary">&larr; Back to Sales Trends</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Parse JSON data from template
+    const forecastData = {{ forecast_json|safe }};
+    
+    // Generate forecasted demand data
+    const forecastDays = forecastData.forecast_days || 30;
+    const dailyForecast = forecastData.daily_forecast || 0;
+    const currentStock = forecastData.current_stock || 0;
+    
+    // Generate labels for each day in the forecast period
+    const labels = [];
+    const today = new Date();
+    
+    for (let i = 0; i < forecastDays; i++) {
+      const date = new Date(today);
+      date.setDate(date.getDate() + i);
+      labels.push(formatDate(date));
+    }
+    
+    // Create daily forecast data
+    const dailyData = Array(forecastDays).fill(dailyForecast);
+    
+    // Create projected inventory data
+    const inventoryData = [];
+    let remaining = currentStock;
+    
+    for (let i = 0; i < forecastDays; i++) {
+      // Calculate remaining inventory after each day
+      remaining = Math.max(0, remaining - dailyForecast);
+      inventoryData.push(remaining);
+    }
+    
+    // Forecast Chart
+    const forecastChartCtx = document.getElementById('forecastChart').getContext('2d');
+    new Chart(forecastChartCtx, {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [
+          {
+            label: 'Daily Demand Forecast',
+            data: dailyData,
+            backgroundColor: 'rgba(54, 162, 235, 0.2)',
+            borderColor: 'rgba(54, 162, 235, 1)',
+            borderWidth: 2,
+            tension: 0.1,
+            pointRadius: 2
+          },
+          {
+            label: 'Projected Inventory',
+            data: inventoryData,
+            backgroundColor: 'rgba(255, 99, 132, 0.2)',
+            borderColor: 'rgba(255, 99, 132, 1)',
+            borderWidth: 2,
+            tension: 0.1,
+            pointRadius: 2
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          y: {
+            beginAtZero: true,
+            title: {
+              display: true,
+              text: 'Units'
+            }
+          },
+          x: {
+            ticks: {
+              maxRotation: 45,
+              minRotation: 45
+            }
+          }
+        }
+      }
+    });
+    
+    // Stock vs Demand Chart
+    const stockDemandChartCtx = document.getElementById('stockDemandChart').getContext('2d');
+    new Chart(stockDemandChartCtx, {
+      type: 'doughnut',
+      data: {
+        labels: ['Current Stock', 'Forecast Demand', 'Recommended Restock'],
+        datasets: [{
+          data: [
+            currentStock, 
+            forecastData.total_forecast || 0,
+            forecastData.restock_recommendation || 0
+          ],
+          backgroundColor: [
+            'rgba(54, 162, 235, 0.7)',
+            'rgba(255, 99, 132, 0.7)',
+            'rgba(255, 206, 86, 0.7)'
+          ],
+          borderWidth: 1
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'bottom'
+          }
+        }
+      }
+    });
+    
+    // Helper function to format date as MM/DD
+    function formatDate(date) {
+      const month = date.getMonth() + 1;
+      const day = date.getDate();
+      return `${month}/${day}`;
+    }
+  });
+</script>
+{% endblock %}

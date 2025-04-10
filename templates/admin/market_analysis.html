@@ -1,0 +1,437 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block head %}
+{{ super() }}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.css">
+<style>
+  .market-analysis-container {
+    padding: 1.5rem;
+  }
+  .metrics-card {
+    background-color: #fff;
+    border-radius: 0.5rem;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    height: 100%;
+  }
+  .metrics-card h3 {
+    margin-top: 0;
+    color: #333;
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+  }
+  .chart-container {
+    position: relative;
+    height: 300px;
+    margin-bottom: 1.5rem;
+  }
+  .metric-value {
+    font-size: 2rem;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+    color: #28a745;
+  }
+  .metric-label {
+    font-size: 0.875rem;
+    color: #6c757d;
+    margin-bottom: 0.75rem;
+  }
+  .metrics-row {
+    margin-bottom: 1.5rem;
+  }
+  .insight-card {
+    padding: 1rem;
+    margin-bottom: 1rem;
+    border-radius: 0.25rem;
+    background-color: #f8f9fa;
+    border-left: 4px solid #17a2b8;
+  }
+  .trend-up {
+    color: #28a745;
+  }
+  .trend-down {
+    color: #dc3545;
+  }
+  .trend-neutral {
+    color: #6c757d;
+  }
+  .period-selector {
+    display: flex;
+    margin-bottom: 1.5rem;
+    gap: 0.5rem;
+  }
+  .period-selector .btn {
+    border-radius: 1.5rem;
+    padding: 0.35rem 1rem;
+    font-size: 0.875rem;
+  }
+  .period-selector .active {
+    background-color: #007bff;
+    color: white;
+  }
+  .top-products-list {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+  }
+  .top-products-list li {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #eee;
+  }
+  .top-products-list li:last-child {
+    border-bottom: none;
+  }
+  .category-badge {
+    padding: 0.25rem 0.5rem;
+    border-radius: 1rem;
+    font-size: 0.75rem;
+    background-color: #f0f0f0;
+    margin-right: 0.5rem;
+    margin-bottom: 0.5rem;
+    display: inline-block;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-12">
+      <h1 class="mb-4">Market Analysis Dashboard</h1>
+      
+      <!-- Time Period Selector -->
+      <div class="period-selector">
+        <button class="btn btn-outline-primary active" data-period="30">Last 30 Days</button>
+        <button class="btn btn-outline-primary" data-period="90">Last 90 Days</button>
+        <button class="btn btn-outline-primary" data-period="180">Last 6 Months</button>
+        <button class="btn btn-outline-primary" data-period="365">Last Year</button>
+      </div>
+      
+      <!-- Key Metrics Row -->
+      <div class="row metrics-row">
+        <div class="col-md-4">
+          <div class="metrics-card">
+            <h3>Total Revenue</h3>
+            <div class="metric-value">${{ sales_trends.total_revenue|default(0)|round(2) }}</div>
+            <div class="metric-label">for selected period</div>
+            <a href="/admin/market-analysis/sales-trends" class="btn btn-sm btn-outline-primary">View Details</a>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="metrics-card">
+            <h3>Total Orders</h3>
+            <div class="metric-value">{{ sales_trends.total_orders|default(0) }}</div>
+            <div class="metric-label">for selected period</div>
+            <a href="/admin/orders" class="btn btn-sm btn-outline-primary">View Orders</a>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="metrics-card">
+            <h3>Average Order Value</h3>
+            <div class="metric-value">${{ sales_trends.avg_order_value|default(0)|round(2) }}</div>
+            <div class="metric-label">for selected period</div>
+            <a href="/admin/analytics" class="btn btn-sm btn-outline-primary">View Analytics</a>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Charts Row -->
+      <div class="row mb-4">
+        <div class="col-md-8">
+          <div class="metrics-card">
+            <h3>Sales Trends</h3>
+            <div class="chart-container">
+              <canvas id="salesTrendsChart"></canvas>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="metrics-card">
+            <h3>Top Categories</h3>
+            <div class="chart-container">
+              <canvas id="categoriesChart"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Insights and Products Row -->
+      <div class="row">
+        <div class="col-md-6">
+          <div class="metrics-card">
+            <h3>Market Insights</h3>
+            {% if market_insights and market_insights.insights %}
+              {% for insight in market_insights.insights %}
+                <div class="insight-card">
+                  <p class="mb-0">{{ insight }}</p>
+                </div>
+              {% endfor %}
+              <div class="mt-3">
+                <h4 class="h5">Recommendations</h4>
+                <ul class="list-group">
+                  {% for recommendation in market_insights.recommendations %}
+                    <li class="list-group-item">{{ recommendation }}</li>
+                  {% endfor %}
+                </ul>
+              </div>
+              <div class="mt-3">
+                <a href="/admin/market-analysis/insights" class="btn btn-sm btn-outline-primary">View All Insights</a>
+              </div>
+            {% else %}
+              <p>No market insights available. Continue operating your store to generate more sales data.</p>
+            {% endif %}
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="metrics-card">
+            <h3>Top Products</h3>
+            {% if sales_trends.top_products and sales_trends.top_products|length > 0 %}
+              <ul class="top-products-list">
+                {% for product in sales_trends.top_products %}
+                  <li>
+                    <span>{{ product.name }}</span>
+                    <span>
+                      <strong>{{ product.quantity }}</strong> units - 
+                      <strong>${{ product.revenue }}</strong>
+                    </span>
+                  </li>
+                {% endfor %}
+              </ul>
+              <div class="mt-3">
+                <a href="/admin/market-analysis/sales-trends" class="btn btn-sm btn-outline-primary">View All Products</a>
+              </div>
+            {% else %}
+              <p>No product data available for the selected period.</p>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Parse JSON data from template
+    const salesTrendsData = {{ sales_trends_json|safe }};
+    const marketInsightsData = {{ market_insights_json|safe }};
+    const categoryPerformanceData = {{ category_performance_json|safe }};
+    
+    // Sales Trends Chart
+    if (salesTrendsData && salesTrendsData.trends) {
+      const ctx = document.getElementById('salesTrendsChart').getContext('2d');
+      const chartData = {
+        labels: salesTrendsData.trends.map(item => item.date),
+        datasets: [{
+          label: 'Daily Revenue',
+          data: salesTrendsData.trends.map(item => item.revenue),
+          backgroundColor: 'rgba(54, 162, 235, 0.2)',
+          borderColor: 'rgba(54, 162, 235, 1)',
+          borderWidth: 2,
+          tension: 0.3,
+          pointRadius: 3
+        }]
+      };
+      
+      const salesChart = new Chart(ctx, {
+        type: 'line',
+        data: chartData,
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: {
+                callback: function(value) {
+                  return '$' + value;
+                }
+              }
+            }
+          },
+          plugins: {
+            legend: {
+              display: false
+            },
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  return '$' + context.parsed.y.toFixed(2);
+                }
+              }
+            }
+          }
+        }
+      });
+    }
+    
+    // Categories Chart
+    if (salesTrendsData && salesTrendsData.top_categories) {
+      const ctx = document.getElementById('categoriesChart').getContext('2d');
+      const chartData = {
+        labels: salesTrendsData.top_categories.map(item => item.category),
+        datasets: [{
+          data: salesTrendsData.top_categories.map(item => item.revenue),
+          backgroundColor: [
+            'rgba(255, 99, 132, 0.6)',
+            'rgba(54, 162, 235, 0.6)',
+            'rgba(255, 206, 86, 0.6)',
+            'rgba(75, 192, 192, 0.6)',
+            'rgba(153, 102, 255, 0.6)'
+          ],
+          borderWidth: 1
+        }]
+      };
+      
+      const categoriesChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: chartData,
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'right',
+              labels: {
+                boxWidth: 15,
+                font: {
+                  size: 11
+                }
+              }
+            },
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  return context.label + ': $' + context.parsed.toFixed(2);
+                }
+              }
+            }
+          }
+        }
+      });
+    }
+    
+    // Time period selector functionality
+    const periodButtons = document.querySelectorAll('.period-selector .btn');
+    periodButtons.forEach(button => {
+      button.addEventListener('click', function() {
+        // Remove active class from all buttons
+        periodButtons.forEach(btn => btn.classList.remove('active'));
+        // Add active class to clicked button
+        this.classList.add('active');
+        
+        // Get selected period
+        const days = parseInt(this.dataset.period);
+        
+        // Calculate date range
+        const endDate = new Date();
+        const startDate = new Date();
+        startDate.setDate(startDate.getDate() - days);
+        
+        // Format dates for API request
+        const formattedStartDate = startDate.toISOString().split('T')[0];
+        const formattedEndDate = endDate.toISOString().split('T')[0];
+        
+        // Fetch new data
+        fetch(`/admin/market-analysis/api/sales-trends?start_date=${formattedStartDate}&end_date=${formattedEndDate}`)
+          .then(response => response.json())
+          .then(data => {
+            if (data.status === 'success' && data.data) {
+              // Update total revenue display
+              document.querySelector('.col-md-4:nth-child(1) .metric-value').textContent = '$' + data.data.total_revenue.toFixed(2);
+              
+              // Update total orders display
+              document.querySelector('.col-md-4:nth-child(2) .metric-value').textContent = data.data.total_orders;
+              
+              // Update average order value display
+              document.querySelector('.col-md-4:nth-child(3) .metric-value').textContent = '$' + data.data.avg_order_value.toFixed(2);
+              
+              // Update sales trends chart
+              if (window.salesChart) {
+                window.salesChart.destroy();
+              }
+              
+              const ctx = document.getElementById('salesTrendsChart').getContext('2d');
+              window.salesChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                  labels: data.data.trends.map(item => item.date),
+                  datasets: [{
+                    label: 'Daily Revenue',
+                    data: data.data.trends.map(item => item.revenue),
+                    backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 2,
+                    tension: 0.3,
+                    pointRadius: 3
+                  }]
+                },
+                options: {
+                  responsive: true,
+                  maintainAspectRatio: false,
+                  scales: {
+                    y: {
+                      beginAtZero: true,
+                      ticks: {
+                        callback: function(value) {
+                          return '$' + value;
+                        }
+                      }
+                    }
+                  },
+                  plugins: {
+                    legend: {
+                      display: false
+                    },
+                    tooltip: {
+                      callbacks: {
+                        label: function(context) {
+                          return '$' + context.parsed.y.toFixed(2);
+                        }
+                      }
+                    }
+                  }
+                }
+              });
+              
+              // Update top products list
+              const topProductsList = document.querySelector('.top-products-list');
+              if (topProductsList) {
+                topProductsList.innerHTML = '';
+                if (data.data.top_products && data.data.top_products.length > 0) {
+                  data.data.top_products.forEach(product => {
+                    const li = document.createElement('li');
+                    li.innerHTML = `
+                      <span>${product.name}</span>
+                      <span>
+                        <strong>${product.quantity}</strong> units - 
+                        <strong>$${product.revenue}</strong>
+                      </span>
+                    `;
+                    topProductsList.appendChild(li);
+                  });
+                } else {
+                  topProductsList.innerHTML = '<p>No product data available for the selected period.</p>';
+                }
+              }
+            }
+          })
+          .catch(error => {
+            console.error('Error fetching data:', error);
+          });
+      });
+    });
+  });
+</script>
+{% endblock %}

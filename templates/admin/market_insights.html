@@ -1,0 +1,288 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block head %}
+{{ super() }}
+<style>
+  .market-insights-container {
+    padding: 1.5rem;
+  }
+  .insights-card {
+    background-color: #fff;
+    border-radius: 0.5rem;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+  .insights-card h3 {
+    margin-top: 0;
+    color: #333;
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+  }
+  .insights-list {
+    list-style-type: none;
+    padding: 0;
+  }
+  .insight-item {
+    padding: 1rem;
+    margin-bottom: 1rem;
+    border-radius: 0.5rem;
+    border-left: 4px solid;
+    background-color: rgba(0, 0, 0, 0.03);
+  }
+  .insight-item p {
+    margin-bottom: 0;
+  }
+  .insight-item.up {
+    border-left-color: #28a745;
+  }
+  .insight-item.down {
+    border-left-color: #dc3545;
+  }
+  .insight-item.neutral {
+    border-left-color: #6c757d;
+  }
+  .insight-item.seasonal {
+    border-left-color: #17a2b8;
+  }
+  .insight-item.inventory {
+    border-left-color: #ffc107;
+  }
+  .insight-icon {
+    font-size: 1.5rem;
+    margin-right: 0.75rem;
+    vertical-align: middle;
+  }
+  .trend-up {
+    color: #28a745;
+  }
+  .trend-down {
+    color: #dc3545;
+  }
+  .trend-neutral {
+    color: #6c757d;
+  }
+  .recommendations-card {
+    background-color: #f8f9fa;
+    border-radius: 0.5rem;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+  .recommendation-item {
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #e9ecef;
+  }
+  .recommendation-item:last-child {
+    border-bottom: none;
+  }
+  .ai-badge {
+    display: inline-block;
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    border-radius: 0.25rem;
+    background-color: #8a2be2;
+    color: white;
+    margin-left: 0.5rem;
+    vertical-align: middle;
+  }
+  .data-sources-list {
+    list-style-type: disc;
+    padding-left: 1.5rem;
+  }
+  .data-sources-list li {
+    margin-bottom: 0.5rem;
+  }
+  .insights-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid market-insights-container">
+  <div class="row">
+    <div class="col-12">
+      <div class="insights-header">
+        <h1>Market Insights</h1>
+        <div>
+          <a href="/admin/market-analysis" class="btn btn-outline-primary">Back to Analytics</a>
+        </div>
+      </div>
+      
+      <div class="row">
+        <div class="col-md-8">
+          <!-- Market Insights Card -->
+          <div class="insights-card">
+            <h3>Market Insights {% if insights.ai_enhanced %}<span class="ai-badge">AI Enhanced</span>{% endif %}</h3>
+            
+            {% if insights.insights and insights.insights|length > 0 %}
+              <ul class="insights-list">
+                {% for insight in insights.insights %}
+                  {% set insight_class = "neutral" %}
+                  {% set icon_class = "trend-neutral" %}
+                  {% set icon = "fas fa-info-circle" %}
+                  
+                  {% if "trending upward" in insight %}
+                    {% set insight_class = "up" %}
+                    {% set icon_class = "trend-up" %}
+                    {% set icon = "fas fa-arrow-up" %}
+                  {% elif "trending downward" in insight %}
+                    {% set insight_class = "down" %}
+                    {% set icon_class = "trend-down" %}
+                    {% set icon = "fas fa-arrow-down" %}
+                  {% elif "stable" in insight %}
+                    {% set insight_class = "neutral" %}
+                    {% set icon_class = "trend-neutral" %}
+                    {% set icon = "fas fa-equals" %}
+                  {% elif "season" in insight or "shopping" in insight %}
+                    {% set insight_class = "seasonal" %}
+                    {% set icon_class = "" %}
+                    {% set icon = "fas fa-calendar-alt" %}
+                  {% elif "stock" in insight or "inventory" in insight %}
+                    {% set insight_class = "inventory" %}
+                    {% set icon_class = "" %}
+                    {% set icon = "fas fa-boxes" %}
+                  {% endif %}
+                  
+                  <li class="insight-item {{ insight_class }}">
+                    <p><i class="{{ icon }} insight-icon {{ icon_class }}"></i> {{ insight }}</p>
+                  </li>
+                {% endfor %}
+              </ul>
+            {% else %}
+              <div class="alert alert-info">
+                <p>Not enough historical data available for detailed insights. Continue operating your store to generate more data for analysis.</p>
+              </div>
+            {% endif %}
+          </div>
+          
+          <!-- Trend Direction Card -->
+          {% if insights.trend_direction %}
+            <div class="insights-card">
+              <h3>Overall Sales Trend</h3>
+              <div class="text-center p-4">
+                {% if insights.trend_direction == "up" %}
+                  <i class="fas fa-arrow-up fa-4x trend-up"></i>
+                  <h4 class="mt-3 trend-up">Positive Trend</h4>
+                  <p class="text-muted">Your sales are trending upward over the analysis period.</p>
+                {% elif insights.trend_direction == "down" %}
+                  <i class="fas fa-arrow-down fa-4x trend-down"></i>
+                  <h4 class="mt-3 trend-down">Downward Trend</h4>
+                  <p class="text-muted">Your sales are trending downward over the analysis period.</p>
+                {% else %}
+                  <i class="fas fa-equals fa-4x trend-neutral"></i>
+                  <h4 class="mt-3 trend-neutral">Stable Trend</h4>
+                  <p class="text-muted">Your sales have remained relatively stable over the analysis period.</p>
+                {% endif %}
+              </div>
+            </div>
+          {% endif %}
+          
+          <!-- Data Sources Card -->
+          <div class="insights-card">
+            <h3>Data Sources</h3>
+            <p>These insights are generated using the following data points:</p>
+            <ul class="data-sources-list">
+              <li>Historical sales data from your orders</li>
+              <li>Product inventory levels</li>
+              <li>Seasonal shopping patterns</li>
+              <li>Category performance metrics</li>
+              {% if insights.ai_enhanced %}
+                <li>AI-enhanced trend analysis</li>
+              {% endif %}
+            </ul>
+          </div>
+        </div>
+        
+        <div class="col-md-4">
+          <!-- Recommendations Card -->
+          <div class="recommendations-card">
+            <h3>Recommendations</h3>
+            {% if insights.recommendations and insights.recommendations|length > 0 %}
+              <div class="list-group">
+                {% for recommendation in insights.recommendations %}
+                  <div class="recommendation-item">
+                    <i class="fas fa-lightbulb mr-2" style="color: #ffc107;"></i>
+                    {{ recommendation }}
+                  </div>
+                {% endfor %}
+              </div>
+            {% else %}
+              <p class="text-muted">No recommendations available yet. Continue operating your store to generate more data for analysis.</p>
+            {% endif %}
+          </div>
+          
+          <!-- Next Steps Card -->
+          <div class="insights-card">
+            <h3>Next Steps</h3>
+            <div class="list-group">
+              <a href="/admin/market-analysis/sales-trends" class="list-group-item list-group-item-action">
+                <i class="fas fa-chart-line mr-2"></i>
+                Analyze Sales Trends
+              </a>
+              <a href="/admin/products" class="list-group-item list-group-item-action">
+                <i class="fas fa-box mr-2"></i>
+                Review Product Inventory
+              </a>
+              <a href="/admin/reports" class="list-group-item list-group-item-action">
+                <i class="fas fa-file-alt mr-2"></i>
+                Generate Detailed Reports
+              </a>
+              <a href="/admin/market-analysis/category-performance" class="list-group-item list-group-item-action">
+                <i class="fas fa-sitemap mr-2"></i>
+                View Category Performance
+              </a>
+            </div>
+          </div>
+          
+          <!-- Refresh Data Button -->
+          <div class="text-center mt-3">
+            <button id="refreshInsights" class="btn btn-outline-primary">
+              <i class="fas fa-sync-alt mr-2"></i> Refresh Insights
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Refresh insights functionality
+    document.getElementById('refreshInsights').addEventListener('click', function() {
+      const button = this;
+      button.disabled = true;
+      button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Refreshing...';
+      
+      fetch('/admin/market-analysis/api/insights')
+        .then(response => response.json())
+        .then(data => {
+          if (data.status === 'success') {
+            window.location.reload();
+          } else {
+            alert('Error refreshing insights: ' + (data.message || 'Unknown error'));
+            button.disabled = false;
+            button.innerHTML = '<i class="fas fa-sync-alt mr-2"></i> Refresh Insights';
+          }
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          alert('Error refreshing insights. Please try again.');
+          button.disabled = false;
+          button.innerHTML = '<i class="fas fa-sync-alt mr-2"></i> Refresh Insights';
+        });
+    });
+  });
+</script>
+{% endblock %}
