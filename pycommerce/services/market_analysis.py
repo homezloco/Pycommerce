@@ -736,6 +736,8 @@ class MarketAnalysisService:
                     
                     # Add to appropriate fallback category when product not found or has no categories
                     if not found_categories:
+                        # Initialize default category
+                        category = "Unknown"
                         # Try direct database lookup for product categories
                         try:
                             from sqlalchemy import text

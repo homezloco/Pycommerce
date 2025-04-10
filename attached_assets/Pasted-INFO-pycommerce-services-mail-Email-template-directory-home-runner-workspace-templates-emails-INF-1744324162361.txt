@@ -1,0 +1,815 @@
+INFO:pycommerce.services.mail:Email template directory: /home/runner/workspace/templates/emails
+INFO:pycommerce.plugins.payment.config:Successfully loaded payment settings from database
+INFO:pycommerce.plugins.payment.config:Using development Stripe credentials
+INFO:pycommerce.plugins.payment.config:Using development PayPal credentials
+INFO:pycommerce.plugins.payment.stripe:Initializing Stripe payment plugin
+INFO:pycommerce.plugins:Registering plugin: stripe_payment v0.1.0
+INFO:pycommerce.plugins.payment.stripe:Initializing Stripe payment plugin
+INFO:pycommerce:Registered payment plugin: stripe
+INFO:pycommerce.plugins.payment.paypal:Initializing PayPal payment plugin
+INFO:pycommerce.plugins:Registering plugin: paypal_payment v0.1.0
+INFO:pycommerce.plugins.payment.paypal:Initializing PayPal payment plugin
+INFO:pycommerce:Registered payment plugin: paypal
+INFO:pycommerce.plugins:Registering plugin: standard_shipping v0.1.0
+INFO:pycommerce.plugins.shipping.standard:Initializing Standard shipping plugin
+INFO:pycommerce:Registered shipping plugin: standard
+INFO:pycommerce.models.category:Found Flask app in module app
+INFO:pycommerce.models.category:CategoryManager initialized
+WARNING:root:AI configuration module not available
+INFO:pycommerce.core.db:Initializing database...
+INFO:pycommerce.core.db:Database initialized successfully.
+INFO:pycommerce.core.db:Initializing database...
+INFO:pycommerce.core.db:Database initialized successfully.
+INFO:pycommerce.migrations:Database migrations initialized
+INFO:pycommerce.models.category:CategoryManager initialized
+INFO:pycommerce.services.market_analysis:Flask ProductManager initialized for fallback product lookups
+INFO:pycommerce.services.market_analysis:Market analysis service initialized
+INFO:routes.admin.categories:Initializing managers for categories routes
+INFO:pycommerce.models.category:CategoryManager initialized
+INFO:routes.admin.categories:Successfully initialized CategoryManager for admin categories routes
+INFO:routes.admin.categories:Manager initialization complete
+INFO:routes.storefront.stores:Initialized SDK TenantManager
+INFO:routes.storefront.stores:Initialized SDK ProductManager
+INFO:routes.storefront.stores:Initialized SDK CartManager
+INFO:routes.storefront.stores:Finished loading managers
+INFO:routes.storefront.cart:Initialized SDK ProductManager
+INFO:routes.storefront.cart:Initialized SDK CartManager
+INFO:routes.storefront.cart:Initialized SDK TenantManager
+INFO:routes.storefront.cart:Finished loading managers
+INFO:routes.storefront.checkout:Initialized SDK TenantManager
+INFO:routes.storefront.checkout:Initialized SDK ProductManager
+INFO:routes.storefront.checkout:Initialized SDK CartManager
+INFO:routes.storefront.checkout:Initialized SDK OrderManager
+INFO:routes.storefront.checkout:Finished loading Flask app managers
+INFO:pycommerce.models.category:CategoryManager initialized
+INFO:pycommerce.services.market_analysis:Flask ProductManager initialized for fallback product lookups
+INFO:pycommerce.services.market_analysis:Market analysis service initialized
+INFO:web_app:API routes registered successfully
+INFO:asgi_wsgi_app:No existing uvicorn processes found
+INFO:asgi_wsgi_app:Starting uvicorn server with command: /nix/store/clx0mcir7qw8zk36zbr4jra789g3knf6-python3-3.11.10/bin/python3 -m uvicorn web_app:app --host 127.0.0.1 --port 8000 --reload --no-use-colors
+INFO:asgi_wsgi_app:Waiting for uvicorn server to start...
+INFO:asgi_wsgi_app:Waiting for uvicorn server (attempt 1/10)
+INFO:asgi_wsgi_app:Uvicorn: INFO:     Will watch for changes in these directories: ['/home/runner/workspace']
+INFO:asgi_wsgi_app:Uvicorn: INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+INFO:asgi_wsgi_app:Uvicorn: INFO:     Started reloader process [186] using WatchFiles
+INFO:asgi_wsgi_app:Waiting for uvicorn server (attempt 2/10)
+INFO:asgi_wsgi_app:Waiting for uvicorn server (attempt 3/10)
+INFO:asgi_wsgi_app:Waiting for uvicorn server (attempt 4/10)
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.services.mail:Email template directory: /home/runner/workspace/templates/emails
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.plugins.payment.config:Successfully loaded payment settings from database
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.plugins.payment.config:Using development Stripe credentials
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.plugins.payment.config:Using development PayPal credentials
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.plugins.payment.stripe:Initializing Stripe payment plugin
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.plugins:Registering plugin: stripe_payment v0.1.0
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.plugins.payment.stripe:Initializing Stripe payment plugin
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce:Registered payment plugin: stripe
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.plugins.payment.paypal:Initializing PayPal payment plugin
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.plugins:Registering plugin: paypal_payment v0.1.0
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.plugins.payment.paypal:Initializing PayPal payment plugin
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce:Registered payment plugin: paypal
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.plugins:Registering plugin: standard_shipping v0.1.0
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.plugins.shipping.standard:Initializing Standard shipping plugin
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce:Registered shipping plugin: standard
+INFO:asgi_wsgi_app:Waiting for uvicorn server (attempt 5/10)
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.models.category:Found Flask app in module app
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.models.category:CategoryManager initialized
+INFO:asgi_wsgi_app:Uvicorn: WARNING:root:AI configuration module not available
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.core.db:Initializing database...
+INFO:asgi_wsgi_app:Waiting for uvicorn server (attempt 6/10)
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.core.db:Database initialized successfully.
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.core.db:Initializing database...
+INFO:asgi_wsgi_app:Waiting for uvicorn server (attempt 7/10)
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.core.db:Database initialized successfully.
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.migrations:Database migrations initialized
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.models.category:CategoryManager initialized
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.services.market_analysis:Flask ProductManager initialized for fallback product lookups
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.services.market_analysis:Market analysis service initialized
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.admin.categories:Initializing managers for categories routes
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.models.category:CategoryManager initialized
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.admin.categories:Successfully initialized CategoryManager for admin categories routes
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.admin.categories:Manager initialization complete
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.storefront.stores:Initialized SDK TenantManager
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.storefront.stores:Initialized SDK ProductManager
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.storefront.stores:Initialized SDK CartManager
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.storefront.stores:Finished loading managers
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.storefront.cart:Initialized SDK ProductManager
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.storefront.cart:Initialized SDK CartManager
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.storefront.cart:Initialized SDK TenantManager
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.storefront.cart:Finished loading managers
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.storefront.checkout:Initialized SDK TenantManager
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.storefront.checkout:Initialized SDK ProductManager
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.storefront.checkout:Initialized SDK CartManager
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.storefront.checkout:Initialized SDK OrderManager
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.storefront.checkout:Finished loading Flask app managers
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.models.category:CategoryManager initialized
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.services.market_analysis:Flask ProductManager initialized for fallback product lookups
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.services.market_analysis:Market analysis service initialized
+INFO:asgi_wsgi_app:Uvicorn: INFO:web_app:API routes registered successfully
+INFO:asgi_wsgi_app:Uvicorn: INFO:     Started server process [189]
+INFO:asgi_wsgi_app:Uvicorn: INFO:     Waiting for application startup.
+INFO:asgi_wsgi_app:Uvicorn: INFO:     Application startup complete.
+INFO:asgi_wsgi_app:Waiting for uvicorn server (attempt 8/10)
+INFO:asgi_wsgi_app:Waiting for uvicorn server (attempt 9/10)
+INFO:asgi_wsgi_app:Uvicorn: INFO:     127.0.0.1:32952 - "GET /api/health HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET http://127.0.0.1:8000/api/health "HTTP/1.1 200 OK"
+INFO:asgi_wsgi_app:Uvicorn server is running
+INFO:     Will watch for changes in these directories: ['/home/runner/workspace']
+INFO:     Uvicorn running on http://0.0.0.0:5000 (Press CTRL+C to quit)
+INFO:     Started reloader process [179] using WatchFiles
+INFO:pycommerce.services.mail:Email template directory: /home/runner/workspace/templates/emails
+INFO:pycommerce.plugins.payment.config:Successfully loaded payment settings from database
+INFO:pycommerce.plugins.payment.config:Using development Stripe credentials
+INFO:pycommerce.plugins.payment.config:Using development PayPal credentials
+INFO:pycommerce.plugins.payment.stripe:Initializing Stripe payment plugin
+INFO:pycommerce.plugins:Registering plugin: stripe_payment v0.1.0
+INFO:pycommerce.plugins.payment.stripe:Initializing Stripe payment plugin
+INFO:pycommerce:Registered payment plugin: stripe
+INFO:pycommerce.plugins.payment.paypal:Initializing PayPal payment plugin
+INFO:pycommerce.plugins:Registering plugin: paypal_payment v0.1.0
+INFO:pycommerce.plugins.payment.paypal:Initializing PayPal payment plugin
+INFO:pycommerce:Registered payment plugin: paypal
+INFO:pycommerce.plugins:Registering plugin: standard_shipping v0.1.0
+INFO:pycommerce.plugins.shipping.standard:Initializing Standard shipping plugin
+INFO:pycommerce:Registered shipping plugin: standard
+INFO:pycommerce.models.category:Found Flask app in module app
+INFO:pycommerce.models.category:CategoryManager initialized
+WARNING:root:AI configuration module not available
+INFO:pycommerce.core.db:Initializing database...
+INFO:pycommerce.core.db:Database initialized successfully.
+INFO:pycommerce.core.db:Initializing database...
+INFO:pycommerce.core.db:Database initialized successfully.
+INFO:pycommerce.migrations:Database migrations initialized
+INFO:pycommerce.models.category:CategoryManager initialized
+INFO:pycommerce.services.market_analysis:Flask ProductManager initialized for fallback product lookups
+INFO:pycommerce.services.market_analysis:Market analysis service initialized
+INFO:routes.admin.categories:Initializing managers for categories routes
+INFO:pycommerce.models.category:CategoryManager initialized
+INFO:routes.admin.categories:Successfully initialized CategoryManager for admin categories routes
+INFO:routes.admin.categories:Manager initialization complete
+INFO:routes.storefront.stores:Initialized SDK TenantManager
+INFO:routes.storefront.stores:Initialized SDK ProductManager
+INFO:routes.storefront.stores:Initialized SDK CartManager
+INFO:routes.storefront.stores:Finished loading managers
+INFO:routes.storefront.cart:Initialized SDK ProductManager
+INFO:routes.storefront.cart:Initialized SDK CartManager
+INFO:routes.storefront.cart:Initialized SDK TenantManager
+INFO:routes.storefront.cart:Finished loading managers
+INFO:routes.storefront.checkout:Initialized SDK TenantManager
+INFO:routes.storefront.checkout:Initialized SDK ProductManager
+INFO:routes.storefront.checkout:Initialized SDK CartManager
+INFO:routes.storefront.checkout:Initialized SDK OrderManager
+INFO:routes.storefront.checkout:Finished loading Flask app managers
+INFO:pycommerce.models.category:CategoryManager initialized
+INFO:pycommerce.services.market_analysis:Flask ProductManager initialized for fallback product lookups
+INFO:pycommerce.services.market_analysis:Market analysis service initialized
+INFO:web_app:API routes registered successfully
+INFO:asgi_wsgi_app:Uvicorn: INFO:     127.0.0.1:32968 - "GET /api/health HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET http://127.0.0.1:8000/api/health "HTTP/1.1 200 OK"
+INFO:asgi_wsgi_app:Uvicorn server is already running and responsive
+INFO:     Started server process [198]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     172.31.128.54:50150 - "GET / HTTP/1.1" 200 OK
+INFO:pycommerce.models.tenant:Retrieved tenant by slug tech with theme settings: {}
+INFO:pycommerce.models.product:Querying database for products of tenant: ea6c4bc0-d5aa-4d4f-862c-5d47e7c3f410
+INFO:pycommerce.models.product:Found 6 products for tenant ea6c4bc0-d5aa-4d4f-862c-5d47e7c3f410 in database
+INFO:     172.31.128.54:50150 - "GET /admin/dashboard HTTP/1.1" 200 OK
+INFO:pycommerce.services.market_analysis:Found category Accessories for product daed01d6-a91f-40d7-81f6-16ecfedd53d6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Bags for product daed01d6-a91f-40d7-81f6-16ecfedd53d6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product daed01d6-a91f-40d7-81f6-16ecfedd53d6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Accessories for product 7bc186c5-8fe5-4f93-ba8a-8d7948ba764a using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product 7bc186c5-8fe5-4f93-ba8a-8d7948ba764a using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Accessories for product 7bc186c5-8fe5-4f93-ba8a-8d7948ba764a using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product 7bc186c5-8fe5-4f93-ba8a-8d7948ba764a using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Women's for product 31b390c8-7337-4036-aa6c-73ee223953b6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Dresses for product 31b390c8-7337-4036-aa6c-73ee223953b6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product 31b390c8-7337-4036-aa6c-73ee223953b6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Footwear for product d7074a30-b13c-4eb9-b301-6eee91c94b5d using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Casual for product d7074a30-b13c-4eb9-b301-6eee91c94b5d using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product d7074a30-b13c-4eb9-b301-6eee91c94b5d using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Accessories for product daed01d6-a91f-40d7-81f6-16ecfedd53d6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Bags for product daed01d6-a91f-40d7-81f6-16ecfedd53d6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product daed01d6-a91f-40d7-81f6-16ecfedd53d6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Camping for product 8f03fe76-e753-4dd5-852c-096b589a66b5 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Hydration for product 8f03fe76-e753-4dd5-852c-096b589a66b5 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product 8f03fe76-e753-4dd5-852c-096b589a66b5 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Hiking for product a3d8f462-798e-4098-8b20-22f019f3d64d using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product a3d8f462-798e-4098-8b20-22f019f3d64d using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Women's for product 31b390c8-7337-4036-aa6c-73ee223953b6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Dresses for product 31b390c8-7337-4036-aa6c-73ee223953b6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product 31b390c8-7337-4036-aa6c-73ee223953b6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Audio for product 8285a63d-9589-4928-9eba-373834fa4014 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Accessories for product 8285a63d-9589-4928-9eba-373834fa4014 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Laptops for product 94f6ec67-45c0-4a69-970f-5a12f3174922 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Hiking for product 9f12243c-ebe3-4995-a5eb-9aa16ae18a35 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Camping for product 9f12243c-ebe3-4995-a5eb-9aa16ae18a35 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product 9f12243c-ebe3-4995-a5eb-9aa16ae18a35 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Camping for product caa4e7ca-3fb7-4577-b701-323f1196a640 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Shelters for product caa4e7ca-3fb7-4577-b701-323f1196a640 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product caa4e7ca-3fb7-4577-b701-323f1196a640 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Hiking for product 9f12243c-ebe3-4995-a5eb-9aa16ae18a35 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Camping for product 9f12243c-ebe3-4995-a5eb-9aa16ae18a35 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product 9f12243c-ebe3-4995-a5eb-9aa16ae18a35 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Hiking for product 9f12243c-ebe3-4995-a5eb-9aa16ae18a35 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Camping for product 9f12243c-ebe3-4995-a5eb-9aa16ae18a35 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product 9f12243c-ebe3-4995-a5eb-9aa16ae18a35 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Laptops for product 63d63aca-5b6b-4672-a72b-b1483f036ef6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Laptops for product 63d63aca-5b6b-4672-a72b-b1483f036ef6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Wearables for product b03b63cc-6c45-45cd-a7d8-8b5cc844f144 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Laptops for product 63d63aca-5b6b-4672-a72b-b1483f036ef6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Camping for product 077ce386-36eb-4ff4-a9e4-022b11e90de4 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Sleep Gear for product 077ce386-36eb-4ff4-a9e4-022b11e90de4 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product 077ce386-36eb-4ff4-a9e4-022b11e90de4 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Camping for product 077ce386-36eb-4ff4-a9e4-022b11e90de4 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Sleep Gear for product 077ce386-36eb-4ff4-a9e4-022b11e90de4 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product 077ce386-36eb-4ff4-a9e4-022b11e90de4 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Hiking for product 61c6630d-d865-48d7-819a-de3d17880eb5 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Bags for product 61c6630d-d865-48d7-819a-de3d17880eb5 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product 61c6630d-d865-48d7-819a-de3d17880eb5 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Wearables for product b03b63cc-6c45-45cd-a7d8-8b5cc844f144 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Audio for product abd3687d-0cf7-481d-a7b0-e4302160a6eb using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Phones for product abd3687d-0cf7-481d-a7b0-e4302160a6eb using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Laptops for product 63d63aca-5b6b-4672-a72b-b1483f036ef6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Audio for product abd3687d-0cf7-481d-a7b0-e4302160a6eb using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Phones for product abd3687d-0cf7-481d-a7b0-e4302160a6eb using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Laptops for product 94f6ec67-45c0-4a69-970f-5a12f3174922 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Audio for product abd3687d-0cf7-481d-a7b0-e4302160a6eb using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Phones for product abd3687d-0cf7-481d-a7b0-e4302160a6eb using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Audio for product abd3687d-0cf7-481d-a7b0-e4302160a6eb using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Phones for product abd3687d-0cf7-481d-a7b0-e4302160a6eb using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Laptops for product 94f6ec67-45c0-4a69-970f-5a12f3174922 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product 561e087e-9fba-4b51-8768-d8fb0a0a00a4 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Phones for product 561e087e-9fba-4b51-8768-d8fb0a0a00a4 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Audio for product abd3687d-0cf7-481d-a7b0-e4302160a6eb using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Phones for product abd3687d-0cf7-481d-a7b0-e4302160a6eb using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Men's for product f82f6825-5ded-4aee-8326-6af524646104 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Bottoms for product f82f6825-5ded-4aee-8326-6af524646104 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product f82f6825-5ded-4aee-8326-6af524646104 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Laptops for product 94f6ec67-45c0-4a69-970f-5a12f3174922 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Audio for product 8285a63d-9589-4928-9eba-373834fa4014 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Accessories for product 8285a63d-9589-4928-9eba-373834fa4014 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Laptops for product 63d63aca-5b6b-4672-a72b-b1483f036ef6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Wearables for product b03b63cc-6c45-45cd-a7d8-8b5cc844f144 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Laptops for product 63d63aca-5b6b-4672-a72b-b1483f036ef6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Laptops for product 63d63aca-5b6b-4672-a72b-b1483f036ef6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Laptops for product 63d63aca-5b6b-4672-a72b-b1483f036ef6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Footwear for product d7074a30-b13c-4eb9-b301-6eee91c94b5d using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Casual for product d7074a30-b13c-4eb9-b301-6eee91c94b5d using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product d7074a30-b13c-4eb9-b301-6eee91c94b5d using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Camping for product 077ce386-36eb-4ff4-a9e4-022b11e90de4 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Sleep Gear for product 077ce386-36eb-4ff4-a9e4-022b11e90de4 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product 077ce386-36eb-4ff4-a9e4-022b11e90de4 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Hiking for product 883f8b38-0dc9-47a2-b6c5-91091300e5f2 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Accessories for product 883f8b38-0dc9-47a2-b6c5-91091300e5f2 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product 883f8b38-0dc9-47a2-b6c5-91091300e5f2 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Audio for product abd3687d-0cf7-481d-a7b0-e4302160a6eb using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Phones for product abd3687d-0cf7-481d-a7b0-e4302160a6eb using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Wearables for product b03b63cc-6c45-45cd-a7d8-8b5cc844f144 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Climbing for product d048f66a-f8e1-44dc-8d84-61a884f70990 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product d048f66a-f8e1-44dc-8d84-61a884f70990 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Hiking for product a3d8f462-798e-4098-8b20-22f019f3d64d using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product a3d8f462-798e-4098-8b20-22f019f3d64d using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Hiking for product 9f12243c-ebe3-4995-a5eb-9aa16ae18a35 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Camping for product 9f12243c-ebe3-4995-a5eb-9aa16ae18a35 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product 9f12243c-ebe3-4995-a5eb-9aa16ae18a35 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Audio for product abd3687d-0cf7-481d-a7b0-e4302160a6eb using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Phones for product abd3687d-0cf7-481d-a7b0-e4302160a6eb using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Audio for product abd3687d-0cf7-481d-a7b0-e4302160a6eb using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Phones for product abd3687d-0cf7-481d-a7b0-e4302160a6eb using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Laptops for product 63d63aca-5b6b-4672-a72b-b1483f036ef6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Men's for product f82f6825-5ded-4aee-8326-6af524646104 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Bottoms for product f82f6825-5ded-4aee-8326-6af524646104 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product f82f6825-5ded-4aee-8326-6af524646104 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Accessories for product daed01d6-a91f-40d7-81f6-16ecfedd53d6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Bags for product daed01d6-a91f-40d7-81f6-16ecfedd53d6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product daed01d6-a91f-40d7-81f6-16ecfedd53d6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Accessories for product daed01d6-a91f-40d7-81f6-16ecfedd53d6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Bags for product daed01d6-a91f-40d7-81f6-16ecfedd53d6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product daed01d6-a91f-40d7-81f6-16ecfedd53d6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Women's for product 31b390c8-7337-4036-aa6c-73ee223953b6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Dresses for product 31b390c8-7337-4036-aa6c-73ee223953b6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product 31b390c8-7337-4036-aa6c-73ee223953b6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Footwear for product d7074a30-b13c-4eb9-b301-6eee91c94b5d using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Casual for product d7074a30-b13c-4eb9-b301-6eee91c94b5d using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product d7074a30-b13c-4eb9-b301-6eee91c94b5d using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Camping for product 8f03fe76-e753-4dd5-852c-096b589a66b5 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Hydration for product 8f03fe76-e753-4dd5-852c-096b589a66b5 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product 8f03fe76-e753-4dd5-852c-096b589a66b5 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Hiking for product a3d8f462-798e-4098-8b20-22f019f3d64d using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product a3d8f462-798e-4098-8b20-22f019f3d64d using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Camping for product 98d7dcd4-c8fd-40e8-ab03-516ee563c78b using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product 98d7dcd4-c8fd-40e8-ab03-516ee563c78b using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Climbing for product d048f66a-f8e1-44dc-8d84-61a884f70990 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product d048f66a-f8e1-44dc-8d84-61a884f70990 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Laptops for product 94f6ec67-45c0-4a69-970f-5a12f3174922 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Wearables for product b03b63cc-6c45-45cd-a7d8-8b5cc844f144 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product 561e087e-9fba-4b51-8768-d8fb0a0a00a4 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Phones for product 561e087e-9fba-4b51-8768-d8fb0a0a00a4 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Laptops for product 63d63aca-5b6b-4672-a72b-b1483f036ef6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Wearables for product b03b63cc-6c45-45cd-a7d8-8b5cc844f144 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Camping for product 8f03fe76-e753-4dd5-852c-096b589a66b5 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Hydration for product 8f03fe76-e753-4dd5-852c-096b589a66b5 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product 8f03fe76-e753-4dd5-852c-096b589a66b5 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Hiking for product 2d7441ba-36f3-476b-92bc-571243abb42d using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Camping for product 2d7441ba-36f3-476b-92bc-571243abb42d using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product 2d7441ba-36f3-476b-92bc-571243abb42d using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Camping for product 8f03fe76-e753-4dd5-852c-096b589a66b5 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Hydration for product 8f03fe76-e753-4dd5-852c-096b589a66b5 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product 8f03fe76-e753-4dd5-852c-096b589a66b5 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Audio for product abd3687d-0cf7-481d-a7b0-e4302160a6eb using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Phones for product abd3687d-0cf7-481d-a7b0-e4302160a6eb using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product 3c9c5dc2-6ba1-4582-b914-98fb073e4981 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Women's for product 31b390c8-7337-4036-aa6c-73ee223953b6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Dresses for product 31b390c8-7337-4036-aa6c-73ee223953b6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product 31b390c8-7337-4036-aa6c-73ee223953b6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Audio for product abd3687d-0cf7-481d-a7b0-e4302160a6eb using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Phones for product abd3687d-0cf7-481d-a7b0-e4302160a6eb using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Women's for product 31b390c8-7337-4036-aa6c-73ee223953b6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Dresses for product 31b390c8-7337-4036-aa6c-73ee223953b6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product 31b390c8-7337-4036-aa6c-73ee223953b6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Accessories for product 7bc186c5-8fe5-4f93-ba8a-8d7948ba764a using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product 7bc186c5-8fe5-4f93-ba8a-8d7948ba764a using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Hiking for product 61c6630d-d865-48d7-819a-de3d17880eb5 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Bags for product 61c6630d-d865-48d7-819a-de3d17880eb5 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product 61c6630d-d865-48d7-819a-de3d17880eb5 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Camping for product 077ce386-36eb-4ff4-a9e4-022b11e90de4 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Sleep Gear for product 077ce386-36eb-4ff4-a9e4-022b11e90de4 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product 077ce386-36eb-4ff4-a9e4-022b11e90de4 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Audio for product 8285a63d-9589-4928-9eba-373834fa4014 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Accessories for product 8285a63d-9589-4928-9eba-373834fa4014 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product 561e087e-9fba-4b51-8768-d8fb0a0a00a4 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Phones for product 561e087e-9fba-4b51-8768-d8fb0a0a00a4 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Accessories for product daed01d6-a91f-40d7-81f6-16ecfedd53d6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Bags for product daed01d6-a91f-40d7-81f6-16ecfedd53d6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product daed01d6-a91f-40d7-81f6-16ecfedd53d6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Accessories for product 7bc186c5-8fe5-4f93-ba8a-8d7948ba764a using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product 7bc186c5-8fe5-4f93-ba8a-8d7948ba764a using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Accessories for product 7bc186c5-8fe5-4f93-ba8a-8d7948ba764a using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product 7bc186c5-8fe5-4f93-ba8a-8d7948ba764a using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Women's for product 31b390c8-7337-4036-aa6c-73ee223953b6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Dresses for product 31b390c8-7337-4036-aa6c-73ee223953b6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product 31b390c8-7337-4036-aa6c-73ee223953b6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Footwear for product d7074a30-b13c-4eb9-b301-6eee91c94b5d using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Casual for product d7074a30-b13c-4eb9-b301-6eee91c94b5d using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product d7074a30-b13c-4eb9-b301-6eee91c94b5d using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Accessories for product daed01d6-a91f-40d7-81f6-16ecfedd53d6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Bags for product daed01d6-a91f-40d7-81f6-16ecfedd53d6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product daed01d6-a91f-40d7-81f6-16ecfedd53d6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Camping for product 8f03fe76-e753-4dd5-852c-096b589a66b5 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Hydration for product 8f03fe76-e753-4dd5-852c-096b589a66b5 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product 8f03fe76-e753-4dd5-852c-096b589a66b5 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Hiking for product a3d8f462-798e-4098-8b20-22f019f3d64d using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product a3d8f462-798e-4098-8b20-22f019f3d64d using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Women's for product 31b390c8-7337-4036-aa6c-73ee223953b6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Dresses for product 31b390c8-7337-4036-aa6c-73ee223953b6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product 31b390c8-7337-4036-aa6c-73ee223953b6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Audio for product 8285a63d-9589-4928-9eba-373834fa4014 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Accessories for product 8285a63d-9589-4928-9eba-373834fa4014 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Laptops for product 94f6ec67-45c0-4a69-970f-5a12f3174922 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Hiking for product 9f12243c-ebe3-4995-a5eb-9aa16ae18a35 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Camping for product 9f12243c-ebe3-4995-a5eb-9aa16ae18a35 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product 9f12243c-ebe3-4995-a5eb-9aa16ae18a35 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Camping for product caa4e7ca-3fb7-4577-b701-323f1196a640 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Shelters for product caa4e7ca-3fb7-4577-b701-323f1196a640 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product caa4e7ca-3fb7-4577-b701-323f1196a640 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Hiking for product 9f12243c-ebe3-4995-a5eb-9aa16ae18a35 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Camping for product 9f12243c-ebe3-4995-a5eb-9aa16ae18a35 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product 9f12243c-ebe3-4995-a5eb-9aa16ae18a35 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Hiking for product 9f12243c-ebe3-4995-a5eb-9aa16ae18a35 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Camping for product 9f12243c-ebe3-4995-a5eb-9aa16ae18a35 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product 9f12243c-ebe3-4995-a5eb-9aa16ae18a35 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Laptops for product 63d63aca-5b6b-4672-a72b-b1483f036ef6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Laptops for product 63d63aca-5b6b-4672-a72b-b1483f036ef6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Wearables for product b03b63cc-6c45-45cd-a7d8-8b5cc844f144 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Laptops for product 63d63aca-5b6b-4672-a72b-b1483f036ef6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Camping for product 077ce386-36eb-4ff4-a9e4-022b11e90de4 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Sleep Gear for product 077ce386-36eb-4ff4-a9e4-022b11e90de4 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product 077ce386-36eb-4ff4-a9e4-022b11e90de4 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Camping for product 077ce386-36eb-4ff4-a9e4-022b11e90de4 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Sleep Gear for product 077ce386-36eb-4ff4-a9e4-022b11e90de4 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product 077ce386-36eb-4ff4-a9e4-022b11e90de4 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Hiking for product 61c6630d-d865-48d7-819a-de3d17880eb5 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Bags for product 61c6630d-d865-48d7-819a-de3d17880eb5 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product 61c6630d-d865-48d7-819a-de3d17880eb5 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Wearables for product b03b63cc-6c45-45cd-a7d8-8b5cc844f144 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Audio for product abd3687d-0cf7-481d-a7b0-e4302160a6eb using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Phones for product abd3687d-0cf7-481d-a7b0-e4302160a6eb using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Laptops for product 63d63aca-5b6b-4672-a72b-b1483f036ef6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Audio for product abd3687d-0cf7-481d-a7b0-e4302160a6eb using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Phones for product abd3687d-0cf7-481d-a7b0-e4302160a6eb using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Laptops for product 94f6ec67-45c0-4a69-970f-5a12f3174922 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Audio for product abd3687d-0cf7-481d-a7b0-e4302160a6eb using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Phones for product abd3687d-0cf7-481d-a7b0-e4302160a6eb using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Audio for product abd3687d-0cf7-481d-a7b0-e4302160a6eb using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Phones for product abd3687d-0cf7-481d-a7b0-e4302160a6eb using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Laptops for product 94f6ec67-45c0-4a69-970f-5a12f3174922 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product 561e087e-9fba-4b51-8768-d8fb0a0a00a4 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Phones for product 561e087e-9fba-4b51-8768-d8fb0a0a00a4 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Audio for product abd3687d-0cf7-481d-a7b0-e4302160a6eb using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Phones for product abd3687d-0cf7-481d-a7b0-e4302160a6eb using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Men's for product f82f6825-5ded-4aee-8326-6af524646104 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Bottoms for product f82f6825-5ded-4aee-8326-6af524646104 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product f82f6825-5ded-4aee-8326-6af524646104 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Laptops for product 94f6ec67-45c0-4a69-970f-5a12f3174922 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Audio for product 8285a63d-9589-4928-9eba-373834fa4014 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Accessories for product 8285a63d-9589-4928-9eba-373834fa4014 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Laptops for product 63d63aca-5b6b-4672-a72b-b1483f036ef6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Wearables for product b03b63cc-6c45-45cd-a7d8-8b5cc844f144 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Laptops for product 63d63aca-5b6b-4672-a72b-b1483f036ef6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Laptops for product 63d63aca-5b6b-4672-a72b-b1483f036ef6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Laptops for product 63d63aca-5b6b-4672-a72b-b1483f036ef6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Footwear for product d7074a30-b13c-4eb9-b301-6eee91c94b5d using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Casual for product d7074a30-b13c-4eb9-b301-6eee91c94b5d using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product d7074a30-b13c-4eb9-b301-6eee91c94b5d using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Camping for product 077ce386-36eb-4ff4-a9e4-022b11e90de4 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Sleep Gear for product 077ce386-36eb-4ff4-a9e4-022b11e90de4 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product 077ce386-36eb-4ff4-a9e4-022b11e90de4 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Hiking for product 883f8b38-0dc9-47a2-b6c5-91091300e5f2 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Accessories for product 883f8b38-0dc9-47a2-b6c5-91091300e5f2 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product 883f8b38-0dc9-47a2-b6c5-91091300e5f2 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Audio for product abd3687d-0cf7-481d-a7b0-e4302160a6eb using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Phones for product abd3687d-0cf7-481d-a7b0-e4302160a6eb using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Wearables for product b03b63cc-6c45-45cd-a7d8-8b5cc844f144 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Climbing for product d048f66a-f8e1-44dc-8d84-61a884f70990 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product d048f66a-f8e1-44dc-8d84-61a884f70990 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Hiking for product a3d8f462-798e-4098-8b20-22f019f3d64d using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product a3d8f462-798e-4098-8b20-22f019f3d64d using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Hiking for product 9f12243c-ebe3-4995-a5eb-9aa16ae18a35 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Camping for product 9f12243c-ebe3-4995-a5eb-9aa16ae18a35 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product 9f12243c-ebe3-4995-a5eb-9aa16ae18a35 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Audio for product abd3687d-0cf7-481d-a7b0-e4302160a6eb using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Phones for product abd3687d-0cf7-481d-a7b0-e4302160a6eb using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Audio for product abd3687d-0cf7-481d-a7b0-e4302160a6eb using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Phones for product abd3687d-0cf7-481d-a7b0-e4302160a6eb using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Laptops for product 63d63aca-5b6b-4672-a72b-b1483f036ef6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Men's for product f82f6825-5ded-4aee-8326-6af524646104 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Bottoms for product f82f6825-5ded-4aee-8326-6af524646104 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product f82f6825-5ded-4aee-8326-6af524646104 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Accessories for product daed01d6-a91f-40d7-81f6-16ecfedd53d6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Bags for product daed01d6-a91f-40d7-81f6-16ecfedd53d6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product daed01d6-a91f-40d7-81f6-16ecfedd53d6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Accessories for product daed01d6-a91f-40d7-81f6-16ecfedd53d6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Bags for product daed01d6-a91f-40d7-81f6-16ecfedd53d6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product daed01d6-a91f-40d7-81f6-16ecfedd53d6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Women's for product 31b390c8-7337-4036-aa6c-73ee223953b6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Dresses for product 31b390c8-7337-4036-aa6c-73ee223953b6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product 31b390c8-7337-4036-aa6c-73ee223953b6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Footwear for product d7074a30-b13c-4eb9-b301-6eee91c94b5d using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Casual for product d7074a30-b13c-4eb9-b301-6eee91c94b5d using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product d7074a30-b13c-4eb9-b301-6eee91c94b5d using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Camping for product 8f03fe76-e753-4dd5-852c-096b589a66b5 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Hydration for product 8f03fe76-e753-4dd5-852c-096b589a66b5 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product 8f03fe76-e753-4dd5-852c-096b589a66b5 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Hiking for product a3d8f462-798e-4098-8b20-22f019f3d64d using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product a3d8f462-798e-4098-8b20-22f019f3d64d using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Camping for product 98d7dcd4-c8fd-40e8-ab03-516ee563c78b using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product 98d7dcd4-c8fd-40e8-ab03-516ee563c78b using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Climbing for product d048f66a-f8e1-44dc-8d84-61a884f70990 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product d048f66a-f8e1-44dc-8d84-61a884f70990 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Laptops for product 94f6ec67-45c0-4a69-970f-5a12f3174922 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Wearables for product b03b63cc-6c45-45cd-a7d8-8b5cc844f144 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product 561e087e-9fba-4b51-8768-d8fb0a0a00a4 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Phones for product 561e087e-9fba-4b51-8768-d8fb0a0a00a4 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Laptops for product 63d63aca-5b6b-4672-a72b-b1483f036ef6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Wearables for product b03b63cc-6c45-45cd-a7d8-8b5cc844f144 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Camping for product 8f03fe76-e753-4dd5-852c-096b589a66b5 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Hydration for product 8f03fe76-e753-4dd5-852c-096b589a66b5 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product 8f03fe76-e753-4dd5-852c-096b589a66b5 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Hiking for product 2d7441ba-36f3-476b-92bc-571243abb42d using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Camping for product 2d7441ba-36f3-476b-92bc-571243abb42d using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product 2d7441ba-36f3-476b-92bc-571243abb42d using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Camping for product 8f03fe76-e753-4dd5-852c-096b589a66b5 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Hydration for product 8f03fe76-e753-4dd5-852c-096b589a66b5 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product 8f03fe76-e753-4dd5-852c-096b589a66b5 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Audio for product abd3687d-0cf7-481d-a7b0-e4302160a6eb using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Phones for product abd3687d-0cf7-481d-a7b0-e4302160a6eb using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product 3c9c5dc2-6ba1-4582-b914-98fb073e4981 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Women's for product 31b390c8-7337-4036-aa6c-73ee223953b6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Dresses for product 31b390c8-7337-4036-aa6c-73ee223953b6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product 31b390c8-7337-4036-aa6c-73ee223953b6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Audio for product abd3687d-0cf7-481d-a7b0-e4302160a6eb using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Phones for product abd3687d-0cf7-481d-a7b0-e4302160a6eb using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Women's for product 31b390c8-7337-4036-aa6c-73ee223953b6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Dresses for product 31b390c8-7337-4036-aa6c-73ee223953b6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product 31b390c8-7337-4036-aa6c-73ee223953b6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Accessories for product 7bc186c5-8fe5-4f93-ba8a-8d7948ba764a using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product 7bc186c5-8fe5-4f93-ba8a-8d7948ba764a using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Hiking for product 61c6630d-d865-48d7-819a-de3d17880eb5 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Bags for product 61c6630d-d865-48d7-819a-de3d17880eb5 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product 61c6630d-d865-48d7-819a-de3d17880eb5 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Camping for product 077ce386-36eb-4ff4-a9e4-022b11e90de4 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Sleep Gear for product 077ce386-36eb-4ff4-a9e4-022b11e90de4 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product 077ce386-36eb-4ff4-a9e4-022b11e90de4 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Audio for product 8285a63d-9589-4928-9eba-373834fa4014 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Accessories for product 8285a63d-9589-4928-9eba-373834fa4014 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product 561e087e-9fba-4b51-8768-d8fb0a0a00a4 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Phones for product 561e087e-9fba-4b51-8768-d8fb0a0a00a4 using direct DB lookup
+INFO:pycommerce.models.product:Querying database for products of tenant: None
+INFO:pycommerce.models.product:Found 0 products for tenant None in database
+WARNING:pycommerce.services.market_analysis:Could not retrieve product daed01d6-a91f-40d7-81f6-16ecfedd53d6 for category metrics: Product not found: daed01d6-a91f-40d7-81f6-16ecfedd53d6
+INFO:pycommerce.services.market_analysis:Found category Accessories for product daed01d6-a91f-40d7-81f6-16ecfedd53d6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Bags for product daed01d6-a91f-40d7-81f6-16ecfedd53d6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product daed01d6-a91f-40d7-81f6-16ecfedd53d6 using direct DB lookup
+ERROR:pycommerce.services.market_analysis:Error getting category performance: cannot access local variable 'category' where it is not associated with a value
+INFO:     172.31.128.54:50156 - "GET /admin/market-analysis HTTP/1.1" 200 OK
+INFO:pycommerce.services.market_analysis:Found category Accessories for product daed01d6-a91f-40d7-81f6-16ecfedd53d6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Bags for product daed01d6-a91f-40d7-81f6-16ecfedd53d6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product daed01d6-a91f-40d7-81f6-16ecfedd53d6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Accessories for product 7bc186c5-8fe5-4f93-ba8a-8d7948ba764a using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product 7bc186c5-8fe5-4f93-ba8a-8d7948ba764a using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Accessories for product 7bc186c5-8fe5-4f93-ba8a-8d7948ba764a using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product 7bc186c5-8fe5-4f93-ba8a-8d7948ba764a using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Women's for product 31b390c8-7337-4036-aa6c-73ee223953b6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Dresses for product 31b390c8-7337-4036-aa6c-73ee223953b6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product 31b390c8-7337-4036-aa6c-73ee223953b6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Footwear for product d7074a30-b13c-4eb9-b301-6eee91c94b5d using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Casual for product d7074a30-b13c-4eb9-b301-6eee91c94b5d using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product d7074a30-b13c-4eb9-b301-6eee91c94b5d using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Accessories for product daed01d6-a91f-40d7-81f6-16ecfedd53d6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Bags for product daed01d6-a91f-40d7-81f6-16ecfedd53d6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product daed01d6-a91f-40d7-81f6-16ecfedd53d6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Camping for product 8f03fe76-e753-4dd5-852c-096b589a66b5 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Hydration for product 8f03fe76-e753-4dd5-852c-096b589a66b5 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product 8f03fe76-e753-4dd5-852c-096b589a66b5 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Hiking for product a3d8f462-798e-4098-8b20-22f019f3d64d using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product a3d8f462-798e-4098-8b20-22f019f3d64d using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Women's for product 31b390c8-7337-4036-aa6c-73ee223953b6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Dresses for product 31b390c8-7337-4036-aa6c-73ee223953b6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product 31b390c8-7337-4036-aa6c-73ee223953b6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Audio for product 8285a63d-9589-4928-9eba-373834fa4014 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Accessories for product 8285a63d-9589-4928-9eba-373834fa4014 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Laptops for product 94f6ec67-45c0-4a69-970f-5a12f3174922 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Hiking for product 9f12243c-ebe3-4995-a5eb-9aa16ae18a35 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Camping for product 9f12243c-ebe3-4995-a5eb-9aa16ae18a35 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product 9f12243c-ebe3-4995-a5eb-9aa16ae18a35 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Camping for product caa4e7ca-3fb7-4577-b701-323f1196a640 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Shelters for product caa4e7ca-3fb7-4577-b701-323f1196a640 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product caa4e7ca-3fb7-4577-b701-323f1196a640 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Hiking for product 9f12243c-ebe3-4995-a5eb-9aa16ae18a35 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Camping for product 9f12243c-ebe3-4995-a5eb-9aa16ae18a35 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product 9f12243c-ebe3-4995-a5eb-9aa16ae18a35 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Hiking for product 9f12243c-ebe3-4995-a5eb-9aa16ae18a35 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Camping for product 9f12243c-ebe3-4995-a5eb-9aa16ae18a35 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product 9f12243c-ebe3-4995-a5eb-9aa16ae18a35 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Laptops for product 63d63aca-5b6b-4672-a72b-b1483f036ef6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Laptops for product 63d63aca-5b6b-4672-a72b-b1483f036ef6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Wearables for product b03b63cc-6c45-45cd-a7d8-8b5cc844f144 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Laptops for product 63d63aca-5b6b-4672-a72b-b1483f036ef6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Camping for product 077ce386-36eb-4ff4-a9e4-022b11e90de4 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Sleep Gear for product 077ce386-36eb-4ff4-a9e4-022b11e90de4 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product 077ce386-36eb-4ff4-a9e4-022b11e90de4 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Camping for product 077ce386-36eb-4ff4-a9e4-022b11e90de4 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Sleep Gear for product 077ce386-36eb-4ff4-a9e4-022b11e90de4 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product 077ce386-36eb-4ff4-a9e4-022b11e90de4 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Hiking for product 61c6630d-d865-48d7-819a-de3d17880eb5 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Bags for product 61c6630d-d865-48d7-819a-de3d17880eb5 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product 61c6630d-d865-48d7-819a-de3d17880eb5 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Wearables for product b03b63cc-6c45-45cd-a7d8-8b5cc844f144 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Audio for product abd3687d-0cf7-481d-a7b0-e4302160a6eb using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Phones for product abd3687d-0cf7-481d-a7b0-e4302160a6eb using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Laptops for product 63d63aca-5b6b-4672-a72b-b1483f036ef6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Audio for product abd3687d-0cf7-481d-a7b0-e4302160a6eb using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Phones for product abd3687d-0cf7-481d-a7b0-e4302160a6eb using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Laptops for product 94f6ec67-45c0-4a69-970f-5a12f3174922 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Audio for product abd3687d-0cf7-481d-a7b0-e4302160a6eb using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Phones for product abd3687d-0cf7-481d-a7b0-e4302160a6eb using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Audio for product abd3687d-0cf7-481d-a7b0-e4302160a6eb using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Phones for product abd3687d-0cf7-481d-a7b0-e4302160a6eb using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Laptops for product 94f6ec67-45c0-4a69-970f-5a12f3174922 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product 561e087e-9fba-4b51-8768-d8fb0a0a00a4 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Phones for product 561e087e-9fba-4b51-8768-d8fb0a0a00a4 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Audio for product abd3687d-0cf7-481d-a7b0-e4302160a6eb using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Phones for product abd3687d-0cf7-481d-a7b0-e4302160a6eb using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Men's for product f82f6825-5ded-4aee-8326-6af524646104 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Bottoms for product f82f6825-5ded-4aee-8326-6af524646104 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product f82f6825-5ded-4aee-8326-6af524646104 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Laptops for product 94f6ec67-45c0-4a69-970f-5a12f3174922 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Audio for product 8285a63d-9589-4928-9eba-373834fa4014 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Accessories for product 8285a63d-9589-4928-9eba-373834fa4014 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Laptops for product 63d63aca-5b6b-4672-a72b-b1483f036ef6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Wearables for product b03b63cc-6c45-45cd-a7d8-8b5cc844f144 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Laptops for product 63d63aca-5b6b-4672-a72b-b1483f036ef6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Laptops for product 63d63aca-5b6b-4672-a72b-b1483f036ef6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Laptops for product 63d63aca-5b6b-4672-a72b-b1483f036ef6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Footwear for product d7074a30-b13c-4eb9-b301-6eee91c94b5d using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Casual for product d7074a30-b13c-4eb9-b301-6eee91c94b5d using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product d7074a30-b13c-4eb9-b301-6eee91c94b5d using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Camping for product 077ce386-36eb-4ff4-a9e4-022b11e90de4 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Sleep Gear for product 077ce386-36eb-4ff4-a9e4-022b11e90de4 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product 077ce386-36eb-4ff4-a9e4-022b11e90de4 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Hiking for product 883f8b38-0dc9-47a2-b6c5-91091300e5f2 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Accessories for product 883f8b38-0dc9-47a2-b6c5-91091300e5f2 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product 883f8b38-0dc9-47a2-b6c5-91091300e5f2 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Audio for product abd3687d-0cf7-481d-a7b0-e4302160a6eb using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Phones for product abd3687d-0cf7-481d-a7b0-e4302160a6eb using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Wearables for product b03b63cc-6c45-45cd-a7d8-8b5cc844f144 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Climbing for product d048f66a-f8e1-44dc-8d84-61a884f70990 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product d048f66a-f8e1-44dc-8d84-61a884f70990 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Hiking for product a3d8f462-798e-4098-8b20-22f019f3d64d using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product a3d8f462-798e-4098-8b20-22f019f3d64d using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Hiking for product 9f12243c-ebe3-4995-a5eb-9aa16ae18a35 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Camping for product 9f12243c-ebe3-4995-a5eb-9aa16ae18a35 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product 9f12243c-ebe3-4995-a5eb-9aa16ae18a35 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Audio for product abd3687d-0cf7-481d-a7b0-e4302160a6eb using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Phones for product abd3687d-0cf7-481d-a7b0-e4302160a6eb using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Audio for product abd3687d-0cf7-481d-a7b0-e4302160a6eb using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Phones for product abd3687d-0cf7-481d-a7b0-e4302160a6eb using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Laptops for product 63d63aca-5b6b-4672-a72b-b1483f036ef6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Men's for product f82f6825-5ded-4aee-8326-6af524646104 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Bottoms for product f82f6825-5ded-4aee-8326-6af524646104 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product f82f6825-5ded-4aee-8326-6af524646104 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Accessories for product daed01d6-a91f-40d7-81f6-16ecfedd53d6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Bags for product daed01d6-a91f-40d7-81f6-16ecfedd53d6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product daed01d6-a91f-40d7-81f6-16ecfedd53d6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Accessories for product daed01d6-a91f-40d7-81f6-16ecfedd53d6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Bags for product daed01d6-a91f-40d7-81f6-16ecfedd53d6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product daed01d6-a91f-40d7-81f6-16ecfedd53d6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Women's for product 31b390c8-7337-4036-aa6c-73ee223953b6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Dresses for product 31b390c8-7337-4036-aa6c-73ee223953b6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product 31b390c8-7337-4036-aa6c-73ee223953b6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Footwear for product d7074a30-b13c-4eb9-b301-6eee91c94b5d using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Casual for product d7074a30-b13c-4eb9-b301-6eee91c94b5d using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product d7074a30-b13c-4eb9-b301-6eee91c94b5d using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Camping for product 8f03fe76-e753-4dd5-852c-096b589a66b5 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Hydration for product 8f03fe76-e753-4dd5-852c-096b589a66b5 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product 8f03fe76-e753-4dd5-852c-096b589a66b5 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Hiking for product a3d8f462-798e-4098-8b20-22f019f3d64d using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product a3d8f462-798e-4098-8b20-22f019f3d64d using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Camping for product 98d7dcd4-c8fd-40e8-ab03-516ee563c78b using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product 98d7dcd4-c8fd-40e8-ab03-516ee563c78b using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Climbing for product d048f66a-f8e1-44dc-8d84-61a884f70990 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product d048f66a-f8e1-44dc-8d84-61a884f70990 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Laptops for product 94f6ec67-45c0-4a69-970f-5a12f3174922 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Wearables for product b03b63cc-6c45-45cd-a7d8-8b5cc844f144 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product 561e087e-9fba-4b51-8768-d8fb0a0a00a4 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Phones for product 561e087e-9fba-4b51-8768-d8fb0a0a00a4 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Laptops for product 63d63aca-5b6b-4672-a72b-b1483f036ef6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Wearables for product b03b63cc-6c45-45cd-a7d8-8b5cc844f144 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Camping for product 8f03fe76-e753-4dd5-852c-096b589a66b5 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Hydration for product 8f03fe76-e753-4dd5-852c-096b589a66b5 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product 8f03fe76-e753-4dd5-852c-096b589a66b5 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Hiking for product 2d7441ba-36f3-476b-92bc-571243abb42d using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Camping for product 2d7441ba-36f3-476b-92bc-571243abb42d using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product 2d7441ba-36f3-476b-92bc-571243abb42d using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Camping for product 8f03fe76-e753-4dd5-852c-096b589a66b5 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Hydration for product 8f03fe76-e753-4dd5-852c-096b589a66b5 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product 8f03fe76-e753-4dd5-852c-096b589a66b5 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Audio for product abd3687d-0cf7-481d-a7b0-e4302160a6eb using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Phones for product abd3687d-0cf7-481d-a7b0-e4302160a6eb using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product 3c9c5dc2-6ba1-4582-b914-98fb073e4981 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Women's for product 31b390c8-7337-4036-aa6c-73ee223953b6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Dresses for product 31b390c8-7337-4036-aa6c-73ee223953b6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product 31b390c8-7337-4036-aa6c-73ee223953b6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Audio for product abd3687d-0cf7-481d-a7b0-e4302160a6eb using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Phones for product abd3687d-0cf7-481d-a7b0-e4302160a6eb using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Women's for product 31b390c8-7337-4036-aa6c-73ee223953b6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Dresses for product 31b390c8-7337-4036-aa6c-73ee223953b6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product 31b390c8-7337-4036-aa6c-73ee223953b6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Accessories for product 7bc186c5-8fe5-4f93-ba8a-8d7948ba764a using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product 7bc186c5-8fe5-4f93-ba8a-8d7948ba764a using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Hiking for product 61c6630d-d865-48d7-819a-de3d17880eb5 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Bags for product 61c6630d-d865-48d7-819a-de3d17880eb5 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product 61c6630d-d865-48d7-819a-de3d17880eb5 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Camping for product 077ce386-36eb-4ff4-a9e4-022b11e90de4 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Sleep Gear for product 077ce386-36eb-4ff4-a9e4-022b11e90de4 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product 077ce386-36eb-4ff4-a9e4-022b11e90de4 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Audio for product 8285a63d-9589-4928-9eba-373834fa4014 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Accessories for product 8285a63d-9589-4928-9eba-373834fa4014 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product 561e087e-9fba-4b51-8768-d8fb0a0a00a4 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Phones for product 561e087e-9fba-4b51-8768-d8fb0a0a00a4 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Accessories for product daed01d6-a91f-40d7-81f6-16ecfedd53d6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Bags for product daed01d6-a91f-40d7-81f6-16ecfedd53d6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product daed01d6-a91f-40d7-81f6-16ecfedd53d6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Accessories for product 7bc186c5-8fe5-4f93-ba8a-8d7948ba764a using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product 7bc186c5-8fe5-4f93-ba8a-8d7948ba764a using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Accessories for product 7bc186c5-8fe5-4f93-ba8a-8d7948ba764a using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product 7bc186c5-8fe5-4f93-ba8a-8d7948ba764a using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Women's for product 31b390c8-7337-4036-aa6c-73ee223953b6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Dresses for product 31b390c8-7337-4036-aa6c-73ee223953b6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product 31b390c8-7337-4036-aa6c-73ee223953b6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Footwear for product d7074a30-b13c-4eb9-b301-6eee91c94b5d using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Casual for product d7074a30-b13c-4eb9-b301-6eee91c94b5d using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product d7074a30-b13c-4eb9-b301-6eee91c94b5d using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Accessories for product daed01d6-a91f-40d7-81f6-16ecfedd53d6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Bags for product daed01d6-a91f-40d7-81f6-16ecfedd53d6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product daed01d6-a91f-40d7-81f6-16ecfedd53d6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Camping for product 8f03fe76-e753-4dd5-852c-096b589a66b5 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Hydration for product 8f03fe76-e753-4dd5-852c-096b589a66b5 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product 8f03fe76-e753-4dd5-852c-096b589a66b5 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Hiking for product a3d8f462-798e-4098-8b20-22f019f3d64d using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product a3d8f462-798e-4098-8b20-22f019f3d64d using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Women's for product 31b390c8-7337-4036-aa6c-73ee223953b6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Dresses for product 31b390c8-7337-4036-aa6c-73ee223953b6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product 31b390c8-7337-4036-aa6c-73ee223953b6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Audio for product 8285a63d-9589-4928-9eba-373834fa4014 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Accessories for product 8285a63d-9589-4928-9eba-373834fa4014 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Laptops for product 94f6ec67-45c0-4a69-970f-5a12f3174922 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Hiking for product 9f12243c-ebe3-4995-a5eb-9aa16ae18a35 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Camping for product 9f12243c-ebe3-4995-a5eb-9aa16ae18a35 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product 9f12243c-ebe3-4995-a5eb-9aa16ae18a35 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Camping for product caa4e7ca-3fb7-4577-b701-323f1196a640 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Shelters for product caa4e7ca-3fb7-4577-b701-323f1196a640 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product caa4e7ca-3fb7-4577-b701-323f1196a640 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Hiking for product 9f12243c-ebe3-4995-a5eb-9aa16ae18a35 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Camping for product 9f12243c-ebe3-4995-a5eb-9aa16ae18a35 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product 9f12243c-ebe3-4995-a5eb-9aa16ae18a35 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Hiking for product 9f12243c-ebe3-4995-a5eb-9aa16ae18a35 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Camping for product 9f12243c-ebe3-4995-a5eb-9aa16ae18a35 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product 9f12243c-ebe3-4995-a5eb-9aa16ae18a35 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Laptops for product 63d63aca-5b6b-4672-a72b-b1483f036ef6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Laptops for product 63d63aca-5b6b-4672-a72b-b1483f036ef6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Wearables for product b03b63cc-6c45-45cd-a7d8-8b5cc844f144 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Laptops for product 63d63aca-5b6b-4672-a72b-b1483f036ef6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Camping for product 077ce386-36eb-4ff4-a9e4-022b11e90de4 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Sleep Gear for product 077ce386-36eb-4ff4-a9e4-022b11e90de4 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product 077ce386-36eb-4ff4-a9e4-022b11e90de4 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Camping for product 077ce386-36eb-4ff4-a9e4-022b11e90de4 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Sleep Gear for product 077ce386-36eb-4ff4-a9e4-022b11e90de4 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product 077ce386-36eb-4ff4-a9e4-022b11e90de4 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Hiking for product 61c6630d-d865-48d7-819a-de3d17880eb5 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Bags for product 61c6630d-d865-48d7-819a-de3d17880eb5 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product 61c6630d-d865-48d7-819a-de3d17880eb5 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Wearables for product b03b63cc-6c45-45cd-a7d8-8b5cc844f144 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Audio for product abd3687d-0cf7-481d-a7b0-e4302160a6eb using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Phones for product abd3687d-0cf7-481d-a7b0-e4302160a6eb using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Laptops for product 63d63aca-5b6b-4672-a72b-b1483f036ef6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Audio for product abd3687d-0cf7-481d-a7b0-e4302160a6eb using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Phones for product abd3687d-0cf7-481d-a7b0-e4302160a6eb using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Laptops for product 94f6ec67-45c0-4a69-970f-5a12f3174922 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Audio for product abd3687d-0cf7-481d-a7b0-e4302160a6eb using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Phones for product abd3687d-0cf7-481d-a7b0-e4302160a6eb using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Audio for product abd3687d-0cf7-481d-a7b0-e4302160a6eb using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Phones for product abd3687d-0cf7-481d-a7b0-e4302160a6eb using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Laptops for product 94f6ec67-45c0-4a69-970f-5a12f3174922 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product 561e087e-9fba-4b51-8768-d8fb0a0a00a4 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Phones for product 561e087e-9fba-4b51-8768-d8fb0a0a00a4 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Audio for product abd3687d-0cf7-481d-a7b0-e4302160a6eb using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Phones for product abd3687d-0cf7-481d-a7b0-e4302160a6eb using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Men's for product f82f6825-5ded-4aee-8326-6af524646104 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Bottoms for product f82f6825-5ded-4aee-8326-6af524646104 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product f82f6825-5ded-4aee-8326-6af524646104 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Laptops for product 94f6ec67-45c0-4a69-970f-5a12f3174922 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Audio for product 8285a63d-9589-4928-9eba-373834fa4014 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Accessories for product 8285a63d-9589-4928-9eba-373834fa4014 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Laptops for product 63d63aca-5b6b-4672-a72b-b1483f036ef6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Wearables for product b03b63cc-6c45-45cd-a7d8-8b5cc844f144 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Laptops for product 63d63aca-5b6b-4672-a72b-b1483f036ef6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Laptops for product 63d63aca-5b6b-4672-a72b-b1483f036ef6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Laptops for product 63d63aca-5b6b-4672-a72b-b1483f036ef6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Footwear for product d7074a30-b13c-4eb9-b301-6eee91c94b5d using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Casual for product d7074a30-b13c-4eb9-b301-6eee91c94b5d using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product d7074a30-b13c-4eb9-b301-6eee91c94b5d using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Camping for product 077ce386-36eb-4ff4-a9e4-022b11e90de4 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Sleep Gear for product 077ce386-36eb-4ff4-a9e4-022b11e90de4 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product 077ce386-36eb-4ff4-a9e4-022b11e90de4 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Hiking for product 883f8b38-0dc9-47a2-b6c5-91091300e5f2 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Accessories for product 883f8b38-0dc9-47a2-b6c5-91091300e5f2 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product 883f8b38-0dc9-47a2-b6c5-91091300e5f2 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Audio for product abd3687d-0cf7-481d-a7b0-e4302160a6eb using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Phones for product abd3687d-0cf7-481d-a7b0-e4302160a6eb using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Wearables for product b03b63cc-6c45-45cd-a7d8-8b5cc844f144 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Climbing for product d048f66a-f8e1-44dc-8d84-61a884f70990 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product d048f66a-f8e1-44dc-8d84-61a884f70990 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Hiking for product a3d8f462-798e-4098-8b20-22f019f3d64d using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product a3d8f462-798e-4098-8b20-22f019f3d64d using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Hiking for product 9f12243c-ebe3-4995-a5eb-9aa16ae18a35 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Camping for product 9f12243c-ebe3-4995-a5eb-9aa16ae18a35 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product 9f12243c-ebe3-4995-a5eb-9aa16ae18a35 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Audio for product abd3687d-0cf7-481d-a7b0-e4302160a6eb using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Phones for product abd3687d-0cf7-481d-a7b0-e4302160a6eb using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Audio for product abd3687d-0cf7-481d-a7b0-e4302160a6eb using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Phones for product abd3687d-0cf7-481d-a7b0-e4302160a6eb using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Laptops for product 63d63aca-5b6b-4672-a72b-b1483f036ef6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Men's for product f82f6825-5ded-4aee-8326-6af524646104 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Bottoms for product f82f6825-5ded-4aee-8326-6af524646104 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product f82f6825-5ded-4aee-8326-6af524646104 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Accessories for product daed01d6-a91f-40d7-81f6-16ecfedd53d6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Bags for product daed01d6-a91f-40d7-81f6-16ecfedd53d6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product daed01d6-a91f-40d7-81f6-16ecfedd53d6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Accessories for product daed01d6-a91f-40d7-81f6-16ecfedd53d6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Bags for product daed01d6-a91f-40d7-81f6-16ecfedd53d6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product daed01d6-a91f-40d7-81f6-16ecfedd53d6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Women's for product 31b390c8-7337-4036-aa6c-73ee223953b6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Dresses for product 31b390c8-7337-4036-aa6c-73ee223953b6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product 31b390c8-7337-4036-aa6c-73ee223953b6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Footwear for product d7074a30-b13c-4eb9-b301-6eee91c94b5d using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Casual for product d7074a30-b13c-4eb9-b301-6eee91c94b5d using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product d7074a30-b13c-4eb9-b301-6eee91c94b5d using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Camping for product 8f03fe76-e753-4dd5-852c-096b589a66b5 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Hydration for product 8f03fe76-e753-4dd5-852c-096b589a66b5 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product 8f03fe76-e753-4dd5-852c-096b589a66b5 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Hiking for product a3d8f462-798e-4098-8b20-22f019f3d64d using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product a3d8f462-798e-4098-8b20-22f019f3d64d using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Camping for product 98d7dcd4-c8fd-40e8-ab03-516ee563c78b using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product 98d7dcd4-c8fd-40e8-ab03-516ee563c78b using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Climbing for product d048f66a-f8e1-44dc-8d84-61a884f70990 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product d048f66a-f8e1-44dc-8d84-61a884f70990 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Laptops for product 94f6ec67-45c0-4a69-970f-5a12f3174922 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Wearables for product b03b63cc-6c45-45cd-a7d8-8b5cc844f144 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product 561e087e-9fba-4b51-8768-d8fb0a0a00a4 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Phones for product 561e087e-9fba-4b51-8768-d8fb0a0a00a4 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Laptops for product 63d63aca-5b6b-4672-a72b-b1483f036ef6 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Wearables for product b03b63cc-6c45-45cd-a7d8-8b5cc844f144 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Camping for product 8f03fe76-e753-4dd5-852c-096b589a66b5 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Hydration for product 8f03fe76-e753-4dd5-852c-096b589a66b5 using direct DB lookup
+INFO:pycommerce.services.market_analysis:Found category Electronics for product 8f03fe76-e753-4dd5-852c-096b589a66b5 using direct DB lookup
