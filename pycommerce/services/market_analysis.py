@@ -338,7 +338,7 @@ class MarketAnalysisService:
                 }
             
             # Get all products for the tenant
-            products = self.product_manager.get_products(tenant_id=tenant_id)
+            products = self.product_manager.get_products_by_tenant(tenant_id)
             
             # Calculate basic insights
             insights = []
