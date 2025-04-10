@@ -63,6 +63,9 @@ async def admin_media(
             url="/admin/dashboard?status_message=Store+not+found&status_type=error", 
             status_code=303
         )
+        
+    # Get all tenants for the dropdown menu
+    tenants = tenant_manager.get_all_tenants()
     
     # Convert query parameters to filter criteria
     filter_criteria = {}
@@ -136,6 +139,7 @@ async def admin_media(
             "selected_tenant": selected_tenant_slug,
             "tenant": tenant_obj,
             "tenant_id": str(tenant_obj.id),
+            "tenants": tenants,  # Add the list of tenants for dropdown
             "file_types": file_types,
             "filters": {
                 "file_type": file_type,
