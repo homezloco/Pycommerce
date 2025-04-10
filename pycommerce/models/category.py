@@ -6,49 +6,90 @@ This module provides the CategoryManager class for managing product categories.
 import logging
 import uuid
 from typing import List, Optional, Dict, Any, Union
-import importlib.util
+from functools import wraps
 
 # Configure logging
 logger = logging.getLogger(__name__)
 
-# Declare globals up front
+# Import models dynamically to avoid circular imports
+# These will be properly imported in the ensure_app_context wrapper
 db = None
 Category = None
 ProductCategory = None
 Product = None
 Tenant = None
 
-# Import models dynamically to avoid circular imports
-# and handle Flask app context issues
-try:
-    from models import db, Category, ProductCategory, Product, Tenant
-except ImportError:
-    logger.warning("Failed to import models directly. Will try to load at runtime.")
+def ensure_app_context(func):
+    """
+    Decorator to ensure Flask application context is available.
+    
+    Args:
+        func: The function to wrap
+        
+    Returns:
+        Wrapped function that ensures Flask app context
+    """
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        # Import global variables
+        global db, Category, ProductCategory, Product, Tenant
+        
+        # Make sure models are imported
+        if db is None or Category is None:
+            try:
+                from models import db, Category, ProductCategory, Product, Tenant
+            except ImportError:
+                logger.error("Failed to import models")
+                return None
+        
+        # Check if we're in an application context
+        try:
+            import flask
+            if flask.has_app_context():
+                # We're already in an app context
+                return func(*args, **kwargs)
+        except (RuntimeError, ImportError, AttributeError):
+            # No current app context or Flask not imported
+            pass
+        
+        # Create an app context
+        try:
+            import flask
+            import sys
+            import os
+            
+            # Try to import the Flask app from different possible locations
+            flask_app = None
+            for module_name in ["web_app", "main", "app"]:
+                try:
+                    module = __import__(module_name)
+                    if hasattr(module, "app"):
+                        flask_app = getattr(module, "app")
+                        break
+                except ImportError:
+                    continue
+            
+            if flask_app is None:
+                logger.error("Could not import Flask app")
+                return None
+            
+            # Use context manager to ensure cleanup
+            with flask_app.app_context():
+                return func(*args, **kwargs)
+        except ImportError:
+            logger.error("Could not import Flask")
+            return None
+    
+    return wrapper
 
 class CategoryManager:
     """Manager class for category operations."""
 
     def __init__(self):
         """Initialize the CategoryManager."""
-        global db, Category, ProductCategory, Product, Tenant
-        
-        # If we couldn't import the models, try to get them at runtime
-        if Category is None:
-            # Get models at runtime
-            try:
-                import models as models_module
-                db = models_module.db
-                Category = models_module.Category
-                ProductCategory = models_module.ProductCategory
-                Product = models_module.Product
-                Tenant = models_module.Tenant
-            except ImportError:
-                logger.error("Failed to import models at runtime.")
-        
-        self.db = db
         logger.info("CategoryManager initialized")
 
-    def get_all_categories(self, tenant_id: str, include_inactive: bool = False) -> List[Category]:
+    def get_all_categories(self, tenant_id: str, include_inactive: bool = False) -> List:
         """
         Get all categories for a tenant.
         
@@ -59,14 +100,18 @@ class CategoryManager:
         Returns:
             List of Category objects
         """
-        query = Category.query.filter_by(tenant_id=tenant_id)
-        
-        if not include_inactive:
-            query = query.filter_by(active=True)
+        @ensure_app_context
+        def _get_all_categories(tenant_id, include_inactive):
+            query = Category.query.filter_by(tenant_id=tenant_id)
             
-        return query.all()
+            if not include_inactive:
+                query = query.filter_by(active=True)
+                
+            return query.all()
+        
+        return _get_all_categories(tenant_id, include_inactive)
     
-    def get_category(self, category_id: str) -> Optional[Category]:
+    def get_category(self, category_id: str) -> Optional:
         """
         Get a category by ID.
         
@@ -76,9 +121,13 @@ class CategoryManager:
         Returns:
             Category object or None if not found
         """
-        return Category.query.get(category_id)
+        @ensure_app_context
+        def _get_category(category_id):
+            return Category.query.get(category_id)
+        
+        return _get_category(category_id)
     
-    def get_category_by_slug(self, tenant_id: str, slug: str) -> Optional[Category]:
+    def get_category_by_slug(self, tenant_id: str, slug: str) -> Optional:
         """
         Get a category by slug for a tenant.
         
@@ -89,12 +138,16 @@ class CategoryManager:
         Returns:
             Category object or None if not found
         """
-        return Category.query.filter_by(tenant_id=tenant_id, slug=slug).first()
+        @ensure_app_context
+        def _get_category_by_slug(tenant_id, slug):
+            return Category.query.filter_by(tenant_id=tenant_id, slug=slug).first()
+        
+        return _get_category_by_slug(tenant_id, slug)
     
     def create_category(self, tenant_id: str, name: str, slug: str, 
                         description: Optional[str] = None, 
                         parent_id: Optional[str] = None,
-                        active: bool = True) -> Category:
+                        active: bool = True):
         """
         Create a new category.
         
@@ -114,24 +167,28 @@ class CategoryManager:
         if existing:
             raise ValueError(f"Category with slug '{slug}' already exists for this tenant")
         
-        # Create new category
-        category = Category(
-            id=str(uuid.uuid4()),
-            tenant_id=tenant_id,
-            name=name,
-            slug=slug,
-            description=description,
-            parent_id=parent_id,
-            active=active
-        )
+        @ensure_app_context
+        def _create_category(tenant_id, name, slug, description, parent_id, active):
+            # Create new category
+            category = Category(
+                id=str(uuid.uuid4()),
+                tenant_id=tenant_id,
+                name=name,
+                slug=slug,
+                description=description,
+                parent_id=parent_id,
+                active=active
+            )
+            
+            # Add to database
+            db.session.add(category)
+            db.session.commit()
+            
+            return category
         
-        # Add to database
-        self.db.session.add(category)
-        self.db.session.commit()
-        
-        return category
+        return _create_category(tenant_id, name, slug, description, parent_id, active)
     
-    def update_category(self, category_id: str, **kwargs) -> Optional[Category]:
+    def update_category(self, category_id: str, **kwargs):
         """
         Update a category.
         
@@ -147,24 +204,28 @@ class CategoryManager:
             logger.warning(f"Category with ID {category_id} not found")
             return None
         
-        # Update allowed fields
-        allowed_fields = ["name", "slug", "description", "parent_id", "active"]
-        for field, value in kwargs.items():
-            if field in allowed_fields:
-                setattr(category, field, value)
-        
-        # If slug is being updated, check for duplicates
-        if "slug" in kwargs:
-            existing = Category.query.filter_by(
-                tenant_id=category.tenant_id, 
-                slug=kwargs["slug"]
-            ).first()
+        @ensure_app_context
+        def _update_category(category, kwargs, category_id):
+            # Update allowed fields
+            allowed_fields = ["name", "slug", "description", "parent_id", "active"]
+            for field, value in kwargs.items():
+                if field in allowed_fields:
+                    setattr(category, field, value)
             
-            if existing and existing.id != category_id:
-                raise ValueError(f"Category with slug '{kwargs['slug']}' already exists for this tenant")
+            # If slug is being updated, check for duplicates
+            if "slug" in kwargs:
+                existing = Category.query.filter_by(
+                    tenant_id=category.tenant_id, 
+                    slug=kwargs["slug"]
+                ).first()
+                
+                if existing and existing.id != category_id:
+                    raise ValueError(f"Category with slug '{kwargs['slug']}' already exists for this tenant")
+            
+            db.session.commit()
+            return category
         
-        self.db.session.commit()
-        return category
+        return _update_category(category, kwargs, category_id)
     
     def delete_category(self, category_id: str) -> bool:
         """
