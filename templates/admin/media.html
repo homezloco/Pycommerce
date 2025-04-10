@@ -81,17 +81,16 @@
                         </div>
                         {% endif %}
                         <div class="card-body">
-                            <h5 class="card-title text-truncate" title="{{ item.name }}">{{ item.name }}</h5>
+                            <h5 class="card-title text-truncate" title="{{ item.file_name }}">{{ item.file_name }}</h5>
                             <p class="card-text small text-muted">
-                                {% if item.width and item.height %}{{ item.width }}×{{ item.height }} · {% endif %}
                                 {{ (item.file_size / 1024) | round(1) }} KB · 
-                                {{ item.mime_type }}
+                                {{ item.file_type }}
                                 {% if item.is_ai_generated %}<span class="badge bg-primary ms-1">AI</span>{% endif %}
                             </p>
                         </div>
                         <div class="card-footer d-flex justify-content-between">
                             <button type="button" class="btn btn-sm btn-outline-primary" 
-                                    onclick="selectMedia('{{ item.id }}', '{{ item.file_url }}', '{{ item.name }}')">
+                                    onclick="selectMedia('{{ item.id }}', '{{ item.url }}', '{{ item.file_name }}')">
                                 Select
                             </button>
                             <div class="btn-group">
@@ -99,15 +98,15 @@
                                     Actions
                                 </button>
                                 <ul class="dropdown-menu dropdown-menu-end">
-                                    <li><a class="dropdown-item" href="{{ item.file_url }}" target="_blank">View</a></li>
+                                    <li><a class="dropdown-item" href="{{ item.url }}" target="_blank">View</a></li>
                                     <li><a class="dropdown-item" href="/admin/media/download/{{ item.id }}"><i class="bi bi-download"></i> Download</a></li>
                                     {% if item.file_type == 'image' %}
-                                    <li><a class="dropdown-item" href="#" onclick="showResizeModal('{{ item.id }}', {{ item.width }}, {{ item.height }})">Resize</a></li>
-                                    <li><a class="dropdown-item" href="#" onclick="showCropModal('{{ item.id }}', '{{ item.file_url }}', {{ item.width }}, {{ item.height }})">Crop</a></li>
+                                    <li><a class="dropdown-item" href="#" onclick="showResizeModal('{{ item.id }}', 800, 600)">Resize</a></li>
+                                    <li><a class="dropdown-item" href="#" onclick="showCropModal('{{ item.id }}', '{{ item.url }}', 800, 600)">Crop</a></li>
                                     {% endif %}
-                                    <li><a class="dropdown-item" href="#" onclick="showEditModal('{{ item.id }}', '{{ item.name }}', '{{ item.alt_text or '' }}', '{{ item.description or '' }}')">Edit Details</a></li>
+                                    <li><a class="dropdown-item" href="#" onclick="showEditModal('{{ item.id }}', '{{ item.file_name }}', '{{ item.alt_text or '' }}', '{{ item.description or '' }}')">Edit Details</a></li>
                                     <li><hr class="dropdown-divider"></li>
-                                    <li><a class="dropdown-item text-danger" href="#" onclick="confirmDelete('{{ item.id }}', '{{ item.name }}')">Delete</a></li>
+                                    <li><a class="dropdown-item text-danger" href="#" onclick="confirmDelete('{{ item.id }}', '{{ item.file_name }}')">Delete</a></li>
                                 </ul>
                             </div>
                         </div>

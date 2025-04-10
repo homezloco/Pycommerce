@@ -361,4 +361,17 @@ def setup_routes(app_templates):
     """
     global templates
     templates = app_templates
+    
+    # Add direct routes for common URLs to redirect to the proper route
+    @router.get("/newsletters", response_class=HTMLResponse)
+    async def newsletters_redirect(
+        request: Request,
+        tenant: Optional[str] = None
+    ):
+        """Redirect to the newsletters page."""
+        redirect_url = f"/admin/marketing/newsletters"
+        if tenant:
+            redirect_url += f"?tenant={tenant}"
+        return RedirectResponse(url=redirect_url, status_code=303)
+        
     return router
