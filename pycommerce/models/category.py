@@ -416,12 +416,32 @@ class CategoryManager:
         """
         @ensure_db_session
         def _get_all_categories(tenant_id, include_inactive):
-            query = Category.query.filter_by(tenant_id=tenant_id)
-            
-            if not include_inactive:
-                query = query.filter_by(active=True)
+            try:
+                # Import SQLAlchemy joinedload for eager loading
+                from sqlalchemy.orm import joinedload
                 
-            return query.all()
+                # Use eager loading of products relationship to avoid lazy loading issues
+                query = Category.query.options(joinedload(Category.products)).filter_by(tenant_id=tenant_id)
+                
+                if not include_inactive:
+                    query = query.filter_by(active=True)
+                
+                categories = query.all()
+                
+                # Ensure products are accessed within the session context
+                for category in categories:
+                    # Force loading products if they exist
+                    if hasattr(category, 'products'):
+                        _ = [p.id for p in category.products]
+                
+                return categories
+            except Exception as e:
+                logger.error(f"Error in get_all_categories: {str(e)}")
+                # Fall back to simple query without relationships if error occurs
+                query = Category.query.filter_by(tenant_id=tenant_id)
+                if not include_inactive:
+                    query = query.filter_by(active=True)
+                return query.all()
         
         return _get_all_categories(tenant_id, include_inactive)
     
@@ -437,7 +457,16 @@ class CategoryManager:
         """
         @ensure_db_session
         def _get_category(category_id):
-            return Category.query.get(category_id)
+            try:
+                # Import SQLAlchemy joinedload for eager loading
+                from sqlalchemy.orm import joinedload
+                
+                # Use eager loading to avoid lazy loading issues
+                return Category.query.options(joinedload(Category.products)).get(category_id)
+            except Exception as e:
+                logger.error(f"Error in get_category: {str(e)}")
+                # Fall back to simple query without relationships
+                return Category.query.get(category_id)
         
         return _get_category(category_id)
     
@@ -625,23 +654,46 @@ class CategoryManager:
         Returns:
             List of Product objects
         """
-        category = self.get_category(category_id)
-        if not category:
-            logger.warning(f"Category with ID {category_id} not found")
-            return []
-        
-        # Get direct products in this category
-        products = category.products
-        
-        # If including subcategories, add those products too
-        if include_subcategories:
-            subcategories = Category.query.filter_by(parent_id=category_id).all()
-            for subcat in subcategories:
-                # Recursive call to get products from this subcategory and its children
-                sub_products = self.get_products_in_category(subcat.id, include_subcategories)
-                products.extend(sub_products)
-        
-        return products
+        @ensure_db_session
+        def _get_products_in_category(category_id, include_subcategories):
+            try:
+                # Import SQLAlchemy joinedload for eager loading
+                from sqlalchemy.orm import joinedload
+                
+                # Get category with eagerly loaded products
+                category = Category.query.options(joinedload(Category.products)).get(category_id)
+                
+                if not category:
+                    logger.warning(f"Category with ID {category_id} not found")
+                    return []
+                
+                # Get direct products in this category
+                products = list(category.products)  # Convert to list to ensure they're loaded
+                
+                # If including subcategories, add those products too
+                if include_subcategories:
+                    # Also use eager loading for subcategories
+                    subcategories = Category.query.options(
+                        joinedload(Category.products)
+                    ).filter_by(parent_id=category_id).all()
+                    
+                    for subcat in subcategories:
+                        # Access products within the session
+                        sub_products = list(subcat.products)
+                        products.extend(sub_products)
+                        
+                        # Get products from deeper subcategories
+                        if Category.query.filter_by(parent_id=subcat.id).count() > 0:
+                            # Only recurse if there are actual subcategories
+                            deeper_products = _get_products_in_category(subcat.id, True)
+                            products.extend(deeper_products)
+                
+                return products
+            except Exception as e:
+                logger.error(f"Error in get_products_in_category: {str(e)}")
+                return []
+                
+        return _get_products_in_category(category_id, include_subcategories)
     
     def assign_product_to_category(self, product_id: str, category_id: str) -> bool:
         """
