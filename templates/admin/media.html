@@ -76,13 +76,13 @@
                 {% for item in media_files %}
                 <div class="col">
                     <div class="card h-100">
-                        {% if item.file_type == 'image' %}
-                        <img src="{{ item.url }}" class="card-img-top" alt="{{ item.alt_text or item.file_name }}" style="height: 200px; object-fit: cover;">
-                        {% elif item.file_type == 'video' %}
+                        {% if item.file_type.startswith('image/') %}
+                        <img src="{{ item.url }}" class="card-img-top" alt="{{ item.alt_text or item.file_name }}" style="height: 200px; object-fit: contain; background-color: #f8f9fa;">
+                        {% elif item.file_type.startswith('video/') %}
                         <div class="card-img-top bg-dark d-flex align-items-center justify-content-center" style="height: 200px;">
                             <i class="bi bi-film text-light" style="font-size: 3rem;"></i>
                         </div>
-                        {% elif item.file_type == 'audio' %}
+                        {% elif item.file_type.startswith('audio/') %}
                         <div class="card-img-top bg-info d-flex align-items-center justify-content-center" style="height: 200px;">
                             <i class="bi bi-music-note-beamed text-light" style="font-size: 3rem;"></i>
                         </div>
@@ -124,9 +124,11 @@
                                 <ul class="dropdown-menu dropdown-menu-end">
                                     <li><a class="dropdown-item" href="{{ item.url }}" target="_blank">View</a></li>
                                     <li><a class="dropdown-item" href="/admin/media/download/{{ item.id }}"><i class="bi bi-download"></i> Download</a></li>
-                                    {% if item.file_type == 'image' %}
+                                    {% if item.file_type.startswith('image/') %}
+                                    {% if not item.file_type.endswith('/svg+xml') %}
                                     <li><a class="dropdown-item" href="#" onclick="showResizeModal('{{ item.id }}', 800, 600)">Resize</a></li>
                                     <li><a class="dropdown-item" href="#" onclick="showCropModal('{{ item.id }}', '{{ item.url }}', 800, 600)">Crop</a></li>
+                                    {% endif %}
                                     {% endif %}
                                     <li><a class="dropdown-item" href="#" onclick="showEditModal('{{ item.id }}', '{{ item.file_name }}', '{{ item.alt_text or '' }}', '{{ item.description or '' }}')">Edit Details</a></li>
                                     <li><hr class="dropdown-divider"></li>
