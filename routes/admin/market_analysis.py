@@ -36,7 +36,12 @@ def setup_routes(templates):
     @router.get("", response_class=HTMLResponse)
     async def market_analysis_dashboard(request: Request):
         """Market Analysis Dashboard."""
+        # Get tenant from session - check both possible session keys
         tenant_id = request.session.get("tenant_id")
+        selected_tenant_slug = request.session.get("selected_tenant")
+        
+        # Initialize tenant_obj for later use
+        tenant_obj = None
         
         # Get all tenants for the store selector
         tenants = []
@@ -52,8 +57,23 @@ def setup_routes(templates):
                 }
                 for t in tenants_list if t and hasattr(t, 'id')
             ]
+            
+            # If we have a selected_tenant_slug but no tenant_id, look up the tenant_id
+            if selected_tenant_slug and not tenant_id:
+                logger.info(f"Looking up tenant_id for slug: {selected_tenant_slug}")
+                tenant_obj = tenant_manager.get_by_slug(selected_tenant_slug)
+                if tenant_obj:
+                    tenant_id = str(tenant_obj.id)
+                    # Store for future use
+                    request.session["tenant_id"] = tenant_id
+                    logger.info(f"Found tenant_id: {tenant_id} for slug: {selected_tenant_slug}")
+                else:
+                    logger.warning(f"No tenant found for slug: {selected_tenant_slug}")
         except Exception as e:
             logger.error(f"Error fetching tenants: {str(e)}")
+        
+        # Log the tenant ID being used
+        logger.info(f"Using tenant_id: {tenant_id} for market analysis dashboard")
         
         # Get the default time period data
         end_date = datetime.now()
@@ -109,7 +129,24 @@ def setup_routes(templates):
         category: Optional[str] = Query(None, description="Filter by category")
     ):
         """Sales trends view."""
+        # Get tenant from session - check both possible session keys
         tenant_id = request.session.get("tenant_id")
+        selected_tenant_slug = request.session.get("selected_tenant")
+        
+        # If we have a selected_tenant_slug but no tenant_id, look up the tenant_id
+        if selected_tenant_slug and not tenant_id:
+            logger.info(f"Looking up tenant_id for slug: {selected_tenant_slug}")
+            tenant_obj = tenant_manager.get_by_slug(selected_tenant_slug)
+            if tenant_obj:
+                tenant_id = str(tenant_obj.id)
+                # Store for future use
+                request.session["tenant_id"] = tenant_id
+                logger.info(f"Found tenant_id: {tenant_id} for slug: {selected_tenant_slug}")
+            else:
+                logger.warning(f"No tenant found for slug: {selected_tenant_slug}")
+        
+        # Log the tenant ID being used
+        logger.info(f"Using tenant_id: {tenant_id} for sales trends")
         
         # If no dates provided, default to last 30 days
         if not start_date or not end_date:
@@ -192,7 +229,24 @@ def setup_routes(templates):
         forecast_days: int = Query(30, description="Number of days to forecast")
     ):
         """Demand forecast view for a specific product."""
+        # Get tenant from session - check both possible session keys
         tenant_id = request.session.get("tenant_id")
+        selected_tenant_slug = request.session.get("selected_tenant")
+        
+        # If we have a selected_tenant_slug but no tenant_id, look up the tenant_id
+        if selected_tenant_slug and not tenant_id:
+            logger.info(f"Looking up tenant_id for slug: {selected_tenant_slug}")
+            tenant_obj = tenant_manager.get_by_slug(selected_tenant_slug)
+            if tenant_obj:
+                tenant_id = str(tenant_obj.id)
+                # Store for future use
+                request.session["tenant_id"] = tenant_id
+                logger.info(f"Found tenant_id: {tenant_id} for slug: {selected_tenant_slug}")
+            else:
+                logger.warning(f"No tenant found for slug: {selected_tenant_slug}")
+                
+        # Log the tenant ID being used
+        logger.info(f"Using tenant_id: {tenant_id} for demand forecast")
         
         # Get forecast data
         forecast = market_analysis_service.forecast_demand(
@@ -228,7 +282,24 @@ def setup_routes(templates):
     @router.get("/insights", response_class=HTMLResponse)
     async def market_insights(request: Request):
         """Market insights view."""
+        # Get tenant from session - check both possible session keys
         tenant_id = request.session.get("tenant_id")
+        selected_tenant_slug = request.session.get("selected_tenant")
+        
+        # If we have a selected_tenant_slug but no tenant_id, look up the tenant_id
+        if selected_tenant_slug and not tenant_id:
+            logger.info(f"Looking up tenant_id for slug: {selected_tenant_slug}")
+            tenant_obj = tenant_manager.get_by_slug(selected_tenant_slug)
+            if tenant_obj:
+                tenant_id = str(tenant_obj.id)
+                # Store for future use
+                request.session["tenant_id"] = tenant_id
+                logger.info(f"Found tenant_id: {tenant_id} for slug: {selected_tenant_slug}")
+            else:
+                logger.warning(f"No tenant found for slug: {selected_tenant_slug}")
+                
+        # Log the tenant ID being used
+        logger.info(f"Using tenant_id: {tenant_id} for market insights")
         
         # Get market insights
         insights = market_analysis_service.get_market_insights(tenant_id=tenant_id)
@@ -277,7 +348,24 @@ def setup_routes(templates):
         period: str = Query("month", description="Time period (week, month, quarter, year)")
     ):
         """Category performance view."""
+        # Get tenant from session - check both possible session keys
         tenant_id = request.session.get("tenant_id")
+        selected_tenant_slug = request.session.get("selected_tenant")
+        
+        # If we have a selected_tenant_slug but no tenant_id, look up the tenant_id
+        if selected_tenant_slug and not tenant_id:
+            logger.info(f"Looking up tenant_id for slug: {selected_tenant_slug}")
+            tenant_obj = tenant_manager.get_by_slug(selected_tenant_slug)
+            if tenant_obj:
+                tenant_id = str(tenant_obj.id)
+                # Store for future use
+                request.session["tenant_id"] = tenant_id
+                logger.info(f"Found tenant_id: {tenant_id} for slug: {selected_tenant_slug}")
+            else:
+                logger.warning(f"No tenant found for slug: {selected_tenant_slug}")
+                
+        # Log the tenant ID being used
+        logger.info(f"Using tenant_id: {tenant_id} for category performance")
         
         # Get category performance data
         category_perf = market_analysis_service.get_category_performance(
@@ -334,7 +422,24 @@ def setup_routes(templates):
         category: Optional[str] = Query(None, description="Filter by category")
     ):
         """API endpoint for sales trends data."""
+        # Get tenant from session - check both possible session keys
         tenant_id = request.session.get("tenant_id")
+        selected_tenant_slug = request.session.get("selected_tenant")
+        
+        # If we have a selected_tenant_slug but no tenant_id, look up the tenant_id
+        if selected_tenant_slug and not tenant_id:
+            logger.info(f"[API] Looking up tenant_id for slug: {selected_tenant_slug}")
+            tenant_obj = tenant_manager.get_by_slug(selected_tenant_slug)
+            if tenant_obj:
+                tenant_id = str(tenant_obj.id)
+                # Store for future use
+                request.session["tenant_id"] = tenant_id
+                logger.info(f"[API] Found tenant_id: {tenant_id} for slug: {selected_tenant_slug}")
+            else:
+                logger.warning(f"[API] No tenant found for slug: {selected_tenant_slug}")
+                
+        # Log the tenant ID being used
+        logger.info(f"[API] Using tenant_id: {tenant_id} for sales trends API")
         
         # Get sales trend data
         sales_trends = market_analysis_service.get_sales_trends(
@@ -353,7 +458,24 @@ def setup_routes(templates):
         forecast_days: int = Query(30, description="Number of days to forecast")
     ):
         """API endpoint for demand forecast data."""
+        # Get tenant from session - check both possible session keys
         tenant_id = request.session.get("tenant_id")
+        selected_tenant_slug = request.session.get("selected_tenant")
+        
+        # If we have a selected_tenant_slug but no tenant_id, look up the tenant_id
+        if selected_tenant_slug and not tenant_id:
+            logger.info(f"[API] Looking up tenant_id for slug: {selected_tenant_slug}")
+            tenant_obj = tenant_manager.get_by_slug(selected_tenant_slug)
+            if tenant_obj:
+                tenant_id = str(tenant_obj.id)
+                # Store for future use
+                request.session["tenant_id"] = tenant_id
+                logger.info(f"[API] Found tenant_id: {tenant_id} for slug: {selected_tenant_slug}")
+            else:
+                logger.warning(f"[API] No tenant found for slug: {selected_tenant_slug}")
+                
+        # Log the tenant ID being used
+        logger.info(f"[API] Using tenant_id: {tenant_id} for demand forecast API")
         
         # Get forecast data
         forecast = market_analysis_service.forecast_demand(
@@ -367,7 +489,24 @@ def setup_routes(templates):
     @router.get("/api/insights")
     async def api_market_insights(request: Request):
         """API endpoint for market insights data."""
+        # Get tenant from session - check both possible session keys
         tenant_id = request.session.get("tenant_id")
+        selected_tenant_slug = request.session.get("selected_tenant")
+        
+        # If we have a selected_tenant_slug but no tenant_id, look up the tenant_id
+        if selected_tenant_slug and not tenant_id:
+            logger.info(f"[API] Looking up tenant_id for slug: {selected_tenant_slug}")
+            tenant_obj = tenant_manager.get_by_slug(selected_tenant_slug)
+            if tenant_obj:
+                tenant_id = str(tenant_obj.id)
+                # Store for future use
+                request.session["tenant_id"] = tenant_id
+                logger.info(f"[API] Found tenant_id: {tenant_id} for slug: {selected_tenant_slug}")
+            else:
+                logger.warning(f"[API] No tenant found for slug: {selected_tenant_slug}")
+                
+        # Log the tenant ID being used
+        logger.info(f"[API] Using tenant_id: {tenant_id} for insights API")
         
         # Get market insights
         insights = market_analysis_service.get_market_insights(tenant_id=tenant_id)
@@ -380,7 +519,24 @@ def setup_routes(templates):
         period: str = Query("month", description="Time period (week, month, quarter, year)")
     ):
         """API endpoint for category performance data."""
+        # Get tenant from session - check both possible session keys
         tenant_id = request.session.get("tenant_id")
+        selected_tenant_slug = request.session.get("selected_tenant")
+        
+        # If we have a selected_tenant_slug but no tenant_id, look up the tenant_id
+        if selected_tenant_slug and not tenant_id:
+            logger.info(f"[API] Looking up tenant_id for slug: {selected_tenant_slug}")
+            tenant_obj = tenant_manager.get_by_slug(selected_tenant_slug)
+            if tenant_obj:
+                tenant_id = str(tenant_obj.id)
+                # Store for future use
+                request.session["tenant_id"] = tenant_id
+                logger.info(f"[API] Found tenant_id: {tenant_id} for slug: {selected_tenant_slug}")
+            else:
+                logger.warning(f"[API] No tenant found for slug: {selected_tenant_slug}")
+                
+        # Log the tenant ID being used
+        logger.info(f"[API] Using tenant_id: {tenant_id} for category performance API")
         
         # Get category performance data
         category_perf = market_analysis_service.get_category_performance(
