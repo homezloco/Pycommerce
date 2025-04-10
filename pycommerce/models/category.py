@@ -7,6 +7,8 @@ Following the same pattern as other managers in the system for consistency.
 import logging
 import uuid
 from typing import List, Optional, Dict, Any, Union, TypeVar, cast
+import sys
+import importlib
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -24,6 +26,29 @@ except ImportError:
     ProductCategory = None
     Product = None
     Tenant = None
+
+# Import Flask app to use app_context
+flask_app = None
+try:
+    # Dynamically find the Flask app from common module locations
+    for module_name in ["web_app", "main", "app", "flask_app", "main_flask"]:
+        try:
+            if module_name in sys.modules:
+                module = sys.modules[module_name]
+            else:
+                module = importlib.import_module(module_name)
+                
+            if hasattr(module, "app"):
+                flask_app = getattr(module, "app")
+                if hasattr(flask_app, 'app_context'):
+                    logger.info(f"Found Flask app in module {module_name}")
+                    break
+        except (ImportError, AttributeError):
+            continue
+        except Exception as e:
+            logger.warning(f"Error importing module {module_name}: {e}")
+except Exception as e:
+    logger.warning(f"Error finding Flask app: {e}")
 
 
 class CategoryManager:
@@ -44,6 +69,16 @@ class CategoryManager:
         Returns:
             List of Category objects
         """
+        # Use Flask's app_context if available
+        if flask_app is not None and hasattr(flask_app, 'app_context'):
+            with flask_app.app_context():
+                return self._get_all_categories(tenant_id, include_inactive)
+        else:
+            # Fallback if we can't find a Flask app
+            return self._get_all_categories(tenant_id, include_inactive)
+            
+    def _get_all_categories(self, tenant_id: str, include_inactive: bool = False) -> List[Any]:
+        """Internal implementation of get_all_categories."""
         try:
             # Use eager loading when available
             try:
@@ -77,6 +112,16 @@ class CategoryManager:
         Returns:
             Category object or None if not found
         """
+        # Use Flask's app_context if available
+        if flask_app is not None and hasattr(flask_app, 'app_context'):
+            with flask_app.app_context():
+                return self._get_category(category_id)
+        else:
+            # Fallback if we can't find a Flask app
+            return self._get_category(category_id)
+            
+    def _get_category(self, category_id: str) -> Optional[T]:
+        """Internal implementation of get_category."""
         try:
             # Use eager loading when available
             try:
@@ -101,6 +146,16 @@ class CategoryManager:
         Returns:
             Category object or None if not found
         """
+        # Use Flask's app_context if available
+        if flask_app is not None and hasattr(flask_app, 'app_context'):
+            with flask_app.app_context():
+                return self._get_category_by_slug(tenant_id, slug)
+        else:
+            # Fallback if we can't find a Flask app
+            return self._get_category_by_slug(tenant_id, slug)
+            
+    def _get_category_by_slug(self, tenant_id: str, slug: str) -> Optional[T]:
+        """Internal implementation of get_category_by_slug."""
         try:
             return Category.query.filter_by(tenant_id=tenant_id, slug=slug).first()
         except Exception as e:
@@ -130,6 +185,19 @@ class CategoryManager:
         if existing:
             raise ValueError(f"Category with slug '{slug}' already exists for this tenant")
         
+        # Use Flask's app_context if available
+        if flask_app is not None and hasattr(flask_app, 'app_context'):
+            with flask_app.app_context():
+                return self._create_category(tenant_id, name, slug, description, parent_id, active)
+        else:
+            # Fallback if we can't find a Flask app
+            return self._create_category(tenant_id, name, slug, description, parent_id, active)
+    
+    def _create_category(self, tenant_id: str, name: str, slug: str, 
+                        description: Optional[str] = None, 
+                        parent_id: Optional[str] = None,
+                        active: bool = True) -> Optional[T]:
+        """Internal implementation of create_category."""
         try:
             # Create new category
             category = Category(
