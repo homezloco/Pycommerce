@@ -179,8 +179,35 @@ class MarketAnalysisService:
                                 # If product is found but has no categories, add to "Uncategorized"
                                 category_sales["Uncategorized"] += item.price * item.quantity
                         else:
-                            # If product is not found, add to "Unknown"
-                            category_sales["Unknown"] += item.price * item.quantity
+                            # If product is not found, try to use a direct database lookup for categories
+                            try:
+                                from sqlalchemy import text
+                                from app import db
+                                
+                                # Look up product categories directly from the database
+                                categories_result = db.session.execute(
+                                    text("""
+                                        SELECT c.name 
+                                        FROM categories c
+                                        JOIN product_categories pc ON c.id = pc.category_id
+                                        WHERE pc.product_id = :product_id
+                                    """),
+                                    {"product_id": product_id}
+                                ).fetchall()
+                                
+                                if categories_result:
+                                    # Found categories, use them
+                                    for cat_result in categories_result:
+                                        cat_name = cat_result[0]
+                                        category_sales[cat_name] += item.price * item.quantity
+                                        logger.info(f"Found category {cat_name} for product {product_id} using direct DB lookup")
+                                else:
+                                    # If product is not found in the database either, add to "Unknown"
+                                    category_sales["Unknown"] += item.price * item.quantity
+                            except Exception as db_err:
+                                logger.warning(f"DB lookup failed for product {product_id}: {db_err}")
+                                # If all lookups fail, add to "Unknown"
+                                category_sales["Unknown"] += item.price * item.quantity
                         
                         # Update product sales counts
                         product_sales[product_id] += item.quantity
@@ -708,11 +735,45 @@ class MarketAnalysisService:
                     
                     # Add to appropriate fallback category when product not found or has no categories
                     if not found_categories:
-                        # Try to infer category from product name if we have product info from elsewhere
-                        inferred_category = None
+                        # Try direct database lookup for product categories
                         try:
-                            # First try to get product name from order item
-                            product_name = None
+                            from sqlalchemy import text
+                            from app import db
+                            
+                            # Look up product categories directly from the database
+                            categories_result = db.session.execute(
+                                text("""
+                                    SELECT c.name 
+                                    FROM categories c
+                                    JOIN product_categories pc ON c.id = pc.category_id
+                                    WHERE pc.product_id = :product_id
+                                """),
+                                {"product_id": product_id}
+                            ).fetchall()
+                            
+                            if categories_result:
+                                # Found categories, use them
+                                found_categories = True
+                                for cat_result in categories_result:
+                                    category_name = cat_result[0]
+                                    if category_name not in category_metrics:
+                                        category_metrics[category_name] = get_default_metrics()
+                                    
+                                    category_metrics[category_name]["revenue"] += item.price * item.quantity
+                                    category_metrics[category_name]["orders"] += 1
+                                    category_metrics[category_name]["units_sold"] += item.quantity
+                                    
+                                    logger.info(f"Found category {category_name} for product {product_id} using direct DB lookup")
+                        except Exception as db_err:
+                            logger.warning(f"DB lookup failed for product {product_id}: {db_err}")
+                        
+                        # If still no categories, try to infer from name
+                        if not found_categories:
+                            # Try to infer category from product name if we have product info from elsewhere
+                            inferred_category = None
+                            try:
+                                # First try to get product name from order item
+                                product_name = None
                             
                             # Check if item has name attribute
                             if hasattr(item, 'name') and item.name:
