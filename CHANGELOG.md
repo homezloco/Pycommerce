@@ -38,6 +38,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Improved database query efficiency
 
 ### Fixed
+- [2025-04-10] Fixed store selector dropdown on admin categories page by adding proper tenant context variables
+- [2025-04-10] Implemented flexible tenant retrieval with multiple fallback methods to handle different TenantManager implementations
 - [2025-04-10] Fixed CategoryManager SQLAlchemy session issues with eager loading for relationships
 - [2025-04-10] Fixed error handling in admin categories page for proper None value handling
 - [2025-04-10] Improved database query efficiency with optimized category subcategory counting
