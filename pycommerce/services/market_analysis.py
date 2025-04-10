@@ -114,19 +114,25 @@ class MarketAnalysisService:
                 # Process items in the order
                 for item in order.items:
                     product_id = str(item.product_id)
-                    product = self.product_manager.get(product_id)
-                    
-                    if product and hasattr(product, 'categories'):
-                        # Skip if category filter is applied and product doesn't match
-                        if category and category not in product.categories:
-                            continue
-                            
-                        # Update category sales
-                        for cat in product.categories:
-                            category_sales[cat] += item.price * item.quantity
-                    
-                    # Update product sales counts
-                    product_sales[product_id] += item.quantity
+                    try:
+                        product = self.product_manager.get(product_id)
+                        
+                        if product and hasattr(product, 'categories'):
+                            # Skip if category filter is applied and product doesn't match
+                            if category and category not in product.categories:
+                                continue
+                                
+                            # Update category sales
+                            for cat in product.categories:
+                                category_sales[cat] += item.price * item.quantity
+                        
+                        # Update product sales counts
+                        product_sales[product_id] += item.quantity
+                    except Exception as e:
+                        # Log the error but continue processing other items
+                        logger.error(f"Error processing product {product_id}: {str(e)}")
+                        # Still count the item in revenue calculations even if product details are unavailable
+                        product_sales[product_id] += item.quantity
             
             # Format data for trends
             date_range = get_date_range(start_date, end_date)
@@ -153,13 +159,23 @@ class MarketAnalysisService:
                 key=lambda x: x[1], 
                 reverse=True
             )[:10]:  # Top 10 products
-                product = self.product_manager.get(product_id)
-                if product:
+                try:
+                    product = self.product_manager.get(product_id)
+                    if product:
+                        top_products_data.append({
+                            "id": product_id,
+                            "name": product.name,
+                            "quantity": quantity,
+                            "revenue": round(quantity * product.price, 2)
+                        })
+                except Exception as e:
+                    logger.warning(f"Could not retrieve product {product_id} for top products list: {str(e)}")
+                    # Add with generic name in case of missing product
                     top_products_data.append({
                         "id": product_id,
-                        "name": product.name,
+                        "name": f"Product {product_id[-6:]}",  # Use last 6 chars of ID as name
                         "quantity": quantity,
-                        "revenue": round(quantity * product.price, 2)
+                        "revenue": 0  # Cannot calculate revenue without price
                     })
             
             return {
@@ -478,13 +494,21 @@ class MarketAnalysisService:
             for order in orders:
                 for item in order.items:
                     product_id = str(item.product_id)
-                    product = self.product_manager.get(product_id)
-                    
-                    if product and hasattr(product, 'categories'):
-                        for category in product.categories:
-                            category_metrics[category]["revenue"] += item.price * item.quantity
-                            category_metrics[category]["orders"] += 1
-                            category_metrics[category]["units_sold"] += item.quantity
+                    try:
+                        product = self.product_manager.get(product_id)
+                        
+                        if product and hasattr(product, 'categories'):
+                            for category in product.categories:
+                                category_metrics[category]["revenue"] += item.price * item.quantity
+                                category_metrics[category]["orders"] += 1
+                                category_metrics[category]["units_sold"] += item.quantity
+                    except Exception as e:
+                        logger.warning(f"Could not retrieve product {product_id} for category metrics: {str(e)}")
+                        # Add to 'Unknown' category when product not found
+                        category = "Unknown"
+                        category_metrics[category]["revenue"] += item.price * item.quantity
+                        category_metrics[category]["orders"] += 1
+                        category_metrics[category]["units_sold"] += item.quantity
             
             # Calculate average price
             for category, metrics in category_metrics.items():
