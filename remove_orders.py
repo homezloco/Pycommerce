@@ -1,13 +1,12 @@
 #!/usr/bin/env python
 """
-Script to remove all existing orders from the database.
+Script to remove all orders from a tenant.
 
-This script will delete all orders for a specified tenant,
-making it possible to recreate them with proper product categories.
+This script removes all orders and related data (order items, notes, shipments)
+for a specified tenant. It's useful for testing and development purposes.
 """
+
 import logging
-import sys
-from typing import Optional
 from sqlalchemy import text
 
 # Configure logging
@@ -15,94 +14,93 @@ logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-# Try to import the models and managers
-try:
-    from pycommerce.models.order import OrderManager
-    from pycommerce.models.tenant import TenantManager
-    from models import db, Order, OrderItem
-except ImportError as e:
-    logger.error(f"Failed to import required modules: {e}")
-    sys.exit(1)
-
-def remove_orders_for_tenant(tenant_slug: str) -> int:
+def remove_orders_for_tenant(tenant_slug="tech"):
     """
-    Remove all orders for a specific tenant.
+    Remove all orders and related data for the specified tenant.
     
     Args:
         tenant_slug: The slug of the tenant to remove orders for
         
     Returns:
-        Number of orders removed
+        Tuple of (success, count of orders removed)
     """
-    tenant_manager = TenantManager()
-    order_manager = OrderManager()
+    from app import app, db
     
-    # Get tenant by slug
-    tenant = tenant_manager.get_tenant_by_slug(tenant_slug)
-    if not tenant:
-        logger.error(f"Tenant with slug '{tenant_slug}' not found")
-        return 0
+    with app.app_context():
+        # Get tenant ID
+        tenant_result = db.session.execute(
+            text("SELECT id FROM tenants WHERE slug = :slug"),
+            {"slug": tenant_slug}
+        ).fetchone()
         
-    logger.info(f"Found tenant: {tenant.name} (ID: {tenant.id})")
-    
-    # Get all orders for this tenant
-    orders = order_manager.get_for_tenant(tenant.id)
-    if not orders:
-        logger.info(f"No orders found for tenant {tenant.name}")
-        return 0
+        if not tenant_result:
+            logger.error(f"Tenant not found with slug: {tenant_slug}")
+            return False, 0
         
-    logger.info(f"Found {len(orders)} orders for tenant {tenant.name}")
-    
-    # Delete each order
-    removed_count = 0
-    for order in orders:
+        tenant_id = tenant_result[0]
+        logger.info(f"Found tenant {tenant_slug} with ID: {tenant_id}")
+        
+        # Get order IDs for this tenant
+        order_ids_result = db.session.execute(
+            text("SELECT id FROM orders WHERE tenant_id = :tenant_id"),
+            {"tenant_id": tenant_id}
+        ).fetchall()
+        
+        if not order_ids_result:
+            logger.info(f"No orders found for tenant: {tenant_slug}")
+            return True, 0
+        
+        order_ids = [row[0] for row in order_ids_result]
+        logger.info(f"Found {len(order_ids)} orders to remove")
+        
+        # Remove order-related data first (due to foreign key constraints)
         try:
-            # First, check if there are related order_notes
-            try:
-                # Try direct SQL access to delete order notes
-                db.session.execute(text(f"DELETE FROM order_notes WHERE order_id = '{order.id}'"))
-            except Exception as note_error:
-                logger.warning(f"Could not delete order notes for {order.id}: {note_error}")
+            # Remove order notes
+            notes_deleted = db.session.execute(
+                text("DELETE FROM order_notes WHERE order_id IN :order_ids"),
+                {"order_ids": tuple(order_ids)}
+            ).rowcount
+            logger.info(f"Deleted {notes_deleted} order notes")
             
-            # Check if there are related shipments
-            try:
-                # Delete shipments if they exist (direct SQL)
-                db.session.execute(text(f"DELETE FROM shipments WHERE order_id = '{order.id}'"))
-            except Exception as ship_error:
-                logger.warning(f"Could not delete shipments for {order.id}: {ship_error}")
+            # Remove shipments
+            shipments_deleted = db.session.execute(
+                text("DELETE FROM shipments WHERE order_id IN :order_ids"),
+                {"order_ids": tuple(order_ids)}
+            ).rowcount
+            logger.info(f"Deleted {shipments_deleted} shipments")
             
-            # Delete order items
-            OrderItem.query.filter_by(order_id=order.id).delete()
+            # Remove order items
+            items_deleted = db.session.execute(
+                text("DELETE FROM order_items WHERE order_id IN :order_ids"),
+                {"order_ids": tuple(order_ids)}
+            ).rowcount
+            logger.info(f"Deleted {items_deleted} order items")
             
-            # Then delete the order itself
-            Order.query.filter_by(id=order.id).delete()
+            # Finally, remove orders
+            orders_deleted = db.session.execute(
+                text("DELETE FROM orders WHERE id IN :order_ids"),
+                {"order_ids": tuple(order_ids)}
+            ).rowcount
+            logger.info(f"Deleted {orders_deleted} orders")
             
-            # Commit the transaction
+            # Commit changes
             db.session.commit()
-            removed_count += 1
-            logger.info(f"Removed order {order.id}")
+            logger.info("Successfully removed all orders and related data")
+            
+            return True, orders_deleted
+            
         except Exception as e:
-            logger.error(f"Error removing order {order.id}: {e}")
+            logger.error(f"Error removing orders: {str(e)}")
             db.session.rollback()
-    
-    logger.info(f"Successfully removed {removed_count} orders for tenant {tenant.name}")
-    return removed_count
-
-def main():
-    """Main function to remove orders."""
-    # Default tenant to "tech"
-    tenant_slug = "tech"
-    
-    try:
-        # Remove orders for the tenant
-        count = remove_orders_for_tenant(tenant_slug)
-        logger.info(f"Removed {count} orders for tenant {tenant_slug}")
-    except Exception as e:
-        logger.error(f"Error removing orders: {e}")
+            return False, 0
 
 if __name__ == "__main__":
-    import os
-    # Flask app context - ensure we have a database session
-    from app import app
-    with app.app_context():
-        main()
+    try:
+        logger.info("Starting order removal")
+        success, count = remove_orders_for_tenant()
+        if success:
+            logger.info(f"Successfully removed {count} orders")
+        else:
+            logger.error("Failed to remove orders")
+    except Exception as e:
+        logger.error(f"Error: {str(e)}")
