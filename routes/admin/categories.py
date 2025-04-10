@@ -98,6 +98,13 @@ def setup_routes(templates_instance: Jinja2Templates):
         
         try:
             # Get the real categories from the database
+            # First fetch all categories for this tenant, handle None case
+            tenant_categories = category_manager.get_all_categories(current_tenant.id)
+            if tenant_categories is None:
+                tenant_categories = []
+                logger.error(f"Failed to get categories for tenant: {current_tenant.id}")
+                context["error"] = "Failed to retrieve categories. Please try again later."
+            
             if parent_id:
                 # Get the parent category
                 parent_category = category_manager.get_category(parent_id)
@@ -121,16 +128,16 @@ def setup_routes(templates_instance: Jinja2Templates):
                     context["parent_breadcrumbs"] = breadcrumbs
                     
                     # Get categories with this parent
-                    categories = [cat for cat in category_manager.get_all_categories(current_tenant.id) 
+                    categories = [cat for cat in tenant_categories 
                                 if cat.parent_id == parent_id]
                 else:
                     # Invalid parent ID, show root categories
                     context["error"] = "Selected parent category not found."
-                    categories = [cat for cat in category_manager.get_all_categories(current_tenant.id) 
+                    categories = [cat for cat in tenant_categories 
                                 if not cat.parent_id]
             else:
                 # Show root categories (those without parents)
-                categories = [cat for cat in category_manager.get_all_categories(current_tenant.id) 
+                categories = [cat for cat in tenant_categories 
                              if not cat.parent_id]
             
             # Calculate product and subcategory counts for each category
@@ -139,8 +146,9 @@ def setup_routes(templates_instance: Jinja2Templates):
                 products_in_category = category_manager.get_products_in_category(category.id, include_subcategories=False)
                 category.product_count = len(products_in_category) if products_in_category else 0
                 
-                # Count subcategories
-                subcategories = [cat for cat in category_manager.get_all_categories(current_tenant.id) 
+                # Count subcategories - reuse tenant_categories to avoid extra database queries
+                # We already fetched the categories once, so let's use that list instead of querying again
+                subcategories = [cat for cat in tenant_categories 
                                if cat.parent_id == category.id]
                 category.subcategory_count = len(subcategories) if subcategories else 0
             
