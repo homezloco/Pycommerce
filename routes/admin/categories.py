@@ -65,25 +65,64 @@ def setup_routes(templates_instance: Jinja2Templates):
             tenant: The tenant slug
             parent_id: Optional parent category ID to filter by
         """
+        # Initialize variables
+        all_tenants = []
+        tenant_categories = []
+        categories = []
+        parent_category = None
+        parent_breadcrumbs = []
+        error_message = None
+        
         # Get current tenant
         logger.info(f"Attempting to access categories for tenant: {tenant}")
         current_tenant = tenant_manager.get_tenant_by_slug(tenant)
         if not current_tenant:
             # Instead of redirecting, log the issue and try to get the first tenant
             logger.warning(f"Tenant with slug '{tenant}' not found, trying to find another tenant")
-            tenants = tenant_manager.get_all_tenants()
-            if tenants and len(tenants) > 0:
-                current_tenant = tenants[0]
-                logger.info(f"Using first available tenant: {current_tenant.name} ({current_tenant.slug})")
-            else:
-                logger.error("No tenants found in the system")
+            
+            # Try different method names for compatibility
+            try:
+                if hasattr(tenant_manager, 'get_all_tenants'):
+                    tenants = tenant_manager.get_all_tenants()
+                elif hasattr(tenant_manager, 'get_all'):
+                    tenants = tenant_manager.get_all()
+                elif hasattr(tenant_manager, 'list'):
+                    tenants = tenant_manager.list()
+                else:
+                    tenants = []
+                    
+                if tenants and len(tenants) > 0:
+                    current_tenant = tenants[0]
+                    logger.info(f"Using first available tenant: {current_tenant.name} ({current_tenant.slug})")
+                else:
+                    logger.error("No tenants found in the system")
+                    return RedirectResponse(url="/admin/tenants")
+            except Exception as e:
+                logger.error(f"Error finding alternative tenant: {e}")
                 return RedirectResponse(url="/admin/tenants")
         
-        # Initialize context
+        # Get all tenants for store selector
+        try:
+            if hasattr(tenant_manager, 'get_all_tenants'):
+                all_tenants = tenant_manager.get_all_tenants()
+            elif hasattr(tenant_manager, 'get_all'):
+                all_tenants = tenant_manager.get_all()
+            elif hasattr(tenant_manager, 'list'):
+                all_tenants = tenant_manager.list()
+            else:
+                logger.warning("TenantManager doesn't have get_all_tenants, get_all, or list methods")
+                all_tenants = []
+        except Exception as e:
+            logger.error(f"Error getting all tenants: {e}")
+            all_tenants = []
+        
+        # Initialize context with what we have so far
         context = {
             "request": request,
             "active_page": "categories",
             "tenant": current_tenant,
+            "tenants": all_tenants,
+            "selected_tenant": tenant,
             "categories": [],
             "parent_category": None,
             "parent_breadcrumbs": [],
@@ -96,15 +135,18 @@ def setup_routes(templates_instance: Jinja2Templates):
             context["error"] = "Category management is not available. The CategoryManager module could not be loaded."
             return templates.TemplateResponse("admin/categories.html", context)
         
+        # Get categories and process them
         try:
-            # Get the real categories from the database
-            # First fetch all categories for this tenant, handle None case
+            # First fetch all categories for this tenant
             tenant_categories = category_manager.get_all_categories(current_tenant.id)
+            
+            # Handle None case
             if tenant_categories is None:
                 tenant_categories = []
                 logger.error(f"Failed to get categories for tenant: {current_tenant.id}")
                 context["error"] = "Failed to retrieve categories. Please try again later."
             
+            # Filter categories based on parent_id
             if parent_id:
                 # Get the parent category
                 parent_category = category_manager.get_category(parent_id)
@@ -147,18 +189,18 @@ def setup_routes(templates_instance: Jinja2Templates):
                 category.product_count = len(products_in_category) if products_in_category else 0
                 
                 # Count subcategories - reuse tenant_categories to avoid extra database queries
-                # We already fetched the categories once, so let's use that list instead of querying again
                 subcategories = [cat for cat in tenant_categories 
                                if cat.parent_id == category.id]
                 category.subcategory_count = len(subcategories) if subcategories else 0
             
-            # Add categories to context
+            # Update context with processed categories
             context["categories"] = categories
-        
+            
         except Exception as e:
             logger.error(f"Error fetching categories: {e}")
             context["error"] = f"Error fetching categories: {str(e)}"
         
+        # Return the template response
         return templates.TemplateResponse("admin/categories.html", context)
 
     @router.post("/admin/categories/create", response_class=HTMLResponse)
