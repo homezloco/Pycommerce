@@ -375,6 +375,16 @@ class CategoryManager:
         Returns:
             List of Product objects
         """
+        # Use Flask's app_context if available
+        if flask_app is not None and hasattr(flask_app, 'app_context'):
+            with flask_app.app_context():
+                return self._get_products_in_category(category_id, include_subcategories)
+        else:
+            # Fallback if we can't find a Flask app
+            return self._get_products_in_category(category_id, include_subcategories)
+            
+    def _get_products_in_category(self, category_id: str, include_subcategories: bool = True) -> List[Any]:
+        """Internal implementation of get_products_in_category."""
         try:
             # Use eager loading when available
             try:
@@ -391,6 +401,7 @@ class CategoryManager:
             if include_subcategories:
                 subcategories = Category.query.filter_by(parent_id=category_id).all()
                 for subcat in subcategories:
+                    # Recursive call - note this will use the public method which has app_context
                     sub_products = self.get_products_in_category(subcat.id, include_subcategories=True)
                     product_ids.extend([p.id for p in sub_products if p.id not in product_ids])
             
