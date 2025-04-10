@@ -152,10 +152,17 @@ class MarketAnalysisService:
             # Get top categories by sales
             top_categories = sorted(
                 [{"category": cat, "revenue": round(revenue, 2)} 
-                 for cat, revenue in category_sales.items()],
+                 for cat, revenue in category_sales.items() if cat not in ("Unknown", "Uncategorized") or len(category_sales) <= 2],
                 key=lambda x: x["revenue"],
                 reverse=True
             )[:5]  # Top 5 categories
+            
+            # If we have no valid categories, add a fallback for UI display
+            if not top_categories and ("Unknown" in category_sales or "Uncategorized" in category_sales):
+                # Add Unknown/Uncategorized if that's all we have
+                for cat in ["Unknown", "Uncategorized"]:
+                    if cat in category_sales:
+                        top_categories.append({"category": cat, "revenue": round(category_sales[cat], 2)})
             
             # Get top products by quantity sold
             top_products_data = []
@@ -358,9 +365,7 @@ class MarketAnalysisService:
             
             # If we don't have valid sales data or top categories/products, return a basic response
             if (sales_trends.get("status") != "success" or 
-                not sales_trends.get("data", {}).get("trends") or
-                (not sales_trends.get("data", {}).get("top_categories") and 
-                 not sales_trends.get("data", {}).get("top_products"))):
+                not sales_trends.get("data", {}).get("trends")):
                 
                 return {
                     "status": "warning",
@@ -372,6 +377,30 @@ class MarketAnalysisService:
                         ],
                         "trend_direction": "neutral",
                         "recommendations": []
+                    }
+                }
+            
+            # Ensure we have some data to work with even if categories or products are missing
+            sales_data = sales_trends.get("data", {})
+            has_categories = bool(sales_data.get("top_categories"))
+            has_products = bool(sales_data.get("top_products"))
+            
+            # If we don't have either categories or products data, generate basic insights
+            if not has_categories and not has_products:
+                return {
+                    "status": "partial",
+                    "message": "Limited data available for market insights",
+                    "data": {
+                        "insights": [
+                            "Limited historical data available for detailed analysis",
+                            "Sales data is available, but category and product details are incomplete",
+                            "Continue operating your store to generate more comprehensive data"
+                        ],
+                        "trend_direction": "neutral",
+                        "recommendations": [
+                            "Ensure products are properly categorized to improve analytics",
+                            "Review your product catalog for completeness"
+                        ]
                     }
                 }
             
@@ -506,28 +535,45 @@ class MarketAnalysisService:
                 }
             
             # Process category data
-            category_metrics = defaultdict(lambda: {
-                "revenue": 0,
-                "orders": 0,
-                "units_sold": 0,
-                "avg_price": 0
-            })
+            category_metrics = {}
+            
+            # Initialize default metrics dictionary for each category
+            def get_default_metrics():
+                return {
+                    "revenue": 0,
+                    "orders": 0,
+                    "units_sold": 0,
+                    "avg_price": 0
+                }
             
             for order in orders:
                 for item in order.items:
                     product_id = str(item.product_id)
+                    
+                    # Track if we've found categories for this product
+                    found_categories = False
+                    
                     try:
                         product = self.product_manager.get(product_id)
                         
-                        if product and hasattr(product, 'categories'):
+                        if product and hasattr(product, 'categories') and product.categories:
+                            found_categories = True
                             for category in product.categories:
+                                if category not in category_metrics:
+                                    category_metrics[category] = get_default_metrics()
+                                
                                 category_metrics[category]["revenue"] += item.price * item.quantity
                                 category_metrics[category]["orders"] += 1
                                 category_metrics[category]["units_sold"] += item.quantity
                     except Exception as e:
                         logger.warning(f"Could not retrieve product {product_id} for category metrics: {str(e)}")
-                        # Add to 'Unknown' category when product not found
+                    
+                    # Add to 'Unknown' category when product not found or has no categories
+                    if not found_categories:
                         category = "Unknown"
+                        if category not in category_metrics:
+                            category_metrics[category] = get_default_metrics()
+                        
                         category_metrics[category]["revenue"] += item.price * item.quantity
                         category_metrics[category]["orders"] += 1
                         category_metrics[category]["units_sold"] += item.quantity
