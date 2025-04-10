@@ -774,30 +774,30 @@ class MarketAnalysisService:
                             try:
                                 # First try to get product name from order item
                                 product_name = None
-                            
-                            # Check if item has name attribute
-                            if hasattr(item, 'name') and item.name:
-                                product_name = item.name.lower()
-                            # Check if item has a product_name attribute
-                            elif hasattr(item, 'product_name') and item.product_name:
-                                product_name = item.product_name.lower()
-                            # Check if item has a description attribute that might contain useful info
-                            elif hasattr(item, 'description') and item.description:
-                                product_name = item.description.lower()
-                            
-                            # If we found a product name, try to categorize it
-                            if product_name:
-                                # Simple keyword-based categorization
-                                if 'laptop' in product_name or 'notebook' in product_name or 'macbook' in product_name:
-                                    inferred_category = "Laptops"
-                                elif 'phone' in product_name or 'smartphone' in product_name or 'iphone' in product_name:
-                                    inferred_category = "Phones"
-                                elif 'headphone' in product_name or 'earbud' in product_name or 'speaker' in product_name or 'audio' in product_name:
-                                    inferred_category = "Audio"
-                                elif 'smart' in product_name and ('home' in product_name or 'hub' in product_name or 'light' in product_name):
-                                    inferred_category = "Smart Home"
-                                elif 'accessory' in product_name or 'case' in product_name or 'charger' in product_name or 'cable' in product_name:
-                                    inferred_category = "Accessories"
+                                
+                                # Check if item has name attribute
+                                if hasattr(item, 'name') and item.name:
+                                    product_name = item.name.lower()
+                                # Check if item has a product_name attribute
+                                elif hasattr(item, 'product_name') and item.product_name:
+                                    product_name = item.product_name.lower()
+                                # Check if item has a description attribute that might contain useful info
+                                elif hasattr(item, 'description') and item.description:
+                                    product_name = item.description.lower()
+                                
+                                # If we found a product name, try to categorize it
+                                if product_name:
+                                    # Simple keyword-based categorization
+                                    if 'laptop' in product_name or 'notebook' in product_name or 'macbook' in product_name:
+                                        inferred_category = "Laptops"
+                                    elif 'phone' in product_name or 'smartphone' in product_name or 'iphone' in product_name:
+                                        inferred_category = "Phones"
+                                    elif 'headphone' in product_name or 'earbud' in product_name or 'speaker' in product_name or 'audio' in product_name:
+                                        inferred_category = "Audio"
+                                    elif 'smart' in product_name and ('home' in product_name or 'hub' in product_name or 'light' in product_name):
+                                        inferred_category = "Smart Home"
+                                    elif 'accessory' in product_name or 'case' in product_name or 'charger' in product_name or 'cable' in product_name:
+                                        inferred_category = "Accessories"
                                 
                                 # Fall back to using product ID to lookup category
                                 if not inferred_category and len(product_id) >= 6:
@@ -810,11 +810,11 @@ class MarketAnalysisService:
                                         inferred_category = "Audio"
                                     elif id_suffix in ['174922', 'fa4014']:
                                         inferred_category = "Phones"
-                        except Exception as e:
-                            logger.debug(f"Could not infer category from product name: {e}")
-                        
-                        # Use inferred category or fallback to "Unknown"
-                        category = inferred_category or "Unknown"
+                            except Exception as e:
+                                logger.debug(f"Could not infer category from product name: {e}")
+                            
+                            # Use inferred category or fallback to "Unknown"
+                            category = inferred_category or "Unknown"
                         if category not in category_metrics:
                             category_metrics[category] = get_default_metrics()
                         
