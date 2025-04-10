@@ -26,6 +26,9 @@ templates = None
 
 # Initialize managers
 tenant_manager = TenantManager()
+# Add compatibility method
+tenant_manager.get_tenant_by_slug = tenant_manager.get_by_slug
+
 category_manager = None
 if CategoryManager:
     try:
