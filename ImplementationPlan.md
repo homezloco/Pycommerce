@@ -27,7 +27,7 @@ PyCommerce is a scalable, multi-tenant ecommerce platform built with Python. It 
 - ✅ **Web UI**: Admin portal and storefront templates with consistent navigation
 - ✅ **API Endpoints**: RESTful API for products, cart, and checkout
 - ✅ **Order Management System**: Full order lifecycle management with notes and tracking
-- ✅ **Media Manager**: File uploads and AI-generated content with admin interface
+- ✅ **Media Manager**: File uploads and AI-generated content with admin interface, proper SVG preview support
 - ✅ **WYSIWYG Editor**: Rich text editing with Quill.js and AI text generation
 - ✅ **Theme Customization**: Dynamic CSS styling for tenant-specific themes
 - ✅ **Email Service**: Order confirmation email system with template-based emails
@@ -50,6 +50,9 @@ PyCommerce is a scalable, multi-tenant ecommerce platform built with Python. It 
 - ✅ **Order Status Improvements**: Updated order status to use string values instead of integers for improved readability and better display in the admin interface
 - ✅ **Shipping Notifications**: Added email notification system for shipping status updates
 - ✅ **Mobile Navigation**: Enhanced mobile responsiveness with hamburger menu toggle for admin dashboard
+- ✅ **Newsletter Management**: Added newsletter subscription and campaign management
+- ✅ **Reporting System**: Implemented comprehensive sales and inventory reports
+- ✅ **Product Page Enhancement**: Improved product listing and detail pages with better organization
 ### In Progress:
 
 - 🔄 **Admin Dashboard**: Enhancing admin controls and analytics
@@ -339,10 +342,14 @@ For existing ecommerce stores looking to migrate to PyCommerce:
 20. ✅ Fix product name display in the order items list - COMPLETED
 21. ✅ Implement shipping notifications - COMPLETED
 22. ✅ Enhance mobile responsiveness with hamburger menu for admin panel - COMPLETED
-23. 🔄 Finalize payment integrations with proper credentials
-24. 🔄 Optimize system performance and database queries
-25. 🔄 Enhance admin dashboard with analytics
-26. ⏳ Add return processing workflow
+23. ✅ Fix SVG image previews in media library - COMPLETED
+24. ✅ Implement newsletter subscription and campaign management - COMPLETED
+25. ✅ Create comprehensive reporting system for sales and inventory - COMPLETED
+26. ✅ Improve product page organization and functionality - COMPLETED
+27. 🔄 Finalize payment integrations with proper credentials
+28. 🔄 Optimize system performance and database queries
+29. 🔄 Enhance admin dashboard with analytics
+30. ⏳ Add return processing workflow
 
 
 ### Future Roadmap
