@@ -65,7 +65,7 @@ async def admin_media(
         )
         
     # Get all tenants for the dropdown menu
-    tenants = tenant_manager.get_all_tenants()
+    tenants = tenant_manager.get_all()
     
     # Convert query parameters to filter criteria
     filter_criteria = {}
