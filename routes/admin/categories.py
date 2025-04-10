@@ -89,84 +89,55 @@ def setup_routes(templates_instance: Jinja2Templates):
             return templates.TemplateResponse("admin/categories.html", context)
         
         try:
-            # Temporary solution: Create a dummy category structure for display
-            # This works around the application context issues with database access
-            
-            # Create a simple Category class for rendering the template
-            class DummyCategory:
-                def __init__(self, id, name, slug, description, parent_id=None, active=True):
-                    self.id = id
-                    self.name = name
-                    self.slug = slug
-                    self.description = description or ""
-                    self.parent_id = parent_id
-                    self.active = active
-                    self.product_count = 0
-                    self.subcategory_count = 0
-                    self.tenant_id = current_tenant.id
-            
-            # Create sample categories
-            example_categories = [
-                DummyCategory("cat1", "Electronics", "electronics", "Electronic devices and gadgets"),
-                DummyCategory("cat2", "Clothing", "clothing", "Apparel and fashion items"),
-                DummyCategory("cat3", "Books", "books", "Books and publications"),
-                DummyCategory("cat4", "Home", "home", "Home and garden items"),
-            ]
-            
-            # Create sample subcategories
-            example_subcategories = {
-                "cat1": [
-                    DummyCategory("cat1-1", "Smartphones", "smartphones", "Mobile phones", "cat1"),
-                    DummyCategory("cat1-2", "Laptops", "laptops", "Laptop computers", "cat1"),
-                    DummyCategory("cat1-3", "Tablets", "tablets", "Tablet devices", "cat1"),
-                ],
-                "cat2": [
-                    DummyCategory("cat2-1", "Men", "men", "Men's clothing", "cat2"),
-                    DummyCategory("cat2-2", "Women", "women", "Women's clothing", "cat2"),
-                    DummyCategory("cat2-3", "Children", "children", "Children's clothing", "cat2"),
-                ],
-                "cat3": [
-                    DummyCategory("cat3-1", "Fiction", "fiction", "Fiction books", "cat3"),
-                    DummyCategory("cat3-2", "Non-fiction", "non-fiction", "Non-fiction books", "cat3"),
-                ],
-                "cat4": [
-                    DummyCategory("cat4-1", "Kitchen", "kitchen", "Kitchen items", "cat4"),
-                    DummyCategory("cat4-2", "Bedroom", "bedroom", "Bedroom items", "cat4"),
-                ]
-            }
-            
-            # Set product counts
-            for category in example_categories:
-                category.product_count = len(example_subcategories.get(category.id, []))
-                category.subcategory_count = len(example_subcategories.get(category.id, []))
-            
-            # Get parent category if specified
-            if parent_id and parent_id in [cat.id for cat in example_categories]:
-                # Find the parent category
-                parent = None
-                for cat in example_categories:
-                    if cat.id == parent_id:
-                        parent = cat
-                        break
-                
-                if parent:
-                    context["parent_category"] = parent
-                    context["parent_breadcrumbs"] = [parent]
+            # Get the real categories from the database
+            if parent_id:
+                # Get the parent category
+                parent_category = category_manager.get_category(parent_id)
+                if parent_category:
+                    # Check if this parent belongs to the current tenant
+                    if parent_category.tenant_id != current_tenant.id:
+                        context["error"] = "Selected category does not belong to this tenant."
+                        return templates.TemplateResponse("admin/categories.html", context)
                     
-                    # Show subcategories of this parent
-                    categories = example_subcategories.get(parent_id, [])
+                    # Build breadcrumb path
+                    breadcrumbs = []
+                    current_parent = parent_category
+                    while current_parent:
+                        breadcrumbs.insert(0, current_parent)
+                        if current_parent.parent_id:
+                            current_parent = category_manager.get_category(current_parent.parent_id)
+                        else:
+                            current_parent = None
+                    
+                    context["parent_category"] = parent_category
+                    context["parent_breadcrumbs"] = breadcrumbs
+                    
+                    # Get categories with this parent
+                    categories = [cat for cat in category_manager.get_all_categories(current_tenant.id) 
+                                if cat.parent_id == parent_id]
                 else:
-                    # Invalid parent, show root categories
-                    categories = example_categories
+                    # Invalid parent ID, show root categories
+                    context["error"] = "Selected parent category not found."
+                    categories = [cat for cat in category_manager.get_all_categories(current_tenant.id) 
+                                if not cat.parent_id]
             else:
-                # Show root categories
-                categories = example_categories
+                # Show root categories (those without parents)
+                categories = [cat for cat in category_manager.get_all_categories(current_tenant.id) 
+                             if not cat.parent_id]
             
-            # Add to context
+            # Calculate product and subcategory counts for each category
+            for category in categories:
+                # Get direct products in this category
+                products_in_category = category_manager.get_products_in_category(category.id, include_subcategories=False)
+                category.product_count = len(products_in_category) if products_in_category else 0
+                
+                # Count subcategories
+                subcategories = [cat for cat in category_manager.get_all_categories(current_tenant.id) 
+                               if cat.parent_id == category.id]
+                category.subcategory_count = len(subcategories) if subcategories else 0
+            
+            # Add categories to context
             context["categories"] = categories
-            
-            # Add warning message
-            context["warning"] = "Note: These are sample categories. Database integration is currently in progress."
         
         except Exception as e:
             logger.error(f"Error fetching categories: {e}")
