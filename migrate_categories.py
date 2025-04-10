@@ -23,9 +23,55 @@ from app import app, db
 from models import Product, Tenant, Category, ProductCategory
 from pycommerce.models.category import CategoryManager
 
+def migrate_tenant_categories(tenant_slug):
+    """
+    Migrate categories from JSON to proper relationships for a specific tenant.
+    
+    Args:
+        tenant_slug: The slug of the tenant to migrate
+    
+    Returns:
+        True if successful, False otherwise
+    """
+    start_time = datetime.now()
+    logger.info(f"Starting category migration for tenant {tenant_slug} at {start_time}")
+    
+    # Create a category manager
+    try:
+        category_manager = CategoryManager()
+    except Exception as e:
+        logger.error(f"Error creating CategoryManager: {e}")
+        return False
+    
+    # Find the tenant
+    tenant = Tenant.query.filter_by(slug=tenant_slug).first()
+    if not tenant:
+        logger.error(f"Tenant with slug '{tenant_slug}' not found")
+        return False
+    
+    logger.info(f"Processing tenant: {tenant.name} ({tenant.id})")
+    
+    try:
+        # Migrate categories for this tenant
+        stats = category_manager.migrate_from_json_categories(tenant.id)
+        
+        logger.info(f"Tenant {tenant.name}: {stats['products_processed']} products processed, "
+                    f"{stats['categories_created']} categories created, "
+                    f"{stats['associations_created']} associations created, "
+                    f"{stats['errors']} errors")
+    except Exception as e:
+        logger.error(f"Error processing tenant {tenant.name}: {e}")
+        return False
+    
+    end_time = datetime.now()
+    duration = end_time - start_time
+    logger.info(f"Category migration for tenant {tenant_slug} completed in {duration}")
+    
+    return True
+
 def migrate_categories():
     """
-    Migrate categories from JSON to proper relationships.
+    Migrate categories from JSON to proper relationships for all tenants.
     """
     start_time = datetime.now()
     logger.info(f"Starting category migration at {start_time}")

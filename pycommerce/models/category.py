@@ -242,20 +242,24 @@ class CategoryManager:
             logger.warning(f"Category with ID {category_id} not found")
             return False
         
-        # Check if category has subcategories
-        subcategories = Category.query.filter_by(parent_id=category_id).count()
-        if subcategories > 0:
-            logger.warning(f"Cannot delete category {category_id} as it has {subcategories} subcategories")
-            return False
-        
-        # Remove product associations
-        ProductCategory.query.filter_by(category_id=category_id).delete()
-        
-        # Delete the category
-        self.db.session.delete(category)
-        self.db.session.commit()
-        
-        return True
+        @ensure_app_context
+        def _delete_category(category_id, category):
+            # Check if category has subcategories
+            subcategories = Category.query.filter_by(parent_id=category_id).count()
+            if subcategories > 0:
+                logger.warning(f"Cannot delete category {category_id} as it has {subcategories} subcategories")
+                return False
+            
+            # Remove product associations
+            ProductCategory.query.filter_by(category_id=category_id).delete()
+            
+            # Delete the category
+            db.session.delete(category)
+            db.session.commit()
+            
+            return True
+            
+        return _delete_category(category_id, category)
     
     def get_category_tree(self, tenant_id: str, include_inactive: bool = False) -> List[Dict[str, Any]]:
         """
@@ -336,9 +340,14 @@ class CategoryManager:
         Returns:
             True if successful, False otherwise
         """
-        # Check if product and category exist
-        product = Product.query.get(product_id)
-        category = Category.query.get(category_id)
+        @ensure_app_context
+        def _get_product_and_category(product_id, category_id):
+            # Check if product and category exist
+            product = Product.query.get(product_id)
+            category = Category.query.get(category_id)
+            return product, category
+            
+        product, category = _get_product_and_category(product_id, category_id)
         
         if not product or not category:
             logger.warning(f"Product {product_id} or category {category_id} not found")
@@ -349,31 +358,35 @@ class CategoryManager:
             logger.warning(f"Product {product_id} and category {category_id} belong to different tenants")
             return False
         
-        # Check if the association already exists
-        association = ProductCategory.query.filter_by(
-            product_id=product_id, 
-            category_id=category_id
-        ).first()
-        
-        if association:
-            logger.info(f"Product {product_id} is already assigned to category {category_id}")
+        @ensure_app_context
+        def _assign_product_to_category(product_id, category_id, product, category):
+            # Check if the association already exists
+            association = ProductCategory.query.filter_by(
+                product_id=product_id, 
+                category_id=category_id
+            ).first()
+            
+            if association:
+                logger.info(f"Product {product_id} is already assigned to category {category_id}")
+                return True
+            
+            # Create the association
+            association = ProductCategory(
+                product_id=product_id,
+                category_id=category_id
+            )
+            db.session.add(association)
+            
+            # Update the legacy categories JSON field for backward compatibility
+            if category.name not in product.categories:
+                current_categories = product.categories or []
+                current_categories.append(category.name)
+                product.categories = current_categories
+            
+            db.session.commit()
             return True
-        
-        # Create the association
-        association = ProductCategory(
-            product_id=product_id,
-            category_id=category_id
-        )
-        self.db.session.add(association)
-        
-        # Update the legacy categories JSON field for backward compatibility
-        if category.name not in product.categories:
-            current_categories = product.categories or []
-            current_categories.append(category.name)
-            product.categories = current_categories
-        
-        self.db.session.commit()
-        return True
+            
+        return _assign_product_to_category(product_id, category_id, product, category)
     
     def remove_product_from_category(self, product_id: str, category_id: str) -> bool:
         """
@@ -386,30 +399,36 @@ class CategoryManager:
         Returns:
             True if successful, False otherwise
         """
-        # Check if the association exists
-        association = ProductCategory.query.filter_by(
-            product_id=product_id, 
-            category_id=category_id
-        ).first()
+        @ensure_app_context
+        def _check_and_remove_association(product_id, category_id):
+            # Check if the association exists
+            association = ProductCategory.query.filter_by(
+                product_id=product_id, 
+                category_id=category_id
+            ).first()
+            
+            if not association:
+                logger.warning(f"Product {product_id} is not assigned to category {category_id}")
+                return False, None, None
+            
+            # Get product and category
+            product = Product.query.get(product_id)
+            category = Category.query.get(category_id)
+            
+            # Delete the association
+            db.session.delete(association)
+            
+            # Update the legacy categories JSON field for backward compatibility
+            if product and category and category.name in product.categories:
+                current_categories = product.categories or []
+                current_categories.remove(category.name)
+                product.categories = current_categories
+            
+            db.session.commit()
+            return True, product, category
         
-        if not association:
-            logger.warning(f"Product {product_id} is not assigned to category {category_id}")
-            return False
-        
-        # Delete the association
-        self.db.session.delete(association)
-        
-        # Update the legacy categories JSON field for backward compatibility
-        product = Product.query.get(product_id)
-        category = Category.query.get(category_id)
-        
-        if product and category and category.name in product.categories:
-            current_categories = product.categories or []
-            current_categories.remove(category.name)
-            product.categories = current_categories
-        
-        self.db.session.commit()
-        return True
+        success, product, category = _check_and_remove_association(product_id, category_id)
+        return success
     
     def sync_product_categories(self, product_id: str, category_ids: List[str]) -> bool:
         """
@@ -422,14 +441,21 @@ class CategoryManager:
         Returns:
             True if successful, False otherwise
         """
-        product = Product.query.get(product_id)
+        @ensure_app_context
+        def _get_product_and_associations(product_id):
+            product = Product.query.get(product_id)
+            if not product:
+                return None, []
+                
+            # Get current category associations
+            current_associations = ProductCategory.query.filter_by(product_id=product_id).all()
+            current_category_ids = [assoc.category_id for assoc in current_associations]
+            return product, current_category_ids
+            
+        product, current_category_ids = _get_product_and_associations(product_id)
         if not product:
             logger.warning(f"Product {product_id} not found")
             return False
-        
-        # Get current category associations
-        current_associations = ProductCategory.query.filter_by(product_id=product_id).all()
-        current_category_ids = [assoc.category_id for assoc in current_associations]
         
         # Determine categories to add and remove
         categories_to_add = [cat_id for cat_id in category_ids if cat_id not in current_category_ids]
@@ -462,8 +488,12 @@ class CategoryManager:
             "errors": 0
         }
         
-        # Get all products for this tenant
-        products = Product.query.filter_by(tenant_id=tenant_id).all()
+        @ensure_app_context
+        def _get_products_for_tenant(tenant_id):
+            # Get all products for this tenant
+            return Product.query.filter_by(tenant_id=tenant_id).all()
+        
+        products = _get_products_for_tenant(tenant_id)
         
         for product in products:
             stats["products_processed"] += 1
