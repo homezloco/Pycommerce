@@ -35,23 +35,35 @@ async def ai_config_page(
     # Get tenant from query parameters or session
     selected_tenant_slug = tenant or request.session.get("selected_tenant")
     
-    # If no tenant is selected, redirect to dashboard with message
+    # Default to 'all' if no tenant is selected
     if not selected_tenant_slug:
-        return RedirectResponse(
-            url="/admin/dashboard?status_message=Please+select+a+store+first&status_type=warning", 
-            status_code=303
-        )
+        selected_tenant_slug = 'all'
     
     # Store the selected tenant in session for future requests
     request.session["selected_tenant"] = selected_tenant_slug
     
-    # Get tenant object
-    tenant_obj = tenant_manager.get_by_slug(selected_tenant_slug)
-    if not tenant_obj:
-        return RedirectResponse(
-            url="/admin/dashboard?status_message=Store+not+found&status_type=error", 
-            status_code=303
-        )
+    # Initialize tenant object
+    tenant_obj = None
+    
+    # Handle the "all stores" case
+    if selected_tenant_slug == 'all':
+        # Create a dummy tenant object with minimal required properties
+        class DummyTenant:
+            def __init__(self):
+                self.id = None
+                self.name = "All Stores"
+                self.slug = "all"
+                self.settings = {}
+        
+        tenant_obj = DummyTenant()
+    else:
+        # Get actual tenant object
+        tenant_obj = tenant_manager.get_by_slug(selected_tenant_slug)
+        if not tenant_obj:
+            return RedirectResponse(
+                url="/admin/dashboard?status_message=Store+not+found&status_type=error", 
+                status_code=303
+            )
     
     # Get AI settings
     ai_settings = tenant_obj.settings.get('ai_settings', {}) if tenant_obj.settings else {}
@@ -137,14 +149,6 @@ async def save_ai_config(
 ):
     """Save AI configuration for a specific provider."""
     try:
-        # Get tenant object
-        tenant_obj = tenant_manager.get_by_slug(tenant)
-        if not tenant_obj:
-            raise HTTPException(
-                status_code=404,
-                detail=f"Store with slug '{tenant}' not found"
-            )
-        
         # Get form data for the selected provider
         form_data = dict(await request.form())
         
@@ -161,14 +165,37 @@ async def save_ai_config(
         from pycommerce.models.plugin_config import PluginConfigManager
         config_manager = PluginConfigManager()
         
-        # Save the provider configuration
-        config_manager.save_config(
-            f"ai_{provider_id}",
-            provider_fields,
-            str(tenant_obj.id)
-        )
-        
-        logger.info(f"Saved AI configuration for provider {provider_id} and tenant {tenant}")
+        # Handle the "all stores" case
+        if tenant == 'all':
+            # Get all tenants
+            tenants = tenant_manager.get_all()
+            
+            # Save configuration for each tenant
+            for tenant_obj in tenants:
+                config_manager.save_config(
+                    f"ai_{provider_id}",
+                    provider_fields,
+                    str(tenant_obj.id)
+                )
+            
+            logger.info(f"Saved AI configuration for provider {provider_id} for all tenants")
+        else:
+            # Get tenant object
+            tenant_obj = tenant_manager.get_by_slug(tenant)
+            if not tenant_obj:
+                raise HTTPException(
+                    status_code=404,
+                    detail=f"Store with slug '{tenant}' not found"
+                )
+            
+            # Save for single tenant
+            config_manager.save_config(
+                f"ai_{provider_id}",
+                provider_fields,
+                str(tenant_obj.id)
+            )
+            
+            logger.info(f"Saved AI configuration for provider {provider_id} and tenant {tenant}")
         
         # Redirect back to AI config page
         return RedirectResponse(
@@ -190,26 +217,41 @@ async def set_active_ai_provider(
 ):
     """Set the active AI provider for a tenant."""
     try:
-        # Get tenant object
-        tenant_obj = tenant_manager.get_by_slug(tenant)
-        if not tenant_obj:
-            raise HTTPException(
-                status_code=404,
-                detail=f"Store with slug '{tenant}' not found"
-            )
-            
         # Create a config manager
         from pycommerce.models.plugin_config import PluginConfigManager
         config_manager = PluginConfigManager()
         
-        # Save the active provider
-        config_manager.save_config(
-            "ai_active_provider",
-            {"provider": provider_id},
-            str(tenant_obj.id)
-        )
-        
-        logger.info(f"Set active AI provider to {provider_id} for tenant {tenant}")
+        # Handle the "all stores" case
+        if tenant == 'all':
+            # Get all tenants
+            tenants = tenant_manager.get_all()
+            
+            # Save active provider for each tenant
+            for tenant_obj in tenants:
+                config_manager.save_config(
+                    "ai_active_provider",
+                    {"provider": provider_id},
+                    str(tenant_obj.id)
+                )
+            
+            logger.info(f"Set active AI provider to {provider_id} for all tenants")
+        else:
+            # Get tenant object
+            tenant_obj = tenant_manager.get_by_slug(tenant)
+            if not tenant_obj:
+                raise HTTPException(
+                    status_code=404,
+                    detail=f"Store with slug '{tenant}' not found"
+                )
+                
+            # Save the active provider for single tenant
+            config_manager.save_config(
+                "ai_active_provider",
+                {"provider": provider_id},
+                str(tenant_obj.id)
+            )
+            
+            logger.info(f"Set active AI provider to {provider_id} for tenant {tenant}")
         
         # Redirect back to AI config page
         return RedirectResponse(
