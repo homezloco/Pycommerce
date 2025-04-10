@@ -9,3 +9,4 @@ from .order import Order, OrderStatus
 from .order_note import OrderNote
 from .order_item import OrderItem
 from .shipment import Shipment, ShipmentItem, ShipmentStatus
+from .return_request import ReturnRequest, ReturnItem, ReturnStatus, ReturnReason

@@ -1,0 +1,190 @@
+{% extends "admin/base_admin.html" %}
+
+{% block content %}
+<div class="container-fluid px-4">
+    <h1 class="mt-4">Create Return Request</h1>
+    <ol class="breadcrumb mb-4">
+        <li class="breadcrumb-item"><a href="/admin">Dashboard</a></li>
+        <li class="breadcrumb-item"><a href="/admin/orders?tenant={{ selected_tenant }}">Orders</a></li>
+        <li class="breadcrumb-item"><a href="/admin/orders/{{ order.id }}?tenant={{ selected_tenant }}">Order #{{ order.order_number }}</a></li>
+        <li class="breadcrumb-item active">Create Return</li>
+    </ol>
+    
+    {% if status_message %}
+    <div class="alert alert-{{ status_type }} alert-dismissible fade show" role="alert">
+        {{ status_message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {% endif %}
+    
+    <div class="card mb-4">
+        <div class="card-header">
+            <i class="fas fa-undo-alt me-1"></i>
+            Return Details
+        </div>
+        <div class="card-body">
+            <form method="post" action="/admin/orders/{{ order.id }}/create-return">
+                <input type="hidden" name="tenant" value="{{ selected_tenant }}">
+                
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <h5>Order Information</h5>
+                        <p><strong>Order Number:</strong> {{ order.order_number }}</p>
+                        <p><strong>Order Date:</strong> {{ order.created_at.strftime('%Y-%m-%d %H:%M') }}</p>
+                        <p><strong>Status:</strong> {{ order.status }}</p>
+                        <p><strong>Total:</strong> ${{ "%.2f"|format(order.total) }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h5>Customer Information</h5>
+                        <p><strong>Name:</strong> {{ order.customer_name }}</p>
+                        <p><strong>Email:</strong> {{ order.customer_email }}</p>
+                        <p><strong>Phone:</strong> {{ order.customer_phone or 'Not provided' }}</p>
+                    </div>
+                </div>
+                
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="reason" class="form-label">Return Reason</label>
+                            <select class="form-select" id="reason" name="reason" required>
+                                <option value="">Select a reason...</option>
+                                {% for reason in reason_options %}
+                                <option value="{{ reason }}">{{ reason }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="customer_comments" class="form-label">Customer Comments</label>
+                            <textarea class="form-control" id="customer_comments" name="customer_comments" rows="3" placeholder="Comments from the customer about the return"></textarea>
+                        </div>
+                    </div>
+                </div>
+                
+                <h5 class="mb-3">Select Items to Return</h5>
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th style="width: 50px;"><input type="checkbox" id="select-all"></th>
+                                <th>Product</th>
+                                <th>SKU</th>
+                                <th>Price</th>
+                                <th>Quantity</th>
+                                <th>Return Reason</th>
+                                <th>Condition</th>
+                                <th>Refund Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in order_items %}
+                            <tr>
+                                <td>
+                                    <input type="checkbox" name="item_{{ item.id }}" id="item_{{ item.id }}" class="item-checkbox">
+                                </td>
+                                <td>
+                                    {% if item.product %}
+                                    {{ item.product.name }}
+                                    {% else %}
+                                    Unknown Product
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if item.product %}
+                                    {{ item.product.sku }}
+                                    {% else %}
+                                    N/A
+                                    {% endif %}
+                                </td>
+                                <td>${{ "%.2f"|format(item.price) }}</td>
+                                <td>
+                                    <input type="number" name="quantity_{{ item.id }}" id="quantity_{{ item.id }}" class="form-control form-control-sm" min="1" max="{{ item.quantity }}" value="{{ item.quantity }}" disabled>
+                                </td>
+                                <td>
+                                    <select name="reason_{{ item.id }}" id="reason_{{ item.id }}" class="form-select form-select-sm" disabled>
+                                        <option value="">Use main reason</option>
+                                        {% for reason in reason_options %}
+                                        <option value="{{ reason }}">{{ reason }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </td>
+                                <td>
+                                    <select name="condition_{{ item.id }}" id="condition_{{ item.id }}" class="form-select form-select-sm" disabled>
+                                        <option value="New">New</option>
+                                        <option value="Used" selected>Used</option>
+                                        <option value="Damaged">Damaged</option>
+                                        <option value="Defective">Defective</option>
+                                    </select>
+                                </td>
+                                <td>
+                                    <div class="input-group input-group-sm">
+                                        <span class="input-group-text">$</span>
+                                        <input type="number" step="0.01" name="refund_{{ item.id }}" id="refund_{{ item.id }}" class="form-control form-control-sm" value="{{ "%.2f"|format(item.price) }}" disabled>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="mt-4">
+                    <button type="submit" class="btn btn-primary">Create Return Request</button>
+                    <a href="/admin/orders/{{ order.id }}?tenant={{ selected_tenant }}" class="btn btn-outline-secondary ms-2">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const selectAllCheckbox = document.getElementById('select-all');
+        const itemCheckboxes = document.querySelectorAll('.item-checkbox');
+        
+        // Handle select all checkbox
+        selectAllCheckbox.addEventListener('change', function() {
+            const isChecked = this.checked;
+            
+            itemCheckboxes.forEach(function(checkbox) {
+                checkbox.checked = isChecked;
+                toggleInputs(checkbox);
+            });
+        });
+        
+        // Handle individual item checkboxes
+        itemCheckboxes.forEach(function(checkbox) {
+            checkbox.addEventListener('change', function() {
+                toggleInputs(this);
+                
+                // Update select all checkbox state
+                selectAllCheckbox.checked = [...itemCheckboxes].every(cb => cb.checked);
+                selectAllCheckbox.indeterminate = !selectAllCheckbox.checked && [...itemCheckboxes].some(cb => cb.checked);
+            });
+        });
+        
+        function toggleInputs(checkbox) {
+            const itemId = checkbox.id.replace('item_', '');
+            const quantityInput = document.getElementById(`quantity_${itemId}`);
+            const reasonSelect = document.getElementById(`reason_${itemId}`);
+            const conditionSelect = document.getElementById(`condition_${itemId}`);
+            const refundInput = document.getElementById(`refund_${itemId}`);
+            
+            if (checkbox.checked) {
+                quantityInput.disabled = false;
+                reasonSelect.disabled = false;
+                conditionSelect.disabled = false;
+                refundInput.disabled = false;
+            } else {
+                quantityInput.disabled = true;
+                reasonSelect.disabled = true;
+                conditionSelect.disabled = true;
+                refundInput.disabled = true;
+            }
+        }
+    });
+</script>
+{% endblock %}
+{% endblock %}
