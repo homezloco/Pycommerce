@@ -27,6 +27,11 @@
                     <a href="/admin/orders/{{ order.id }}/fulfillment" class="btn btn-primary">
                         <i class="fas fa-truck me-1"></i> Fulfillment
                     </a>
+                    {% if order.status|string|lower not in ['cancelled', 'refunded'] %}
+                    <a href="/admin/orders/{{ order.id }}/create-return?tenant={{ selected_tenant }}" class="btn btn-outline-secondary ms-2">
+                        <i class="fas fa-undo-alt me-1"></i> Create Return
+                    </a>
+                    {% endif %}
                 </div>
             </div>
         </div>
