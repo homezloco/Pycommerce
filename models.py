@@ -46,9 +46,43 @@ class Tenant(db.Model):
     
     # Relationships
     products = relationship("Product", back_populates="tenant", cascade="all, delete-orphan")
+    categories = relationship("Category", back_populates="tenant", cascade="all, delete-orphan")
     
     def __repr__(self):
         return f"<Tenant {self.name}>"
+
+class Category(db.Model):
+    """Category model for products."""
+    __tablename__ = "categories"
+    
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    tenant_id = Column(String(36), ForeignKey("tenants.id"), nullable=False)
+    name = Column(String(100), nullable=False)
+    description = Column(String(500), nullable=True)
+    slug = Column(String(100), nullable=False)
+    parent_id = Column(String(36), ForeignKey("categories.id"), nullable=True)
+    active = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Relationships
+    tenant = relationship("Tenant", back_populates="categories")
+    parent = relationship("Category", remote_side=[id], backref="subcategories")
+    products = relationship("Product", secondary="product_categories", back_populates="category_objects")
+    
+    def __repr__(self):
+        return f"<Category {self.name}>"
+
+class ProductCategory(db.Model):
+    """Association table for products and categories."""
+    __tablename__ = "product_categories"
+    
+    product_id = Column(String(36), ForeignKey("products.id"), primary_key=True)
+    category_id = Column(String(36), ForeignKey("categories.id"), primary_key=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    
+    def __repr__(self):
+        return f"<ProductCategory {self.product_id}-{self.category_id}>"
 
 class Product(db.Model):
     """Product model."""
@@ -61,7 +95,7 @@ class Product(db.Model):
     price = Column(Float, nullable=False)
     sku = Column(String(100), nullable=False)
     stock = Column(Integer, default=0)
-    categories = Column(JSON, default=list)
+    categories = Column(JSON, default=list)  # Keep for backward compatibility
     active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -69,6 +103,7 @@ class Product(db.Model):
     # Relationships
     tenant = relationship("Tenant", back_populates="products")
     inventory_records = relationship("InventoryRecord", back_populates="product", cascade="all, delete-orphan")
+    category_objects = relationship("Category", secondary="product_categories", back_populates="products")
     
     def __repr__(self):
         return f"<Product {self.name}>"
