@@ -97,7 +97,8 @@ def create_test_orders(tenant_slug="tech", user_email="testuser@example.com", nu
         created_orders = []
         
         order_statuses = ["pending", "processing", "shipped", "delivered", "cancelled", "refunded"]
-        order_types = ["STANDARD", "EXPRESS", "INTERNATIONAL"]
+        # These are the exact valid enum values from the database
+        order_types = ["STANDARD", "EXPEDITED", "INTERNATIONAL"]
         
         for i in range(num_orders):
             # Create random order date within last 30 days
@@ -231,48 +232,23 @@ def create_test_orders(tenant_slug="tech", user_email="testuser@example.com", nu
                     }
                 )
             
-            # Check if the order_notes table has the author column
-            has_author_column = False
+            # Try to add a simple order note - only use the ID, order_id, and content fields
             try:
-                column_check = db.session.execute(
-                    text("SELECT column_name FROM information_schema.columns WHERE table_name = 'order_notes' AND column_name = 'author'")
-                ).fetchone()
-                has_author_column = column_check is not None
+                note_id = str(uuid.uuid4())
+                db.session.execute(
+                    text("""
+                        INSERT INTO order_notes (id, order_id, content)
+                        VALUES (:id, :order_id, :content)
+                    """),
+                    {
+                        "id": note_id,
+                        "order_id": order_id,
+                        "content": f"Test order note"
+                    }
+                )
+                logger.info(f"Added note to order {order_id}")
             except Exception as e:
-                logger.warning(f"Could not check order_notes schema: {e}")
-                
-            # Add a note based on schema
-            note_id = str(uuid.uuid4())
-            if has_author_column:
-                db.session.execute(
-                    text("""
-                        INSERT INTO order_notes (id, order_id, content, author, is_customer_visible, created_at)
-                        VALUES (:id, :order_id, :content, :author, :is_customer_visible, :created_at)
-                    """),
-                    {
-                        "id": note_id,
-                        "order_id": order_id,
-                        "content": f"Test note for {status} order",
-                        "author": "System",
-                        "is_customer_visible": False,
-                        "created_at": order_date
-                    }
-                )
-            else:
-                # Try without author column
-                db.session.execute(
-                    text("""
-                        INSERT INTO order_notes (id, order_id, content, is_customer_visible, created_at)
-                        VALUES (:id, :order_id, :content, :is_customer_visible, :created_at)
-                    """),
-                    {
-                        "id": note_id,
-                        "order_id": order_id,
-                        "content": f"Test note for {status} order",
-                        "is_customer_visible": False,
-                        "created_at": order_date
-                    }
-                )
+                logger.warning(f"Could not add note to order: {e}, but continuing with order creation")
             
             created_orders.append({
                 "id": order_id,
