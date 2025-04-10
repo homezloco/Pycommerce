@@ -55,7 +55,7 @@ def setup_routes(templates_instance: Jinja2Templates):
     @router.get("/admin/categories", response_class=HTMLResponse)
     async def categories_page(
         request: Request,
-        tenant: str = Query("default", description="Tenant slug"),
+        tenant: str = Query("tech", description="Tenant slug"),  # Default to tech tenant instead of default
         parent_id: Optional[str] = Query(None, description="Parent category ID to filter by")
     ):
         """
@@ -67,9 +67,18 @@ def setup_routes(templates_instance: Jinja2Templates):
             parent_id: Optional parent category ID to filter by
         """
         # Get current tenant
+        logger.info(f"Attempting to access categories for tenant: {tenant}")
         current_tenant = tenant_manager.get_tenant_by_slug(tenant)
         if not current_tenant:
-            return RedirectResponse(url="/admin/tenants")
+            # Instead of redirecting, log the issue and try to get the first tenant
+            logger.warning(f"Tenant with slug '{tenant}' not found, trying to find another tenant")
+            tenants = tenant_manager.get_all_tenants()
+            if tenants and len(tenants) > 0:
+                current_tenant = tenants[0]
+                logger.info(f"Using first available tenant: {current_tenant.name} ({current_tenant.slug})")
+            else:
+                logger.error("No tenants found in the system")
+                return RedirectResponse(url="/admin/tenants")
         
         # Initialize context
         context = {
