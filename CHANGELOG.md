@@ -38,6 +38,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Improved database query efficiency
 
 ### Fixed
+- [2025-04-10] Fixed CategoryManager SQLAlchemy session issues with eager loading for relationships
+- [2025-04-10] Fixed error handling in admin categories page for proper None value handling
+- [2025-04-10] Improved database query efficiency with optimized category subcategory counting
 - [2025-04-10] Fixed text visibility issues in AI configuration interface for dark mode
 - [2025-04-10] Fixed SVG image previews in media library to properly display vector graphics
 - [2025-04-10] Enhanced menu navigation with better organization and submenu structure
