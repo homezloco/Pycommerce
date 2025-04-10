@@ -1,0 +1,209 @@
+{% extends "base.html" %}
+
+{% block title %}{{ product.name }} - PyCommerce{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <!-- Breadcrumbs -->
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/">Home</a></li>
+            <li class="breadcrumb-item"><a href="/products">Products</a></li>
+            <li class="breadcrumb-item active" aria-current="page">{{ product.name }}</li>
+        </ol>
+    </nav>
+
+    <div class="row">
+        <!-- Product Images Column -->
+        <div class="col-md-6 mb-4">
+            {% if product.images and product.images|length > 0 %}
+                <div id="productCarousel" class="carousel slide" data-bs-ride="carousel">
+                    <div class="carousel-inner">
+                        {% for image in product.images %}
+                            <div class="carousel-item {% if loop.first %}active{% endif %}">
+                                <img src="{{ image }}" class="d-block w-100 img-fluid rounded" alt="{{ product.name }}">
+                            </div>
+                        {% endfor %}
+                    </div>
+                    {% if product.images|length > 1 %}
+                        <button class="carousel-control-prev" type="button" data-bs-target="#productCarousel" data-bs-slide="prev">
+                            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                            <span class="visually-hidden">Previous</span>
+                        </button>
+                        <button class="carousel-control-next" type="button" data-bs-target="#productCarousel" data-bs-slide="next">
+                            <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                            <span class="visually-hidden">Next</span>
+                        </button>
+                    {% endif %}
+                </div>
+            {% else %}
+                <div class="bg-light d-flex align-items-center justify-content-center rounded" style="height: 400px;">
+                    <div class="text-center text-muted">
+                        <i class="bi bi-image fs-1"></i>
+                        <p>No image available</p>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Product Details Column -->
+        <div class="col-md-6">
+            <h1 class="mb-3">{{ product.name }}</h1>
+            
+            {% if product.categories %}
+                <div class="mb-3">
+                    {% for category in product.categories %}
+                        <span class="badge bg-secondary me-1">{{ category }}</span>
+                    {% endfor %}
+                </div>
+            {% endif %}
+            
+            <div class="mb-3">
+                <h2 class="fs-4 fw-bold text-primary">${{ product.price | round(2) }}</h2>
+            </div>
+
+            <div class="mb-4">
+                <p class="text-muted">SKU: {{ product.sku }}</p>
+                <p class="{% if product.stock > 0 %}text-success{% else %}text-danger{% endif %}">
+                    {% if product.stock > 0 %}
+                        <i class="bi bi-check-circle-fill"></i> In Stock ({{ product.stock }} available)
+                    {% else %}
+                        <i class="bi bi-x-circle-fill"></i> Out of Stock
+                    {% endif %}
+                </p>
+            </div>
+
+            <div class="mb-4">
+                {% if product.description %}
+                    <h3 class="fs-5 mb-2">Description</h3>
+                    <div>{{ product.description }}</div>
+                {% else %}
+                    <p class="text-muted">No description available</p>
+                {% endif %}
+            </div>
+
+            <!-- Add to Cart Form -->
+            <form action="/products/add-to-cart" method="post" class="mb-4">
+                <input type="hidden" name="product_id" value="{{ product.id }}">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <div class="input-group">
+                            <button type="button" class="btn btn-outline-secondary" onclick="decreaseQuantity()">-</button>
+                            <input type="number" class="form-control text-center" id="quantity" name="quantity" value="1" min="1" max="{{ product.stock }}" {% if product.stock <= 0 %}disabled{% endif %}>
+                            <button type="button" class="btn btn-outline-secondary" onclick="increaseQuantity()">+</button>
+                        </div>
+                    </div>
+                    <div class="col-md-8">
+                        <button type="submit" class="btn btn-primary w-100" {% if product.stock <= 0 %}disabled{% endif %}>
+                            <i class="bi bi-cart-plus"></i> Add to Cart
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Related Products Section -->
+    <div id="related-products" class="mt-5">
+        <h2 class="mb-4">Related Products</h2>
+        <div class="text-center" id="related-products-loading">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4" id="related-products-container">
+            <!-- Related products will be loaded here via JavaScript -->
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Quantity adjustment functions
+    function increaseQuantity() {
+        const quantityInput = document.getElementById('quantity');
+        const maxStock = {{ product.stock }};
+        const currentValue = parseInt(quantityInput.value);
+        if (currentValue < maxStock) {
+            quantityInput.value = currentValue + 1;
+        }
+    }
+
+    function decreaseQuantity() {
+        const quantityInput = document.getElementById('quantity');
+        const currentValue = parseInt(quantityInput.value);
+        if (currentValue > 1) {
+            quantityInput.value = currentValue - 1;
+        }
+    }
+
+    // Function to get and display related products
+    async function loadRelatedProducts() {
+        try {
+            const productId = "{{ product.id }}";
+            {% if tenant_id %}
+            const tenantId = "{{ tenant_id }}";
+            const response = await fetch(`/api/recommendations/related/${productId}?tenant_id=${tenantId}`);
+            {% else %}
+            const response = await fetch(`/api/recommendations/related/${productId}`);
+            {% endif %}
+            
+            if (!response.ok) {
+                throw new Error(`Error: ${response.status}`);
+            }
+            
+            const data = await response.json();
+            const container = document.getElementById('related-products-container');
+            
+            // Hide loading spinner
+            document.getElementById('related-products-loading').style.display = 'none';
+            
+            if (data.products.length === 0) {
+                container.innerHTML = '<div class="col-12 text-center"><p>No related products found</p></div>';
+                return;
+            }
+            
+            // Build HTML for related products
+            let html = '';
+            data.products.forEach(product => {
+                html += `
+                    <div class="col">
+                        <div class="card h-100">
+                            <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 200px;">
+                                ${product.images && product.images.length > 0 
+                                    ? `<img src="${product.images[0]}" class="img-fluid" alt="${product.name}" style="max-height: 100%;">`
+                                    : `<div class="text-center text-muted">
+                                        <i class="bi bi-image fs-1"></i>
+                                        <p>No image</p>
+                                      </div>`
+                                }
+                            </div>
+                            <div class="card-body">
+                                <h5 class="card-title">${product.name}</h5>
+                                <p class="card-text text-primary fw-bold">$${product.price.toFixed(2)}</p>
+                                <p class="card-text small text-muted">SKU: ${product.sku}</p>
+                            </div>
+                            <div class="card-footer">
+                                <div class="d-grid">
+                                    <a href="/products/${product.id}" class="btn btn-outline-primary">View Product</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        } catch (error) {
+            console.error("Error loading related products:", error);
+            document.getElementById('related-products-loading').style.display = 'none';
+            document.getElementById('related-products-container').innerHTML = 
+                '<div class="col-12 text-center"><p>Failed to load related products</p></div>';
+        }
+    }
+
+    // Load related products when the page loads
+    document.addEventListener('DOMContentLoaded', loadRelatedProducts);
+</script>
+{% endblock %}

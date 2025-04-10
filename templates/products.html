@@ -74,7 +74,7 @@
         </div>
     </div>
 
-    <div class="row row-cols-1 row-cols-md-3 g-4">
+    <div class="row row-cols-1 row-cols-md-3 g-4 mb-5">
         {% for product in products %}
         <div class="col">
             <div class="card product-card shadow-sm h-100">
@@ -95,11 +95,14 @@
                     {% endif %}
                 </div>
                 <div class="card-footer bg-transparent">
-                    <form method="post" action="/cart/add" class="d-flex">
-                        <input type="hidden" name="product_id" value="{{ product.id }}">
-                        <input type="number" name="quantity" value="1" min="1" max="100" class="form-control me-2" style="width: 70px;">
-                        <button type="submit" class="btn btn-outline-primary flex-grow-1">Add to Cart</button>
-                    </form>
+                    <div class="d-flex gap-2">
+                        <a href="/products/{{ product.id }}" class="btn btn-outline-secondary flex-grow-1">View Details</a>
+                        <form method="post" action="/cart/add" class="d-flex flex-grow-1">
+                            <input type="hidden" name="product_id" value="{{ product.id }}">
+                            <input type="hidden" name="quantity" value="1">
+                            <button type="submit" class="btn btn-outline-primary w-100">Add to Cart</button>
+                        </form>
+                    </div>
                 </div>
             </div>
         </div>
@@ -116,6 +119,19 @@
             </div>
         </div>
         {% endfor %}
+    </div>
+    
+    <!-- Trending Products Section -->
+    <div id="trending-products" class="mt-5 mb-5">
+        <h2 class="mb-4">Trending Products</h2>
+        <div class="text-center" id="trending-products-loading">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+        <div class="row row-cols-1 row-cols-md-4 g-4" id="trending-products-container">
+            <!-- Trending products will be loaded here via JavaScript -->
+        </div>
     </div>
 </div>
 {% endblock %}

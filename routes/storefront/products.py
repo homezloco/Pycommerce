@@ -12,6 +12,7 @@ from fastapi.templating import Jinja2Templates
 from pycommerce.models.tenant import TenantManager
 from pycommerce.models.product import ProductManager
 from pycommerce.models.cart import CartManager
+from pycommerce.services.recommendation import RecommendationService
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -132,9 +133,15 @@ async def products(
 async def product_detail(request: Request, product_id: str):
     """Product detail page."""
     product_data = None
+    tenant_id = None
+    
     try:
         product = product_manager.get(product_id)
         if product:
+            # If the product has a tenant, store the tenant ID for recommendations
+            if hasattr(product, 'metadata') and 'tenant_id' in product.metadata:
+                tenant_id = product.metadata.get('tenant_id')
+                
             product_data = {
                 "id": str(product.id),
                 "name": product.name,
@@ -166,7 +173,8 @@ async def product_detail(request: Request, product_id: str):
         {
             "request": request, 
             "product": product_data,
-            "cart_item_count": cart_item_count
+            "cart_item_count": cart_item_count,
+            "tenant_id": tenant_id
         }
     )
 
