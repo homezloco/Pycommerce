@@ -62,11 +62,11 @@
             </div>
             
             <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4 mb-4">
-                {% for item in media %}
+                {% for item in media_files %}
                 <div class="col">
                     <div class="card h-100">
                         {% if item.file_type == 'image' %}
-                        <img src="{{ item.file_url }}" class="card-img-top" alt="{{ item.alt_text or item.name }}" style="height: 200px; object-fit: cover;">
+                        <img src="{{ item.url }}" class="card-img-top" alt="{{ item.alt_text or item.file_name }}" style="height: 200px; object-fit: cover;">
                         {% elif item.file_type == 'video' %}
                         <div class="card-img-top bg-dark d-flex align-items-center justify-content-center" style="height: 200px;">
                             <i class="bi bi-film text-light" style="font-size: 3rem;"></i>
