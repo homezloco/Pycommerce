@@ -88,6 +88,19 @@
                                 {{ (item.file_size / 1024) | round(1) }} KB · 
                                 {{ item.file_type }}
                                 {% if item.is_ai_generated %}<span class="badge bg-primary ms-1">AI</span>{% endif %}
+                                {% if item.meta_data and item.meta_data.sharing_level %}
+                                    {% if item.meta_data.sharing_level == "store" %}
+                                        <span class="badge bg-secondary ms-1" title="Shared with this store only">Store</span>
+                                    {% elif item.meta_data.sharing_level == "my_stores" %}
+                                        <span class="badge bg-info ms-1" title="Shared with all your stores">My Stores</span>
+                                    {% elif item.meta_data.sharing_level == "community" %}
+                                        <span class="badge bg-success ms-1" title="Shared with PyCommerce community">Community</span>
+                                    {% endif %}
+                                {% elif item.is_public %}
+                                    <span class="badge bg-success ms-1" title="Shared with PyCommerce community">Community</span>
+                                {% else %}
+                                    <span class="badge bg-secondary ms-1" title="Shared with this store only">Store</span>
+                                {% endif %}
                             </p>
                         </div>
                         <div class="card-footer d-flex justify-content-between">

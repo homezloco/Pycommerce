@@ -124,7 +124,7 @@ class MediaService:
                 "description": description,
                 "meta_data": metadata or {},
                 "is_ai_generated": False,
-                "is_public": True
+                "is_public": is_public
             }
             
             media = self.media_manager.create(media_data)
@@ -142,7 +142,8 @@ class MediaService:
         quality: str = "standard",
         alt_text: Optional[str] = None,
         description: Optional[str] = None,
-        metadata: Optional[Dict[str, Any]] = None
+        metadata: Optional[Dict[str, Any]] = None,
+        is_public: bool = False
     ) -> Optional[Media]:
         """
         Generate an image using OpenAI's DALL-E and create a media record.
@@ -229,7 +230,7 @@ class MediaService:
                     **(metadata or {})
                 },
                 "is_ai_generated": True,
-                "is_public": True
+                "is_public": is_public
             }
             
             media = self.media_manager.create(media_data)
