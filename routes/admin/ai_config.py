@@ -141,6 +141,131 @@ async def ai_config_page(
         }
     )
 
+@router.get("/ai-config/configure/{provider_id}", response_class=HTMLResponse)
+async def ai_config_configure_page(
+    request: Request,
+    provider_id: str,
+    tenant: Optional[str] = None,
+    status_message: Optional[str] = None,
+    status_type: str = "info"
+):
+    """Admin page for configuring a specific AI provider."""
+    # Get tenant from query parameters or session
+    selected_tenant_slug = tenant or request.session.get("selected_tenant")
+    
+    # Default to 'all' if no tenant is selected
+    if not selected_tenant_slug:
+        selected_tenant_slug = 'all'
+    
+    # Store the selected tenant in session for future requests
+    request.session["selected_tenant"] = selected_tenant_slug
+    
+    # Initialize tenant object
+    tenant_obj = None
+    
+    # Handle the "all stores" case
+    if selected_tenant_slug == 'all':
+        # Create a dummy tenant object with minimal required properties
+        class DummyTenant:
+            def __init__(self):
+                self.id = None
+                self.name = "All Stores"
+                self.slug = "all"
+                self.settings = {}
+        
+        tenant_obj = DummyTenant()
+    else:
+        # Get actual tenant object
+        tenant_obj = tenant_manager.get_by_slug(selected_tenant_slug)
+        if not tenant_obj:
+            return RedirectResponse(
+                url="/admin/dashboard?status_message=Store+not+found&status_type=error", 
+                status_code=303
+            )
+    
+    # Get AI settings
+    ai_settings = tenant_obj.settings.get('ai_settings', {}) if tenant_obj.settings else {}
+    
+    # Check if OpenAI API key is available
+    has_openai_key = bool(os.environ.get("OPENAI_API_KEY"))
+    
+    # Get all tenants for the sidebar
+    tenants = tenant_manager.get_all()
+    
+    # Available models
+    openai_models = [
+        "gpt-4-turbo",
+        "gpt-4",
+        "gpt-3.5-turbo",
+    ]
+    
+    openai_image_models = [
+        "dall-e-3",
+        "dall-e-2",
+    ]
+    
+    # Import AI providers configuration
+    from pycommerce.plugins.ai.config import get_ai_providers
+    
+    # Get AI providers from plugin configuration
+    ai_providers = get_ai_providers()
+    
+    # Add icons for Bootstrap display
+    for provider in ai_providers:
+        if provider['id'] == 'openai':
+            provider['icon'] = 'bi-cpu'
+            provider['color'] = 'success'
+        elif provider['id'] == 'gemini':
+            provider['icon'] = 'bi-google'
+            provider['color'] = 'primary'
+        elif provider['id'] == 'deepseek':
+            provider['icon'] = 'bi-braces'
+            provider['color'] = 'info'
+        elif provider['id'] == 'openrouter':
+            provider['icon'] = 'bi-diagram-3'
+            provider['color'] = 'warning'
+        else:
+            provider['icon'] = 'bi-robot'
+            provider['color'] = 'secondary'
+    
+    # Get active provider from settings
+    active_provider = ai_settings.get('provider_id', 'openai')
+    
+    # Use the requested provider from URL
+    selected_provider_id = provider_id
+    selected_provider = next((p for p in ai_providers if p['id'] == selected_provider_id), None)
+    
+    if not selected_provider:
+        # If provider not found, redirect to the default config page
+        return RedirectResponse(
+            url=f"/admin/ai-config?tenant={selected_tenant_slug}&status_message=Selected+AI+provider+not+found&status_type=error", 
+            status_code=303
+        )
+    
+    # Get field values for selected provider
+    field_values = ai_settings.get(selected_provider_id, {})
+    
+    return templates.TemplateResponse(
+        "admin/ai_config.html",
+        {
+            "request": request,
+            "selected_tenant": selected_tenant_slug,
+            "tenant": tenant_obj,
+            "tenants": tenants,
+            "active_page": "ai-config",
+            "ai_settings": ai_settings,
+            "has_openai_key": has_openai_key,
+            "openai_models": openai_models,
+            "openai_image_models": openai_image_models,
+            "ai_providers": ai_providers,
+            "active_provider": active_provider,
+            "selected_provider": selected_provider,
+            "field_values": field_values,
+            "status_message": status_message,
+            "status_type": status_type
+        }
+    )
+
 @router.post("/ai-config/save", response_class=RedirectResponse)
 async def save_ai_config(
     request: Request,
@@ -151,6 +276,9 @@ async def save_ai_config(
     try:
         # Get form data for the selected provider
         form_data = dict(await request.form())
+        
+        # Import AI providers configuration
+        from pycommerce.plugins.ai.config import get_ai_providers
         
         # Get the provider configuration fields and filter form data to include only fields for this provider
         provider_fields = {}
