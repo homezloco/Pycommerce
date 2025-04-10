@@ -35,9 +35,13 @@ uvicorn_process = None
 # Flag to track if a server start is in progress
 _server_start_in_progress = False
 
+# Flag to indicate we are processing a categories page request
+# This prevents any process cleanup operations during categories requests
+_processing_categories_request = False
+
 def start_uvicorn_server():
     """Start the uvicorn server in a separate process."""
-    global uvicorn_process, _server_start_in_progress
+    global uvicorn_process, _server_start_in_progress, _processing_categories_request
     
     # If we're already in the process of starting a server, return immediately
     # This prevents multiple simultaneous start attempts from different requests
@@ -78,62 +82,66 @@ def start_uvicorn_server():
         
         # Clean up - try to find any existing uvicorn processes and terminate them
         # BUT only if they are stuck or not working - don't terminate working servers!
-        try:
-            import psutil
-            current_pid = os.getpid()
-            
-            # First try to make a health check request before doing any cleanup
-            # If a server is already running and working, don't terminate it!
+        # ALSO, completely skip this for categories page requests
+        if _processing_categories_request:
+            logger.info("Skipping process cleanup because we're processing a categories page request")
+        else:
             try:
-                response = httpx.get(f"{UVICORN_SERVER}/api/health", timeout=2.0)
-                if response.status_code == 200:
-                    logger.info("Found a working uvicorn server, not terminating it")
-                    return
-            except Exception:
-                # Only proceed with cleanup if the health check failed
-                pass
+                import psutil
+                current_pid = os.getpid()
                 
-            # Get all uvicorn processes using our port
-            uvicorn_procs = []
-            for proc in psutil.process_iter(['pid', 'name', 'cmdline']):
+                # First try to make a health check request before doing any cleanup
+                # If a server is already running and working, don't terminate it!
                 try:
-                    if proc.info['name'] and 'python' in proc.info['name'].lower():
-                        cmdline = proc.info.get('cmdline', [])
-                        if cmdline and 'uvicorn' in ' '.join(cmdline) and str(UVICORN_PORT) in ' '.join(cmdline):
-                            if proc.pid != current_pid:
-                                uvicorn_procs.append(proc)
-                except (psutil.NoSuchProcess, psutil.AccessDenied):
+                    response = httpx.get(f"{UVICORN_SERVER}/api/health", timeout=2.0)
+                    if response.status_code == 200:
+                        logger.info("Found a working uvicorn server, not terminating it")
+                        return
+                except Exception:
+                    # Only proceed with cleanup if the health check failed
                     pass
-            
-            # We only terminate processes if the server is not responding
-            # This keeps a working server running
-            if not uvicorn_procs:
-                logger.info("No existing uvicorn processes found")
-            else:
-                logger.warning(f"Found {len(uvicorn_procs)} non-responsive uvicorn processes")
-                
-                # Terminate all found processes in order
-                for proc in uvicorn_procs:
-                    try:
-                        logger.warning(f"Terminating non-responsive uvicorn process (PID: {proc.pid})")
-                        proc.terminate()
-                    except (psutil.NoSuchProcess, psutil.AccessDenied):
-                        pass
-                
-                # Wait for termination to complete and kill any remaining that don't respond
-                time.sleep(1)  # Give the processes a chance to terminate
-                for proc in uvicorn_procs:
-                    try:
-                        if proc.is_running():
-                            logger.warning(f"Process {proc.pid} didn't terminate, using stronger measures")
-                            proc.kill()
-                    except (psutil.NoSuchProcess, psutil.AccessDenied):
-                        pass
                     
-        except ImportError:
-            logger.warning("psutil not available, skipping uvicorn process cleanup")
-        except Exception as e:
-            logger.warning(f"Error trying to clean up uvicorn processes: {e}")
+                # Get all uvicorn processes using our port
+                uvicorn_procs = []
+                for proc in psutil.process_iter(['pid', 'name', 'cmdline']):
+                    try:
+                        if proc.info['name'] and 'python' in proc.info['name'].lower():
+                            cmdline = proc.info.get('cmdline', [])
+                            if cmdline and 'uvicorn' in ' '.join(cmdline) and str(UVICORN_PORT) in ' '.join(cmdline):
+                                if proc.pid != current_pid:
+                                    uvicorn_procs.append(proc)
+                    except (psutil.NoSuchProcess, psutil.AccessDenied):
+                        pass
+                
+                # We only terminate processes if the server is not responding
+                # This keeps a working server running
+                if not uvicorn_procs:
+                    logger.info("No existing uvicorn processes found")
+                else:
+                    logger.warning(f"Found {len(uvicorn_procs)} non-responsive uvicorn processes")
+                    
+                    # Terminate all found processes in order
+                    for proc in uvicorn_procs:
+                        try:
+                            logger.warning(f"Terminating non-responsive uvicorn process (PID: {proc.pid})")
+                            proc.terminate()
+                        except (psutil.NoSuchProcess, psutil.AccessDenied):
+                            pass
+                    
+                    # Wait for termination to complete and kill any remaining that don't respond
+                    time.sleep(1)  # Give the processes a chance to terminate
+                    for proc in uvicorn_procs:
+                        try:
+                            if proc.is_running():
+                                logger.warning(f"Process {proc.pid} didn't terminate, using stronger measures")
+                                proc.kill()
+                        except (psutil.NoSuchProcess, psutil.AccessDenied):
+                            pass
+                        
+            except ImportError:
+                logger.warning("psutil not available, skipping uvicorn process cleanup")
+            except Exception as e:
+                logger.warning(f"Error trying to clean up uvicorn processes: {e}")
     
         # Start new uvicorn process with a small delay to ensure port is free
         time.sleep(1)
@@ -243,8 +251,73 @@ def proxy_to_uvicorn(environ, start_response):
     # Special handling for admin/categories route - don't restart server if it's already running
     # This helps prevent the common issue where accessing the categories page causes server crashes
     is_categories_request = path and '/admin/categories' in path
-    if is_categories_request:
-        logger.info("Categories page requested, being extra careful with server status")
+    is_market_analysis_request = path and '/admin/market-analysis' in path
+
+    # Apply the same protection for categories and market analysis pages
+    # These routes are particularly sensitive to server restarts
+    if is_categories_request or is_market_analysis_request:
+        # Set the global flag to prevent any process cleanup in other functions
+        global _processing_categories_request
+        _processing_categories_request = True
+        
+        route_name = "Categories" if is_categories_request else "Market Analysis"
+        logger.info(f"{route_name} page requested, using special handling to prevent server crashes")
+        
+        # NEVER attempt to kill existing processes for these routes
+        # Instead, wait for the existing server to respond or create a friendly error
+        try:
+            # Add more retries and longer timeout for these sensitive routes
+            server_available = False
+            for retry in range(3):  # Try up to 3 times
+                try:
+                    response = httpx.get(f"{UVICORN_SERVER}/api/health", timeout=3.0)
+                    if response.status_code == 200:
+                        # If we can reach the health endpoint, server is working - proceed normally
+                        logger.info(f"Server is responsive for {route_name} page request (retry {retry})")
+                        server_available = True
+                        break
+                    else:
+                        # Health endpoint returned non-200 - but don't give up immediately
+                        logger.warning(f"Health endpoint returned status {response.status_code} (retry {retry})")
+                        time.sleep(1)  # Wait a bit before retry
+                except Exception as retry_error:
+                    logger.warning(f"Health check retry {retry} failed: {retry_error}")
+                    time.sleep(1)  # Wait before retry
+                    
+            if not server_available:
+                # After all retries, if we still can't reach the server, show a friendly error
+                logger.warning(f"Server is not responding for {route_name} page after multiple retries")
+                start_response('503 Service Unavailable', [('Content-Type', 'text/html')])
+                return [f'''
+                <html><body>
+                    <h1>Server is temporarily unavailable</h1>
+                    <p>The server is still starting up. Please try again in a few seconds.</p>
+                    <p><a href="/admin/dashboard">Return to Dashboard</a></p>
+                    <script>
+                        // Auto-refresh after 5 seconds
+                        setTimeout(function() {{ 
+                            window.location.reload(); 
+                        }}, 5000);
+                    </script>
+                </body></html>
+                '''.encode('utf-8')]
+        except Exception as e:
+            # Cannot reach health endpoint - server might be starting up
+            logger.warning(f"Health check failed for {route_name} page: {e}")
+            start_response('503 Service Unavailable', [('Content-Type', 'text/html')])
+            return [f'''
+            <html><body>
+                <h1>Server is temporarily unavailable</h1>
+                <p>The server is in the process of starting up. Please try again in a few seconds.</p>
+                <p><a href="/admin/dashboard">Return to Dashboard</a></p>
+                <script>
+                    // Auto-refresh after 5 seconds
+                    setTimeout(function() {{ 
+                        window.location.reload(); 
+                    }}, 5000);
+                </script>
+            </body></html>
+            '''.encode('utf-8')]
     
     # Make sure uvicorn is running - we'll only check health URL once
     try:
@@ -263,18 +336,39 @@ def proxy_to_uvicorn(environ, start_response):
             # Do one final check if the server started
             try:
                 if not is_uvicorn_running():
-                    # For categories page requests, try to be more lenient - it might still be starting up
-                    if is_categories_request:
-                        logger.warning("Categories page requested but server not fully ready. Waiting longer...")
+                    # For categories or market analysis page requests, try to be more lenient - it might still be starting up
+                    if is_categories_request or is_market_analysis_request:
+                        route_name = "Categories" if is_categories_request else "Market Analysis"
+                        logger.warning(f"{route_name} page requested but server not fully ready. Waiting longer...")
                         time.sleep(3)  # Give it a bit more time
+                        
+                        # Try one more health check
                         if not is_uvicorn_running():
-                            logger.error("Could not start uvicorn server after extended wait for categories page")
-                            start_response('500 Internal Server Error', [('Content-Type', 'text/plain')])
-                            return [b'Failed to start uvicorn server for categories page - please try again in a moment']
+                            logger.error(f"Could not start uvicorn server after extended wait for {route_name} page")
+                            start_response('503 Service Unavailable', [('Content-Type', 'text/html')])
+                            return [f'''
+                            <html><body>
+                                <h1>Server is starting up</h1>
+                                <p>The server is still initializing. Please wait a moment and try again.</p>
+                                <p><a href="/admin/dashboard">Return to Dashboard</a></p>
+                                <script>
+                                    // Auto-refresh after 5 seconds
+                                    setTimeout(function() {{ 
+                                        window.location.reload(); 
+                                    }}, 5000);
+                                </script>
+                            </body></html>
+                            '''.encode('utf-8')]
                     else:
                         logger.error("Could not start uvicorn server after attempt")
-                        start_response('500 Internal Server Error', [('Content-Type', 'text/plain')])
-                        return [b'Failed to start uvicorn server']
+                        start_response('500 Internal Server Error', [('Content-Type', 'text/html')])
+                        return [b'''
+                        <html><body>
+                            <h1>Server Error</h1>
+                            <p>The server could not be started. Please try again in a few moments.</p>
+                            <p><a href="/">Return to Home</a></p>
+                        </body></html>
+                        ''']
             except Exception as e:
                 logger.error(f"Final health check failed: {e}")
                 start_response('500 Internal Server Error', [('Content-Type', 'text/plain')])
