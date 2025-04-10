@@ -1,0 +1,32 @@
+INFO:asgi_wsgi_app:Uvicorn: WARNING:pycommerce.models.category:Flask app does not have app_context attribute
+INFO:asgi_wsgi_app:Uvicorn: ERROR:pycommerce.models.category:Error running function in FastAPI context: Working outside of application context.
+INFO:asgi_wsgi_app:Uvicorn: 
+INFO:asgi_wsgi_app:Uvicorn: This typically means that you attempted to use functionality that needed
+INFO:asgi_wsgi_app:Uvicorn: the current application. To solve this, set up an application context
+INFO:asgi_wsgi_app:Uvicorn: with app.app_context(). See the documentation for more information.
+INFO:asgi_wsgi_app:Uvicorn: ERROR:routes.admin.categories:Error fetching categories: 'NoneType' object is not iterable
+INFO:asgi_wsgi_app:Uvicorn: INFO:     127.0.0.1:51330 - "GET /admin/categories HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET http://127.0.0.1:8000/admin/categories "HTTP/1.1 200 OK"
+INFO:asgi_wsgi_app:Uvicorn: INFO:     127.0.0.1:51338 - "GET /api/health HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET http://127.0.0.1:8000/api/health "HTTP/1.1 200 OK"
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.models.tenant:Retrieved tenant by slug tech with theme settings: {}
+INFO:asgi_wsgi_app:Uvicorn: INFO:     127.0.0.1:51350 - "GET /admin/change-store?tenant=tech HTTP/1.1" 303 See Other
+INFO:httpx:HTTP Request: GET http://127.0.0.1:8000/admin/change-store?tenant=tech "HTTP/1.1 303 See Other"
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.models.tenant:Retrieved tenant by slug tech with theme settings: {}
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.models.product:Querying database for products of tenant: ea6c4bc0-d5aa-4d4f-862c-5d47e7c3f410
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.models.product:Found 6 products for tenant ea6c4bc0-d5aa-4d4f-862c-5d47e7c3f410 in database
+INFO:asgi_wsgi_app:Uvicorn: INFO:     127.0.0.1:51350 - "GET /admin/dashboard?status_message=Store+changed+successfully&status_type=success HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET http://127.0.0.1:8000/admin/dashboard?status_message=Store+changed+successfully&status_type=success "HTTP/1.1 200 OK"
+INFO:asgi_wsgi_app:Uvicorn: INFO:     127.0.0.1:38280 - "GET /api/health HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET http://127.0.0.1:8000/api/health "HTTP/1.1 200 OK"
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.admin.categories:Attempting to access categories for tenant: tech
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.models.tenant:Retrieved tenant by slug tech with theme settings: {}
+INFO:asgi_wsgi_app:Uvicorn: WARNING:pycommerce.models.category:Flask app does not have app_context attribute
+INFO:asgi_wsgi_app:Uvicorn: ERROR:pycommerce.models.category:Error running function in FastAPI context: Working outside of application context.
+INFO:asgi_wsgi_app:Uvicorn: 
+INFO:asgi_wsgi_app:Uvicorn: This typically means that you attempted to use functionality that needed
+INFO:asgi_wsgi_app:Uvicorn: the current application. To solve this, set up an application context
+INFO:asgi_wsgi_app:Uvicorn: with app.app_context(). See the documentation for more information.
+INFO:asgi_wsgi_app:Uvicorn: ERROR:routes.admin.categories:Error fetching categories: 'NoneType' object is not iterable
+INFO:asgi_wsgi_app:Uvicorn: INFO:     127.0.0.1:38296 - "GET /admin/categories HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET http://127.0.0.1:8000/admin/categories "HTTP/1.1 200 OK"
