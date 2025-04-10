@@ -139,7 +139,8 @@ async def returns_list(
                 },
                 "status_message": status_message,
                 "status_type": status_type,
-                "cart_item_count": request.session.get("cart_item_count", 0)
+                "cart_item_count": request.session.get("cart_item_count", 0),
+                "active_page": "returns"  # For sidebar highlighting
             }
         )
     
@@ -242,7 +243,8 @@ async def return_detail(
                 "reason_options": reason_options,
                 "status_message": status_message,
                 "status_type": status_type,
-                "cart_item_count": request.session.get("cart_item_count", 0)
+                "cart_item_count": request.session.get("cart_item_count", 0),
+                "active_page": "returns"  # For sidebar highlighting
             }
         )
     
@@ -382,7 +384,8 @@ async def create_return_form(
                 "reason_options": reason_options,
                 "status_message": status_message,
                 "status_type": status_type,
-                "cart_item_count": request.session.get("cart_item_count", 0)
+                "cart_item_count": request.session.get("cart_item_count", 0),
+                "active_page": "orders"  # Use orders for sidebar since this is initiated from the order page
             }
         )
     
