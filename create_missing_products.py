@@ -9,23 +9,30 @@ proper rendering of the market analysis dashboard.
 import logging
 import os
 import sys
+import uuid
 from typing import Dict, List, Optional, Set, Tuple
+from datetime import datetime
 
 # Set up logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-# Add the current directory to the path so Python can find the pycommerce package
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+# Import Flask app context
+from app import app, db
+from models import Tenant, Product
 
-from managers import ProductManager, TenantManager
-from pycommerce.models.category import CategoryManager
-from pycommerce.models.order import OrderManager, Order, OrderItem
-from models import Product
+# Import from pycommerce
+from pycommerce.models.category import CategoryManager, Category
+from pycommerce.models.order import Order, OrderItem
 from pycommerce.core.db import init_db
 
+# Import managers but with alternative names to avoid conflicts
+from managers import ProductManager as AppProductManager
+from managers import TenantManager as AppTenantManager
+from pycommerce.models.order import OrderManager as PyOrderManager
 
-def extract_missing_product_ids(product_manager: ProductManager, order_manager: OrderManager) -> Dict[str, List[OrderItem]]:
+
+def extract_missing_product_ids(product_manager: AppProductManager, order_manager: PyOrderManager) -> Dict[str, List[OrderItem]]:
     """
     Extract product IDs from orders that don't exist in the product manager.
     
@@ -116,9 +123,9 @@ def infer_product_details(product_id: str, items: List[OrderItem]) -> Tuple[str,
 
 
 def create_missing_products(
-    product_manager: ProductManager, 
+    product_manager: AppProductManager, 
     category_manager: CategoryManager,
-    tenant_manager: TenantManager,
+    tenant_manager: AppTenantManager,
     missing_products: Dict[str, List[OrderItem]]
 ) -> int:
     """
@@ -219,31 +226,35 @@ def main():
         # Initialize database
         init_db()
         
-        # Initialize managers
-        product_manager = ProductManager()
-        order_manager = OrderManager()
-        category_manager = CategoryManager()
-        tenant_manager = TenantManager()
-        
-        # Find missing products
-        missing_products = extract_missing_product_ids(product_manager, order_manager)
-        
-        if not missing_products:
-            logger.info("No missing products found!")
-            return
+        # Use Flask app context
+        with app.app_context():
+            # Initialize managers
+            product_manager = AppProductManager()
+            order_manager = PyOrderManager()
+            category_manager = CategoryManager()
+            tenant_manager = AppTenantManager()
             
-        # Create missing products
-        created_count = create_missing_products(
-            product_manager, 
-            category_manager,
-            tenant_manager,
-            missing_products
-        )
-        
-        logger.info(f"Created {created_count} missing products successfully!")
+            # Find missing products
+            missing_products = extract_missing_product_ids(product_manager, order_manager)
+            
+            if not missing_products:
+                logger.info("No missing products found!")
+                return
+                
+            # Create missing products
+            created_count = create_missing_products(
+                product_manager, 
+                category_manager,
+                tenant_manager,
+                missing_products
+            )
+            
+            logger.info(f"Created {created_count} missing products successfully!")
         
     except Exception as e:
         logger.error(f"Error in main function: {e}")
+        import traceback
+        logger.error(traceback.format_exc())
 
 
 if __name__ == "__main__":
