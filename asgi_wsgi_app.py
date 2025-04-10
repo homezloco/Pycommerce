@@ -35,10 +35,48 @@ uvicorn_process = None
 def start_uvicorn_server():
     """Start the uvicorn server in a separate process."""
     global uvicorn_process
-    if uvicorn_process is not None and uvicorn_process.poll() is None:
-        logger.info("Uvicorn server is already running")
+    
+    # First check if we can connect to an existing uvicorn server
+    if is_uvicorn_running():
+        logger.info("Uvicorn server is already running and responsive")
         return
+        
+    # Check if our process reference is still active
+    if uvicorn_process is not None and uvicorn_process.poll() is None:
+        logger.info("Uvicorn process is still running, waiting for it to become responsive")
+        if wait_for_uvicorn(max_retries=3, delay=1):
+            return
+        else:
+            # Process is running but not responsive, terminate it
+            logger.warning("Uvicorn process is running but not responsive, restarting it")
+            uvicorn_process.terminate()
+            try:
+                uvicorn_process.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                logger.warning("Failed to terminate previous uvicorn process, killing it")
+                uvicorn_process.kill()
 
+    # Try to find any existing uvicorn processes and terminate them
+    try:
+        import psutil
+        current_pid = os.getpid()
+        for proc in psutil.process_iter(['pid', 'name', 'cmdline']):
+            if proc.info['name'] and 'python' in proc.info['name'].lower():
+                cmdline = proc.info.get('cmdline', [])
+                if cmdline and 'uvicorn' in ' '.join(cmdline) and str(UVICORN_PORT) in ' '.join(cmdline):
+                    if proc.pid != current_pid:
+                        logger.warning(f"Found existing uvicorn process (PID: {proc.pid}), terminating it")
+                        try:
+                            proc.terminate()
+                            proc.wait(timeout=5)
+                        except (psutil.NoSuchProcess, psutil.TimeoutExpired):
+                            pass
+    except ImportError:
+        logger.warning("psutil not available, skipping uvicorn process cleanup")
+    except Exception as e:
+        logger.warning(f"Error trying to clean up uvicorn processes: {e}")
+
+    # Start new uvicorn process
     cmd = [
         sys.executable, "-m", "uvicorn", "web_app:app",
         "--host", UVICORN_HOST, "--port", str(UVICORN_PORT),
@@ -46,13 +84,17 @@ def start_uvicorn_server():
     ]
     logger.info(f"Starting uvicorn server with command: {' '.join(cmd)}")
     
-    uvicorn_process = subprocess.Popen(
-        cmd,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-        text=True,
-        bufsize=1,
-    )
+    try:
+        uvicorn_process = subprocess.Popen(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            bufsize=1,
+        )
+    except Exception as e:
+        logger.error(f"Failed to start uvicorn process: {e}")
+        return None
     
     # Start a thread to log uvicorn output
     def log_output():
