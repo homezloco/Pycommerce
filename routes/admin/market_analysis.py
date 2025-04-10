@@ -342,6 +342,8 @@ def setup_routes(templates):
         
         return templates.TemplateResponse("admin/market_insights.html", context)
     
+
+    
     @router.get("/category-performance", response_class=HTMLResponse)
     async def category_performance(
         request: Request,
