@@ -1,0 +1,138 @@
+[2025-04-10 11:56:45 +0000] [1713] [INFO] Starting gunicorn 23.0.0
+[2025-04-10 11:56:45 +0000] [1713] [INFO] Listening at: http://0.0.0.0:5000 (1713)
+[2025-04-10 11:56:45 +0000] [1713] [INFO] Using worker: sync
+[2025-04-10 11:56:45 +0000] [1725] [INFO] Booting worker with pid: 1725
+[2025-04-10 11:56:45 +0000] [1713] [INFO] Handling signal: winch
+[2025-04-10 11:56:45 +0000] [1713] [INFO] Handling signal: winch
+[2025-04-10 11:56:46 +0000] [1713] [INFO] Handling signal: winch
+[2025-04-10 11:56:46 +0000] [1713] [INFO] Handling signal: winch
+INFO:pycommerce.services.mail:Email template directory: /home/runner/workspace/templates/emails
+[2025-04-10 11:56:47 +0000] [1713] [INFO] Handling signal: winch
+INFO:pycommerce.plugins.payment.config:Successfully loaded payment settings from database
+INFO:pycommerce.plugins.payment.config:Using development Stripe credentials
+INFO:pycommerce.plugins.payment.config:Using development PayPal credentials
+INFO:pycommerce.plugins.payment.stripe:Initializing Stripe payment plugin
+INFO:pycommerce.plugins:Registering plugin: stripe_payment v0.1.0
+INFO:pycommerce.plugins.payment.stripe:Initializing Stripe payment plugin
+INFO:pycommerce:Registered payment plugin: stripe
+INFO:pycommerce.plugins.payment.paypal:Initializing PayPal payment plugin
+INFO:pycommerce.plugins:Registering plugin: paypal_payment v0.1.0
+INFO:pycommerce.plugins.payment.paypal:Initializing PayPal payment plugin
+INFO:pycommerce:Registered payment plugin: paypal
+INFO:pycommerce.plugins:Registering plugin: standard_shipping v0.1.0
+INFO:pycommerce.plugins.shipping.standard:Initializing Standard shipping plugin
+INFO:pycommerce:Registered shipping plugin: standard
+INFO:pycommerce.models.category:CategoryManager initialized
+WARNING:root:AI configuration module not available
+INFO:pycommerce.models.category:CategoryManager initialized
+INFO:pycommerce.core.db:Initializing database...
+[2025-04-10 11:56:48 +0000] [1713] [INFO] Handling signal: winch
+[2025-04-10 11:56:48 +0000] [1713] [INFO] Handling signal: winch
+[2025-04-10 11:56:48 +0000] [1713] [INFO] Handling signal: winch
+[2025-04-10 11:56:48 +0000] [1713] [INFO] Handling signal: winch
+[2025-04-10 11:56:48 +0000] [1713] [INFO] Handling signal: winch
+[2025-04-10 11:56:48 +0000] [1713] [INFO] Handling signal: winch
+[2025-04-10 11:56:48 +0000] [1713] [INFO] Handling signal: winch
+[2025-04-10 11:56:48 +0000] [1713] [INFO] Handling signal: winch
+INFO:pycommerce.core.db:Database initialized successfully.
+INFO:pycommerce.core.db:Initializing database...
+INFO:pycommerce.core.db:Database initialized successfully.
+INFO:pycommerce.migrations:Database migrations initialized
+INFO:pycommerce.services.market_analysis:Market analysis service initialized
+INFO:routes.storefront.stores:Initialized SDK TenantManager
+INFO:routes.storefront.stores:Initialized SDK ProductManager
+INFO:routes.storefront.stores:Initialized SDK CartManager
+INFO:routes.storefront.stores:Finished loading managers
+INFO:routes.storefront.cart:Initialized SDK ProductManager
+INFO:routes.storefront.cart:Initialized SDK CartManager
+INFO:routes.storefront.cart:Initialized SDK TenantManager
+INFO:routes.storefront.cart:Finished loading managers
+INFO:routes.storefront.checkout:Initialized SDK TenantManager
+INFO:routes.storefront.checkout:Initialized SDK ProductManager
+INFO:routes.storefront.checkout:Initialized SDK CartManager
+INFO:routes.storefront.checkout:Initialized SDK OrderManager
+INFO:routes.storefront.checkout:Finished loading Flask app managers
+INFO:pycommerce.services.market_analysis:Market analysis service initialized
+INFO:web_app:API routes registered successfully
+INFO:asgi_wsgi_app:Starting uvicorn server with command: /nix/store/wqhkxzzlaswkj3gimqign99sshvllcg6-python-wrapped-0.1.0/bin/python3 -m uvicorn web_app:app --host 127.0.0.1 --port 8000 --reload --no-use-colors
+INFO:asgi_wsgi_app:Waiting for uvicorn server to start...
+INFO:asgi_wsgi_app:Waiting for uvicorn server (attempt 1/10)
+INFO:asgi_wsgi_app:Uvicorn: INFO:     Will watch for changes in these directories: ['/home/runner/workspace']
+INFO:asgi_wsgi_app:Uvicorn: INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+INFO:asgi_wsgi_app:Uvicorn: INFO:     Started reloader process [1751] using WatchFiles
+INFO:asgi_wsgi_app:Waiting for uvicorn server (attempt 2/10)
+INFO:asgi_wsgi_app:Waiting for uvicorn server (attempt 3/10)
+INFO:asgi_wsgi_app:Waiting for uvicorn server (attempt 4/10)
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.services.mail:Email template directory: /home/runner/workspace/templates/emails
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.plugins.payment.config:Successfully loaded payment settings from database
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.plugins.payment.config:Using development Stripe credentials
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.plugins.payment.config:Using development PayPal credentials
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.plugins.payment.stripe:Initializing Stripe payment plugin
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.plugins:Registering plugin: stripe_payment v0.1.0
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.plugins.payment.stripe:Initializing Stripe payment plugin
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce:Registered payment plugin: stripe
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.plugins.payment.paypal:Initializing PayPal payment plugin
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.plugins:Registering plugin: paypal_payment v0.1.0
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.plugins.payment.paypal:Initializing PayPal payment plugin
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce:Registered payment plugin: paypal
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.plugins:Registering plugin: standard_shipping v0.1.0
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.plugins.shipping.standard:Initializing Standard shipping plugin
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce:Registered shipping plugin: standard
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.models.category:CategoryManager initialized
+INFO:asgi_wsgi_app:Uvicorn: WARNING:root:AI configuration module not available
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.models.category:CategoryManager initialized
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.core.db:Initializing database...
+INFO:asgi_wsgi_app:Waiting for uvicorn server (attempt 5/10)
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.core.db:Database initialized successfully.
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.core.db:Initializing database...
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.core.db:Database initialized successfully.
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.migrations:Database migrations initialized
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.services.market_analysis:Market analysis service initialized
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.storefront.stores:Initialized SDK TenantManager
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.storefront.stores:Initialized SDK ProductManager
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.storefront.stores:Initialized SDK CartManager
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.storefront.stores:Finished loading managers
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.storefront.cart:Initialized SDK ProductManager
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.storefront.cart:Initialized SDK CartManager
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.storefront.cart:Initialized SDK TenantManager
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.storefront.cart:Finished loading managers
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.storefront.checkout:Initialized SDK TenantManager
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.storefront.checkout:Initialized SDK ProductManager
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.storefront.checkout:Initialized SDK CartManager
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.storefront.checkout:Initialized SDK OrderManager
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.storefront.checkout:Finished loading Flask app managers
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.services.market_analysis:Market analysis service initialized
+INFO:asgi_wsgi_app:Uvicorn: INFO:web_app:API routes registered successfully
+INFO:asgi_wsgi_app:Uvicorn: INFO:     Started server process [1760]
+INFO:asgi_wsgi_app:Uvicorn: INFO:     Waiting for application startup.
+INFO:asgi_wsgi_app:Uvicorn: INFO:     Application startup complete.
+INFO:asgi_wsgi_app:Uvicorn: INFO:     127.0.0.1:54826 - "GET /api/health HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET http://127.0.0.1:8000/api/health "HTTP/1.1 200 OK"
+INFO:asgi_wsgi_app:Uvicorn server is running
+INFO:asgi_wsgi_app:Uvicorn: INFO:     127.0.0.1:54836 - "GET /api/health HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET http://127.0.0.1:8000/api/health "HTTP/1.1 200 OK"
+INFO:asgi_wsgi_app:Uvicorn: INFO:     127.0.0.1:54846 - "GET / HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET http://127.0.0.1:8000/ "HTTP/1.1 200 OK"
+INFO:asgi_wsgi_app:Uvicorn: INFO:     127.0.0.1:54850 - "GET /api/health HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET http://127.0.0.1:8000/api/health "HTTP/1.1 200 OK"
+INFO:asgi_wsgi_app:Uvicorn: INFO:     127.0.0.1:51342 - "GET / HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET http://127.0.0.1:8000/ "HTTP/1.1 200 OK"
+INFO:asgi_wsgi_app:Uvicorn: INFO:     127.0.0.1:51346 - "GET /api/health HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET http://127.0.0.1:8000/api/health "HTTP/1.1 200 OK"
+INFO:asgi_wsgi_app:Uvicorn: INFO:     127.0.0.1:51356 - "GET / HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET http://127.0.0.1:8000/ "HTTP/1.1 200 OK"
+[2025-04-10 11:56:55 +0000] [1713] [INFO] Handling signal: winch
+[2025-04-10 11:56:56 +0000] [1713] [INFO] Handling signal: winch
+INFO:asgi_wsgi_app:Uvicorn: INFO:     127.0.0.1:34396 - "GET /api/health HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET http://127.0.0.1:8000/api/health "HTTP/1.1 200 OK"
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.models.tenant:Retrieved tenant by slug tech with theme settings: {}
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.models.product:Querying database for products of tenant: ea6c4bc0-d5aa-4d4f-862c-5d47e7c3f410
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.models.product:Found 6 products for tenant ea6c4bc0-d5aa-4d4f-862c-5d47e7c3f410 in database
+INFO:asgi_wsgi_app:Uvicorn: INFO:     127.0.0.1:34412 - "GET /admin/dashboard HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET http://127.0.0.1:8000/admin/dashboard "HTTP/1.1 200 OK"
+INFO:asgi_wsgi_app:Uvicorn: INFO:     127.0.0.1:34428 - "GET /api/health HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET http://127.0.0.1:8000/api/health "HTTP/1.1 200 OK"
+INFO:asgi_wsgi_app:Uvicorn: INFO:     127.0.0.1:34440 - "GET /admin/categories HTTP/1.1" 307 Temporary Redirect
+INFO:httpx:HTTP Request: GET http://127.0.0.1:8000/admin/categories "HTTP/1.1 307 Temporary Redirect"
+INFO:asgi_wsgi_app:Uvicorn: INFO:     127.0.0.1:34440 - "GET /admin/tenants HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET http://127.0.0.1:8000/admin/tenants "HTTP/1.1 200 OK"
