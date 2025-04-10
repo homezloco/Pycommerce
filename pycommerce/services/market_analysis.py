@@ -88,6 +88,8 @@ class MarketAnalysisService:
         Returns:
             Dictionary containing sales trend data
         """
+        # Initialize product category cache to prevent repeated lookups
+        product_category_cache = {}
         try:
             # Default to last 30 days if no dates provided
             if not start_date:
@@ -181,27 +183,33 @@ class MarketAnalysisService:
                         else:
                             # If product is not found, try to use a direct database lookup for categories
                             try:
-                                from sqlalchemy import text
-                                from app import db, app
-                                
-                                # Look up product categories directly from the database
-                                with app.app_context():
-                                    categories_result = db.session.execute(
-                                        text("""
-                                            SELECT c.name 
-                                            FROM categories c
-                                            JOIN product_categories pc ON c.id = pc.category_id
-                                            WHERE pc.product_id = :product_id
-                                        """),
-                                        {"product_id": product_id}
-                                    ).fetchall()
+                                # Check if we already looked up this product's categories
+                                if product_id in product_category_cache:
+                                    categories_result = product_category_cache[product_id]
+                                else:
+                                    from sqlalchemy import text
+                                    from app import db, app
+                                    
+                                    # Look up product categories directly from the database
+                                    with app.app_context():
+                                        categories_result = db.session.execute(
+                                            text("""
+                                                SELECT c.name 
+                                                FROM categories c
+                                                JOIN product_categories pc ON c.id = pc.category_id
+                                                WHERE pc.product_id = :product_id
+                                            """),
+                                            {"product_id": product_id}
+                                        ).fetchall()
+                                    
+                                    # Cache the results
+                                    product_category_cache[product_id] = categories_result
                                 
                                 if categories_result:
                                     # Found categories, use them
                                     for cat_result in categories_result:
                                         cat_name = cat_result[0]
                                         category_sales[cat_name] += item.price * item.quantity
-                                        logger.info(f"Found category {cat_name} for product {product_id} using direct DB lookup")
                                 else:
                                     # If product is not found in the database either, add to "Unknown"
                                     category_sales["Unknown"] += item.price * item.quantity
@@ -638,6 +646,8 @@ class MarketAnalysisService:
         Returns:
             Dictionary containing category performance data
         """
+        # Initialize product category cache to prevent repeated lookups
+        product_category_cache = {}
         try:
             # Determine date range based on period
             end_date = datetime.datetime.now()
@@ -740,20 +750,27 @@ class MarketAnalysisService:
                         category = "Unknown"
                         # Try direct database lookup for product categories
                         try:
-                            from sqlalchemy import text
-                            from app import db, app
-                            
-                            # Look up product categories directly from the database
-                            with app.app_context():
-                                categories_result = db.session.execute(
-                                    text("""
-                                        SELECT c.name 
-                                        FROM categories c
-                                        JOIN product_categories pc ON c.id = pc.category_id
-                                        WHERE pc.product_id = :product_id
-                                    """),
-                                    {"product_id": product_id}
-                                ).fetchall()
+                            # Check if we already looked up this product's categories
+                            if product_id in product_category_cache:
+                                categories_result = product_category_cache[product_id]
+                            else:
+                                from sqlalchemy import text
+                                from app import db, app
+                                
+                                # Look up product categories directly from the database
+                                with app.app_context():
+                                    categories_result = db.session.execute(
+                                        text("""
+                                            SELECT c.name 
+                                            FROM categories c
+                                            JOIN product_categories pc ON c.id = pc.category_id
+                                            WHERE pc.product_id = :product_id
+                                        """),
+                                        {"product_id": product_id}
+                                    ).fetchall()
+                                
+                                # Cache the results
+                                product_category_cache[product_id] = categories_result
                             
                             if categories_result:
                                 # Found categories, use them
@@ -766,8 +783,6 @@ class MarketAnalysisService:
                                     category_metrics[category_name]["revenue"] += item.price * item.quantity
                                     category_metrics[category_name]["orders"] += 1
                                     category_metrics[category_name]["units_sold"] += item.quantity
-                                    
-                                    logger.info(f"Found category {category_name} for product {product_id} using direct DB lookup")
                         except Exception as db_err:
                             logger.warning(f"DB lookup failed for product {product_id}: {db_err}")
                         
