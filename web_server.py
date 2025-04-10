@@ -99,6 +99,10 @@ app.include_router(users_router.router, prefix="/api/users", tags=["users"])
 from pycommerce.api.routes import ai
 app.include_router(ai.router, prefix="/api/ai", tags=["ai"])
 
+# Import and include recommendations routes
+from pycommerce.api.routes import recommendations
+app.include_router(recommendations.router, prefix="/api", tags=["recommendations"])
+
 # Include media routes
 app.include_router(media_router.router, prefix="/api/media", tags=["media"])
 
