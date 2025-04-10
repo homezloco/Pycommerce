@@ -207,63 +207,87 @@ async def admin_dashboard(
     }
     
     if selected_tenant:
-        # Get counts and summary data for the selected tenant
-        products = product_manager.get_by_tenant(str(selected_tenant.id))
-        dashboard_data["products_count"] = len(products)
-        
-        # Get all users (customers)
-        users = user_manager.get_all()
-        dashboard_data["customers_count"] = len(users)
-        
-        # Get orders for the selected time period
-        filters = {
-            "date_from": start_date,
-            "date_to": end_date
-        }
-        
-        orders = order_manager.get_for_tenant(str(selected_tenant.id), filters)
-        dashboard_data["orders_count"] = len(orders)
-        
-        # Get pending orders count
-        pending_orders = [order for order in orders if order.status == "PENDING" or str(order.status) == "PENDING"]
-        dashboard_data["orders_pending"] = len(pending_orders)
-        
-        # Calculate revenue from completed orders
-        completed_statuses = ["COMPLETED", "DELIVERED", "SHIPPED"]
-        completed_orders = [order for order in orders if order.status in completed_statuses or str(order.status) in completed_statuses]
-        dashboard_data["revenue"] = sum(order.total for order in completed_orders)
-        
-        # Get recent orders - last 5 regardless of time period
-        all_orders = order_manager.get_for_tenant(str(selected_tenant.id))
-        recent_orders = sorted(all_orders, key=lambda x: x.created_at, reverse=True)[:5]
-        recent_orders_data = []
-        
-        for order in recent_orders:
-            # Create customer name from available fields
-            customer_name = order.customer_name if hasattr(order, 'customer_name') and order.customer_name else ""
-            if not customer_name and hasattr(order, 'shipping_address_line1') and order.shipping_address_line1:
-                # If we have shipping info but no customer name, use that
-                customer_name = f"{order.shipping_address_line1}"
+        try:
+            # Get counts and summary data for the selected tenant
+            products = product_manager.get_by_tenant(str(selected_tenant.id))
+            dashboard_data["products_count"] = len(products)
             
-            # Append order data
-            recent_orders_data.append({
-                "id": str(order.id),
-                "customer_name": customer_name,
-                "total": order.total,
-                "status": order.status if isinstance(order.status, str) else order.status.name if hasattr(order.status, "name") else str(order.status),
-                "created_at": order.created_at
-            })
-        
-        dashboard_data["recent_orders"] = recent_orders_data
-        
-        # Get detailed sales data for charts
-        sales_data = get_sales_data_by_period(
-            str(selected_tenant.id),
-            start_date,
-            end_date
-        )
-        
-        dashboard_data["sales_data"] = sales_data
+            # Get all users (customers)
+            try:
+                users = user_manager.get_all()
+                dashboard_data["customers_count"] = len(users)
+            except Exception as e:
+                logger.error(f"Error getting users: {str(e)}")
+                dashboard_data["customers_count"] = 0
+            
+            # Get orders for the selected time period
+            filters = {
+                "date_from": start_date,
+                "date_to": end_date
+            }
+            
+            # Define orders at this level so it's available in the whole function
+            orders = []
+            
+            try:
+                # Get orders for the selected time period
+                orders = order_manager.get_for_tenant(str(selected_tenant.id), filters)
+                dashboard_data["orders_count"] = len(orders)
+                
+                # Get pending orders count
+                pending_orders = [order for order in orders if order.status == "PENDING" or str(order.status) == "PENDING"]
+                dashboard_data["orders_pending"] = len(pending_orders)
+                
+                # Calculate revenue from completed orders
+                completed_statuses = ["COMPLETED", "DELIVERED", "SHIPPED"]
+                completed_orders = [order for order in orders if order.status in completed_statuses or str(order.status) in completed_statuses]
+                dashboard_data["revenue"] = sum(order.total for order in completed_orders if hasattr(order, 'total') and order.total is not None)
+                
+                # Get recent orders - last 5 regardless of time period
+                all_orders = order_manager.get_for_tenant(str(selected_tenant.id))
+                recent_orders = sorted(all_orders, key=lambda x: x.created_at if hasattr(x, 'created_at') else datetime.now(), reverse=True)[:5]
+                recent_orders_data = []
+                
+                for order in recent_orders:
+                    # Create customer name from available fields
+                    customer_name = order.customer_name if hasattr(order, 'customer_name') and order.customer_name else ""
+                    if not customer_name and hasattr(order, 'shipping_address_line1') and order.shipping_address_line1:
+                        # If we have shipping info but no customer name, use that
+                        customer_name = f"{order.shipping_address_line1}"
+                    
+                    # Append order data
+                    recent_orders_data.append({
+                        "id": str(order.id),
+                        "customer_name": customer_name,
+                        "total": order.total if hasattr(order, 'total') else 0,
+                        "status": order.status if isinstance(order.status, str) else order.status.name if hasattr(order.status, "name") else str(order.status),
+                        "created_at": order.created_at if hasattr(order, 'created_at') else datetime.now()
+                    })
+                
+                dashboard_data["recent_orders"] = recent_orders_data
+                
+                # Get detailed sales data for charts
+                sales_data = get_sales_data_by_period(
+                    str(selected_tenant.id),
+                    start_date,
+                    end_date
+                )
+                
+                dashboard_data["sales_data"] = sales_data
+            except Exception as e:
+                logger.error(f"Error processing orders: {str(e)}")
+                dashboard_data["orders_count"] = 0
+                dashboard_data["orders_pending"] = 0
+                dashboard_data["revenue"] = 0
+                dashboard_data["recent_orders"] = []
+                dashboard_data["sales_data"] = {
+                    "dates": [],
+                    "revenue_data": [],
+                    "orders_data": [],
+                    "top_products": []
+                }
+        except Exception as e:
+            logger.error(f"Error generating dashboard data: {str(e)}")
     
     # Format tenants for template with order and revenue counts
     tenants_data = []

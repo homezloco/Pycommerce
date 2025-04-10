@@ -323,6 +323,15 @@ class UserManager:
             List of all users
         """
         return list(self._users.values())
+    
+    def get_all(self) -> List[User]:
+        """
+        Get all users.
+        
+        Returns:
+            List of all users
+        """
+        return self.list()
         
     def authenticate(self, email: str, password: str) -> Optional[tuple]:
         """
