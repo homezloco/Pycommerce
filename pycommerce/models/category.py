@@ -5,7 +5,11 @@ This module provides the CategoryManager class for managing product categories.
 """
 import logging
 import uuid
-from typing import List, Optional, Dict, Any, Union
+import inspect
+from typing import List, Optional, Dict, Any, Union, TypeVar, cast
+
+# Define a generic type for category and product objects
+T = TypeVar('T')
 from functools import wraps
 
 # Configure logging
@@ -137,8 +141,32 @@ def ensure_db_session(func):
             self._initialize_mock_data()
         
         # Call the appropriate mock method
+        # Function can be a nested function like _get_all_categories or one directly on the class
+        # Get parent function's name - in CategoryManager.get_all_categories, this would be 'get_all_categories'
+        parent_func_name = inspect.currentframe().f_back.f_code.co_name
+        # Try finding a mock for either the nested function or parent function name
+        mock_choices = []
+        
+        # First try exact match with nested function name
         if hasattr(self, f"_mock_{func_name}"):
-            mock_method = getattr(self, f"_mock_{func_name}")
+            mock_choices.append(f"_mock_{func_name}")
+        
+        # Then try nested function without leading underscore
+        actual_func_name = func_name
+        if actual_func_name.startswith('_'):
+            actual_func_name = actual_func_name[1:]
+            if hasattr(self, f"_mock_{actual_func_name}"):
+                mock_choices.append(f"_mock_{actual_func_name}")
+        
+        # Finally try parent function name
+        if hasattr(self, f"_mock_{parent_func_name}"):
+            mock_choices.append(f"_mock_{parent_func_name}")
+        
+        # Use the first mock method found
+        if mock_choices:
+            mock_method_name = mock_choices[0]
+            mock_method = getattr(self, mock_method_name)
+            logger.info(f"Using mock implementation {mock_method_name} for {func_name} (called from {parent_func_name})")
             return mock_method(*args, **kwargs)
         else:
             logger.error(f"No mock implementation for {func_name}")
@@ -397,7 +425,7 @@ class CategoryManager:
         
         return _get_all_categories(tenant_id, include_inactive)
     
-    def get_category(self, category_id: str) -> Optional:
+    def get_category(self, category_id: str) -> Optional[T]:
         """
         Get a category by ID.
         
@@ -413,7 +441,7 @@ class CategoryManager:
         
         return _get_category(category_id)
     
-    def get_category_by_slug(self, tenant_id: str, slug: str) -> Optional:
+    def get_category_by_slug(self, tenant_id: str, slug: str) -> Optional[T]:
         """
         Get a category by slug for a tenant.
         
