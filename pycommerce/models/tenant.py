@@ -162,6 +162,18 @@ class TenantManager:
         except Exception as e:
             logger.error(f"Error getting tenant by slug {slug}: {str(e)}")
             return None
+            
+    def get_tenant_by_slug(self, slug: str) -> Optional[TenantDTO]:
+        """
+        Get a tenant by slug (alias for get_by_slug).
+
+        Args:
+            slug: The tenant slug
+
+        Returns:
+            The tenant, or None if not found
+        """
+        return self.get_by_slug(slug)
 
     def get_by_domain(self, domain: str) -> Optional[TenantDTO]:
         """
