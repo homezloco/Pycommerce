@@ -27,8 +27,10 @@ templates = None
 # Initialize managers
 tenant_manager = TenantManager()
 # Add compatibility method
-tenant_manager.get_tenant_by_slug = tenant_manager.get_by_slug
+if not hasattr(tenant_manager, 'get_tenant_by_slug'):
+    tenant_manager.get_tenant_by_slug = tenant_manager.get_by_slug
 
+# Initialize category manager
 category_manager = None
 if CategoryManager:
     try:
@@ -90,7 +92,7 @@ def setup_routes(templates_instance: Jinja2Templates):
             # Get parent category if specified
             if parent_id:
                 parent = category_manager.get_category(parent_id)
-                if parent and parent.tenant_id == current_tenant.id:
+                if parent and str(parent.tenant_id) == str(current_tenant.id):
                     context["parent_category"] = parent
                     
                     # Build breadcrumbs for navigation
@@ -106,17 +108,17 @@ def setup_routes(templates_instance: Jinja2Templates):
                     context["parent_breadcrumbs"] = breadcrumbs
                     
                     # Get categories that are children of this parent
-                    categories = category_manager.get_all_categories(current_tenant.id)
-                    categories = [c for c in categories if c.parent_id == parent_id]
+                    all_categories = category_manager.get_all_categories(str(current_tenant.id))
+                    categories = [c for c in all_categories if c.parent_id == parent_id]
                 else:
                     # Invalid parent, show root categories
                     parent_id = None
-                    categories = category_manager.get_all_categories(current_tenant.id)
-                    categories = [c for c in categories if c.parent_id is None]
+                    all_categories = category_manager.get_all_categories(str(current_tenant.id))
+                    categories = [c for c in all_categories if c.parent_id is None]
             else:
                 # Show root categories (no parent)
-                categories = category_manager.get_all_categories(current_tenant.id)
-                categories = [c for c in categories if c.parent_id is None]
+                all_categories = category_manager.get_all_categories(str(current_tenant.id))
+                categories = [c for c in all_categories if c.parent_id is None]
             
             # Sort categories by name
             categories.sort(key=lambda x: x.name)
@@ -131,9 +133,9 @@ def setup_routes(templates_instance: Jinja2Templates):
                 ))
                 
                 # Count subcategories
+                all_categories = category_manager.get_all_categories(str(current_tenant.id))
                 category.subcategory_count = len([
-                    c for c in category_manager.get_all_categories(current_tenant.id)
-                    if c.parent_id == category.id
+                    c for c in all_categories if c.parent_id == category.id
                 ])
         
         except Exception as e:

@@ -6,17 +6,45 @@ This module provides the CategoryManager class for managing product categories.
 import logging
 import uuid
 from typing import List, Optional, Dict, Any, Union
-
-from models import db, Category, ProductCategory, Product, Tenant
+import importlib.util
 
 # Configure logging
 logger = logging.getLogger(__name__)
+
+# Declare globals up front
+db = None
+Category = None
+ProductCategory = None
+Product = None
+Tenant = None
+
+# Import models dynamically to avoid circular imports
+# and handle Flask app context issues
+try:
+    from models import db, Category, ProductCategory, Product, Tenant
+except ImportError:
+    logger.warning("Failed to import models directly. Will try to load at runtime.")
 
 class CategoryManager:
     """Manager class for category operations."""
 
     def __init__(self):
         """Initialize the CategoryManager."""
+        global db, Category, ProductCategory, Product, Tenant
+        
+        # If we couldn't import the models, try to get them at runtime
+        if Category is None:
+            # Get models at runtime
+            try:
+                import models as models_module
+                db = models_module.db
+                Category = models_module.Category
+                ProductCategory = models_module.ProductCategory
+                Product = models_module.Product
+                Tenant = models_module.Tenant
+            except ImportError:
+                logger.error("Failed to import models at runtime.")
+        
         self.db = db
         logger.info("CategoryManager initialized")
 

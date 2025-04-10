@@ -28,6 +28,7 @@ from routes.admin.reports import setup_routes as setup_reports_routes
 from routes.admin.returns import setup_routes as setup_returns_routes
 from routes.admin.market_analysis import setup_routes as setup_market_analysis_routes
 from routes.admin.categories import setup_routes as setup_categories_routes
+from routes.admin.tenants import setup_routes as setup_tenants_routes
 # We've moved the test_products implementation to products.py
 
 # Import storefront routes
@@ -70,6 +71,7 @@ def register_routes(app: FastAPI, templates: Jinja2Templates):
     app.include_router(setup_reports_routes(templates))
     app.include_router(setup_market_analysis_routes(templates))
     app.include_router(setup_categories_routes(templates))
+    app.include_router(setup_tenants_routes(templates))
     
     # Register storefront routes
     app.include_router(setup_home_routes(templates))
