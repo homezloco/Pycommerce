@@ -168,7 +168,7 @@ async def admin_upload_media(
         file_content = await file.read()
         
         # Upload file
-        result = media_service.upload_file(
+        result = await media_service.upload_file(
             file=file_content,
             filename=file.filename,
             tenant_id=tenant_id,
@@ -208,7 +208,7 @@ async def admin_generate_image(
     """Generate an image using DALL-E."""
     try:
         # Generate image
-        result = media_service.generate_image(
+        result = await media_service.generate_image(
             tenant_id=tenant_id,
             prompt=prompt,
             size=size,
@@ -244,7 +244,7 @@ async def admin_download_media(
     """Download a media file."""
     try:
         # Get the media file
-        media_file, content = media_service.get_media_content(media_id)
+        media_file, content = await media_service.get_media_content(media_id)
         
         if media_file and content:
             return Response(
@@ -276,7 +276,7 @@ async def admin_delete_media_via_api(
     """Delete a media file via API (DELETE request)."""
     try:
         # Delete the media file
-        result = media_service.delete_media(media_id)
+        result = await media_service.delete_media(media_id)
         
         if result:
             return JSONResponse(
@@ -318,7 +318,7 @@ async def admin_delete_media(
                 logger.warning(f"Could not get tenant with slug '{selected_tenant_slug}': {str(e)}")
         
         # Use the media service to delete the media
-        result = media_service.delete_media(media_id)
+        result = await media_service.delete_media(media_id)
         if result:
             return RedirectResponse(
                 url=f"/admin/media?tenant={tenant_id if tenant_id else ''}&status_message=Media+deleted+successfully&status_type=success", 
