@@ -109,23 +109,27 @@ class MediaService:
                 except Exception as e:
                     logger.warning(f"Could not determine image dimensions: {str(e)}")
             
-            # Create the media record
+            # Create the media record with only the fields that exist in the model
             media_data = {
                 "tenant_id": uuid.UUID(tenant_id) if tenant_id else None,
-                "name": os.path.splitext(filename)[0],
+                "filename": os.path.splitext(filename)[0],  # Use filename instead of name
+                "original_filename": filename,
                 "file_path": file_path,
-                "file_url": f"/static/media/uploads/{unique_filename}",  # URL relative to the application root
-                "file_type": file_type,
-                "mime_type": mime_type,
+                "file_type": mime_type,  # Use mime_type since that's what file_type should store
                 "file_size": file_size,
-                "width": width,
-                "height": height,
-                "alt_text": alt_text,
-                "description": description,
-                "meta_data": metadata or {},
-                "is_ai_generated": False,
-                "is_public": is_public
+                "description": description
             }
+            
+            # Store additional metadata in the description as JSON if needed
+            if metadata:
+                import json
+                # Append sharing info to the description
+                sharing_info = f"\nSharing Level: {metadata.get('sharing_level', 'store')}"
+                sharing_info += f"\nIs Public: {is_public}"
+                if description:
+                    media_data["description"] = description + sharing_info
+                else:
+                    media_data["description"] = sharing_info
             
             media = self.media_manager.create(media_data)
             logger.info(f"Uploaded file: {filename} -> {file_path}")
@@ -209,29 +213,32 @@ class MediaService:
             except Exception as e:
                 logger.warning(f"Could not determine image dimensions: {str(e)}")
             
-            # Create the media record
+            # Create the media record with only the fields that exist in the model
             media_data = {
                 "tenant_id": uuid.UUID(tenant_id) if tenant_id else None,
-                "name": f"DALL-E: {prompt[:50]}{'...' if len(prompt) > 50 else ''}",
+                "filename": f"DALL-E: {prompt[:50]}{'...' if len(prompt) > 50 else ''}.png",
+                "original_filename": f"DALL-E generation.png",
                 "file_path": file_path,
-                "file_url": f"/static/media/generated/{unique_filename}",  # URL relative to the application root
-                "file_type": "image",
-                "mime_type": "image/png",
+                "file_type": "image/png",
                 "file_size": file_size,
-                "width": width,
-                "height": height,
-                "alt_text": alt_text or prompt,
-                "description": description or prompt,
-                "meta_data": {
-                    "prompt": prompt,
-                    "model": "dall-e-3",
-                    "size": size,
-                    "quality": quality,
-                    **(metadata or {})
-                },
-                "is_ai_generated": True,
-                "is_public": is_public
+                "description": description or prompt
             }
+            
+            # Store additional metadata in the description as JSON if needed
+            if metadata:
+                import json
+                # Append sharing info to the description
+                sharing_info = f"\nSharing Level: {metadata.get('sharing_level', 'store')}"
+                sharing_info += f"\nIs Public: {is_public}"
+                sharing_info += f"\nPrompt: {prompt}"
+                sharing_info += f"\nModel: dall-e-3"
+                sharing_info += f"\nSize: {size}"
+                sharing_info += f"\nQuality: {quality}"
+                
+                if description:
+                    media_data["description"] = description + sharing_info
+                else:
+                    media_data["description"] = prompt + sharing_info
             
             media = self.media_manager.create(media_data)
             logger.info(f"Generated image with DALL-E: {prompt[:50]}{'...' if len(prompt) > 50 else ''}")

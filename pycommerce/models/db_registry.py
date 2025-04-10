@@ -116,8 +116,26 @@ class MediaFile(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
+    # Media sharing and additional fields (added for the sharing feature)
+    meta_data = Column(JSON, nullable=True)  # For storing sharing_level and other metadata
+    is_public = Column(Boolean, default=False)  # True for community-shared media
+    is_ai_generated = Column(Boolean, default=False)  # True for AI-generated media
+    url = Column(String(500), nullable=True)  # URL for accessing the media
+    thumbnail_url = Column(String(500), nullable=True)  # URL for thumbnail
+    alt_text = Column(Text, nullable=True)  # Alternative text for accessibility
+    
     # Relationship with Tenant
     tenant = relationship("Tenant", back_populates="media_files")
     
     def __repr__(self):
         return f"<MediaFile {self.filename}>"
+        
+    @property
+    def name(self):
+        """Alias for filename for compatibility with existing code."""
+        return self.filename
+    
+    @property
+    def file_name(self):
+        """Alias for filename for compatibility with existing code."""
+        return self.filename

@@ -92,21 +92,23 @@ def create_test_media_files():
                 'tenant_name': tenant.name
             }
             
-            # Create media record
+            # Create media record using the upload_file method
             try:
-                media_data = {
-                    "tenant_id": uuid.UUID(tenant_id),
-                    "filename": f"{tenant.slug}_{sharing_level}_{uuid.uuid4()}.svg",
-                    "original_filename": filename,
-                    "file_path": filepath,
-                    "file_type": "image/svg+xml",
-                    "file_size": len(svg_content),
-                    "description": f"This is a test image with {sharing_level} sharing level for tenant {tenant.name}",
-                    "is_public": is_public,
-                    "meta_data": meta_data
-                }
+                # Convert the file content to bytes for upload
+                file_content = svg_content.encode('utf-8')
                 
-                media = media_service.media_manager.create(media_data)
+                # Call the upload_file method to create the media record
+                import asyncio
+                media = asyncio.run(media_service.upload_file(
+                    file=file_content,
+                    filename=filename,
+                    tenant_id=tenant_id,
+                    alt_text=f"Test {sharing_level} level image for {tenant.name}",
+                    description=f"This is a test image with {sharing_level} sharing level for tenant {tenant.name}",
+                    metadata=meta_data,
+                    is_public=is_public
+                ))
+                
                 if media:
                     created_count += 1
                     logger.info(f"Created media for tenant {tenant.name} with sharing level {sharing_level}")
