@@ -30,13 +30,12 @@ tenant_manager = TenantManager()
 if not hasattr(tenant_manager, 'get_tenant_by_slug'):
     tenant_manager.get_tenant_by_slug = tenant_manager.get_by_slug
 
-# Import the MockCategoryManager for FastAPI routes 
-from routes.admin.mock_category_manager import MockCategoryManager
+# Initialize category manager using improved CategoryManager
+# This now works with both Flask and FastAPI contexts
+from pycommerce.models.category import CategoryManager
 
-# Initialize category manager - use MockCategoryManager which doesn't need app_context
-# This helps avoid the Flask app_context issues in FastAPI routes
-category_manager = MockCategoryManager()
-logger.info("Using MockCategoryManager for admin categories routes")
+category_manager = CategoryManager()
+logger.info("Using CategoryManager for admin categories routes")
 
 def setup_routes(templates_instance: Jinja2Templates):
     """

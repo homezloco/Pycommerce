@@ -19,89 +19,80 @@ ProductCategory = None
 Product = None
 Tenant = None
 
-def ensure_app_context(func):
+def get_db_session():
     """
-    Decorator to ensure database context is available.
+    Get a database session that works in both Flask and FastAPI environments.
+    
+    This function handles importing the necessary models and creating a session
+    regardless of which web framework is being used.
+    
+    Returns:
+        tuple: (db, Category, ProductCategory, Product, Tenant) - database and model classes
+    """
+    global db, Category, ProductCategory, Product, Tenant
+    
+    # Make sure models are imported
+    if db is None or Category is None:
+        try:
+            from models import db, Category, ProductCategory, Product, Tenant
+        except ImportError:
+            logger.error("Failed to import models")
+            return None, None, None, None, None
+    
+    # Check if db already has a session (Flask environment)
+    if hasattr(db, 'session') and db.session is not None:
+        return db, Category, ProductCategory, Product, Tenant
+    
+    # For FastAPI, create a standalone session
+    try:
+        from sqlalchemy.orm import sessionmaker, scoped_session
+        from sqlalchemy import create_engine
+        import os
+        
+        # Create engine and session
+        if not hasattr(db, 'engine'):
+            db.engine = create_engine(os.environ.get("DATABASE_URL"))
+        
+        if not hasattr(db, 'session') or db.session is None:
+            session_factory = sessionmaker(bind=db.engine)
+            db.session = scoped_session(session_factory)
+            logger.info("Created standalone SQLAlchemy session for FastAPI")
+        
+        return db, Category, ProductCategory, Product, Tenant
+    except Exception as e:
+        logger.error(f"Failed to create database session: {e}")
+        return None, None, None, None, None
+
+
+def ensure_db_session(func):
+    """
+    Decorator to ensure a database session is available.
     Works with both Flask and FastAPI environments.
     
     Args:
         func: The function to wrap
         
     Returns:
-        Wrapped function that ensures database context
+        Wrapped function that ensures database access
     """
     @wraps(func)
     def wrapper(*args, **kwargs):
-        # Import global variables
-        global db, Category, ProductCategory, Product, Tenant
+        # Import global variables and get DB session
+        db, Category, ProductCategory, Product, Tenant = get_db_session()
         
-        # Make sure models are imported
-        if db is None or Category is None:
-            try:
-                from models import db, Category, ProductCategory, Product, Tenant
-            except ImportError:
-                logger.error("Failed to import models")
-                return None
-        
-        # First attempt: Check if we're in a Flask application context
-        try:
-            import flask
-            if flask.has_app_context():
-                # We're already in a Flask app context
-                return func(*args, **kwargs)
-        except (RuntimeError, ImportError, AttributeError):
-            # No current app context or Flask not imported
-            pass
-        
-        # Second attempt: Create a Flask app context if possible
-        try:
-            import flask
-            import sys
-            import os
+        if db is None:
+            logger.error("Failed to get database session")
+            return None
             
-            # Try to import the Flask app from different possible locations
-            flask_app = None
-            for module_name in ["web_app", "main", "app"]:
-                try:
-                    module = __import__(module_name)
-                    if hasattr(module, "app"):
-                        flask_app = getattr(module, "app")
-                        break
-                except ImportError:
-                    continue
-            
-            if flask_app is None:
-                # No Flask app found, will try FastAPI approach next
-                logger.warning("Could not import Flask app")
-            elif hasattr(flask_app, 'app_context'):
-                # Use context manager to ensure cleanup
-                with flask_app.app_context():
-                    return func(*args, **kwargs)
-            else:
-                logger.warning("Flask app does not have app_context attribute")
-        except ImportError:
-            logger.warning("Could not import Flask")
-        except Exception as e:
-            logger.warning(f"Error creating Flask application context: {e}")
-        
-        # Third attempt: FastAPI environment - just try to run directly
         try:
-            # In FastAPI, we don't need a special application context for database operations
-            # Just make sure we have a session
-            if not hasattr(db, 'session'):
-                from sqlalchemy.orm import sessionmaker, scoped_session
-                from sqlalchemy import create_engine
-                import os
-                
-                # Create engine and session if needed
-                engine = create_engine(os.environ.get("DATABASE_URL"))
-                session_factory = sessionmaker(bind=engine)
-                db.session = scoped_session(session_factory)
-            
-            # Run the function directly
             return func(*args, **kwargs)
         except Exception as e:
-            logger.error(f"Error running function in FastAPI context: {e}")
+            logger.error(f"Error in database operation: {e}")
+            # Try to rollback if there was a transaction
+            try:
+                db.session.rollback()
+            except:
+                pass
             return None
     
     return wrapper
@@ -124,7 +115,7 @@ class CategoryManager:
         Returns:
             List of Category objects
         """
-        @ensure_app_context
+        @ensure_db_session
         def _get_all_categories(tenant_id, include_inactive):
             query = Category.query.filter_by(tenant_id=tenant_id)
             
@@ -145,7 +136,7 @@ class CategoryManager:
         Returns:
             Category object or None if not found
         """
-        @ensure_app_context
+        @ensure_db_session
         def _get_category(category_id):
             return Category.query.get(category_id)
         
@@ -162,7 +153,7 @@ class CategoryManager:
         Returns:
             Category object or None if not found
         """
-        @ensure_app_context
+        @ensure_db_session
         def _get_category_by_slug(tenant_id, slug):
             return Category.query.filter_by(tenant_id=tenant_id, slug=slug).first()
         
@@ -191,7 +182,7 @@ class CategoryManager:
         if existing:
             raise ValueError(f"Category with slug '{slug}' already exists for this tenant")
         
-        @ensure_app_context
+        @ensure_db_session
         def _create_category(tenant_id, name, slug, description, parent_id, active):
             # Create new category
             category = Category(
@@ -228,7 +219,7 @@ class CategoryManager:
             logger.warning(f"Category with ID {category_id} not found")
             return None
         
-        @ensure_app_context
+        @ensure_db_session
         def _update_category(category, kwargs, category_id):
             # Update allowed fields
             allowed_fields = ["name", "slug", "description", "parent_id", "active"]
@@ -266,7 +257,7 @@ class CategoryManager:
             logger.warning(f"Category with ID {category_id} not found")
             return False
         
-        @ensure_app_context
+        @ensure_db_session
         def _delete_category(category_id, category):
             # Check if category has subcategories
             subcategories = Category.query.filter_by(parent_id=category_id).count()
@@ -364,7 +355,7 @@ class CategoryManager:
         Returns:
             True if successful, False otherwise
         """
-        @ensure_app_context
+        @ensure_db_session
         def _get_product_and_category(product_id, category_id):
             # Check if product and category exist
             product = Product.query.get(product_id)
@@ -382,7 +373,7 @@ class CategoryManager:
             logger.warning(f"Product {product_id} and category {category_id} belong to different tenants")
             return False
         
-        @ensure_app_context
+        @ensure_db_session
         def _assign_product_to_category(product_id, category_id, product, category):
             # Check if the association already exists
             association = ProductCategory.query.filter_by(
@@ -423,7 +414,7 @@ class CategoryManager:
         Returns:
             True if successful, False otherwise
         """
-        @ensure_app_context
+        @ensure_db_session
         def _check_and_remove_association(product_id, category_id):
             # Check if the association exists
             association = ProductCategory.query.filter_by(
@@ -465,7 +456,7 @@ class CategoryManager:
         Returns:
             True if successful, False otherwise
         """
-        @ensure_app_context
+        @ensure_db_session
         def _get_product_and_associations(product_id):
             product = Product.query.get(product_id)
             if not product:
@@ -512,7 +503,7 @@ class CategoryManager:
             "errors": 0
         }
         
-        @ensure_app_context
+        @ensure_db_session
         def _get_products_for_tenant(tenant_id):
             # Get all products for this tenant
             return Product.query.filter_by(tenant_id=tenant_id).all()
