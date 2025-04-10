@@ -13,8 +13,15 @@ from collections import defaultdict
 from pycommerce.models.product import ProductManager
 from pycommerce.models.order import OrderManager
 from pycommerce.models.tenant import TenantManager
-from pycommerce.plugins.ai.config import AIConfigManager
 from pycommerce.utils.date_utils import get_date_range, format_date
+
+# AI config may not be available in all environments
+try:
+    from pycommerce.plugins.ai.config import AIConfigManager
+    ai_config_available = True
+except ImportError:
+    ai_config_available = False
+    logging.warning("AI configuration module not available")
 
 logger = logging.getLogger(__name__)
 
@@ -31,7 +38,16 @@ class MarketAnalysisService:
         self.product_manager = ProductManager()
         self.order_manager = OrderManager()
         self.tenant_manager = TenantManager()
-        self.ai_config_manager = AIConfigManager()
+        
+        # Initialize AI config manager if available
+        if ai_config_available:
+            try:
+                self.ai_config_manager = AIConfigManager()
+            except Exception as e:
+                logger.warning(f"Failed to initialize AI config manager: {str(e)}")
+                self.ai_config_manager = None
+        else:
+            self.ai_config_manager = None
         
         logger.info("Market analysis service initialized")
     
@@ -283,12 +299,15 @@ class MarketAnalysisService:
         try:
             # Get active AI provider configuration
             ai_provider = None
-            try:
-                ai_config = self.ai_config_manager.get_active_provider(tenant_id)
-                if ai_config:
-                    ai_provider = ai_config.get("provider_id")
-            except Exception as e:
-                logger.error(f"Error getting AI provider: {str(e)}")
+            if self.ai_config_manager:
+                try:
+                    ai_config = self.ai_config_manager.get_active_provider(tenant_id)
+                    if ai_config:
+                        ai_provider = ai_config.get("provider_id")
+                except Exception as e:
+                    logger.error(f"Error getting AI provider: {str(e)}")
+            else:
+                logger.debug("AI configuration manager not available")
             
             # Get sales trends for the past 90 days
             end_date = datetime.datetime.now()

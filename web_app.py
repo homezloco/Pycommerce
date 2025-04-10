@@ -17,6 +17,14 @@ from app_factory import create_app
 
 app, templates = create_app()
 
+# Register API routes
+try:
+    from pycommerce.api.routes import register_api_routes
+    register_api_routes(app)
+    logger.info("API routes registered successfully")
+except ImportError as e:
+    logger.warning(f"Failed to register API routes: {str(e)}")
+
 # Add health endpoint required by the ASGI-WSGI adapter
 @app.get("/api/health")
 async def health_check():

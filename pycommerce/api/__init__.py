@@ -1,5 +1,5 @@
 """
-API package for PyCommerce.
+API package initialization.
 
-This package contains API routes and endpoints for the PyCommerce platform.
+This package contains API routes and utilities for the PyCommerce platform.
 """
