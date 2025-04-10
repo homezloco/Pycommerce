@@ -22,6 +22,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Newsletter subscription and campaign management system
 - Comprehensive sales and inventory reporting
 - Enhanced product listing and detail pages
+- Multi-provider AI configuration system with support for OpenAI, Google Gemini, DeepSeek, and OpenRouter
+- "All Stores" option for centralized AI configuration management
+- Rich text editor with AI-powered content generation and enhancement
 
 ### Changed
 - Updated order status to use string values instead of integers for improved readability and better display in the admin interface
@@ -35,6 +38,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Improved database query efficiency
 
 ### Fixed
+- [2025-04-10] Fixed text visibility issues in AI configuration interface for dark mode
 - [2025-04-10] Fixed SVG image previews in media library to properly display vector graphics
 - [2025-04-10] Enhanced menu navigation with better organization and submenu structure
 - [2025-04-09] Improved mobile navigation with hamburger menu and auto-collapsing sidebar
