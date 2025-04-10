@@ -21,13 +21,14 @@ Tenant = None
 
 def ensure_app_context(func):
     """
-    Decorator to ensure Flask application context is available.
+    Decorator to ensure database context is available.
+    Works with both Flask and FastAPI environments.
     
     Args:
         func: The function to wrap
         
     Returns:
-        Wrapped function that ensures Flask app context
+        Wrapped function that ensures database context
     """
     @wraps(func)
     def wrapper(*args, **kwargs):
@@ -42,17 +43,17 @@ def ensure_app_context(func):
                 logger.error("Failed to import models")
                 return None
         
-        # Check if we're in an application context
+        # First attempt: Check if we're in a Flask application context
         try:
             import flask
             if flask.has_app_context():
-                # We're already in an app context
+                # We're already in a Flask app context
                 return func(*args, **kwargs)
         except (RuntimeError, ImportError, AttributeError):
             # No current app context or Flask not imported
             pass
         
-        # Create an app context
+        # Second attempt: Create a Flask app context if possible
         try:
             import flask
             import sys
@@ -70,14 +71,37 @@ def ensure_app_context(func):
                     continue
             
             if flask_app is None:
-                logger.error("Could not import Flask app")
-                return None
-            
-            # Use context manager to ensure cleanup
-            with flask_app.app_context():
-                return func(*args, **kwargs)
+                # No Flask app found, will try FastAPI approach next
+                logger.warning("Could not import Flask app")
+            elif hasattr(flask_app, 'app_context'):
+                # Use context manager to ensure cleanup
+                with flask_app.app_context():
+                    return func(*args, **kwargs)
+            else:
+                logger.warning("Flask app does not have app_context attribute")
         except ImportError:
-            logger.error("Could not import Flask")
+            logger.warning("Could not import Flask")
+        except Exception as e:
+            logger.warning(f"Error creating Flask application context: {e}")
+        
+        # Third attempt: FastAPI environment - just try to run directly
+        try:
+            # In FastAPI, we don't need a special application context for database operations
+            # Just make sure we have a session
+            if not hasattr(db, 'session'):
+                from sqlalchemy.orm import sessionmaker, scoped_session
+                from sqlalchemy import create_engine
+                import os
+                
+                # Create engine and session if needed
+                engine = create_engine(os.environ.get("DATABASE_URL"))
+                session_factory = sessionmaker(bind=engine)
+                db.session = scoped_session(session_factory)
+            
+            # Run the function directly
+            return func(*args, **kwargs)
+        except Exception as e:
+            logger.error(f"Error running function in FastAPI context: {e}")
             return None
     
     return wrapper
