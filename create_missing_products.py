@@ -45,8 +45,8 @@ def extract_missing_product_ids(product_manager: AppProductManager, order_manage
     """
     missing_products: Dict[str, List[OrderItem]] = {}
     
-    # Get all orders
-    orders = order_manager.get_all()
+    # Get all orders (using the get_for_tenant method with no tenant_id to get all)
+    orders = order_manager.get_for_tenant()
     logger.info(f"Found {len(orders)} orders in the system")
     
     # Check each order's items
@@ -56,7 +56,7 @@ def extract_missing_product_ids(product_manager: AppProductManager, order_manage
             
             # Check if product exists
             try:
-                product = product_manager.get(product_id)
+                product = product_manager.get_product_by_id(product_id)
                 if not product:
                     if product_id not in missing_products:
                         missing_products[product_id] = []
@@ -143,9 +143,9 @@ def create_missing_products(
     created_count = 0
     
     # Get default tenant for product creation
-    default_tenant = tenant_manager.get_by_slug("tech")
+    default_tenant = tenant_manager.get_tenant_by_slug("tech")
     if not default_tenant:
-        default_tenant = tenant_manager.get_all()[0] if tenant_manager.get_all() else None
+        default_tenant = tenant_manager.get_all_tenants()[0] if tenant_manager.get_all_tenants() else None
     
     if not default_tenant:
         logger.error("No tenants found in the system, cannot create products")
@@ -193,14 +193,13 @@ def create_missing_products(
             category_ids = [primary_categories[cat] for cat in categories if cat in primary_categories]
             
             # Create product with a specific ID (matching the ID used in orders)
-            product = product_manager.create(
+            product = product_manager.create_product(
                 tenant_id=tenant_id,
                 name=name,
                 price=price,
                 description=description,
                 sku=f"SKU-{product_id[-6:]}",
-                stock=10,
-                product_id=product_id
+                stock=10
             )
             
             # Assign categories
