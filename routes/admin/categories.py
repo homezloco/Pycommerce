@@ -11,12 +11,6 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 
 from pycommerce.models.tenant import TenantManager
-# Import CategoryManager with error handling
-try:
-    from pycommerce.models.category import CategoryManager
-except ImportError:
-    CategoryManager = None
-
 # Configure logging
 logger = logging.getLogger(__name__)
 
@@ -24,18 +18,12 @@ logger = logging.getLogger(__name__)
 router = None
 templates = None
 
-# Initialize managers
-tenant_manager = TenantManager()
-# Add compatibility method
-if not hasattr(tenant_manager, 'get_tenant_by_slug'):
-    tenant_manager.get_tenant_by_slug = tenant_manager.get_by_slug
+# Shared manager instances - initialized in setup_routes to avoid early initialization
+tenant_manager = None
+category_manager = None
 
-# Initialize category manager using improved CategoryManager
-# This now works with both Flask and FastAPI contexts
-from pycommerce.models.category import CategoryManager
-
-category_manager = CategoryManager()
-logger.info("Using CategoryManager for admin categories routes")
+# Flag to track initialization
+_managers_initialized = False
 
 def setup_routes(templates_instance: Jinja2Templates):
     """
@@ -47,9 +35,41 @@ def setup_routes(templates_instance: Jinja2Templates):
     Returns:
         APIRouter: FastAPI router
     """
-    global templates, router
+    global templates, router, tenant_manager, category_manager, _managers_initialized
     templates = templates_instance
     router = APIRouter()
+    
+    # Initialize managers only once, and only when this function is called (not at import time)
+    if not _managers_initialized:
+        try:
+            logger.info("Initializing managers for categories routes")
+            # Initialize tenant manager
+            tenant_manager = TenantManager()
+            # Add compatibility method
+            if not hasattr(tenant_manager, 'get_tenant_by_slug'):
+                tenant_manager.get_tenant_by_slug = tenant_manager.get_by_slug
+            
+            # Initialize category manager
+            try:
+                from pycommerce.models.category import CategoryManager
+                category_manager = CategoryManager()
+                logger.info("Successfully initialized CategoryManager for admin categories routes")
+            except ImportError as e:
+                logger.error(f"Failed to import CategoryManager: {e}")
+                category_manager = None
+            except Exception as e:
+                logger.error(f"Error initializing CategoryManager: {e}")
+                category_manager = None
+                
+            _managers_initialized = True
+            logger.info("Manager initialization complete")
+        except Exception as e:
+            logger.error(f"Failed to initialize managers: {e}")
+            # Set default values so the app doesn't crash
+            if not tenant_manager:
+                tenant_manager = TenantManager()
+            if not category_manager:
+                category_manager = None
     
     @router.get("/admin/categories", response_class=HTMLResponse)
     async def categories_page(
