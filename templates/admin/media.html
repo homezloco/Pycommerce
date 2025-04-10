@@ -169,13 +169,33 @@
                         </div>
                     </div>
                     <div class="mb-3">
-                        <label for="tenant_id" class="form-label">Store (optional)</label>
+                        <label for="tenant_id" class="form-label">Store</label>
                         <select class="form-select" id="tenant_id" name="tenant_id">
-                            <option value="">No specific store</option>
                             {% for t in tenants %}
                             <option value="{{ t.id }}" {% if selected_tenant == t.id %}selected{% endif %}>{{ t.name }}</option>
                             {% endfor %}
                         </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Sharing Level</label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="sharing_level" id="sharing_store" value="store" checked>
+                            <label class="form-check-label" for="sharing_store">
+                                This store only (default)
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="sharing_level" id="sharing_my_stores" value="my_stores">
+                            <label class="form-check-label" for="sharing_my_stores">
+                                Share with all my stores
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="sharing_level" id="sharing_community" value="community">
+                            <label class="form-check-label" for="sharing_community">
+                                Share with PyCommerce community
+                            </label>
+                        </div>
                     </div>
                     <div class="mb-3">
                         <label for="alt_text" class="form-label">Alt Text (optional)</label>
@@ -211,13 +231,33 @@
                         <div class="form-text">Be detailed and specific about what you want in the image</div>
                     </div>
                     <div class="mb-3">
-                        <label for="tenant_id_gen" class="form-label">Store (optional)</label>
+                        <label for="tenant_id_gen" class="form-label">Store</label>
                         <select class="form-select" id="tenant_id_gen" name="tenant_id">
-                            <option value="">No specific store</option>
                             {% for t in tenants %}
                             <option value="{{ t.id }}" {% if selected_tenant == t.id %}selected{% endif %}>{{ t.name }}</option>
                             {% endfor %}
                         </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Sharing Level</label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="sharing_level" id="sharing_store_gen" value="store" checked>
+                            <label class="form-check-label" for="sharing_store_gen">
+                                This store only (default)
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="sharing_level" id="sharing_my_stores_gen" value="my_stores">
+                            <label class="form-check-label" for="sharing_my_stores_gen">
+                                Share with all my stores
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="sharing_level" id="sharing_community_gen" value="community">
+                            <label class="form-check-label" for="sharing_community_gen">
+                                Share with PyCommerce community
+                            </label>
+                        </div>
                     </div>
                     <div class="row mb-3">
                         <div class="col">

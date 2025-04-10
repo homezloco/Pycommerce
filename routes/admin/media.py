@@ -6,6 +6,7 @@ This module contains all the routes for managing media files in the admin interf
 import logging
 from typing import Optional
 from uuid import UUID
+from datetime import datetime
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, Request, UploadFile
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response
@@ -89,11 +90,11 @@ async def admin_media(
     if isinstance(is_ai_generated, bool):
         bool_is_ai_generated = is_ai_generated
     
-    # If tenant_id is specified, filter by it, otherwise show all media
-    tenant_id_param = str(tenant_obj.id) if tenant_id else None
+    # If tenant is selected, filter by it, otherwise show all media
+    selected_tenant_id = str(tenant_obj.id) if selected_tenant_slug else None
     
     media_files = media_service.list_media(
-        tenant_id=tenant_id_param,
+        tenant_id=selected_tenant_id,
         file_type=file_type,
         is_ai_generated=bool_is_ai_generated,
         search_term=search_term
@@ -162,6 +163,7 @@ async def admin_upload_media(
     request: Request,
     file: UploadFile = File(...),
     tenant_id: str = Form(...),
+    sharing_level: str = Form("store"),
     alt_text: Optional[str] = Form(None),
     description: Optional[str] = Form(None)
 ):
@@ -170,13 +172,24 @@ async def admin_upload_media(
         # Read file content
         file_content = await file.read()
         
+        # Determine sharing settings based on sharing_level
+        is_public = sharing_level == "community"
+        
+        # Create metadata with sharing info
+        metadata = {
+            "sharing_level": sharing_level,
+            "upload_date": datetime.now().isoformat()
+        }
+        
         # Upload file
         result = await media_service.upload_file(
             file=file_content,
             filename=file.filename,
             tenant_id=tenant_id,
             alt_text=alt_text,
-            description=description
+            description=description,
+            metadata=metadata,
+            is_public=is_public
         )
         
         if result:
@@ -203,6 +216,7 @@ async def admin_generate_image(
     request: Request,
     prompt: str = Form(...),
     tenant_id: str = Form(...),
+    sharing_level: str = Form("store"),
     size: str = Form("1024x1024"),
     quality: str = Form("standard"),
     alt_text: Optional[str] = Form(None),
@@ -210,6 +224,15 @@ async def admin_generate_image(
 ):
     """Generate an image using DALL-E."""
     try:
+        # Determine sharing settings based on sharing_level
+        is_public = sharing_level == "community"
+        
+        # Create metadata with sharing info and add to existing metadata
+        sharing_metadata = {
+            "sharing_level": sharing_level,
+            "generation_date": datetime.now().isoformat()
+        }
+        
         # Generate image
         result = await media_service.generate_image(
             tenant_id=tenant_id,
@@ -217,7 +240,9 @@ async def admin_generate_image(
             size=size,
             quality=quality,
             alt_text=alt_text or prompt,
-            description=description or f"AI-generated image from prompt: {prompt}"
+            description=description or f"AI-generated image from prompt: {prompt}",
+            metadata=sharing_metadata,
+            is_public=is_public
         )
         
         if result:

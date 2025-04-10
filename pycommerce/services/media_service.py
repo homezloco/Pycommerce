@@ -59,7 +59,8 @@ class MediaService:
         tenant_id: Optional[str] = None,
         alt_text: Optional[str] = None,
         description: Optional[str] = None,
-        metadata: Optional[Dict[str, Any]] = None
+        metadata: Optional[Dict[str, Any]] = None,
+        is_public: bool = False
     ) -> Media:
         """
         Upload a file and create a media record.
