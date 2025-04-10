@@ -185,6 +185,16 @@ class MarketAnalysisService:
                             # Update category sales
                             if product_categories:
                                 for cat in product_categories:
+                                    # Make sure we're using the full category name, not just a letter
+                                    if isinstance(cat, str) and len(cat) <= 1:
+                                        logger.warning(f"Found short category name: '{cat}', trying to get full name")
+                                        # Skip very short category names
+                                        continue
+                                    
+                                    # Log the category type and value for debugging
+                                    logger.debug(f"Category: {type(cat)}, value: {cat}")
+                                    
+                                    # Add category sales
                                     category_sales[cat] += item.price * item.quantity
                             else:
                                 # If product is found but has no categories, add to "Uncategorized"
@@ -211,14 +221,41 @@ class MarketAnalysisService:
                                             {"product_id": product_id}
                                         ).fetchall()
                                     
+                                    # Debug category query results
+                                    logger.debug(f"Retrieved categories for product {product_id}: {categories_result}")
+                                    
                                     # Convert SQL rows to plain strings before caching
-                                    category_names = [row[0] for row in categories_result]
+                                    category_names = []
+                                    for row in categories_result:
+                                        if row and len(row) > 0:
+                                            # Get the complete category name and ensure it's a proper string
+                                            cat_name = str(row[0]) if row[0] else "Unknown"
+                                            # Skip single letter categories (likely DB corruption or bad import)
+                                            if len(cat_name) <= 1:
+                                                logger.warning(f"Skipping short category name from DB: '{cat_name}'")
+                                                continue
+                                            category_names.append(cat_name)
+                                            
+                                    # If we somehow ended up with no valid categories, add Unknown
+                                    if not category_names:
+                                        category_names = ["Unknown"]
+                                        
+                                    logger.debug(f"Processed category names: {category_names}")
                                     product_category_cache[product_id] = category_names
                                 
                                 if categories_result:
                                     # Found categories, use them
                                     for cat_result in categories_result:
                                         cat_name = cat_result[0]
+                                        # Skip very short category names
+                                        if isinstance(cat_name, str) and len(cat_name) <= 1:
+                                            logger.warning(f"Found short category name from DB: '{cat_name}', skipping")
+                                            continue
+                                            
+                                        # Log the category value for debugging
+                                        logger.debug(f"DB Category value: {cat_name}")
+                                        
+                                        # Add to category sales
                                         category_sales[cat_name] += item.price * item.quantity
                                 else:
                                     # If product is not found in the database either, add to "Unknown"
@@ -573,6 +610,7 @@ class MarketAnalysisService:
             # Add insights based on top categories
             if "top_categories" in sales_trends["data"] and sales_trends["data"]["top_categories"]:
                 top_category = sales_trends["data"]["top_categories"][0]["category"]
+                
                 # Skip Unknown category and try to get a real category
                 if top_category == "Unknown" and len(sales_trends["data"]["top_categories"]) > 1:
                     for category_data in sales_trends["data"]["top_categories"][1:]:
@@ -580,8 +618,18 @@ class MarketAnalysisService:
                             top_category = category_data["category"]
                             break
                 
+                # Skip very short category names (single letters) and try to get the next category
+                if len(top_category) <= 1 and len(sales_trends["data"]["top_categories"]) > 1:
+                    logger.warning(f"Found short top category name: '{top_category}', trying to get a better one")
+                    for category_data in sales_trends["data"]["top_categories"][1:]:
+                        cat_name = category_data["category"]
+                        if cat_name != "Unknown" and len(cat_name) > 1:
+                            top_category = cat_name
+                            logger.info(f"Using alternate top category: '{top_category}'")
+                            break
+                
                 # Only add insights if we have a meaningful category
-                if top_category != "Unknown":
+                if top_category != "Unknown" and len(top_category) > 1:
                     insights.append(f"'{top_category}' is your best-performing category")
                     recommendations.append(f"Consider expanding your '{top_category}' product line")
                 else:
