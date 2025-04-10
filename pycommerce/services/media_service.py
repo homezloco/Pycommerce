@@ -109,7 +109,7 @@ class MediaService:
                 except Exception as e:
                     logger.warning(f"Could not determine image dimensions: {str(e)}")
             
-            # Create the media record with only the fields that exist in the model
+            # Create the media record with all the fields that now exist in the model
             media_data = {
                 "tenant_id": uuid.UUID(tenant_id) if tenant_id else None,
                 "filename": os.path.splitext(filename)[0],  # Use filename instead of name
@@ -117,19 +117,14 @@ class MediaService:
                 "file_path": file_path,
                 "file_type": mime_type,  # Use mime_type since that's what file_type should store
                 "file_size": file_size,
-                "description": description
+                "description": description,
+                "meta_data": metadata or {},
+                "is_public": is_public,
+                "is_ai_generated": False,
+                "url": f"/static/media/uploads/{unique_filename}",
+                "thumbnail_url": f"/static/media/uploads/thumbnails/{unique_filename}" if os.path.exists(os.path.join(UPLOADS_DIR, "thumbnails", unique_filename)) else None,
+                "alt_text": alt_text
             }
-            
-            # Store additional metadata in the description as JSON if needed
-            if metadata:
-                import json
-                # Append sharing info to the description
-                sharing_info = f"\nSharing Level: {metadata.get('sharing_level', 'store')}"
-                sharing_info += f"\nIs Public: {is_public}"
-                if description:
-                    media_data["description"] = description + sharing_info
-                else:
-                    media_data["description"] = sharing_info
             
             media = self.media_manager.create(media_data)
             logger.info(f"Uploaded file: {filename} -> {file_path}")
@@ -213,7 +208,19 @@ class MediaService:
             except Exception as e:
                 logger.warning(f"Could not determine image dimensions: {str(e)}")
             
-            # Create the media record with only the fields that exist in the model
+            # Prepare base metadata
+            dalle_metadata = {
+                "prompt": prompt,
+                "model": "dall-e-3",
+                "size": size,
+                "quality": quality
+            }
+            
+            # Merge with any custom metadata
+            if metadata:
+                dalle_metadata.update(metadata)
+            
+            # Create the media record with all the fields that now exist in the model
             media_data = {
                 "tenant_id": uuid.UUID(tenant_id) if tenant_id else None,
                 "filename": f"DALL-E: {prompt[:50]}{'...' if len(prompt) > 50 else ''}.png",
@@ -221,24 +228,14 @@ class MediaService:
                 "file_path": file_path,
                 "file_type": "image/png",
                 "file_size": file_size,
-                "description": description or prompt
+                "description": description or prompt,
+                "meta_data": dalle_metadata,
+                "is_public": is_public,
+                "is_ai_generated": True,
+                "url": f"/static/media/generated/{unique_filename}",
+                "thumbnail_url": None,  # We don't create thumbnails yet for AI-generated images
+                "alt_text": alt_text or prompt
             }
-            
-            # Store additional metadata in the description as JSON if needed
-            if metadata:
-                import json
-                # Append sharing info to the description
-                sharing_info = f"\nSharing Level: {metadata.get('sharing_level', 'store')}"
-                sharing_info += f"\nIs Public: {is_public}"
-                sharing_info += f"\nPrompt: {prompt}"
-                sharing_info += f"\nModel: dall-e-3"
-                sharing_info += f"\nSize: {size}"
-                sharing_info += f"\nQuality: {quality}"
-                
-                if description:
-                    media_data["description"] = description + sharing_info
-                else:
-                    media_data["description"] = prompt + sharing_info
             
             media = self.media_manager.create(media_data)
             logger.info(f"Generated image with DALL-E: {prompt[:50]}{'...' if len(prompt) > 50 else ''}")
@@ -398,25 +395,22 @@ class MediaService:
             # Create the media record
             media_data = {
                 "tenant_id": media.tenant_id,
-                "name": f"{media.name} (Resized to {width}x{height})",
+                "filename": f"{media.filename} (Resized to {width}x{height})",
+                "original_filename": media.original_filename,
                 "file_path": file_path,
-                "file_url": f"/static/media/uploads/{unique_filename}",  # URL relative to the application root
-                "file_type": "image",
-                "mime_type": media.mime_type,
+                "file_type": media.file_type,
                 "file_size": file_size,
-                "width": width,
-                "height": height,
-                "alt_text": media.alt_text,
                 "description": media.description,
                 "meta_data": {
                     "original_media_id": str(media.id),
-                    "original_width": media.width,
-                    "original_height": media.height,
                     "resize_operation": "resize",
                     **(media.meta_data or {})
                 },
                 "is_ai_generated": media.is_ai_generated,
-                "is_public": media.is_public
+                "is_public": media.is_public,
+                "url": f"/static/media/uploads/{unique_filename}",
+                "thumbnail_url": None,
+                "alt_text": media.alt_text
             }
             
             new_media = self.media_manager.create(media_data)
@@ -478,20 +472,14 @@ class MediaService:
             # Create the media record
             media_data = {
                 "tenant_id": media.tenant_id,
-                "name": f"{media.name} (Cropped)",
+                "filename": f"{media.filename} (Cropped)",
+                "original_filename": media.original_filename,
                 "file_path": file_path,
-                "file_url": f"/static/media/uploads/{unique_filename}",  # URL relative to the application root
-                "file_type": "image",
-                "mime_type": media.mime_type,
+                "file_type": media.file_type,
                 "file_size": file_size,
-                "width": width,
-                "height": height,
-                "alt_text": media.alt_text,
                 "description": media.description,
                 "meta_data": {
                     "original_media_id": str(media.id),
-                    "original_width": media.width,
-                    "original_height": media.height,
                     "crop_operation": "crop",
                     "crop_box": {
                         "left": left,
@@ -502,7 +490,10 @@ class MediaService:
                     **(media.meta_data or {})
                 },
                 "is_ai_generated": media.is_ai_generated,
-                "is_public": media.is_public
+                "is_public": media.is_public,
+                "url": f"/static/media/uploads/{unique_filename}",
+                "thumbnail_url": None,
+                "alt_text": media.alt_text
             }
             
             new_media = self.media_manager.create(media_data)
