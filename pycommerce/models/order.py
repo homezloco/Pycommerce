@@ -14,6 +14,7 @@ from typing import List, Optional, Dict, Any, Union
 
 from sqlalchemy import Column, String, Float, Integer, Boolean, DateTime, ForeignKey, Enum as SQLAlchemyEnum, and_, or_
 from sqlalchemy.orm import relationship
+import sqlalchemy.orm
 
 from pycommerce.core.db import Base, get_session
 from pycommerce.models.order_note import OrderNote
@@ -151,7 +152,11 @@ class OrderManager:
         """
         try:
             with get_session() as session:
-                query = session.query(Order).filter(Order.tenant_id == tenant_id)
+                # Use joinedload to eagerly load items - this prevents 
+                # "not bound to a session" errors when items are accessed later
+                query = session.query(Order).options(
+                    sqlalchemy.orm.joinedload(Order.items)
+                ).filter(Order.tenant_id == tenant_id)
                 
                 # Apply filters if provided
                 if filters:
