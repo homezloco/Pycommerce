@@ -805,7 +805,12 @@ class MarketAnalysisService:
                                 # Get cached category names
                                 category_names = product_category_cache[product_id]
                                 # Create synthetic result for consistent processing
-                                categories_result = [(name,) for name in category_names]
+                                # Format each category name as a tuple with name in first position
+                                categories_result = [(name,) for name in category_names if name and len(name) > 1]
+                                
+                                # If we somehow got empty results from cache, add Unknown
+                                if not categories_result:
+                                    categories_result = [("Unknown",)]
                             else:
                                 from sqlalchemy import text
                                 from app import db, app
@@ -814,7 +819,7 @@ class MarketAnalysisService:
                                 with app.app_context():
                                     categories_result = db.session.execute(
                                         text("""
-                                            SELECT c.name 
+                                            SELECT c.name, c.id
                                             FROM categories c
                                             JOIN product_categories pc ON c.id = pc.category_id
                                             WHERE pc.product_id = :product_id
@@ -823,7 +828,21 @@ class MarketAnalysisService:
                                     ).fetchall()
                                 
                                 # Convert SQL rows to plain strings before caching
-                                category_names = [row[0] for row in categories_result]
+                                # Ensure we're getting complete category names, not just first letter
+                                category_names = []
+                                for row in categories_result:
+                                    if row and len(row) > 0:
+                                        # Get complete category name and ensure it's a string
+                                        cat_name = str(row[0]) if row[0] else "Unknown"
+                                        # Skip single letter categories (likely invalid data)
+                                        if len(cat_name) > 1:
+                                            category_names.append(cat_name)
+                                
+                                # If we couldn't find valid categories, add a default
+                                if not category_names:
+                                    category_names = ["Unknown"]
+                                    
+                                # Cache the result
                                 product_category_cache[product_id] = category_names
                             
                             if categories_result:
