@@ -48,6 +48,15 @@ class MarketAnalysisService:
             logger.warning(f"Failed to initialize category manager: {str(e)}")
             self.category_manager = None
         
+        # Initialize a Flask-based product manager if available
+        try:
+            from managers import ProductManager as FlaskProductManager
+            self.flask_product_manager = FlaskProductManager()
+            logger.info("Flask ProductManager initialized for fallback product lookups")
+        except ImportError:
+            logger.debug("Flask ProductManager not available")
+            self.flask_product_manager = None
+        
         # Initialize AI config manager if available
         if ai_config_available:
             try:
@@ -124,7 +133,20 @@ class MarketAnalysisService:
                 for item in order.items:
                     product_id = str(item.product_id)
                     try:
-                        product = self.product_manager.get(product_id)
+                        # First try original product manager
+                        product = None
+                        try:
+                            product = self.product_manager.get(product_id)
+                        except Exception as e:
+                            logger.debug(f"Failed to get product from SDK manager: {e}")
+                            
+                        # If that fails, try Flask product manager
+                        if not product and hasattr(self, 'flask_product_manager') and self.flask_product_manager:
+                            try:
+                                product = self.flask_product_manager.get_product_by_id(product_id)
+                                logger.debug(f"Retrieved product {product_id} from Flask product manager")
+                            except Exception as e:
+                                logger.debug(f"Failed to get product from Flask manager: {e}")
                         
                         if product:
                             # Try to get categories from the category manager first
@@ -203,7 +225,21 @@ class MarketAnalysisService:
                 reverse=True
             )[:10]:  # Top 10 products
                 try:
-                    product = self.product_manager.get(product_id)
+                    # First try original product manager
+                    product = None
+                    try:
+                        product = self.product_manager.get(product_id)
+                    except Exception as e:
+                        logger.debug(f"Failed to get product from SDK manager: {e}")
+                        
+                    # If that fails, try Flask product manager
+                    if not product and hasattr(self, 'flask_product_manager') and self.flask_product_manager:
+                        try:
+                            product = self.flask_product_manager.get_product_by_id(product_id)
+                            logger.debug(f"Retrieved product {product_id} from Flask product manager")
+                        except Exception as e:
+                            logger.debug(f"Failed to get product from Flask manager: {e}")
+                    
                     if product:
                         top_products_data.append({
                             "id": product_id,
@@ -271,8 +307,21 @@ class MarketAnalysisService:
             Dictionary containing forecast data
         """
         try:
-            # Get the product details
-            product = self.product_manager.get(product_id)
+            # Get the product details - first try SDK manager
+            product = None
+            try:
+                product = self.product_manager.get(product_id)
+            except Exception as e:
+                logger.debug(f"Failed to get product from SDK manager: {e}")
+                
+            # If that fails, try Flask product manager
+            if not product and hasattr(self, 'flask_product_manager') and self.flask_product_manager:
+                try:
+                    product = self.flask_product_manager.get_product_by_id(product_id)
+                    logger.debug(f"Retrieved product {product_id} from Flask product manager")
+                except Exception as e:
+                    logger.debug(f"Failed to get product from Flask manager: {e}")
+                    
             if not product:
                 logger.error(f"Product not found: {product_id}")
                 return {
