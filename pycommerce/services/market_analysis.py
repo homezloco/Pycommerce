@@ -125,14 +125,19 @@ class MarketAnalysisService:
                             # Update category sales
                             for cat in product.categories:
                                 category_sales[cat] += item.price * item.quantity
+                        else:
+                            # If product is found but has no categories, add to "Uncategorized"
+                            category_sales["Uncategorized"] += item.price * item.quantity
                         
                         # Update product sales counts
                         product_sales[product_id] += item.quantity
                     except Exception as e:
                         # Log the error but continue processing other items
-                        logger.error(f"Error processing product {product_id}: {str(e)}")
+                        logger.warning(f"Could not retrieve product {product_id} for sales trends: {str(e)}")
                         # Still count the item in revenue calculations even if product details are unavailable
                         product_sales[product_id] += item.quantity
+                        # Add to "Unknown" category when product not found
+                        category_sales["Unknown"] += item.price * item.quantity
             
             # Format data for trends
             date_range = get_date_range(start_date, end_date)
@@ -170,12 +175,25 @@ class MarketAnalysisService:
                         })
                 except Exception as e:
                     logger.warning(f"Could not retrieve product {product_id} for top products list: {str(e)}")
-                    # Add with generic name in case of missing product
+                    # Calculate revenue from order items directly since we don't have product price
+                    revenue = 0
+                    item_count = 0
+                    item_price = 0
+                    
+                    # Find all order items for this product to calculate true revenue
+                    for order in orders:
+                        for item in order.items:
+                            if str(item.product_id) == product_id:
+                                revenue += item.price * item.quantity
+                                item_count += item.quantity
+                                # Use the most recent price as the reference
+                                item_price = item.price
+                    
                     top_products_data.append({
                         "id": product_id,
                         "name": f"Product {product_id[-6:]}",  # Use last 6 chars of ID as name
                         "quantity": quantity,
-                        "revenue": 0  # Cannot calculate revenue without price
+                        "revenue": round(revenue, 2)  # Calculate from order item data
                     })
             
             return {
@@ -338,8 +356,12 @@ class MarketAnalysisService:
                 end_date=end_date.strftime("%Y-%m-%d")
             )
             
-            # If we don't have valid sales data, return a basic response
-            if sales_trends.get("status") != "success" or not sales_trends.get("data", {}).get("trends"):
+            # If we don't have valid sales data or top categories/products, return a basic response
+            if (sales_trends.get("status") != "success" or 
+                not sales_trends.get("data", {}).get("trends") or
+                (not sales_trends.get("data", {}).get("top_categories") and 
+                 not sales_trends.get("data", {}).get("top_products"))):
+                
                 return {
                     "status": "warning",
                     "message": "Insufficient data for market insights",
