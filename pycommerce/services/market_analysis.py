@@ -40,6 +40,14 @@ class MarketAnalysisService:
         self.order_manager = OrderManager()
         self.tenant_manager = TenantManager()
         
+        # Initialize category manager
+        try:
+            self.category_manager = CategoryManager()
+            logger.debug("Category manager initialized in MarketAnalysisService")
+        except Exception as e:
+            logger.warning(f"Failed to initialize category manager: {str(e)}")
+            self.category_manager = None
+        
         # Initialize AI config manager if available
         if ai_config_available:
             try:
@@ -118,17 +126,39 @@ class MarketAnalysisService:
                     try:
                         product = self.product_manager.get(product_id)
                         
-                        if product and hasattr(product, 'categories'):
+                        if product:
+                            # Try to get categories from the category manager first
+                            product_categories = []
+                            if self.category_manager:
+                                try:
+                                    categories_from_manager = self.category_manager.get_product_categories(product_id)
+                                    if categories_from_manager:
+                                        for cat_obj in categories_from_manager:
+                                            if hasattr(cat_obj, 'name'):
+                                                product_categories.append(cat_obj.name)
+                                            else:
+                                                product_categories.append(str(cat_obj))
+                                except Exception as e:
+                                    logger.debug(f"Error getting categories from manager: {e}")
+                            
+                            # Fall back to product.categories if needed
+                            if not product_categories and hasattr(product, 'categories'):
+                                product_categories = product.categories
+
                             # Skip if category filter is applied and product doesn't match
-                            if category and category not in product.categories:
+                            if category and category not in product_categories:
                                 continue
                                 
                             # Update category sales
-                            for cat in product.categories:
-                                category_sales[cat] += item.price * item.quantity
+                            if product_categories:
+                                for cat in product_categories:
+                                    category_sales[cat] += item.price * item.quantity
+                            else:
+                                # If product is found but has no categories, add to "Uncategorized"
+                                category_sales["Uncategorized"] += item.price * item.quantity
                         else:
-                            # If product is found but has no categories, add to "Uncategorized"
-                            category_sales["Uncategorized"] += item.price * item.quantity
+                            # If product is not found, add to "Unknown"
+                            category_sales["Unknown"] += item.price * item.quantity
                         
                         # Update product sales counts
                         product_sales[product_id] += item.quantity
@@ -406,7 +436,25 @@ class MarketAnalysisService:
                 }
             
             # Get all products for the tenant
-            products = self.product_manager.get_products_by_tenant(tenant_id)
+            try:
+                # Try different methods of getting products for a tenant
+                if hasattr(self.product_manager, 'get_products_by_tenant'):
+                    products = self.product_manager.get_products_by_tenant(tenant_id)
+                elif hasattr(self.product_manager, 'get_by_tenant'):
+                    products = self.product_manager.get_by_tenant(tenant_id)
+                else:
+                    # Fallback to using product data from sales trends
+                    products = []
+                    for product_data in sales_data.get("top_products", []):
+                        try:
+                            product = self.product_manager.get(product_data["id"])
+                            if product:
+                                products.append(product)
+                        except Exception as e:
+                            logger.debug(f"Could not get product {product_data['id']}: {e}")
+            except Exception as e:
+                logger.warning(f"Could not get products for tenant: {e}")
+                products = []
             
             # Calculate basic insights
             insights = []

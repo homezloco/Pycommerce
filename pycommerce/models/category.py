@@ -643,6 +643,49 @@ class CategoryManager:
         
         return root_categories
     
+    def get_product_categories(self, product_id: str) -> List[Any]:
+        """
+        Get all categories that a product belongs to.
+        
+        Args:
+            product_id: The product ID
+            
+        Returns:
+            List of Category objects
+        """
+        @ensure_db_session
+        def _get_product_categories(product_id):
+            try:
+                # Check if we're using SQLAlchemy
+                if hasattr(self, '_db_mode') and self._db_mode:
+                    from pycommerce.models import ProductCategory
+                    
+                    # Find all product-category associations for this product
+                    product_categories = ProductCategory.query.filter_by(product_id=product_id).all()
+                    
+                    # Get the categories from associations
+                    categories = []
+                    for pc in product_categories:
+                        category = Category.query.get(pc.category_id)
+                        if category:
+                            categories.append(category)
+                    
+                    return categories
+                else:
+                    # SDK mode - find categories based on product_id in associations
+                    categories = []
+                    for cat_id, cat_data in self._categories.items():
+                        # Check if this category has the product in its associations
+                        if product_id in cat_data.get("product_ids", []):
+                            categories.append(cat_data)
+                    
+                    return categories
+            except Exception as e:
+                logger.error(f"Error getting categories for product {product_id}: {str(e)}")
+                return []
+        
+        return _get_product_categories(product_id)
+
     def get_products_in_category(self, category_id: str, include_subcategories: bool = True) -> List[Product]:
         """
         Get all products in a category.
