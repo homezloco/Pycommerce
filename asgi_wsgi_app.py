@@ -35,8 +35,8 @@ uvicorn_process = None
 # Flag to track if a server start is in progress
 _server_start_in_progress = False
 
-# Flag to indicate we are processing a categories page request
-# This prevents any process cleanup operations during categories requests
+# No longer need special handling for category page requests
+# After fixing CategoryManager with proper Flask app_context handling
 _processing_categories_request = False
 
 def start_uvicorn_server():
@@ -248,79 +248,9 @@ def proxy_to_uvicorn(environ, start_response):
     """WSGI app that proxies requests to the uvicorn server."""
     path = environ.get('PATH_INFO', '')
     
-    # Special handling for admin/categories route - don't restart server if it's already running
-    # This helps prevent the common issue where accessing the categories page causes server crashes
-    is_categories_request = path and '/admin/categories' in path
-    is_market_analysis_request = path and '/admin/market-analysis' in path
-
-    # Apply the same protection for categories and market analysis pages
-    # These routes are particularly sensitive to server restarts
-    if is_categories_request or is_market_analysis_request:
-        # Set the global flag to prevent any process cleanup in other functions
-        global _processing_categories_request
-        _processing_categories_request = True
-        
-        route_name = "Categories" if is_categories_request else "Market Analysis"
-        logger.info(f"{route_name} page requested, using special handling to prevent server crashes")
-        
-        # NEVER attempt to kill existing processes for these routes
-        # Instead, wait for the existing server to respond or create a friendly error
-        # Set a global variable to completely bypass ANY server restart logic
-        global _server_start_in_progress
-        _server_start_in_progress = True  # This will prevent any attempt to start a new server
-        try:
-            # Add more retries and longer timeout for these sensitive routes
-            server_available = False
-            for retry in range(3):  # Try up to 3 times
-                try:
-                    response = httpx.get(f"{UVICORN_SERVER}/api/health", timeout=3.0)
-                    if response.status_code == 200:
-                        # If we can reach the health endpoint, server is working - proceed normally
-                        logger.info(f"Server is responsive for {route_name} page request (retry {retry})")
-                        server_available = True
-                        break
-                    else:
-                        # Health endpoint returned non-200 - but don't give up immediately
-                        logger.warning(f"Health endpoint returned status {response.status_code} (retry {retry})")
-                        time.sleep(1)  # Wait a bit before retry
-                except Exception as retry_error:
-                    logger.warning(f"Health check retry {retry} failed: {retry_error}")
-                    time.sleep(1)  # Wait before retry
-                    
-            if not server_available:
-                # After all retries, if we still can't reach the server, show a friendly error
-                logger.warning(f"Server is not responding for {route_name} page after multiple retries")
-                start_response('503 Service Unavailable', [('Content-Type', 'text/html')])
-                return [f'''
-                <html><body>
-                    <h1>Server is temporarily unavailable</h1>
-                    <p>The server is still starting up. Please try again in a few seconds.</p>
-                    <p><a href="/admin/dashboard">Return to Dashboard</a></p>
-                    <script>
-                        // Auto-refresh after 5 seconds
-                        setTimeout(function() {{ 
-                            window.location.reload(); 
-                        }}, 5000);
-                    </script>
-                </body></html>
-                '''.encode('utf-8')]
-        except Exception as e:
-            # Cannot reach health endpoint - server might be starting up
-            logger.warning(f"Health check failed for {route_name} page: {e}")
-            start_response('503 Service Unavailable', [('Content-Type', 'text/html')])
-            return [f'''
-            <html><body>
-                <h1>Server is temporarily unavailable</h1>
-                <p>The server is in the process of starting up. Please try again in a few seconds.</p>
-                <p><a href="/admin/dashboard">Return to Dashboard</a></p>
-                <script>
-                    // Auto-refresh after 5 seconds
-                    setTimeout(function() {{ 
-                        window.location.reload(); 
-                    }}, 5000);
-                </script>
-            </body></html>
-            '''.encode('utf-8')]
+    # No need for special handling for categories or market analysis pages anymore
+    # The CategoryManager has been rewritten with proper Flask app_context support
+    # This prevents the crashes we used to see with these routes
     
     # Make sure uvicorn is running - we'll only check health URL once
     try:
@@ -339,30 +269,12 @@ def proxy_to_uvicorn(environ, start_response):
             # Do one final check if the server started
             try:
                 if not is_uvicorn_running():
-                    # For categories or market analysis page requests, try to be more lenient - it might still be starting up
-                    if is_categories_request or is_market_analysis_request:
-                        route_name = "Categories" if is_categories_request else "Market Analysis"
-                        logger.warning(f"{route_name} page requested but server not fully ready. Waiting longer...")
-                        time.sleep(3)  # Give it a bit more time
-                        
-                        # Try one more health check
-                        if not is_uvicorn_running():
-                            logger.error(f"Could not start uvicorn server after extended wait for {route_name} page")
-                            start_response('503 Service Unavailable', [('Content-Type', 'text/html')])
-                            return [f'''
-                            <html><body>
-                                <h1>Server is starting up</h1>
-                                <p>The server is still initializing. Please wait a moment and try again.</p>
-                                <p><a href="/admin/dashboard">Return to Dashboard</a></p>
-                                <script>
-                                    // Auto-refresh after 5 seconds
-                                    setTimeout(function() {{ 
-                                        window.location.reload(); 
-                                    }}, 5000);
-                                </script>
-                            </body></html>
-                            '''.encode('utf-8')]
-                    else:
+                    # Give all requests a bit more time for the server to start
+                    logger.warning("Server not fully ready. Waiting longer...")
+                    time.sleep(3)  # Give it a bit more time
+                    
+                    # Try one more health check
+                    if not is_uvicorn_running():
                         logger.error("Could not start uvicorn server after attempt")
                         start_response('500 Internal Server Error', [('Content-Type', 'text/html')])
                         return [b'''
