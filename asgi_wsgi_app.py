@@ -77,10 +77,22 @@ def start_uvicorn_server():
                     logger.error(f"Error terminating previous process: {e}")
         
         # Clean up - try to find any existing uvicorn processes and terminate them
+        # BUT only if they are stuck or not working - don't terminate working servers!
         try:
             import psutil
             current_pid = os.getpid()
             
+            # First try to make a health check request before doing any cleanup
+            # If a server is already running and working, don't terminate it!
+            try:
+                response = httpx.get(f"{UVICORN_SERVER}/api/health", timeout=2.0)
+                if response.status_code == 200:
+                    logger.info("Found a working uvicorn server, not terminating it")
+                    return
+            except Exception:
+                # Only proceed with cleanup if the health check failed
+                pass
+                
             # Get all uvicorn processes using our port
             uvicorn_procs = []
             for proc in psutil.process_iter(['pid', 'name', 'cmdline']):
@@ -93,25 +105,31 @@ def start_uvicorn_server():
                 except (psutil.NoSuchProcess, psutil.AccessDenied):
                     pass
             
-            # Terminate all found processes in order
-            for proc in uvicorn_procs:
-                try:
-                    logger.warning(f"Found existing uvicorn process (PID: {proc.pid}), terminating it")
-                    proc.terminate()
-                except (psutil.NoSuchProcess, psutil.AccessDenied):
-                    pass
-            
-            # Wait for termination to complete and kill any remaining
-            for proc in uvicorn_procs:
-                try:
-                    proc.wait(timeout=3)
-                except (psutil.NoSuchProcess, psutil.TimeoutExpired):
+            # We only terminate processes if the server is not responding
+            # This keeps a working server running
+            if not uvicorn_procs:
+                logger.info("No existing uvicorn processes found")
+            else:
+                logger.warning(f"Found {len(uvicorn_procs)} non-responsive uvicorn processes")
+                
+                # Terminate all found processes in order
+                for proc in uvicorn_procs:
                     try:
-                        logger.warning(f"Killing process {proc.pid} that didn't terminate")
-                        proc.kill()
+                        logger.warning(f"Terminating non-responsive uvicorn process (PID: {proc.pid})")
+                        proc.terminate()
                     except (psutil.NoSuchProcess, psutil.AccessDenied):
                         pass
-                        
+                
+                # Wait for termination to complete and kill any remaining that don't respond
+                time.sleep(1)  # Give the processes a chance to terminate
+                for proc in uvicorn_procs:
+                    try:
+                        if proc.is_running():
+                            logger.warning(f"Process {proc.pid} didn't terminate, using stronger measures")
+                            proc.kill()
+                    except (psutil.NoSuchProcess, psutil.AccessDenied):
+                        pass
+                    
         except ImportError:
             logger.warning("psutil not available, skipping uvicorn process cleanup")
         except Exception as e:
@@ -220,6 +238,14 @@ def wait_for_uvicorn(max_retries=10, delay=1):
 
 def proxy_to_uvicorn(environ, start_response):
     """WSGI app that proxies requests to the uvicorn server."""
+    path = environ.get('PATH_INFO', '')
+    
+    # Special handling for admin/categories route - don't restart server if it's already running
+    # This helps prevent the common issue where accessing the categories page causes server crashes
+    is_categories_request = path and '/admin/categories' in path
+    if is_categories_request:
+        logger.info("Categories page requested, being extra careful with server status")
+    
     # Make sure uvicorn is running - we'll only check health URL once
     try:
         health_check = is_uvicorn_running()
@@ -228,21 +254,36 @@ def proxy_to_uvicorn(environ, start_response):
         health_check = False
         
     if not health_check:
-        # Only try to start the server if we haven't already done so
+        # Only try to start the server if it's not already trying to start
         # This avoids repeated restart attempts that can cause conflicts
-        logger.info("Attempting to start uvicorn server once")
-        start_uvicorn_server()
-        
-        # Do one final check if the server started
-        try:
-            if not is_uvicorn_running():
-                logger.error("Could not start uvicorn server after attempt")
+        if not _server_start_in_progress:
+            logger.info("Attempting to start uvicorn server")
+            start_uvicorn_server()
+            
+            # Do one final check if the server started
+            try:
+                if not is_uvicorn_running():
+                    # For categories page requests, try to be more lenient - it might still be starting up
+                    if is_categories_request:
+                        logger.warning("Categories page requested but server not fully ready. Waiting longer...")
+                        time.sleep(3)  # Give it a bit more time
+                        if not is_uvicorn_running():
+                            logger.error("Could not start uvicorn server after extended wait for categories page")
+                            start_response('500 Internal Server Error', [('Content-Type', 'text/plain')])
+                            return [b'Failed to start uvicorn server for categories page - please try again in a moment']
+                    else:
+                        logger.error("Could not start uvicorn server after attempt")
+                        start_response('500 Internal Server Error', [('Content-Type', 'text/plain')])
+                        return [b'Failed to start uvicorn server']
+            except Exception as e:
+                logger.error(f"Final health check failed: {e}")
                 start_response('500 Internal Server Error', [('Content-Type', 'text/plain')])
-                return [b'Failed to start uvicorn server']
-        except Exception as e:
-            logger.error(f"Final health check failed: {e}")
-            start_response('500 Internal Server Error', [('Content-Type', 'text/plain')])
-            return [f"Error checking uvicorn health: {e}".encode('utf-8')]
+                return [f"Error checking uvicorn health: {e}".encode('utf-8')]
+        else:
+            # Let the user know the server is in the process of starting
+            logger.info("Server start already in progress, waiting...")
+            start_response('503 Service Unavailable', [('Content-Type', 'text/plain'), ('Retry-After', '5')])
+            return [b'Server is starting up, please try again in a few seconds']
     
     # Extract request details from WSGI environ
     method = environ['REQUEST_METHOD']
