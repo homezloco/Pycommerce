@@ -25,6 +25,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Multi-provider AI configuration system with support for OpenAI, Google Gemini, DeepSeek, and OpenRouter
 - "All Stores" option for centralized AI configuration management
 - Rich text editor with AI-powered content generation and enhancement
+- Market analysis dashboard with sales trends and category performance metrics
+- Product category caching system for improved database query performance
 
 ### Changed
 - Updated order status to use string values instead of integers for improved readability and better display in the admin interface
