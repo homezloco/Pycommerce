@@ -74,70 +74,29 @@ async def ai_config_page(
         "dall-e-2",
     ]
     
-    # Define AI providers
-    ai_providers = [
-        {
-            'id': 'openai',
-            'name': 'OpenAI',
-            'description': 'Use OpenAI for AI-powered features',
-            'logo': 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4d/OpenAI_Logo.svg/1280px-OpenAI_Logo.svg.png',
-            'fields': [
-                {
-                    'id': 'api_key',
-                    'name': 'API Key',
-                    'type': 'password',
-                    'description': 'Your OpenAI API key',
-                    'required': True,
-                },
-                {
-                    'id': 'model',
-                    'name': 'Default Model',
-                    'type': 'select',
-                    'options': [{'value': model, 'label': model} for model in openai_models],
-                    'default': 'gpt-4-turbo',
-                    'description': 'Default model to use for text generation',
-                    'required': True,
-                },
-                {
-                    'id': 'image_model',
-                    'name': 'Image Generation Model',
-                    'type': 'select',
-                    'options': [{'value': model, 'label': model} for model in openai_image_models],
-                    'default': 'dall-e-3',
-                    'description': 'Model to use for image generation',
-                    'required': True,
-                }
-            ]
-        },
-        {
-            'id': 'azure',
-            'name': 'Azure OpenAI',
-            'description': 'Use Azure OpenAI for AI-powered features',
-            'fields': [
-                {
-                    'id': 'api_key',
-                    'name': 'API Key',
-                    'type': 'password',
-                    'description': 'Your Azure OpenAI API key',
-                    'required': True,
-                },
-                {
-                    'id': 'endpoint',
-                    'name': 'Endpoint',
-                    'type': 'text',
-                    'description': 'Azure OpenAI endpoint URL',
-                    'required': True,
-                },
-                {
-                    'id': 'deployment_name',
-                    'name': 'Deployment Name',
-                    'type': 'text',
-                    'description': 'Azure OpenAI deployment name',
-                    'required': True,
-                }
-            ]
-        }
-    ]
+    # Import AI providers configuration
+    from pycommerce.plugins.ai.config import get_ai_providers
+    
+    # Get AI providers from plugin configuration
+    ai_providers = get_ai_providers()
+    
+    # Add icons for Bootstrap display
+    for provider in ai_providers:
+        if provider['id'] == 'openai':
+            provider['icon'] = 'bi-cpu'
+            provider['color'] = 'success'
+        elif provider['id'] == 'gemini':
+            provider['icon'] = 'bi-google'
+            provider['color'] = 'primary'
+        elif provider['id'] == 'deepseek':
+            provider['icon'] = 'bi-braces'
+            provider['color'] = 'info'
+        elif provider['id'] == 'openrouter':
+            provider['icon'] = 'bi-diagram-3'
+            provider['color'] = 'warning'
+        else:
+            provider['icon'] = 'bi-robot'
+            provider['color'] = 'secondary'
     
     # Get active provider from settings
     active_provider = ai_settings.get('provider_id', 'openai')
@@ -170,59 +129,97 @@ async def ai_config_page(
         }
     )
 
-@router.post("/ai-config/update", response_class=RedirectResponse)
-async def update_ai_config(
+@router.post("/ai-config/save", response_class=RedirectResponse)
+async def save_ai_config(
     request: Request,
-    tenant_id: str = Form(...),
-    openai_enabled: Optional[str] = Form(None),
-    openai_model: str = Form("gpt-4-turbo"),
-    openai_image_model: str = Form("dall-e-3"),
-    product_description_enabled: Optional[str] = Form(None),
-    image_generation_enabled: Optional[str] = Form(None),
-    max_tokens_per_request: int = Form(2000),
-    temperature: float = Form(0.7)
+    provider_id: str = Form(...),
+    tenant: str = Form(...)
 ):
-    """Update AI configuration."""
+    """Save AI configuration for a specific provider."""
     try:
-        # Get tenant
-        tenant = tenant_manager.get(tenant_id)
-        if not tenant:
+        # Get tenant object
+        tenant_obj = tenant_manager.get_by_slug(tenant)
+        if not tenant_obj:
             raise HTTPException(
                 status_code=404,
-                detail=f"Store with ID {tenant_id} not found"
+                detail=f"Store with slug '{tenant}' not found"
             )
         
-        # Update AI settings
-        settings = tenant.settings or {}
+        # Get form data for the selected provider
+        form_data = dict(await request.form())
         
-        # Create AI settings object
-        ai_settings = {
-            "openai_enabled": openai_enabled is not None,
-            "openai_model": openai_model,
-            "openai_image_model": openai_image_model,
-            "product_description_enabled": product_description_enabled is not None,
-            "image_generation_enabled": image_generation_enabled is not None,
-            "max_tokens_per_request": max_tokens_per_request,
-            "temperature": temperature
-        }
+        # Get the provider configuration fields and filter form data to include only fields for this provider
+        provider_fields = {}
+        for provider in get_ai_providers():
+            if provider['id'] == provider_id:
+                for field in provider['fields']:
+                    field_id = field['id']
+                    if field_id in form_data:
+                        provider_fields[field_id] = form_data[field_id]
         
-        # Update settings
-        settings["ai_settings"] = ai_settings
+        # Create a config manager
+        from pycommerce.models.plugin_config import PluginConfigManager
+        config_manager = PluginConfigManager()
         
-        # Save updated settings
-        tenant_manager.update_settings(tenant_id, settings)
+        # Save the provider configuration
+        config_manager.save_config(
+            f"ai_{provider_id}",
+            provider_fields,
+            str(tenant_obj.id)
+        )
         
-        # Get tenant slug for redirect
-        tenant_slug = tenant.slug
+        logger.info(f"Saved AI configuration for provider {provider_id} and tenant {tenant}")
         
+        # Redirect back to AI config page
         return RedirectResponse(
-            url=f"/admin/ai-config?tenant={tenant_slug}&status_message=AI+settings+updated+successfully&status_type=success",
+            url=f"/admin/ai-config?tenant={tenant}&status_message=AI+configuration+saved+successfully&status_type=success",
             status_code=status.HTTP_303_SEE_OTHER
         )
     except Exception as e:
-        logger.error(f"Error updating AI settings: {str(e)}")
+        logger.error(f"Error saving AI configuration: {str(e)}")
         return RedirectResponse(
-            url=f"/admin/ai-config?tenant={tenant.slug if tenant else ''}&status_message=Error+updating+AI+settings:+{str(e)}&status_type=danger",
+            url=f"/admin/ai-config?tenant={tenant}&status_message=Error+saving+AI+configuration:+{str(e)}&status_type=danger",
+            status_code=status.HTTP_303_SEE_OTHER
+        )
+        
+@router.post("/ai-config/set-active", response_class=RedirectResponse)
+async def set_active_ai_provider(
+    request: Request,
+    provider_id: str = Form(...),
+    tenant: str = Form(...)
+):
+    """Set the active AI provider for a tenant."""
+    try:
+        # Get tenant object
+        tenant_obj = tenant_manager.get_by_slug(tenant)
+        if not tenant_obj:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Store with slug '{tenant}' not found"
+            )
+            
+        # Create a config manager
+        from pycommerce.models.plugin_config import PluginConfigManager
+        config_manager = PluginConfigManager()
+        
+        # Save the active provider
+        config_manager.save_config(
+            "ai_active_provider",
+            {"provider": provider_id},
+            str(tenant_obj.id)
+        )
+        
+        logger.info(f"Set active AI provider to {provider_id} for tenant {tenant}")
+        
+        # Redirect back to AI config page
+        return RedirectResponse(
+            url=f"/admin/ai-config?tenant={tenant}&status_message=Active+AI+provider+set+to+{provider_id}&status_type=success",
+            status_code=status.HTTP_303_SEE_OTHER
+        )
+    except Exception as e:
+        logger.error(f"Error setting active AI provider: {str(e)}")
+        return RedirectResponse(
+            url=f"/admin/ai-config?tenant={tenant}&status_message=Error+setting+active+AI+provider:+{str(e)}&status_type=danger",
             status_code=status.HTTP_303_SEE_OTHER
         )
 
