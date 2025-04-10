@@ -265,6 +265,9 @@ def proxy_to_uvicorn(environ, start_response):
         
         # NEVER attempt to kill existing processes for these routes
         # Instead, wait for the existing server to respond or create a friendly error
+        # Set a global variable to completely bypass ANY server restart logic
+        global _server_start_in_progress
+        _server_start_in_progress = True  # This will prevent any attempt to start a new server
         try:
             # Add more retries and longer timeout for these sensitive routes
             server_available = False
