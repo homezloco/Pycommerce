@@ -79,7 +79,7 @@ class MarketAnalysisService:
                 end_date = end_datetime.strftime("%Y-%m-%d")
             
             # Get orders for the specified time period
-            orders = self.order_manager.list(
+            orders = self.order_manager.get_orders(
                 tenant_id=tenant_id,
                 date_from=start_date,
                 date_to=end_date
@@ -210,7 +210,7 @@ class MarketAnalysisService:
             end_date = datetime.datetime.now()
             start_date = end_date - datetime.timedelta(days=90)
             
-            orders = self.order_manager.list(
+            orders = self.order_manager.get_orders(
                 tenant_id=tenant_id,
                 date_from=start_date.strftime("%Y-%m-%d"),
                 date_to=end_date.strftime("%Y-%m-%d")
@@ -335,7 +335,7 @@ class MarketAnalysisService:
                 }
             
             # Get all products for the tenant
-            products = self.product_manager.list(tenant_id=tenant_id)
+            products = self.product_manager.get_products(tenant_id=tenant_id)
             
             # Calculate basic insights
             insights = []
@@ -446,7 +446,7 @@ class MarketAnalysisService:
                 start_date = end_date - datetime.timedelta(days=30)
             
             # Get orders for the period
-            orders = self.order_manager.list(
+            orders = self.order_manager.get_orders(
                 tenant_id=tenant_id,
                 date_from=start_date.strftime("%Y-%m-%d"),
                 date_to=end_date.strftime("%Y-%m-%d")
