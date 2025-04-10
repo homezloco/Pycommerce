@@ -49,23 +49,49 @@ def extract_missing_product_ids(product_manager: AppProductManager, order_manage
     orders = order_manager.get_for_tenant()
     logger.info(f"Found {len(orders)} orders in the system")
     
-    # Check each order's items
+    # Get all unique product IDs from orders
+    order_product_ids = set()
     for order in orders:
         for item in order.items:
-            product_id = str(item.product_id)
+            if hasattr(item, 'product_id') and item.product_id:
+                order_product_ids.add(str(item.product_id))
             
-            # Check if product exists
+    logger.info(f"Found {len(order_product_ids)} unique product IDs referenced in orders")
+    
+    # Check each product ID both through the manager and directly in the database
+    for product_id in order_product_ids:
+        # First check through the manager
+        product_exists = False
+        
+        # Check the manager
+        try:
+            product = product_manager.get_product_by_id(product_id)
+            if product:
+                product_exists = True
+        except Exception:
+            # Product not found through manager, continue to database check
+            pass
+            
+        # If not found through manager, check directly in database
+        if not product_exists:
             try:
-                product = product_manager.get_product_by_id(product_id)
-                if not product:
-                    if product_id not in missing_products:
-                        missing_products[product_id] = []
-                    missing_products[product_id].append(item)
-            except Exception:
-                # If there's an exception, the product doesn't exist
-                if product_id not in missing_products:
-                    missing_products[product_id] = []
-                missing_products[product_id].append(item)
+                # Direct database query
+                product_record = db.session.query(Product).filter(Product.id == product_id).first()
+                if product_record:
+                    product_exists = True
+                    logger.info(f"Product {product_id} exists in database but not found through manager")
+            except Exception as e:
+                logger.warning(f"Error checking product {product_id} in database: {e}")
+                
+        # If still not found, add to missing products
+        if not product_exists:
+            logger.info(f"Product {product_id} is missing from the database")
+            # Find the order items for this product
+            missing_products[product_id] = []
+            for order in orders:
+                for item in order.items:
+                    if str(item.product_id) == product_id:
+                        missing_products[product_id].append(item)
     
     logger.info(f"Found {len(missing_products)} unique missing products")
     return missing_products
@@ -178,8 +204,11 @@ def create_missing_products(
                     name=category_name,
                     slug=category_name.lower().replace(' ', '-')
                 )
-                primary_categories[category_name] = category.id
-                logger.info(f"Created category {category_name}")
+                if category and hasattr(category, 'id'):
+                    primary_categories[category_name] = category.id
+                    logger.info(f"Created category {category_name} with ID {category.id}")
+                else:
+                    logger.warning(f"Created category {category_name} but no ID was returned")
             except Exception as e:
                 logger.error(f"Error creating category {category_name}: {e}")
     
@@ -193,22 +222,56 @@ def create_missing_products(
             category_ids = [primary_categories[cat] for cat in categories if cat in primary_categories]
             
             # Create product with a specific ID (matching the ID used in orders)
-            product = product_manager.create_product(
-                tenant_id=tenant_id,
-                name=name,
-                price=price,
-                description=description,
-                sku=f"SKU-{product_id[-6:]}",
-                stock=10
-            )
+            # First, check if we can create directly with the specific ID
+            try:
+                # Try to create directly in the database with the specific product_id
+                with db.session.begin():
+                    product = Product(
+                        id=product_id,
+                        tenant_id=tenant_id,
+                        name=name,
+                        price=price,
+                        description=description,
+                        sku=f"SKU-{product_id[-6:]}",
+                        stock=10,
+                        created_at=datetime.utcnow(),
+                        updated_at=datetime.utcnow()
+                    )
+                    db.session.add(product)
+                logger.info(f"Created product directly in database with ID {product_id}")
+            except Exception as e:
+                logger.warning(f"Could not create product directly with ID {product_id}: {e}")
+                # Fall back to standard creation if direct creation fails
+                product = product_manager.create_product(
+                    tenant_id=tenant_id,
+                    name=name,
+                    price=price,
+                    description=description,
+                    sku=f"SKU-{product_id[-6:]}",
+                    stock=10
+                )
+                logger.warning(f"Created product with new ID {product.id} instead of {product_id}")
+                # Map the old product ID to the new one for category assignment
+                product_id = product.id
             
             # Assign categories
             for category_id in category_ids:
                 if category_id:
                     try:
+                        # Use the correct product ID for category assignment
                         category_manager.assign_product_to_category(product.id, category_id)
                     except Exception as e:
-                        logger.error(f"Error assigning product {product_id} to category: {e}")
+                        logger.error(f"Error assigning product {product.id} to category: {e}")
+                        # Try direct database assignment if the category manager fails
+                        try:
+                            with db.session.begin():
+                                # Create direct association in the product_categories table
+                                db.session.execute(
+                                    f"INSERT INTO product_categories (product_id, category_id) VALUES ('{product.id}', '{category_id}')"
+                                )
+                            logger.info(f"Assigned product {product.id} to category {category_id} directly in database")
+                        except Exception as inner_e:
+                            logger.error(f"Direct category assignment also failed: {inner_e}")
             
             created_count += 1
             logger.info(f"Created product {name} (ID: {product_id}) with categories: {', '.join(categories)}")

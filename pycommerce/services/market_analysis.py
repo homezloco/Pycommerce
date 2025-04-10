@@ -10,6 +10,15 @@ from typing import Dict, List, Any, Optional, Tuple
 import json
 from collections import defaultdict
 
+# Import sqlalchemy for direct database queries
+try:
+    import sqlalchemy
+    from sqlalchemy import text
+    sqlalchemy_available = True
+except ImportError:
+    sqlalchemy_available = False
+    logging.warning("SQLAlchemy import failed, direct database queries will not be available")
+
 from pycommerce.models.product import ProductManager
 from pycommerce.models.order import OrderManager
 from pycommerce.models.tenant import TenantManager
@@ -202,8 +211,9 @@ class MarketAnalysisService:
                                             {"product_id": product_id}
                                         ).fetchall()
                                     
-                                    # Cache the results
-                                    product_category_cache[product_id] = categories_result
+                                    # Convert SQL rows to plain strings before caching
+                                    category_names = [row[0] for row in categories_result]
+                                    product_category_cache[product_id] = category_names
                                 
                                 if categories_result:
                                     # Found categories, use them
@@ -702,47 +712,87 @@ class MarketAnalysisService:
                     # Track if we've found categories for this product
                     found_categories = False
                     
+                    # Check if we already have this product's categories in our cache
+                    if product_id in product_category_cache:
+                        found_categories = True
+                        for category_name in product_category_cache[product_id]:
+                            if category_name not in category_metrics:
+                                category_metrics[category_name] = get_default_metrics()
+                            
+                            category_metrics[category_name]["revenue"] += item.price * item.quantity
+                            category_metrics[category_name]["orders"] += 1
+                            category_metrics[category_name]["units_sold"] += item.quantity
+                        
+                        # Skip further product lookup since we have cached data
+                        continue
+                    
+                    # First try to get from SDK product manager
+                    product = None
                     try:
                         product = self.product_manager.get(product_id)
-                        
-                        if product:
-                            # First try to get categories from the Categories model relationship
-                            try:
-                                # Try to get category names from category manager
-                                if hasattr(self, 'category_manager') and self.category_manager:
-                                    product_categories = self.category_manager.get_product_categories(product_id)
-                                    if product_categories:
-                                        found_categories = True
-                                        # Category manager returns category objects, get their names
-                                        for category_obj in product_categories:
-                                            if hasattr(category_obj, 'name'):
-                                                category_name = category_obj.name
-                                            else:
-                                                category_name = str(category_obj)
-                                            
-                                            if category_name not in category_metrics:
-                                                category_metrics[category_name] = get_default_metrics()
-                                            
-                                            category_metrics[category_name]["revenue"] += item.price * item.quantity
-                                            category_metrics[category_name]["orders"] += 1
-                                            category_metrics[category_name]["units_sold"] += item.quantity
-                            except Exception as e:
-                                logger.debug(f"Could not get product categories from category manager: {e}")
-                                # Continue with the fallback below
-                            
-                            # If we haven't found categories through the relationship model,
-                            # fall back to the product's categories list
-                            if not found_categories and hasattr(product, 'categories') and product.categories:
-                                found_categories = True
-                                for category in product.categories:
-                                    if category not in category_metrics:
-                                        category_metrics[category] = get_default_metrics()
+                    except Exception as sdk_error:
+                        logger.debug(f"Could not retrieve product {product_id} from SDK manager: {str(sdk_error)}")
+                    
+                    # If not found, try Flask product manager
+                    if not product and hasattr(self, 'flask_product_manager') and self.flask_product_manager:
+                        try:
+                            product = self.flask_product_manager.get_product_by_id(product_id)
+                            logger.debug(f"Retrieved product {product_id} from Flask product manager")
+                        except Exception as flask_error:
+                            logger.debug(f"Could not retrieve product {product_id} from Flask manager: {str(flask_error)}")
+                    
+                    # If we have a product, process its categories
+                    if product:
+                        # First try to get categories from the Categories model relationship
+                        try:
+                            # Try to get category names from category manager
+                            if hasattr(self, 'category_manager') and self.category_manager:
+                                product_categories = self.category_manager.get_product_categories(product_id)
+                                if product_categories:
+                                    found_categories = True
+                                    # Store in cache to avoid future lookups
+                                    product_category_cache[product_id] = []
                                     
-                                    category_metrics[category]["revenue"] += item.price * item.quantity
-                                    category_metrics[category]["orders"] += 1
-                                    category_metrics[category]["units_sold"] += item.quantity
-                    except Exception as e:
-                        logger.warning(f"Could not retrieve product {product_id} for category metrics: {str(e)}")
+                                    # Category manager returns category objects, get their names
+                                    for category_obj in product_categories:
+                                        if hasattr(category_obj, 'name'):
+                                            category_name = category_obj.name
+                                        else:
+                                            category_name = str(category_obj)
+                                        
+                                        # Add to cache
+                                        product_category_cache[product_id].append(category_name)
+                                        
+                                        if category_name not in category_metrics:
+                                            category_metrics[category_name] = get_default_metrics()
+                                        
+                                        category_metrics[category_name]["revenue"] += item.price * item.quantity
+                                        category_metrics[category_name]["orders"] += 1
+                                        category_metrics[category_name]["units_sold"] += item.quantity
+                        except Exception as cat_error:
+                            logger.debug(f"Could not get product categories from category manager: {cat_error}")
+                            # Continue with the fallback below
+                        
+                        # If we haven't found categories through the relationship model,
+                        # fall back to the product's categories list
+                        if not found_categories and hasattr(product, 'categories') and product.categories:
+                            found_categories = True
+                            # Store in cache to avoid future lookups
+                            product_category_cache[product_id] = []
+                            
+                            for category in product.categories:
+                                # Add to cache
+                                product_category_cache[product_id].append(category)
+                                
+                                if category not in category_metrics:
+                                    category_metrics[category] = get_default_metrics()
+                                
+                                category_metrics[category]["revenue"] += item.price * item.quantity
+                                category_metrics[category]["orders"] += 1
+                                category_metrics[category]["units_sold"] += item.quantity
+                    else:
+                        # If we can't find the product with either manager, log a warning with a more detailed message
+                        logger.warning(f"Could not retrieve product {product_id} for category metrics: Product not found: {product_id}")
                     
                     # Add to appropriate fallback category when product not found or has no categories
                     if not found_categories:
@@ -752,7 +802,10 @@ class MarketAnalysisService:
                         try:
                             # Check if we already looked up this product's categories
                             if product_id in product_category_cache:
-                                categories_result = product_category_cache[product_id]
+                                # Get cached category names
+                                category_names = product_category_cache[product_id]
+                                # Create synthetic result for consistent processing
+                                categories_result = [(name,) for name in category_names]
                             else:
                                 from sqlalchemy import text
                                 from app import db, app
@@ -769,8 +822,9 @@ class MarketAnalysisService:
                                         {"product_id": product_id}
                                     ).fetchall()
                                 
-                                # Cache the results
-                                product_category_cache[product_id] = categories_result
+                                # Convert SQL rows to plain strings before caching
+                                category_names = [row[0] for row in categories_result]
+                                product_category_cache[product_id] = category_names
                             
                             if categories_result:
                                 # Found categories, use them
