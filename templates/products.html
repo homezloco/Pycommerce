@@ -2,6 +2,76 @@
 
 {% block title %}PyCommerce - Products{% endblock %}
 
+{% block scripts %}
+<script>
+    // Function to load trending products
+    async function loadTrendingProducts() {
+        try {
+            {% if selected_tenant %}
+            const tenantId = "{{ selected_tenant }}";
+            const response = await fetch(`/api/recommendations/trending?tenant_id=${tenantId}`);
+            {% else %}
+            const response = await fetch('/api/recommendations/trending');
+            {% endif %}
+            
+            if (!response.ok) {
+                throw new Error(`Error: ${response.status}`);
+            }
+            
+            const data = await response.json();
+            const container = document.getElementById('trending-products-container');
+            
+            // Hide loading spinner
+            document.getElementById('trending-products-loading').style.display = 'none';
+            
+            if (data.products.length === 0) {
+                container.innerHTML = '<div class="col-12 text-center"><p>No trending products found</p></div>';
+                return;
+            }
+            
+            // Build HTML for trending products
+            let html = '';
+            data.products.forEach(product => {
+                html += `
+                    <div class="col">
+                        <div class="card h-100">
+                            <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 180px;">
+                                ${product.images && product.images.length > 0 
+                                    ? `<img src="${product.images[0]}" class="img-fluid" alt="${product.name}" style="max-height: 100%;">`
+                                    : `<div class="text-center text-muted">
+                                        <i class="bi bi-image fs-1"></i>
+                                        <p>No image</p>
+                                      </div>`
+                                }
+                            </div>
+                            <div class="card-body">
+                                <h5 class="card-title">${product.name}</h5>
+                                <p class="card-text text-primary fw-bold">$${product.price.toFixed(2)}</p>
+                            </div>
+                            <div class="card-footer">
+                                <div class="d-grid gap-2">
+                                    <a href="/products/${product.id}" class="btn btn-sm btn-outline-primary">View Product</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        } catch (error) {
+            console.error("Error loading trending products:", error);
+            document.getElementById('trending-products-loading').style.display = 'none';
+            document.getElementById('trending-products-container').innerHTML = 
+                '<div class="col-12 text-center"><p>Failed to load trending products</p></div>';
+        }
+    }
+
+    // Load trending products when the page loads
+    document.addEventListener('DOMContentLoaded', loadTrendingProducts);
+</script>
+{% endblock %}
+
 {% block content %}
 <div class="container">
     <div class="text-center my-5">
