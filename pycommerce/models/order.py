@@ -139,7 +139,7 @@ class OrderManager:
             logger.error(f"Error getting order: {str(e)}")
             return None
 
-    def get_for_tenant(self, tenant_id: str, filters: Optional[Dict[str, Any]] = None) -> List[Order]:
+    def get_for_tenant(self, tenant_id: Optional[str] = None, filters: Optional[Dict[str, Any]] = None) -> List[Order]:
         """
         Get all orders for a tenant with optional filtering.
         
@@ -156,7 +156,11 @@ class OrderManager:
                 # "not bound to a session" errors when items are accessed later
                 query = session.query(Order).options(
                     sqlalchemy.orm.joinedload(Order.items)
-                ).filter(Order.tenant_id == tenant_id)
+                )
+                
+                # Only filter by tenant_id if it's provided
+                if tenant_id:
+                    query = query.filter(Order.tenant_id == tenant_id)
                 
                 # Apply filters if provided
                 if filters:
