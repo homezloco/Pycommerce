@@ -182,18 +182,19 @@ class MarketAnalysisService:
                             # If product is not found, try to use a direct database lookup for categories
                             try:
                                 from sqlalchemy import text
-                                from app import db
+                                from app import db, app
                                 
                                 # Look up product categories directly from the database
-                                categories_result = db.session.execute(
-                                    text("""
-                                        SELECT c.name 
-                                        FROM categories c
-                                        JOIN product_categories pc ON c.id = pc.category_id
-                                        WHERE pc.product_id = :product_id
-                                    """),
-                                    {"product_id": product_id}
-                                ).fetchall()
+                                with app.app_context():
+                                    categories_result = db.session.execute(
+                                        text("""
+                                            SELECT c.name 
+                                            FROM categories c
+                                            JOIN product_categories pc ON c.id = pc.category_id
+                                            WHERE pc.product_id = :product_id
+                                        """),
+                                        {"product_id": product_id}
+                                    ).fetchall()
                                 
                                 if categories_result:
                                     # Found categories, use them
@@ -738,18 +739,19 @@ class MarketAnalysisService:
                         # Try direct database lookup for product categories
                         try:
                             from sqlalchemy import text
-                            from app import db
+                            from app import db, app
                             
                             # Look up product categories directly from the database
-                            categories_result = db.session.execute(
-                                text("""
-                                    SELECT c.name 
-                                    FROM categories c
-                                    JOIN product_categories pc ON c.id = pc.category_id
-                                    WHERE pc.product_id = :product_id
-                                """),
-                                {"product_id": product_id}
-                            ).fetchall()
+                            with app.app_context():
+                                categories_result = db.session.execute(
+                                    text("""
+                                        SELECT c.name 
+                                        FROM categories c
+                                        JOIN product_categories pc ON c.id = pc.category_id
+                                        WHERE pc.product_id = :product_id
+                                    """),
+                                    {"product_id": product_id}
+                                ).fetchall()
                             
                             if categories_result:
                                 # Found categories, use them

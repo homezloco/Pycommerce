@@ -267,10 +267,27 @@ def create_test_orders(tenant_slug="tech", user_email="testuser@example.com", nu
         
         return created_orders
 
+def create_orders_for_all_stores():
+    """Create test orders for all stores that have products."""
+    # List of store slugs to create orders for
+    store_slugs = ["tech", "outdoor", "fashion"]
+    total_orders = 0
+    
+    for slug in store_slugs:
+        try:
+            logger.info(f"Creating orders for store: {slug}")
+            orders = create_test_orders(tenant_slug=slug)
+            logger.info(f"Created {len(orders)} test orders for {slug}")
+            total_orders += len(orders)
+        except Exception as e:
+            logger.error(f"Error creating test orders for {slug}: {str(e)}")
+    
+    return total_orders
+
 if __name__ == "__main__":
     try:
-        logger.info("Starting test order creation")
-        orders = create_test_orders()
-        logger.info(f"Created {len(orders)} test orders")
+        logger.info("Starting test order creation for all stores")
+        total = create_orders_for_all_stores()
+        logger.info(f"Created {total} test orders across all stores")
     except Exception as e:
         logger.error(f"Error creating test orders: {str(e)}")
