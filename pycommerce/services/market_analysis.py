@@ -79,11 +79,13 @@ class MarketAnalysisService:
                 end_date = end_datetime.strftime("%Y-%m-%d")
             
             # Get orders for the specified time period
-            orders = self.order_manager.get_orders(
-                tenant_id=tenant_id,
-                date_from=start_date,
-                date_to=end_date
-            )
+            orders = self.order_manager.get_orders_for_tenant(tenant_id)
+            
+            # Filter orders by date if dates are provided
+            if start_date and end_date:
+                orders = [order for order in orders 
+                         if order.created_at.strftime("%Y-%m-%d") >= start_date 
+                         and order.created_at.strftime("%Y-%m-%d") <= end_date]
             
             if not orders:
                 logger.warning(f"No orders found for the specified period: {start_date} to {end_date}")
@@ -210,11 +212,12 @@ class MarketAnalysisService:
             end_date = datetime.datetime.now()
             start_date = end_date - datetime.timedelta(days=90)
             
-            orders = self.order_manager.get_orders(
-                tenant_id=tenant_id,
-                date_from=start_date.strftime("%Y-%m-%d"),
-                date_to=end_date.strftime("%Y-%m-%d")
-            )
+            orders = self.order_manager.get_orders_for_tenant(tenant_id)
+            
+            # Filter orders by date manually
+            orders = [order for order in orders 
+                     if order.created_at.strftime("%Y-%m-%d") >= start_date.strftime("%Y-%m-%d") 
+                     and order.created_at.strftime("%Y-%m-%d") <= end_date.strftime("%Y-%m-%d")]
             
             # Process historical sales data
             daily_sales = defaultdict(int)
@@ -446,11 +449,12 @@ class MarketAnalysisService:
                 start_date = end_date - datetime.timedelta(days=30)
             
             # Get orders for the period
-            orders = self.order_manager.get_orders(
-                tenant_id=tenant_id,
-                date_from=start_date.strftime("%Y-%m-%d"),
-                date_to=end_date.strftime("%Y-%m-%d")
-            )
+            orders = self.order_manager.get_orders_for_tenant(tenant_id)
+            
+            # Filter orders by date manually
+            orders = [order for order in orders 
+                     if order.created_at.strftime("%Y-%m-%d") >= start_date.strftime("%Y-%m-%d") 
+                     and order.created_at.strftime("%Y-%m-%d") <= end_date.strftime("%Y-%m-%d")]
             
             if not orders:
                 logger.warning(f"No orders found for the period: {period}")
