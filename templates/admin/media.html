@@ -45,12 +45,21 @@
                             <option value="application" {% if filters.file_type == 'application' %}selected{% endif %}>Documents</option>
                         </select>
                     </div>
-                    <div class="col-md-3">
+                    <div class="col-md-2">
                         <label for="is_ai_generated" class="form-label">Source</label>
                         <select class="form-select" id="is_ai_generated" name="is_ai_generated">
                             <option value="">All Sources</option>
                             <option value="true" {% if filters.is_ai_generated == 'true' %}selected{% endif %}>AI Generated</option>
                             <option value="false" {% if filters.is_ai_generated == 'false' %}selected{% endif %}>Uploaded</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label for="sharing_level" class="form-label">Sharing</label>
+                        <select class="form-select" id="sharing_level" name="sharing_level">
+                            <option value="">All Levels</option>
+                            <option value="store" {% if filters.sharing_level == 'store' %}selected{% endif %}>This Store Only</option>
+                            <option value="my_stores" {% if filters.sharing_level == 'my_stores' %}selected{% endif %}>My Stores</option>
+                            <option value="community" {% if filters.sharing_level == 'community' %}selected{% endif %}>Community</option>
                         </select>
                     </div>
                     <div class="col-md-3">

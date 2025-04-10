@@ -39,6 +39,7 @@ async def admin_media(
     tenant: Optional[str] = None,
     file_type: Optional[str] = None,
     is_ai_generated: Optional[str] = None,
+    sharing_level: Optional[str] = None,
     search: Optional[str] = None,
     status_message: Optional[str] = None,
     status_type: str = "info"
@@ -77,12 +78,15 @@ async def admin_media(
         filter_criteria["is_ai_generated"] = True
     elif is_ai_generated == "false":
         filter_criteria["is_ai_generated"] = False
+    if sharing_level:
+        filter_criteria["sharing_level"] = sharing_level
     if search:
         filter_criteria["search"] = search
     
     # Get media files for tenant
     file_type = filter_criteria.get("file_type", None)
     is_ai_generated = filter_criteria.get("is_ai_generated", None)
+    sharing_level_filter = filter_criteria.get("sharing_level", None)
     search_term = filter_criteria.get("search", None)
     
     # Convert string 'is_ai_generated' to boolean explicitly
@@ -93,6 +97,7 @@ async def admin_media(
     # If tenant is selected, filter by it, otherwise show all media
     selected_tenant_id = str(tenant_obj.id) if selected_tenant_slug else None
     
+    # Get all media files that match the criteria
     media_files = media_service.list_media(
         tenant_id=selected_tenant_id,
         file_type=file_type,
@@ -100,10 +105,31 @@ async def admin_media(
         search_term=search_term
     )
     
+    # Filter by sharing level if specified (this must be done in Python since MediaService 
+    # doesn't directly support filtering by sharing_level in the JSON metadata)
+    if sharing_level_filter:
+        filtered_media_files = []
+        for media in media_files:
+            # Check for sharing level in metadata
+            media_sharing_level = None
+            if hasattr(media, 'meta_data') and media.meta_data and 'sharing_level' in media.meta_data:
+                media_sharing_level = media.meta_data.get('sharing_level')
+            
+            # For older files without sharing_level, infer from is_public
+            elif hasattr(media, 'is_public'):
+                media_sharing_level = "community" if media.is_public else "store"
+            
+            # If the sharing level matches the filter, include this media
+            if media_sharing_level == sharing_level_filter:
+                filtered_media_files.append(media)
+        
+        # Replace the unfiltered list with our filtered one
+        media_files = filtered_media_files
+    
     # Format media data for template
     media_data = []
     for media in media_files:
-        media_data.append({
+        media_item = {
             "id": str(media.id),
             "file_name": media.file_name,
             "file_type": media.file_type,
@@ -111,10 +137,13 @@ async def admin_media(
             "alt_text": media.alt_text,
             "description": media.description,
             "is_ai_generated": media.is_ai_generated,
+            "is_public": media.is_public if hasattr(media, 'is_public') else False,
             "url": media.url,
             "thumbnail_url": media.thumbnail_url or media.url,
-            "created_at": media.created_at
-        })
+            "created_at": media.created_at,
+            "meta_data": media.meta_data if hasattr(media, 'meta_data') else {}
+        }
+        media_data.append(media_item)
     
     # Group media files by type for filtering
     file_types = set(media.file_type for media in media_files)
@@ -148,6 +177,7 @@ async def admin_media(
             "filters": {
                 "file_type": file_type,
                 "is_ai_generated": is_ai_generated,
+                "sharing_level": sharing_level_filter,
                 "search": search
             },
             "has_openai_key": has_openai_key,
