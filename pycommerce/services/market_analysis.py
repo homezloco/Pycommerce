@@ -79,7 +79,7 @@ class MarketAnalysisService:
                 end_date = end_datetime.strftime("%Y-%m-%d")
             
             # Get orders for the specified time period
-            orders = self.order_manager.get_orders_for_tenant(tenant_id)
+            orders = self.order_manager.get_for_tenant(tenant_id)
             
             # Filter orders by date if dates are provided
             if start_date and end_date:
@@ -212,7 +212,7 @@ class MarketAnalysisService:
             end_date = datetime.datetime.now()
             start_date = end_date - datetime.timedelta(days=90)
             
-            orders = self.order_manager.get_orders_for_tenant(tenant_id)
+            orders = self.order_manager.get_for_tenant(tenant_id)
             
             # Filter orders by date manually
             orders = [order for order in orders 
@@ -449,7 +449,7 @@ class MarketAnalysisService:
                 start_date = end_date - datetime.timedelta(days=30)
             
             # Get orders for the period
-            orders = self.order_manager.get_orders_for_tenant(tenant_id)
+            orders = self.order_manager.get_for_tenant(tenant_id)
             
             # Filter orders by date manually
             orders = [order for order in orders 
