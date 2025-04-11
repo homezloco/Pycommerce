@@ -34,29 +34,24 @@ async def store_settings(
     # Get tenant from query parameters or session
     selected_tenant_slug = tenant or request.session.get("selected_tenant")
     
-    # If no tenant is selected, redirect to dashboard with message
-    if not selected_tenant_slug:
-        return RedirectResponse(
-            url="/admin/dashboard?status_message=Please+select+a+store+first&status_type=warning", 
-            status_code=303
-        )
+    # Get all tenants for the sidebar
+    tenants = tenant_manager.get_all()
+    
+    # If no tenant is selected and we have tenants, select the first one
+    if not selected_tenant_slug and tenants:
+        selected_tenant_slug = tenants[0].slug
+        request.session["selected_tenant"] = selected_tenant_slug
     
     # Store the selected tenant in session for future requests
     request.session["selected_tenant"] = selected_tenant_slug
     
-    # Get tenant object
-    tenant_obj = tenant_manager.get_by_slug(selected_tenant_slug)
-    if not tenant_obj:
-        return RedirectResponse(
-            url="/admin/dashboard?status_message=Store+not+found&status_type=error", 
-            status_code=303
-        )
-    
-    # Get store settings
-    store_settings = tenant_obj.settings or {}
-    
-    # Get all tenants for the sidebar
-    tenants = tenant_manager.get_all()
+    # Get tenant object if we have a selected tenant
+    tenant_obj = None
+    store_settings = {}
+    if selected_tenant_slug:
+        tenant_obj = tenant_manager.get_by_slug(selected_tenant_slug)
+        if tenant_obj:
+            store_settings = tenant_obj.settings or {}
     
     return templates.TemplateResponse(
         "admin/store_settings.html",
