@@ -16,7 +16,9 @@
                     <div class="nav flex-column nav-pills me-3" id="v-pills-tab" role="tablist" aria-orientation="vertical">
                         <button class="nav-link active" id="v-pills-basic-tab" data-bs-toggle="pill" data-bs-target="#v-pills-basic" type="button" role="tab" aria-controls="v-pills-basic" aria-selected="true">Basic Settings</button>
                         <button class="nav-link" id="v-pills-shipping-tab" data-bs-toggle="pill" data-bs-target="#v-pills-shipping" type="button" role="tab" aria-controls="v-pills-shipping" aria-selected="false">Shipping</button>
-                        <button class="nav-link" id="v-pills-ai-tab" data-bs-toggle="pill" data-bs-target="#v-pills-ai" type="button" role="tab" aria-controls="v-pills-ai" aria-selected="false">AI Configuration</button>
+                        <a href="/admin/ai-config?tenant={{ selected_tenant }}" class="nav-link text-primary">
+                            <i class="fas fa-external-link-alt me-1"></i> AI Configuration
+                        </a>
                     </div>
                 </div>
                 <div class="col-md-9">
@@ -100,39 +102,9 @@
                                 </div>
                             </div>
 
-                            <!-- AI Configuration Tab -->
-                            <div class="tab-pane fade" id="v-pills-ai" role="tabpanel" aria-labelledby="v-pills-ai-tab">
-                                <h4>AI Configuration</h4>
-                                <div class="mb-3">
-                                    <label for="openai_api_key" class="form-label">OpenAI API Key</label>
-                                    <input type="password" class="form-control" id="openai_api_key" name="openai_api_key">
-                                </div>
-                                <div class="mb-3">
-                                    <label for="openai_model" class="form-label">OpenAI Model</label>
-                                    <select class="form-select" id="openai_model" name="openai_model">
-                                        <option value="gpt-4">GPT-4</option>
-                                        <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
-                                    </select>
-                                </div>
-                                <div class="mb-3">
-                                    <label for="dalle_model" class="form-label">DALL-E Model</label>
-                                    <select class="form-select" id="dalle_model" name="dalle_model">
-                                        <option value="dall-e-3">DALL-E 3</option>
-                                        <option value="dall-e-2">DALL-E 2</option>
-                                    </select>
-                                </div>
-                                <div class="mb-3 form-check">
-                                    <input type="checkbox" class="form-check-input" id="enable_description_generation" name="enable_description_generation">
-                                    <label class="form-check-label" for="enable_description_generation">Enable Product Description Generation</label>
-                                </div>
-                                <div class="mb-3 form-check">
-                                    <input type="checkbox" class="form-check-input" id="enable_image_generation" name="enable_image_generation">
-                                    <label class="form-check-label" for="enable_image_generation">Enable Image Generation</label>
-                                </div>
-                                <div class="mb-3 form-check">
-                                    <input type="checkbox" class="form-check-input" id="enable_chatbot" name="enable_chatbot">
-                                    <label class="form-check-label" for="enable_chatbot">Enable AI Shopping Assistant</label>
-                                </div>
+                            <!-- AI Configuration has been moved to a dedicated page -->
+                            <div class="d-none">
+                                <!-- This section is hidden and kept for backward compatibility -->
                             </div>
                         </div>
                         <div class="mt-4">

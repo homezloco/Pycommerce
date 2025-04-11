@@ -71,6 +71,14 @@ async def store_settings(
     # Default tab if not specified
     if not tab:
         tab = "basic"
+    
+    # If AI tab is requested, redirect to dedicated AI config page
+    if tab == "ai":
+        logger.info(f"Redirecting from store settings AI tab to dedicated AI config page")
+        return RedirectResponse(
+            url=f"/admin/ai-config?tenant={selected_tenant_slug}&status_message=AI+configuration+is+now+on+a+dedicated+page&status_type=info",
+            status_code=status.HTTP_303_SEE_OTHER
+        )
 
     # Debug output
     logger.info(f"Rendering store settings with tenant: {tenant_obj.slug if tenant_obj else 'None'}")
@@ -261,51 +269,18 @@ async def update_ai_settings(
     enable_image_generation: bool = Form(False),
     enable_chatbot: bool = Form(False)
 ):
-    """Update AI settings."""
-    try:
-        # Get selected tenant from session
-        selected_tenant_slug = request.session.get("selected_tenant")
-        if not selected_tenant_slug:
-            return RedirectResponse(
-                url="/admin/store-settings?status_message=No+store+selected&status_type=danger&tab=ai",
-                status_code=status.HTTP_303_SEE_OTHER
-            )
-
-        # Get tenant object
-        tenant_obj = tenant_manager.get_by_slug(selected_tenant_slug)
-        if not tenant_obj:
-            return RedirectResponse(
-                url="/admin/store-settings?status_message=Store+not+found&status_type=danger&tab=ai",
-                status_code=status.HTTP_303_SEE_OTHER
-            )
-
-        # Get current settings or initialize empty dict
-        settings = tenant_obj.settings or {}
-
-        # Update settings
-        settings.update({
-            "openai_api_key": openai_api_key,
-            "openai_model": openai_model,
-            "dalle_model": dalle_model,
-            "enable_product_descriptions": enable_product_descriptions,
-            "enable_image_generation": enable_image_generation,
-            "enable_chatbot": enable_chatbot
-        })
-
-        # Save settings
-        tenant_manager.update_settings(str(tenant_obj.id), settings)
-
-        # Return to settings page with success message
-        return RedirectResponse(
-            url=f"/admin/store-settings?tenant={selected_tenant_slug}&status_message=AI+settings+updated+successfully&status_type=success&tab=ai",
-            status_code=status.HTTP_303_SEE_OTHER
-        )
-    except Exception as e:
-        logger.error(f"Error updating AI settings: {str(e)}")
-        return RedirectResponse(
-            url=f"/admin/store-settings?tenant={selected_tenant_slug if 'selected_tenant_slug' in locals() else ''}&status_message=Error+updating+AI+settings:+{str(e)}&status_type=danger&tab=ai",
-            status_code=status.HTTP_303_SEE_OTHER
-        )
+    """
+    Legacy route - redirects to dedicated AI configuration page.
+    This is kept for backward compatibility with existing links.
+    """
+    # Get selected tenant from session
+    selected_tenant_slug = request.session.get("selected_tenant")
+    
+    # Redirect to the dedicated AI config page
+    return RedirectResponse(
+        url=f"/admin/ai-config?tenant={selected_tenant_slug}&status_message=AI+configuration+has+moved+to+a+dedicated+page&status_type=info",
+        status_code=status.HTTP_303_SEE_OTHER
+    )
 
 @router.get("/api/store-settings", response_class=JSONResponse)
 async def get_store_settings_api(
