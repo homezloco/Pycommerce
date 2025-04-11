@@ -1487,6 +1487,14 @@ async def admin_products(
         except Exception:
             pass
     
+    # Create a special "All Stores" tenant object for the template if needed
+    if tenant == "all":
+        tenant_obj = {
+            "name": "All Stores",
+            "slug": "all",
+            "id": "all"
+        }
+    
     return templates.TemplateResponse(
         "admin/products.html", 
         {
@@ -1495,6 +1503,8 @@ async def admin_products(
             "products": products_list,
             "tenants": tenants,
             "selected_tenant": tenant,
+            "selected_tenant_slug": tenant,  # For compatibility with filter forms
+            "tenant": tenant_obj,  # This is used in the template header
             "filters": filters,
             "cart_item_count": cart_item_count,
             "status_message": status_message,

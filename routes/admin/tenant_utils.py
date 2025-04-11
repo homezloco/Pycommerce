@@ -39,6 +39,7 @@ def get_selected_tenant(request, tenants, tenant_param=None, allow_all=False):
             # Keep "all" selection and update session
             request.session["selected_tenant"] = "all"
             request.session["tenant_id"] = None
+            logger.info("Using 'All Stores' selection")
             return "all", None
         elif tenants:
             # Switch to first tenant if "all" not allowed
@@ -46,7 +47,7 @@ def get_selected_tenant(request, tenants, tenant_param=None, allow_all=False):
             logger.info(f"'All Stores' selected but using first tenant {selected_tenant_slug}")
     
     # Find the tenant in the tenants list
-    if selected_tenant_slug:
+    if selected_tenant_slug and selected_tenant_slug != "all":
         for tenant in tenants:
             if tenant["slug"] == selected_tenant_slug:
                 selected_tenant = tenant
