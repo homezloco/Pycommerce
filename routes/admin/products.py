@@ -89,13 +89,25 @@ async def admin_products(
     # Store the selected tenant in session
     request.session["selected_tenant"] = selected_tenant_slug
     
-    # Get tenant object
-    tenant_obj = tenant_manager.get_by_slug(selected_tenant_slug)
-    if not tenant_obj:
-        return RedirectResponse(
-            url="/admin/dashboard?status_message=Store+not+found&status_type=error", 
-            status_code=303
-        )
+    # Handle "all" tenant slug case
+    if selected_tenant_slug == "all":
+        logger.info("Using 'All Stores' selection in products page")
+        # Create a virtual tenant object for "All Stores"
+        tenant_obj = type('AllStoresTenant', (), {
+            'id': 'all',
+            'name': 'All Stores',
+            'slug': 'all',
+            'domain': None,
+            'active': True
+        })()
+    else:
+        # Get tenant object
+        tenant_obj = tenant_manager.get_by_slug(selected_tenant_slug)
+        if not tenant_obj:
+            return RedirectResponse(
+                url="/admin/dashboard?status_message=Store+not+found&status_type=error", 
+                status_code=303
+            )
     
     # Build filters
     filters = {}
@@ -109,12 +121,19 @@ async def admin_products(
         filters["in_stock"] = in_stock
     
     # Fetch products
-    logger.info(f"Fetching products for tenant: {tenant_obj.name} (ID: {tenant_obj.id})")
-    products = product_manager.get_by_tenant(
-        tenant_id=str(tenant_obj.id),
-        **filters
-    )
-    logger.info(f"Found {len(products)} products for tenant {tenant_obj.name}")
+    if selected_tenant_slug == "all":
+        # Fetch all products when "All Stores" is selected
+        logger.info("Fetching products for all stores")
+        products = product_manager.list(**filters)
+        logger.info(f"Found {len(products)} products across all stores")
+    else:
+        # Fetch products for specific tenant
+        logger.info(f"Fetching products for tenant: {tenant_obj.name} (ID: {tenant_obj.id})")
+        products = product_manager.get_by_tenant(
+            tenant_id=str(tenant_obj.id),
+            **filters
+        )
+        logger.info(f"Found {len(products)} products for tenant {tenant_obj.name}")
     
     # Format products for template
     products_list = []

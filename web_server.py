@@ -564,6 +564,15 @@ async def admin_change_store(request: Request, tenant: str = ""):
     if redirect_url.startswith('/admin/change-store'):
         redirect_url = '/admin/dashboard'
     
+    # Always use the specified redirect_url for "all" stores selection
+    # This fixes the issue with "all" redirecting to dashboard
+    if tenant == "all" and redirect_url != "/admin/dashboard":
+        logger.info(f"Using specified redirect URL {redirect_url} for 'All Stores' selection")
+        return RedirectResponse(
+            url=f"{redirect_url}?status_message=Showing+all+stores&status_type=success",
+            status_code=303
+        )
+    
     # Add status message for success notification and redirect
     return RedirectResponse(
         url=f"{redirect_url}?status_message=Store+changed+successfully&status_type=success",
