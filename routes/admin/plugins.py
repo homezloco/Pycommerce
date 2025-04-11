@@ -33,26 +33,25 @@ async def plugins_page(
     status_type: str = "info"
 ):
     """Admin page for plugin management."""
+    # Get all tenants for the sidebar
+    tenants = tenant_manager.get_all()
+    
     # Get tenant from query parameters or session
     selected_tenant_slug = tenant or request.session.get("selected_tenant")
     
-    # If no tenant is selected, redirect to dashboard with message
-    if not selected_tenant_slug:
-        return RedirectResponse(
-            url="/admin/dashboard?status_message=Please+select+a+store+first&status_type=warning", 
-            status_code=303
-        )
-    
+    # If no tenant is selected and we have tenants, select the first one
+    if not selected_tenant_slug and tenants:
+        selected_tenant_slug = tenants[0].slug
+        request.session["selected_tenant"] = selected_tenant_slug
+        
     # Store the selected tenant in session for future requests
-    request.session["selected_tenant"] = selected_tenant_slug
+    if selected_tenant_slug:
+        request.session["selected_tenant"] = selected_tenant_slug
     
-    # Get tenant object
-    tenant_obj = tenant_manager.get_by_slug(selected_tenant_slug)
-    if not tenant_obj:
-        return RedirectResponse(
-            url="/admin/dashboard?status_message=Store+not+found&status_type=error", 
-            status_code=303
-        )
+    # Get tenant object if a tenant is selected
+    tenant_obj = None
+    if selected_tenant_slug:
+        tenant_obj = tenant_manager.get_by_slug(selected_tenant_slug)
     
     # Get plugin registry
     registry = get_plugin_registry()
@@ -97,11 +96,10 @@ async def plugins_page(
     else:
         filtered_plugins = plugins_by_type
     
-    # Get tenant plugin configuration
-    tenant_plugin_config = getattr(tenant_obj, 'plugin_config', {}) or {}
-    
-    # Get all tenants for the sidebar
-    tenants = tenant_manager.get_all()
+    # Get tenant plugin configuration if tenant exists
+    tenant_plugin_config = {}
+    if tenant_obj:
+        tenant_plugin_config = getattr(tenant_obj, 'plugin_config', {}) or {}
     
     return templates.TemplateResponse(
         "admin/plugins.html",

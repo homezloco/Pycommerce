@@ -19,6 +19,13 @@
             </a>
         </div>
     </div>
+    
+    {% if not tenant %}
+    <div class="alert alert-info">
+        <i class="fas fa-info-circle me-2"></i>
+        Please select a store from the dropdown to manage plugins.
+    </div>
+    {% endif %}
 
     <div class="row">
         <div class="col-md-9">
