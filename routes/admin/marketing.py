@@ -65,36 +65,33 @@ async def marketing_dashboard(
         "active_discounts": 2
     }
 
-    # Recent campaigns (in a real app, these would come from a database)
-    campaigns = [
-        {
-            "id": "1",
-            "name": "Summer Sale 2023",
-            "type": "discount",
-            "status": "active",
-            "start_date": "2023-06-01",
-            "end_date": "2023-08-31",
-            "metrics": {
-                "views": 450,
-                "conversions": 25,
-                "revenue": 1875.50
-            }
-        },
-        {
-            "id": "2",
-            "name": "New Customer Welcome",
-            "type": "email",
-            "status": "active",
-            "start_date": "2023-01-01",
-            "end_date": "2023-12-31",
-            "metrics": {
-                "emails_sent": 120,
-                "open_rate": 45.8,
-                "click_rate": 12.5,
-                "conversions": 8
-            }
-        }
-    ]
+    # Fetch campaigns
+    if selected_tenant_slug.lower() == "all":
+        # Fetch campaigns for all tenants
+        logger.info("Fetching campaigns for all stores")
+        try:
+            # First try to get all tenants
+            all_tenants = tenant_manager.list() or []
+
+            # Then fetch campaigns for each tenant and combine them
+            all_campaigns = []
+            for tenant in all_tenants:
+                try:
+                    # Replace with actual campaign fetching logic
+                    tenant_campaigns = []  # Replace with actual campaign fetching
+                    all_campaigns.extend(tenant_campaigns)
+                    logger.info(f"Found {len(tenant_campaigns)} campaigns for tenant {tenant.name}")
+                except Exception as e:
+                    logger.error(f"Error fetching campaigns for tenant {tenant.name}: {str(e)}")
+
+            campaigns = all_campaigns
+            logger.info(f"Found {len(campaigns)} campaigns across all stores")
+        except Exception as e:
+            logger.error(f"Error fetching all campaigns: {str(e)}")
+            campaigns = []
+    else:
+        # Fetch campaigns for specific tenant
+        campaigns = []  # Replace with actual campaign fetching
 
     return templates.TemplateResponse(
         "admin/marketing.html",

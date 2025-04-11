@@ -261,3 +261,151 @@ def get_products_for_all_tenants(tenant_manager, product_manager, logger, filter
         all_products = product_manager.list(**filters)
         logger.info(f"Falling back to list() method, found {len(all_products)} products")
         return all_products
+
+def get_items_for_all_tenants(tenant_manager, item_manager, get_method_name, logger, filters=None):
+    """
+    Generic function to fetch items from all tenants.
+
+    Args:
+        tenant_manager: The tenant manager instance
+        item_manager: The manager instance for specific items
+        get_method_name: The method name to use to get items for a tenant (e.g., 'get_by_tenant')
+        logger: The logger to use
+        filters: Optional dictionary of filters to apply
+
+    Returns:
+        List of items from all tenants
+    """
+    if filters is None:
+        filters = {}
+
+    try:
+        # First try to get all tenants
+        all_tenants = tenant_manager.list() or []
+
+        # Then fetch items for each tenant and combine them
+        all_items = []
+        for tenant in all_tenants:
+            try:
+                # Get the method to call
+                get_method = getattr(item_manager, get_method_name)
+                tenant_items = get_method(
+                    tenant_id=str(tenant.id),
+                    **filters
+                )
+                all_items.extend(tenant_items)
+                logger.info(f"Found {len(tenant_items)} items for tenant {tenant.name}")
+            except Exception as e:
+                logger.error(f"Error fetching items for tenant {tenant.name}: {str(e)}")
+
+        logger.info(f"Found {len(all_items)} items across all stores")
+
+        # If no items found, fall back to list() method if available
+        if not all_items and hasattr(item_manager, 'list'):
+            logger.info("No items found using tenant queries, trying list() method")
+            all_items = item_manager.list(**filters)
+            logger.info(f"Found {len(all_items)} items using list() method")
+
+        return all_items
+    except Exception as e:
+        logger.error(f"Error fetching all items: {str(e)}")
+        # Fallback to the general list method if available
+        if hasattr(item_manager, 'list'):
+            all_items = item_manager.list(**filters)
+            logger.info(f"Falling back to list() method, found {len(all_items)} items")
+            return all_items
+        return []
+
+def get_orders_for_all_tenants(tenant_manager, order_manager, logger, filters=None):
+    """
+    Fetch orders from all tenants.
+
+    Args:
+        tenant_manager: The tenant manager instance
+        order_manager: The order manager instance
+        logger: The logger to use
+        filters: Optional dictionary of filters to apply
+
+    Returns:
+        List of orders from all tenants
+    """
+    if filters is None:
+        filters = {}
+
+    try:
+        # First try to get all tenants
+        all_tenants = tenant_manager.list() or []
+
+        # Then fetch orders for each tenant and combine them
+        all_orders = []
+        for tenant in all_tenants:
+            try:
+                tenant_orders = order_manager.get_for_tenant(
+                    tenant_id=str(tenant.id),
+                    filters=filters
+                )
+                all_orders.extend(tenant_orders)
+                logger.info(f"Found {len(tenant_orders)} orders for tenant {tenant.name}")
+            except Exception as e:
+                logger.error(f"Error fetching orders for tenant {tenant.name}: {str(e)}")
+
+        logger.info(f"Found {len(all_orders)} orders across all stores")
+
+        # If no orders found, fall back to a list method if available
+        if not all_orders and hasattr(order_manager, 'list'):
+            logger.info("No orders found using tenant queries, trying list() method")
+            all_orders = order_manager.list(**filters)
+            logger.info(f"Found {len(all_orders)} orders using list() method")
+
+        return all_orders
+    except Exception as e:
+        logger.error(f"Error fetching all orders: {str(e)}")
+        # Fallback to the general list method if available
+        if hasattr(order_manager, 'list'):
+            all_orders = order_manager.list(**filters)
+            logger.info(f"Falling back to list() method, found {len(all_orders)} orders")
+            return all_orders
+        return []
+
+def get_categories_for_all_tenants(tenant_manager, category_manager, logger, include_inactive=False):
+    """
+    Fetch categories from all tenants.
+
+    Args:
+        tenant_manager: The tenant manager instance
+        category_manager: The category manager instance
+        logger: The logger to use
+        include_inactive: Whether to include inactive categories
+
+    Returns:
+        List of categories from all tenants
+    """
+    try:
+        # First try to get all tenants
+        all_tenants = tenant_manager.list() or []
+        
+        # Then fetch categories for each tenant and combine them
+        all_categories = []
+        for tenant in all_tenants:
+            try:
+                if category_manager:
+                    tenant_categories = category_manager.get_all_categories(
+                        tenant_id=str(tenant.id),
+                        include_inactive=include_inactive
+                    )
+                    logger.info(f"Found {len(tenant_categories)} categories for tenant {tenant.name}")
+
+                    # Add tenant name to category objects for display
+                    for category in tenant_categories:
+                        category.tenant_name = tenant.name
+                        all_categories.append(category)
+                else:
+                    logger.warning(f"Category manager not available for tenant {tenant.name}")
+            except Exception as e:
+                logger.error(f"Error fetching categories for tenant {tenant.name}: {str(e)}")
+
+        logger.info(f"Found {len(all_categories)} categories across all stores")
+        return all_categories
+    except Exception as e:
+        logger.error(f"Error fetching categories from all tenants: {str(e)}")
+        return []

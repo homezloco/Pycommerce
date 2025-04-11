@@ -164,32 +164,16 @@ def setup_routes(templates_instance: Jinja2Templates):
         try:
             if selected_tenant_slug.lower() == "all":
                 # Fetch categories from all tenants
+                from routes.admin.tenant_utils import get_categories_for_all_tenants
                 logger.info("Fetching categories from all tenants")
                 try:
-                    all_tenants = tenant_manager.list() or []
-                    all_categories = []
-
-                    for tenant in all_tenants:
-                        try:
-                            if category_manager:
-                                tenant_categories = category_manager.get_all_categories(
-                                    tenant_id=str(tenant.id),
-                                    include_inactive=True
-                                )
-                                logger.info(f"Found {len(tenant_categories)} categories for tenant {tenant.name}")
-
-                                # Add tenant name to category objects for display
-                                for category in tenant_categories:
-                                    category.tenant_name = tenant.name
-                                    all_categories.append(category)
-                            else:
-                                logger.warning(f"Category manager not available for tenant {tenant.name}")
-                        except Exception as e:
-                            logger.error(f"Error fetching categories for tenant {tenant.name}: {str(e)}")
-
-                    categories = all_categories
-                    logger.info(f"Found {len(categories)} categories across all stores")
-
+                    categories = get_categories_for_all_tenants(
+                        tenant_manager=tenant_manager,
+                        category_manager=category_manager, 
+                        logger=logger,
+                        include_inactive=True
+                    )
+                    
                     if not categories:
                         error_message = "No categories found across all stores."
                 except Exception as e:

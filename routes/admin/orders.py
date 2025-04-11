@@ -202,38 +202,15 @@ async def admin_orders(
 
     if selected_tenant_slug.lower() == "all":
         # Get orders for all stores
+        from routes.admin.tenant_utils import get_orders_for_all_tenants
         logger.info("Getting orders for all stores")
-        try:
-            # First try to get all tenants
-            all_tenants = tenant_manager.list() or []
-
-            # Then fetch orders for each tenant and combine them
-            all_orders = []
-            for tenant in all_tenants:
-                try:
-                    tenant_orders = order_manager.get_by_tenant(
-                        tenant_id=str(tenant.id),
-                        **filters
-                    )
-                    all_orders.extend(tenant_orders)
-                    logger.info(f"Found {len(tenant_orders)} orders for tenant {tenant.name}")
-                except Exception as e:
-                    logger.error(f"Error fetching orders for tenant {tenant.name}: {str(e)}")
-
-            orders = all_orders
-            logger.info(f"Found {len(orders)} orders across all stores")
-
-            # If no orders found, fall back to list() method
-            if not orders:
-                logger.info("No orders found using tenant queries, trying list() method")
-                orders = order_manager.list(**filters)
-                logger.info(f"Found {len(orders)} orders using list() method")
-
-        except Exception as e:
-            logger.error(f"Error fetching all orders: {str(e)}")
-            # Fallback to the general list method
-            orders = order_manager.list(**filters)
-            logger.info(f"Falling back to list() method, found {len(orders)} orders")
+        
+        orders = get_orders_for_all_tenants(
+            tenant_manager=tenant_manager,
+            order_manager=order_manager,
+            logger=logger,
+            filters=filters
+        )
     else:
         # Get orders for specific tenant
         logger.info(f"Getting orders for tenant: {tenant.name}")
@@ -793,7 +770,7 @@ async def admin_order_fulfillment(
             "order_number": getattr(order, 'order_number', '') or '',
             # Customer information
             "customer_name": getattr(order, 'customer_name', '') or '',
-            "customer_email": getattr(order, ''customer_email', '') or '',
+            "customer_email": getattr(order, 'customer_email', '') or '',
             "customer_phone": getattr(order, 'customer_phone', '') or '',
             # Shipping address
             "shipping_address": {

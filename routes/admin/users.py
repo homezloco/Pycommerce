@@ -25,7 +25,7 @@ tenant_manager = TenantManager()
 
 class UserManager:
     """Simple user manager class for admin users."""
-    
+
     @staticmethod
     def get_users():
         """Return a list of admin users (in a real app, this would query the database)."""
@@ -65,7 +65,7 @@ class UserManager:
                 "last_login": None
             }
         ]
-    
+
     @staticmethod
     def get_user(user_id):
         """Return a user by ID (in a real app, this would query the database)."""
@@ -106,6 +106,17 @@ class UserManager:
             }
         }
         return users.get(user_id)
+    
+    @staticmethod
+    def get_users_by_tenant(tenant_id):
+        # Placeholder - Replace with actual database query
+        return [{"id": f"{tenant_id}_1", "name": f"User in Tenant {tenant_id}"}, {"id": f"{tenant_id}_2", "name": f"Another User in Tenant {tenant_id}"}]
+
+    @staticmethod
+    def get_all_users():
+        #Placeholder - Replace with actual database query
+        return [{"id": "all_1", "name": "User 1 (All Tenants)"}, {"id": "all_2", "name": "User 2 (All Tenants)"}]
+
 
 # Initialize manager
 user_manager = UserManager()
@@ -119,14 +130,14 @@ async def list_users(
     """Admin page for user management."""
     # Get users
     users = user_manager.get_users()
-    
+
     # Get all tenants for the sidebar
     tenants = tenant_manager.get_all()
-    
+
     # Get selected tenant from session
     selected_tenant_slug = request.session.get("selected_tenant")
     tenant = next((t for t in tenants if t.slug == selected_tenant_slug), tenants[0] if tenants else None)
-    
+
     return templates.TemplateResponse(
         "admin/users.html",
         {
@@ -148,14 +159,14 @@ async def new_user_form(
     """Display form for creating a new user."""
     # Get all tenants for the sidebar
     tenants = tenant_manager.get_all()
-    
+
     # Get selected tenant from session
     selected_tenant_slug = request.session.get("selected_tenant")
     tenant = next((t for t in tenants if t.slug == selected_tenant_slug), tenants[0] if tenants else None)
-    
+
     # Define available roles
     roles = ["administrator", "manager", "staff"]
-    
+
     return templates.TemplateResponse(
         "admin/user_create.html",
         {
@@ -185,11 +196,11 @@ async def create_user(
     try:
         # Get all tenants for the sidebar
         tenants = tenant_manager.get_all()
-        
+
         # Get selected tenant from session
         selected_tenant_slug = request.session.get("selected_tenant")
         tenant = next((t for t in tenants if t.slug == selected_tenant_slug), tenants[0] if tenants else None)
-        
+
         # Validate password
         if password != confirm_password:
             return templates.TemplateResponse(
@@ -205,15 +216,15 @@ async def create_user(
                 },
                 status_code=400
             )
-        
+
         # Create user
         # This is a placeholder - in a real app we'd create the user in the database
         name = f"{first_name} {last_name}"
         is_active = active is not None
         send_email = send_welcome_email is not None
-        
+
         logger.info(f"Would create user: {name} ({email}) with role {role}, active: {is_active}, send email: {send_email}")
-        
+
         return RedirectResponse(
             url="/admin/users?status_message=User+created+successfully&status_type=success",
             status_code=status.HTTP_303_SEE_OTHER
@@ -238,14 +249,14 @@ async def edit_user_form(
             status_code=404,
             detail=f"User with ID {user_id} not found"
         )
-    
+
     # Get all tenants for the sidebar
     tenants = tenant_manager.get_all()
-    
+
     # Get selected tenant from session
     selected_tenant_slug = request.session.get("selected_tenant")
     tenant = next((t for t in tenants if t.slug == selected_tenant_slug), tenants[0] if tenants else None)
-    
+
     return templates.TemplateResponse(
         "admin/user_edit.html",
         {
@@ -276,7 +287,7 @@ async def update_user(
     try:
         # Get all tenants for the sidebar
         tenants = tenant_manager.get_all()
-        
+
         # Get selected tenant from session
         selected_tenant_slug = request.session.get("selected_tenant")
         tenant = next((t for t in tenants if t.slug == selected_tenant_slug), tenants[0] if tenants else None)
@@ -288,7 +299,7 @@ async def update_user(
                 status_code=404,
                 detail=f"User with ID {user_id} not found"
             )
-        
+
         # Validate password if provided
         if password and password != confirm_password:
             user_with_form_data = {
@@ -302,7 +313,7 @@ async def update_user(
                 "created_at": user["created_at"],
                 "last_login": user["last_login"]
             }
-            
+
             return templates.TemplateResponse(
                 "admin/user_edit.html",
                 {
@@ -317,14 +328,14 @@ async def update_user(
                 },
                 status_code=400
             )
-        
+
         # Update user
         # This is a placeholder - in a real app we'd update the user in the database
         name = f"{first_name} {last_name}"
         is_active = active is not None
-        
+
         logger.info(f"Would update user: {name} ({email}) with role {role}, active: {is_active}")
-        
+
         return RedirectResponse(
             url="/admin/users?status_message=User+updated+successfully&status_type=success",
             status_code=status.HTTP_303_SEE_OTHER
@@ -350,12 +361,12 @@ async def delete_user(
                 status_code=404,
                 detail=f"User with ID {user_id} not found"
             )
-        
+
         # Delete user
         # This is a placeholder - in a real app we'd delete the user from the database
-        
+
         logger.info(f"Would delete user: {user['name']} ({user['email']})")
-        
+
         return RedirectResponse(
             url="/admin/users?status_message=User+deleted+successfully&status_type=success",
             status_code=status.HTTP_303_SEE_OTHER
@@ -370,7 +381,7 @@ async def delete_user(
 def setup_routes(app_templates):
     """
     Set up routes with the given templates.
-    
+
     Args:
         app_templates: Jinja2Templates instance from the main app
     """
