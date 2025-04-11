@@ -444,12 +444,19 @@ async def admin_change_store(request: Request, tenant: str = "", redirect_url: s
         request.session["selected_tenant"] = "all"
         request.session["tenant_id"] = None
         
-        # Always redirect to products page for 'all' selection
-        # since it's the main page that supports viewing all stores
-        return RedirectResponse(
-            url="/admin/products?tenant=all&status_message=Showing+products+from+all+stores&status_type=success",
-            status_code=303
-        )
+        # Check if a redirect_url was provided
+        if redirect_url:
+            # Use the provided redirect URL with tenant=all parameter
+            return RedirectResponse(
+                url=f"{redirect_url}?tenant=all&status_message=Showing+data+from+all+stores&status_type=success",
+                status_code=303
+            )
+        else:
+            # Fallback to the products page 
+            return RedirectResponse(
+                url="/admin/products?tenant=all&status_message=Showing+products+from+all+stores&status_type=success",
+                status_code=303
+            )
     
     # Regular tenant selection
     elif tenant:

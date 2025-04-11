@@ -198,7 +198,7 @@ def setup_routes(templates):
         
         # Determine selected tenant for the UI
         selected_tenant = None
-        if tenant_slug == "all":
+        if tenant_slug.lower() == "all":
             # Create a special entry for the "All Stores" option
             selected_tenant = {
                 "id": "",
@@ -213,6 +213,20 @@ def setup_routes(templates):
                 if tenant.get("id") == tenant_id:
                     selected_tenant = tenant
                     break
+            
+            # If no matching tenant was found, default to "All Stores"
+            if not selected_tenant and tenants:
+                logger.warning(f"No tenant found with ID {tenant_id}, defaulting to 'All Stores'")
+                selected_tenant = {
+                    "id": "",
+                    "name": "All Stores",
+                    "slug": "all",
+                    "domain": None,
+                    "active": True
+                }
+                # Update session
+                request.session["selected_tenant"] = "all"
+                request.session["tenant_id"] = None
         
         # Template context
         context = {
