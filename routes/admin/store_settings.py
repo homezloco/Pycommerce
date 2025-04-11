@@ -59,7 +59,9 @@ async def store_settings(
         try:
             tenant_obj = tenant_manager.get_by_slug(selected_tenant_slug)
             if tenant_obj:
+                # Make sure we have settings initialized
                 store_settings = tenant_obj.settings or {}
+                logger.info(f"Retrieved settings for tenant {selected_tenant_slug}: {store_settings}")
         except Exception as e:
             logger.error(f"Error getting tenant: {str(e)}")
     
@@ -70,6 +72,10 @@ async def store_settings(
     if not tab:
         tab = "basic"
     
+    # Debug output
+    logger.info(f"Rendering store settings with tenant: {tenant_obj.slug if tenant_obj else 'None'}")
+    logger.info(f"Settings data: {store_settings}")
+    
     return templates.TemplateResponse(
         "admin/store_settings.html",
         {
@@ -78,7 +84,7 @@ async def store_settings(
             "tenant": tenant_obj,
             "tenants": tenants,
             "active_page": "store-settings",
-            "config": store_settings,
+            "config": store_settings,  # This is the key variable for the template
             "status_message": status_message,
             "status_type": status_type,
             "cart_item_count": cart_item_count,
