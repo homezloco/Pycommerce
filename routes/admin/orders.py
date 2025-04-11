@@ -269,6 +269,9 @@ async def admin_orders(
     # Get all possible order statuses for filter dropdown
     status_options = ["PENDING", "PROCESSING", "PAID", "SHIPPED", "DELIVERED", "COMPLETED", "CANCELLED", "REFUNDED"]
 
+    # Get all tenants for the store selector
+    tenants = tenant_manager.list()
+    
     return templates.TemplateResponse(
         "admin/orders.html",
         {
@@ -276,6 +279,7 @@ async def admin_orders(
             "orders": orders_data,
             "selected_tenant": selected_tenant_slug,
             "tenant": tenant,
+            "tenants": tenants,  # Pass all tenants for the dropdown
             "status_options": status_options,
             "filters": {
                 "status": status,
