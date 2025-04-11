@@ -25,13 +25,13 @@
                 {{ error }}
             </div>
             {% endif %}
-            
+
             {% if success %}
             <div class="alert alert-success">
                 {{ success }}
             </div>
             {% endif %}
-            
+
             <div class="row">
                 <div class="col-lg-12">
                     <div class="card">
@@ -68,13 +68,13 @@
                                             {% endif %}
                                         </td>
                                         <td>
-                                            <a href="/admin/categories?tenant={{ tenant.slug }}" class="btn btn-xs btn-primary">
+                                            <a href="/admin/categories" class="btn btn-xs btn-primary">
                                                 <i class="fas fa-list"></i> Categories
                                             </a>
-                                            <a href="/admin/products?tenant={{ tenant.slug }}" class="btn btn-xs btn-info">
+                                            <a href="/admin/products" class="btn btn-xs btn-info">
                                                 <i class="fas fa-box"></i> Products
                                             </a>
-                                            <a href="/admin/orders?tenant={{ tenant.slug }}" class="btn btn-xs btn-secondary">
+                                            <a href="/admin/orders" class="btn btn-xs btn-secondary">
                                                 <i class="fas fa-shopping-cart"></i> Orders
                                             </a>
                                             <button class="btn btn-xs btn-warning" data-toggle="modal" data-target="#modal-edit-tenant-{{ tenant.id }}">
@@ -83,7 +83,7 @@
                                         </td>
                                     </tr>
                                     {% endfor %}
-                                    
+
                                     {% if tenants|length == 0 %}
                                     <tr>
                                         <td colspan="5" class="text-center">No tenants found</td>
