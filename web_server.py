@@ -564,10 +564,19 @@ async def admin_change_store(request: Request, tenant: str = ""):
     if redirect_url.startswith('/admin/change-store'):
         redirect_url = '/admin/dashboard'
     
-    # Always use the specified redirect_url for "all" stores selection
+    # Log debug information for tenant selection and redirect
+    logger.info(f"Tenant selected: '{tenant}', Redirect URL: '{redirect_url}'")
+    
+    # Always use the specified redirect_url for "all" stores selection, with stricter condition
     # This fixes the issue with "all" redirecting to dashboard
-    if tenant == "all" and redirect_url != "/admin/dashboard":
-        logger.info(f"Using specified redirect URL {redirect_url} for 'All Stores' selection")
+    if tenant.lower() == "all":
+        logger.info(f"'All Stores' selected - ensuring proper redirect to {redirect_url}")
+        
+        # Ensure we're not redirecting back to change-store to avoid loops
+        if redirect_url.startswith('/admin/change-store'):
+            redirect_url = '/admin/products'
+            logger.info(f"Prevented loop - redirecting to {redirect_url} instead")
+            
         return RedirectResponse(
             url=f"{redirect_url}?status_message=Showing+all+stores&status_type=success",
             status_code=303
