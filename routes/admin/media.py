@@ -44,8 +44,8 @@ async def admin_media(
     status_type: str = "info"
 ):
     """Admin page for managing media files."""
-    # Get all tenants for the dropdown menu (this part remains for now, but could be removed if tenant selection is truly removed)
-    tenants = tenant_manager.get_all()
+    # Media manager doesn't need tenant list anymore as we've removed the tenant selector
+    tenants = []
 
     # Convert query parameters to filter criteria
     filter_criteria = {}
@@ -149,7 +149,6 @@ async def admin_media(
         {
             "request": request,
             "media_files": media_data,
-            "tenants": tenants,  # Add the list of tenants for dropdown (this part remains, potentially unnecessary now)
             "file_types": file_types,
             "filters": {
                 "file_type": file_type,
