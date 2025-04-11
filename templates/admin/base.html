@@ -47,12 +47,12 @@
         .card-header-tabs .nav-link.active {
             border-bottom: 2px solid var(--bs-primary);
         }
-        
+
         /* Mobile store selector styling */
         .store-selector-mobile {
             max-width: 130px;
         }
-        
+
         .store-selector-mobile select {
             font-size: 0.8rem;
             height: 31px;
@@ -60,19 +60,19 @@
             color: white;
             border-color: rgba(255, 255, 255, 0.2);
         }
-        
+
         .store-selector-mobile select option {
             background-color: #343a40;
             color: white;
         }
-        
+
         .store-selector-mobile select:focus {
             background-color: rgba(255, 255, 255, 0.2);
             color: white;
             border-color: rgba(255, 255, 255, 0.3);
             box-shadow: 0 0 0 0.2rem rgba(255, 255, 255, 0.1);
         }
-        
+
         /* Mobile sidebar improvements */
         @media (max-width: 767.98px) {
             .sidebar {
@@ -84,22 +84,22 @@
                 max-height: calc(100vh - 56px);
                 overflow-y: auto;
             }
-            
+
             .sidebar .nav-link {
                 padding: 0.75rem 1rem;
                 font-size: 1.1rem;
             }
-            
+
             .sidebar .nav-link i {
                 font-size: 1.2rem;
             }
-            
+
             /* Ensure main content is pushed down when sidebar is visible */
             .sidebar.show + .main-content {
                 margin-top: 100%;
             }
         }
-        
+
         .notification-badge {
             position: absolute;
             top: -5px;
@@ -127,7 +127,7 @@
             <a class="navbar-brand" href="/admin">
                 <i class="bi bi-shop me-2"></i>PyCommerce Admin
             </a>
-            
+
             <!-- Mobile Store Display and Selector - Only visible on small screens -->
             <div class="d-lg-none ms-auto me-2">
                 <!-- Mobile Current Store Badge -->
@@ -149,7 +149,7 @@
                         {% endif %}
                     </span>
                 </div>
-                
+
                 <!-- Mobile Store Selector -->
                 <form action="/admin/change-store" method="GET" class="d-flex store-selector-mobile">
                     <input type="hidden" name="redirect_url" id="mobile_current_path">
@@ -170,12 +170,12 @@
                     document.getElementById('mobile_current_path').value = window.location.pathname;
                 </script>
             </div>
-            
+
             <!-- This button will now toggle the sidebar menu -->
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#sidebarMenu" aria-controls="sidebarMenu" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
-            
+
             <div class="collapse navbar-collapse" id="navbarNav">
                 <!-- Current Store Indicator - Always visible -->
                 <div class="me-3">
@@ -196,7 +196,7 @@
                         {% endif %}
                     </span>
                 </div>
-                
+
                 <!-- Desktop Store Selector Dropdown - Only visible on large screens -->
                 <div class="mx-auto d-none d-lg-block">
                     <form action="/admin/change-store" method="GET" class="d-flex store-selector">
@@ -212,52 +212,55 @@
                                 {{ tenant.name }}
                             </option>
                             {% endfor %}
-                        </select>
-                        <a href="/admin/stores/add" class="btn btn-sm btn-outline-light">
-                            <i class="bi bi-plus"></i>
-                        </a>
+                    </select>
                     </form>
-                    <script>
-                        // Set the current path as the redirect URL
-                        document.getElementById('current_path').value = window.location.pathname;
-                    </script>
+                    {% if request.path not in ['/admin/settings', '/admin/media', '/admin/stores'] %}
+                    <a href="/admin/stores/add" class="btn btn-sm btn-outline-light">
+                        <i class="bi bi-plus"></i>
+                    </a>
+                    {% endif %}
                 </div>
-                
-                <ul class="navbar-nav ms-auto">
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle position-relative" href="#" id="notificationsDropdown" role="button" data-bs-toggle="dropdown">
-                            <i class="bi bi-bell"></i>
-                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger notification-badge">
-                                3
-                            </span>
-                        </a>
-                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="notificationsDropdown">
-                            <li><h6 class="dropdown-header">Notifications</h6></li>
-                            <li><a class="dropdown-item" href="#">New order received</a></li>
-                            <li><a class="dropdown-item" href="#">Low stock warning: Product #123</a></li>
-                            <li><a class="dropdown-item" href="#">Payment processed</a></li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="#">View all notifications</a></li>
-                        </ul>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/" target="_blank">
-                            <i class="bi bi-box-arrow-up-right"></i> Visit Store
-                        </a>
-                    </li>
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
-                            <i class="bi bi-person-circle"></i> Admin
-                        </a>
-                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
-                            <li><a class="dropdown-item" href="/admin/profile">Profile</a></li>
-                            <li><a class="dropdown-item" href="/admin/settings">Settings</a></li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="/logout">Logout</a></li>
-                        </ul>
-                    </li>
-                </ul>
+
+                <script>
+                    // Set the current path as the redirect URL
+                    document.getElementById('current_path').value = window.location.pathname;
+                </script>
             </div>
+
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle position-relative" href="#" id="notificationsDropdown" role="button" data-bs-toggle="dropdown">
+                        <i class="bi bi-bell"></i>
+                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger notification-badge">
+                            3
+                        </span>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="notificationsDropdown">
+                        <li><h6 class="dropdown-header">Notifications</h6></li>
+                        <li><a class="dropdown-item" href="#">New order received</a></li>
+                        <li><a class="dropdown-item" href="#">Low stock warning: Product #123</a></li>
+                        <li><a class="dropdown-item" href="#">Payment processed</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="#">View all notifications</a></li>
+                    </ul>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/" target="_blank">
+                        <i class="bi bi-box-arrow-up-right"></i> Visit Store
+                    </a>
+                </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
+                        <i class="bi bi-person-circle"></i> Admin
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                        <li><a class="dropdown-item" href="/admin/profile">Profile</a></li>
+                        <li><a class="dropdown-item" href="/admin/settings">Settings</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="/logout">Logout</a></li>
+                    </ul>
+                </li>
+            </ul>
         </div>
     </nav>
 
@@ -308,7 +311,7 @@
                             </a>
                         </li>
                     </ul>
-                    
+
                     <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
                         <span>Marketing</span>
                     </h6>
@@ -344,7 +347,7 @@
                             </a>
                         </li>
                     </ul>
-                    
+
                     <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
                         <span>Settings</span>
                     </h6>
@@ -382,7 +385,7 @@
                     </ul>
                 </div>
             </nav>
-            
+
             <!-- Main Content -->
             <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 content main-content">
                 {% if status_message %}
@@ -391,10 +394,11 @@
                     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>
                 {% endif %}
-                
-                {% block content %}{% endblock %}
+
+                {% block content %}
+                {% endblock %}
             </main>
-            
+
             <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
             <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
         </div>
@@ -406,13 +410,13 @@
         document.addEventListener('DOMContentLoaded', function() {
             const path = window.location.pathname;
             const navLinks = document.querySelectorAll('.sidebar .nav-link');
-            
+
             navLinks.forEach(link => {
                 if (link.getAttribute('href') !== '/admin' && path.includes(link.getAttribute('href'))) {
                     link.classList.add('active');
                 }
             });
-            
+
             // Handle mobile menu clicks - close sidebar when a menu item is clicked
             if (window.innerWidth < 768) {
                 const mobileMenuLinks = document.querySelectorAll('#sidebarMenu .nav-link');
