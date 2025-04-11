@@ -76,6 +76,15 @@ async def store_settings(
     logger.info(f"Rendering store settings with tenant: {tenant_obj.slug if tenant_obj else 'None'}")
     logger.info(f"Settings data: {store_settings}")
     
+    # Ensure settings are properly structured 
+    # The template expects direct access to settings fields, not nested structure
+    # If settings are nested within 'theme', extract them to top-level
+    if 'theme' in store_settings and isinstance(store_settings['theme'], dict):
+        theme_settings = store_settings['theme']
+        # Merge theme settings with top-level settings for backward compatibility
+        store_settings.update(theme_settings)
+    
+    # Add display_tenant_selector flag for consistency with other admin pages
     return templates.TemplateResponse(
         "admin/store_settings.html",
         {
@@ -88,7 +97,8 @@ async def store_settings(
             "status_message": status_message,
             "status_type": status_type,
             "cart_item_count": cart_item_count,
-            "tab": tab
+            "tab": tab,
+            "display_tenant_selector": True  # Add this flag to ensure tenant selector is displayed
         }
     )
 
