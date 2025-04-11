@@ -69,26 +69,41 @@ def setup_routes(templates: Jinja2Templates):
         # Handle "all" tenant slug case
         if selected_tenant_slug.lower() == "all":
             logger.info("Using 'All Stores' selection in reports page")
-            from routes.admin.tenant_utils import create_virtual_all_tenant
+            from routes.admin.tenant_utils import create_virtual_all_tenant, get_objects_for_all_tenants
             selected_tenant = type('AllStoresTenant', (), create_virtual_all_tenant())
-            # Get report data
+            
+            # Use the generalized utility function to get reports for all tenants
             try:
                 # First try to get all tenants
                 all_tenants = tenant_manager.list() or []
-
-                # Then fetch report data for each tenant and combine them
-                all_report_data = []
-                for tenant in all_tenants:
-                    try:
-                        # Replace with actual report data fetching logic
-                        tenant_report_data = []  # Replace with actual report data fetching
-                        all_report_data.extend(tenant_report_data)
-                        logger.info(f"Found {len(tenant_report_data)} report entries for tenant {tenant.name}")
-                    except Exception as e:
-                        logger.error(f"Error fetching reports for tenant {tenant.name}: {str(e)}")
-
-                report_data = all_report_data
+                
+                # Define a report manager or function if one exists
+                # For demonstration, we'll use a placeholder
+                # In a real implementation, you would use an actual report manager
+                class ReportManager:
+                    @staticmethod
+                    def get_for_tenant(tenant_id, **kwargs):
+                        # Placeholder for report data fetching logic
+                        # This should be replaced with actual implementation
+                        return [{"id": f"report_{tenant_id}_{i}", "name": f"Report {i} for tenant {tenant_id}"} for i in range(3)]
+                
+                report_manager = ReportManager()
+                
+                # Get reports for all tenants using the generalized utility function
+                report_data = get_objects_for_all_tenants(
+                    tenant_manager=tenant_manager,
+                    object_manager=report_manager,
+                    get_method_name="get_for_tenant",
+                    id_param_name="tenant_id",
+                    logger=logger,
+                    fallback_method_name=None
+                )
+                
                 logger.info(f"Found {len(report_data)} report entries across all stores")
+                
+                # If no reports found, initialize to empty list
+                if not report_data:
+                    report_data = []
             except Exception as e:
                 logger.error(f"Error fetching all reports: {str(e)}")
                 report_data = []

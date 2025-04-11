@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 tenant_manager = TenantManager()
 
 def get_selected_tenant(request: Request, tenant_param: Optional[str] = None, 
-                       allow_all: bool = False) -> Tuple[str, Optional[Dict[str, Any]]]:
+                       allow_all: bool = True) -> Tuple[str, Optional[Dict[str, Any]]]:
     """
     Get the selected tenant based on request parameters and session data.
 

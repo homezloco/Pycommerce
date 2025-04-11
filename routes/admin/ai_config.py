@@ -25,6 +25,8 @@ templates = None
 # Initialize managers
 tenant_manager = TenantManager()
 
+import os  # Added missing import
+
 @router.get("/ai-config", response_class=HTMLResponse)
 async def ai_config_page(
     request: Request,
@@ -33,20 +35,26 @@ async def ai_config_page(
     status_type: str = "info"
 ):
     """Admin page for AI configuration."""
-    # Get tenant from query parameters or session using helper function
-    selected_tenant_slug = get_selected_tenant(request, tenant)
+    # Get tenant from query parameters or session
+    selected_tenant_slug = tenant or request.query_params.get('tenant') or request.session.get("selected_tenant")
 
-    # Handle tenant selection redirect if necessary
-    if selected_tenant_slug is None:
-        return redirect_to_tenant_selection(request)
+    # If no tenant is selected, redirect to dashboard with message
+    if not selected_tenant_slug:
+        return RedirectResponse(
+            url="/admin/dashboard?status_message=Please+select+a+store+first&status_type=warning", 
+            status_code=303
+        )
 
+    # Store the selected tenant in session for future requests
+    request.session["selected_tenant"] = selected_tenant_slug
 
     # Initialize tenant object
     tenant_obj = None
 
-    # Handle the "all stores" case using helper function
-    if selected_tenant_slug == 'all':
-        tenant_obj = create_virtual_all_tenant()
+    # Handle the "all stores" case
+    if selected_tenant_slug.lower() == "all":
+        logger.info("Using 'All Stores' selection in AI config page")
+        tenant_obj = type('AllStoresTenant', (), create_virtual_all_tenant())
     else:
         # Get actual tenant object
         tenant_obj = tenant_manager.get_by_slug(selected_tenant_slug)
@@ -141,19 +149,26 @@ async def ai_config_configure_page(
     status_type: str = "info"
 ):
     """Admin page for configuring a specific AI provider."""
-    # Get tenant from query parameters or session using helper function
-    selected_tenant_slug = get_selected_tenant(request, tenant)
+    # Get tenant from query parameters or session
+    selected_tenant_slug = tenant or request.query_params.get('tenant') or request.session.get("selected_tenant")
 
-    # Handle tenant selection redirect if necessary
-    if selected_tenant_slug is None:
-        return redirect_to_tenant_selection(request)
+    # If no tenant is selected, redirect to dashboard with message
+    if not selected_tenant_slug:
+        return RedirectResponse(
+            url="/admin/dashboard?status_message=Please+select+a+store+first&status_type=warning", 
+            status_code=303
+        )
+
+    # Store the selected tenant in session for future requests
+    request.session["selected_tenant"] = selected_tenant_slug
 
     # Initialize tenant object
     tenant_obj = None
 
-    # Handle the "all stores" case using helper function
-    if selected_tenant_slug == 'all':
-        tenant_obj = create_virtual_all_tenant()
+    # Handle the "all stores" case
+    if selected_tenant_slug.lower() == "all":
+        logger.info("Using 'All Stores' selection in AI config provider page")
+        tenant_obj = type('AllStoresTenant', (), create_virtual_all_tenant())
     else:
         # Get actual tenant object
         tenant_obj = tenant_manager.get_by_slug(selected_tenant_slug)

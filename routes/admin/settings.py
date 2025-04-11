@@ -75,33 +75,57 @@ async def settings(request: Request):
     
     # Get tenant info for admin sidebar
     tenants = []
-    selected_tenant = None
+    selected_tenant_slug = None
     try:
-        from pycommerce.models.tenant import TenantManager
-        tenant_manager = TenantManager()
-        tenants_list = tenant_manager.list()
-        if tenants_list:
-            tenants = [
-                {
-                    "id": str(t.id),
-                    "name": t.name,
-                    "slug": t.slug,
-                    "active": True
-                }
-                for t in tenants_list
-            ]
-            # Get selected tenant from session or query param
-            selected_tenant = request.session.get("selected_tenant", "")
+        # Get all tenants
+        tenants_list = tenant_manager.list() or []
+        tenants = [
+            {
+                "id": str(t.id),
+                "name": t.name,
+                "slug": t.slug,
+                "domain": getattr(t, 'domain', ''),
+                "active": getattr(t, 'active', True)
+            }
+            for t in tenants_list
+        ]
+        
+        # Get selected tenant from session or query param
+        selected_tenant_slug = request.query_params.get('tenant') or request.session.get("selected_tenant", "")
+        
+        # If no tenant is selected and we have tenants, select the first one
+        if not selected_tenant_slug and tenants:
+            selected_tenant_slug = tenants[0]["slug"]
+            request.session["selected_tenant"] = selected_tenant_slug
+            
+        # Add "All Stores" option to tenants list if it's not already there
+        if tenants and not any(t["slug"] == "all" for t in tenants):
+            from routes.admin.tenant_utils import create_virtual_all_tenant
+            all_stores = create_virtual_all_tenant()
+            tenants.insert(0, all_stores)
     except Exception as e:
         logger.error(f"Error fetching tenants: {str(e)}")
+    
+    # Get tenant object if we have a selected tenant
+    tenant_obj = None
+    if selected_tenant_slug:
+        if selected_tenant_slug.lower() == "all":
+            # Create a virtual "All Stores" tenant
+            from routes.admin.tenant_utils import create_virtual_all_tenant
+            tenant_obj = type('AllStoresTenant', (), create_virtual_all_tenant())
+        else:
+            # Get the tenant by slug
+            tenant_obj = tenant_manager.get_by_slug(selected_tenant_slug)
     
     return templates.TemplateResponse(
         "admin/settings.html", 
         {
             "request": request,
             "tenants": tenants,
-            "selected_tenant": selected_tenant,
+            "selected_tenant": selected_tenant_slug,
+            "tenant": tenant_obj,
             "active_page": "settings",
+            "all_stores_selected": selected_tenant_slug and selected_tenant_slug.lower() == "all",
             **settings_data
         }
     )
