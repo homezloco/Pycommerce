@@ -183,10 +183,16 @@ class MarketAnalysisService:
             product_sales = defaultdict(int)
             total_revenue = 0
             
+            # Define completed order statuses - same as in dashboard calculation
+            completed_statuses = ["COMPLETED", "DELIVERED", "SHIPPED"]
+            
             for order in orders:
-                order_date = order.created_at.strftime("%Y-%m-%d")
-                daily_sales[order_date] += order.total
-                total_revenue += order.total
+                # Only consider completed orders for revenue calculations to match dashboard
+                order_status = str(order.status) if not isinstance(order.status, str) else order.status
+                if order_status.upper() in [s.upper() for s in completed_statuses]:
+                    order_date = order.created_at.strftime("%Y-%m-%d")
+                    daily_sales[order_date] += order.total
+                    total_revenue += order.total
                 
                 # Process items in the order
                 for item in order.items:
