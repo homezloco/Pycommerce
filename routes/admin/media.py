@@ -24,7 +24,7 @@ router = APIRouter(prefix="/admin", tags=["admin"])
 try:
     from pycommerce.models.tenant import TenantManager
     from pycommerce.services.media_service import MediaService
-    
+
     # Initialize managers and services
     tenant_manager = TenantManager()
     media_service = MediaService()
@@ -36,7 +36,6 @@ except ImportError as e:
 @router.get("/media", response_class=HTMLResponse)
 async def admin_media(
     request: Request,
-    tenant: Optional[str] = None,
     file_type: Optional[str] = None,
     is_ai_generated: Optional[str] = None,
     sharing_level: Optional[str] = None,
@@ -45,35 +44,12 @@ async def admin_media(
     status_type: str = "info"
 ):
     """Admin page for managing media files."""
-    # Import tenant utils for consistent tenant selection
-    from routes.admin.tenant_utils import get_selected_tenant, create_virtual_all_tenant
-    
-    # Get selected tenant using the unified utility
-    selected_tenant_slug, tenant_obj, is_all_tenants = get_selected_tenant(
-        request=request, 
-        tenant_param=tenant,
-        allow_all=True
-    )
-    
-    # If no tenant is selected, redirect to dashboard with message
-    if not selected_tenant_slug:
-        return RedirectResponse(
-            url="/admin/dashboard?status_message=Please+select+a+store+first&status_type=warning", 
-            status_code=303
-        )
-    
-    # Special handling for "all" tenant
-    if is_all_tenants:
-        logger.info("Media manager showing data for all stores")
-        # Create a virtual "All Stores" tenant
-        tenant_obj = type('AllStoresTenant', (), create_virtual_all_tenant())
-        
-    # Get all tenants for the dropdown menu
+    # Get all tenants for the dropdown menu (this part remains for now, but could be removed if tenant selection is truly removed)
     tenants = tenant_manager.get_all()
-    
+
     # Convert query parameters to filter criteria
     filter_criteria = {}
-    
+
     if file_type:
         filter_criteria["file_type"] = file_type
     if is_ai_generated == "true":
@@ -84,56 +60,31 @@ async def admin_media(
         filter_criteria["sharing_level"] = sharing_level
     if search:
         filter_criteria["search"] = search
-    
-    # Get media files for tenant
+
+    # Get media files for tenant -  Simplified to fetch all media (no tenant selection needed)
     file_type = filter_criteria.get("file_type", None)
     is_ai_generated = filter_criteria.get("is_ai_generated", None)
     sharing_level_filter = filter_criteria.get("sharing_level", None)
     search_term = filter_criteria.get("search", None)
-    
+
     # Convert string 'is_ai_generated' to boolean explicitly
     bool_is_ai_generated = None
     if isinstance(is_ai_generated, bool):
         bool_is_ai_generated = is_ai_generated
-    
-    # Get all media files that match the criteria
-    if selected_tenant_slug.lower() == "all":
-        # Fetch media for all tenants
-        logger.info("Fetching media for all stores")
-        try:
-            # First try to get all tenants
-            all_tenants = tenant_manager.list() or []
-            
-            # Then fetch media for each tenant and combine them
-            all_media_files = []
-            for tenant in all_tenants:
-                try:
-                    tenant_media = media_service.list_media(
-                        tenant_id=str(tenant.id),
-                        file_type=file_type,
-                        is_ai_generated=bool_is_ai_generated,
-                        search_term=search_term
-                    )
-                    all_media_files.extend(tenant_media)
-                    logger.info(f"Found {len(tenant_media)} media files for tenant {tenant.name}")
-                except Exception as e:
-                    logger.error(f"Error fetching media for tenant {tenant.name}: {str(e)}")
-            
-            media_files = all_media_files
-            logger.info(f"Found {len(media_files)} media files across all stores")
-        except Exception as e:
-            logger.error(f"Error fetching all media files: {str(e)}")
-            media_files = []
-    else:
-        # Fetch media for specific tenant
-        selected_tenant_id = str(tenant_obj.id) if tenant_obj else None
+
+    # Fetch media for all tenants
+    logger.info("Fetching media for all stores")
+    try:
         media_files = media_service.list_media(
-            tenant_id=selected_tenant_id,
             file_type=file_type,
             is_ai_generated=bool_is_ai_generated,
             search_term=search_term
         )
-    
+    except Exception as e:
+        logger.error(f"Error fetching all media files: {str(e)}")
+        media_files = []
+
+
     # Filter by sharing level if specified (this must be done in Python since MediaService 
     # doesn't directly support filtering by sharing_level in the JSON metadata)
     if sharing_level_filter:
@@ -143,18 +94,18 @@ async def admin_media(
             media_sharing_level = None
             if hasattr(media, 'meta_data') and media.meta_data and 'sharing_level' in media.meta_data:
                 media_sharing_level = media.meta_data.get('sharing_level')
-            
+
             # For older files without sharing_level, infer from is_public
             elif hasattr(media, 'is_public'):
                 media_sharing_level = "community" if media.is_public else "store"
-            
+
             # If the sharing level matches the filter, include this media
             if media_sharing_level == sharing_level_filter:
                 filtered_media_files.append(media)
-        
+
         # Replace the unfiltered list with our filtered one
         media_files = filtered_media_files
-    
+
     # Format media data for template
     media_data = []
     for media in media_files:
@@ -173,10 +124,10 @@ async def admin_media(
             "meta_data": media.meta_data if hasattr(media, 'meta_data') else {}
         }
         media_data.append(media_item)
-    
+
     # Group media files by type for filtering
     file_types = set(media.file_type for media in media_files)
-    
+
     # Check if we have an OpenAI API key for AI image generation
     has_openai_key = False
     try:
@@ -184,7 +135,7 @@ async def admin_media(
         has_openai_key = bool(os.environ.get("OPENAI_API_KEY"))
     except Exception as e:
         logger.warning(f"Error checking for OpenAI API key: {str(e)}")
-    
+
     # Add simple pagination data (can be enhanced later)
     pagination = {
         "total": len(media_files),
@@ -192,16 +143,13 @@ async def admin_media(
         "page": 1,    # Current page
         "pages": max(1, (len(media_files) + 11) // 12)  # Total pages (ceiling division)
     }
-    
+
     return templates.TemplateResponse(
         "admin/media.html",
         {
             "request": request,
             "media_files": media_data,
-            "selected_tenant": selected_tenant_slug,
-            "tenant": tenant_obj,
-            "tenant_id": str(tenant_obj.id),
-            "tenants": tenants,  # Add the list of tenants for dropdown
+            "tenants": tenants,  # Add the list of tenants for dropdown (this part remains, potentially unnecessary now)
             "file_types": file_types,
             "filters": {
                 "file_type": file_type,
@@ -221,7 +169,6 @@ async def admin_media(
 async def admin_upload_media(
     request: Request,
     file: UploadFile = File(...),
-    tenant_id: str = Form(...),
     sharing_level: str = Form("store"),
     alt_text: Optional[str] = Form(None),
     description: Optional[str] = Form(None)
@@ -230,43 +177,45 @@ async def admin_upload_media(
     try:
         # Read file content
         file_content = await file.read()
-        
+
         # Determine sharing settings based on sharing_level
         is_public = sharing_level == "community"
-        
+
         # Create metadata with sharing info
         metadata = {
             "sharing_level": sharing_level,
             "upload_date": datetime.now().isoformat()
         }
-        
-        # Upload file
+
+        # Upload file with the sharing level in metadata
         result = await media_service.upload_file(
             file=file_content,
             filename=file.filename,
-            tenant_id=tenant_id,
+            tenant_id=None, # Tenant ID removed
             alt_text=alt_text,
             description=description,
             metadata=metadata,
             is_public=is_public
         )
-        
+
+        logger.info(f"Uploaded media with sharing level: {sharing_level}")
+
         if result:
             return RedirectResponse(
-                url=f"/admin/media?tenant={tenant_id}&status_message=File+uploaded+successfully&status_type=success", 
+                url=f"/admin/media?status_message=File+uploaded+successfully&status_type=success", 
                 status_code=303
             )
         else:
             error_message = "Failed to upload file"
             return RedirectResponse(
-                url=f"/admin/media?tenant={tenant_id}&status_message={error_message}&status_type=danger", 
+                url=f"/admin/media?status_message={error_message}&status_type=danger", 
                 status_code=303
             )
     except Exception as e:
         logger.error(f"Error uploading media: {str(e)}")
         error_message = f"Error uploading media: {str(e)}"
         return RedirectResponse(
-            url=f"/admin/media?tenant={tenant_id if tenant_id else ''}&status_message={error_message}&status_type=danger", 
+            url=f"/admin/media?status_message={error_message}&status_type=danger", 
             status_code=303
         )
 
@@ -274,7 +223,6 @@ async def admin_upload_media(
 async def admin_generate_image(
     request: Request,
     prompt: str = Form(...),
-    tenant_id: str = Form(...),
     sharing_level: str = Form("store"),
     size: str = Form("1024x1024"),
     quality: str = Form("standard"),
@@ -285,16 +233,16 @@ async def admin_generate_image(
     try:
         # Determine sharing settings based on sharing_level
         is_public = sharing_level == "community"
-        
+
         # Create metadata with sharing info and add to existing metadata
         sharing_metadata = {
             "sharing_level": sharing_level,
             "generation_date": datetime.now().isoformat()
         }
-        
+
         # Generate image
         result = await media_service.generate_image(
-            tenant_id=tenant_id,
+            tenant_id=None, # Tenant ID removed
             prompt=prompt,
             size=size,
             quality=quality,
@@ -303,23 +251,23 @@ async def admin_generate_image(
             metadata=sharing_metadata,
             is_public=is_public
         )
-        
+
         if result:
             return RedirectResponse(
-                url=f"/admin/media?tenant={tenant_id}&status_message=Image+generated+successfully&status_type=success", 
+                url=f"/admin/media?status_message=Image+generated+successfully&status_type=success", 
                 status_code=303
             )
         else:
             error_message = "Failed to generate image"
             return RedirectResponse(
-                url=f"/admin/media?tenant={tenant_id}&status_message={error_message}&status_type=danger", 
+                url=f"/admin/media?status_message={error_message}&status_type=danger", 
                 status_code=303
             )
     except Exception as e:
         logger.error(f"Error generating image: {str(e)}")
         error_message = f"Error generating image: {str(e)}"
         return RedirectResponse(
-            url=f"/admin/media?tenant={tenant_id if tenant_id else ''}&status_message={error_message}&status_type=danger", 
+            url=f"/admin/media?status_message={error_message}&status_type=danger", 
             status_code=303
         )
 
@@ -332,7 +280,7 @@ async def admin_download_media(
     try:
         # Get the media file
         media_file, content = await media_service.get_media_content(media_id)
-        
+
         if media_file and content:
             return Response(
                 content=content,
@@ -357,14 +305,13 @@ async def admin_download_media(
 @router.delete("/media/delete/{media_id}", response_class=JSONResponse)
 async def admin_delete_media_via_api(
     request: Request,
-    media_id: str,
-    tenant_id: str = Form(...)
+    media_id: str
 ):
     """Delete a media file via API (DELETE request)."""
     try:
         # Delete the media file
         result = await media_service.delete_media(media_id)
-        
+
         if result:
             return JSONResponse(
                 content={"success": True, "message": "Media deleted successfully"},
@@ -389,32 +336,17 @@ async def admin_delete_media(
 ):
     """Delete a media file via browser link (GET request)."""
     try:
-        # Get tenant ID from session or query params if available
-        selected_tenant_slug = None
-        tenant_id = None
-        
-        if "selected_tenant" in request.session:
-            selected_tenant_slug = request.session.get("selected_tenant")
-        
-        if selected_tenant_slug:
-            try:
-                selected_tenant = tenant_manager.get_by_slug(selected_tenant_slug)
-                if selected_tenant and hasattr(selected_tenant, 'id'):
-                    tenant_id = str(selected_tenant.id)
-            except Exception as e:
-                logger.warning(f"Could not get tenant with slug '{selected_tenant_slug}': {str(e)}")
-        
-        # Use the media service to delete the media
+        # Delete the media file
         result = await media_service.delete_media(media_id)
         if result:
             return RedirectResponse(
-                url=f"/admin/media?tenant={tenant_id if tenant_id else ''}&status_message=Media+deleted+successfully&status_type=success", 
+                url=f"/admin/media?status_message=Media+deleted+successfully&status_type=success", 
                 status_code=303
             )
         else:
             error_message = "Deletion failed. Please try again."
             return RedirectResponse(
-                url=f"/admin/media?tenant={tenant_id if tenant_id else ''}&status_message={error_message}&status_type=danger", 
+                url=f"/admin/media?status_message={error_message}&status_type=danger", 
                 status_code=303
             )
     except Exception as e:
@@ -428,7 +360,7 @@ async def admin_delete_media(
 def setup_routes(app_templates):
     """
     Set up routes with the given templates.
-    
+
     Args:
         app_templates: Jinja2Templates instance from the main app
     """

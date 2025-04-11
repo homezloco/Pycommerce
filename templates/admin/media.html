@@ -179,14 +179,7 @@
                             Maximum file size: 20MB
                         </div>
                     </div>
-                    <div class="mb-3">
-                        <label for="tenant_id" class="form-label">Store</label>
-                        <select class="form-select" id="tenant_id" name="tenant_id">
-                            {% for t in tenants %}
-                            <option value="{{ t.id }}" {% if selected_tenant == t.id %}selected{% endif %}>{{ t.name }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
+                    <input type="hidden" id="tenant_id" name="tenant_id" value="{{ tenant_id }}">
                     <div class="mb-3">
                         <label class="form-label">Sharing Level</label>
                         <div class="form-check">
