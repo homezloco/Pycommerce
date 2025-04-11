@@ -61,16 +61,16 @@ async def debug_products(request: Request):
     """Debug page for products."""
     from pycommerce.models.tenant import TenantManager
     from pycommerce.models.product import ProductManager
-    
+
     tenant_manager = TenantManager()
     product_manager = ProductManager()
-    
+
     selected_tenant_slug = "tech"  # Use Tech Gadgets store
     tenant_obj = tenant_manager.get_by_slug(selected_tenant_slug)
-    
+
     # Get products for tenant
     products = product_manager.get_by_tenant(str(tenant_obj.id)) if tenant_obj else []
-    
+
     # Format products for template
     products_list = []
     for product in products:
@@ -86,7 +86,7 @@ async def debug_products(request: Request):
             "tenant_name": tenant_obj.name if tenant_obj else "Unknown"
         }
         products_list.append(product_dict)
-    
+
     # Create debug html directly
     debug_html = f"""
     <!DOCTYPE html>
@@ -98,13 +98,13 @@ async def debug_products(request: Request):
     <body>
         <div class="container py-4">
             <h1>Debug Products Page</h1>
-            
+
             <div class="alert alert-info">
                 <h3>Debug Information</h3>
                 <p>Tenant: {selected_tenant_slug}</p>
                 <p>Products count: {len(products_list)}</p>
             </div>
-            
+
             <div class="card mt-4">
                 <div class="card-header">
                     <h3>All Products</h3>
@@ -138,25 +138,25 @@ async def debug_products(request: Request):
     </body>
     </html>
     """
-    
+
     return HTMLResponse(content=debug_html)
-    
+
 # Template debug route for products
 @app.get("/debug/products/template", response_class=HTMLResponse)
 async def debug_products_template(request: Request):
     """Debug page for products using the Jinja template."""
     from pycommerce.models.tenant import TenantManager
     from pycommerce.models.product import ProductManager
-    
+
     tenant_manager = TenantManager()
     product_manager = ProductManager()
-    
+
     selected_tenant_slug = "tech"  # Use Tech Gadgets store
     tenant_obj = tenant_manager.get_by_slug(selected_tenant_slug)
-    
+
     # Get products for tenant
     products = product_manager.get_by_tenant(str(tenant_obj.id)) if tenant_obj else []
-    
+
     # Format products for template
     products_list = []
     for product in products:
@@ -172,7 +172,7 @@ async def debug_products_template(request: Request):
             "tenant_name": tenant_obj.name if tenant_obj else "Unknown"
         }
         products_list.append(product_dict)
-    
+
     # Get all tenants for the store selector
     tenants = []
     try:
@@ -189,7 +189,7 @@ async def debug_products_template(request: Request):
         ]
     except Exception as e:
         print(f"Error fetching tenants: {str(e)}")
-    
+
     # Use the template directly
     context = {
         "request": request,
@@ -200,7 +200,7 @@ async def debug_products_template(request: Request):
         "tenants": tenants,
         "cart_item_count": request.session.get("cart_item_count", 0)
     }
-    
+
     return templates.TemplateResponse("admin/products_debug.html", context)
 
 # Direct HTML rendering for products (no template)
@@ -209,16 +209,16 @@ async def debug_products_inline(request: Request):
     """Debug page for products with direct HTML output (no template)."""
     from pycommerce.models.tenant import TenantManager
     from pycommerce.models.product import ProductManager
-    
+
     tenant_manager = TenantManager()
     product_manager = ProductManager()
-    
+
     selected_tenant_slug = "tech"  # Use Tech Gadgets store
     tenant_obj = tenant_manager.get_by_slug(selected_tenant_slug)
-    
+
     # Get products for tenant
     products = product_manager.get_by_tenant(str(tenant_obj.id)) if tenant_obj else []
-    
+
     # Format products for HTML
     products_html_rows = ""
     for product in products:
@@ -229,7 +229,7 @@ async def debug_products_inline(request: Request):
         stock = product.stock if hasattr(product, "stock") else 0
         sku = product.sku if hasattr(product, "sku") else ""
         tenant_name = tenant_obj.name if tenant_obj else "Unknown"
-        
+
         # Create HTML table row for this product
         products_html_rows += f"""
         <tr>
@@ -245,11 +245,11 @@ async def debug_products_inline(request: Request):
             </td>
         </tr>
         """
-    
+
     # If no products found
     if not products_html_rows:
         products_html_rows = '<tr><td colspan="6" class="text-center">No products found for this tenant</td></tr>'
-    
+
     # Complete HTML document
     html = f"""
     <!DOCTYPE html>
@@ -290,13 +290,13 @@ async def debug_products_inline(request: Request):
 
         <div class="container">
             <h1>Product Management (Inline HTML)</h1>
-            
+
             <div class="alert alert-info">
                 <h3>Debug Information</h3>
                 <p>Tenant: {selected_tenant_slug}</p>
                 <p>Products count: {len(products)}</p>
             </div>
-            
+
             <div class="card mt-4">
                 <div class="card-header">
                     <h3>All Products</h3>
@@ -319,7 +319,7 @@ async def debug_products_inline(request: Request):
                     </table>
                 </div>
             </div>
-            
+
             <div class="mt-4">
                 <a href="/admin/products/add" class="btn btn-success">Add New Product</a>
                 <a href="/admin/dashboard" class="btn btn-secondary">Back to Dashboard</a>
@@ -330,5 +330,5 @@ async def debug_products_inline(request: Request):
     </body>
     </html>
     """
-    
+
     return HTMLResponse(content=html)

@@ -1,0 +1,128 @@
+
+{% extends 'admin/base_admin.html' %}
+
+{% block title %}PyCommerce - Store Settings (Test){% endblock %}
+
+{% block admin_content %}
+<div class="container-fluid">
+    <h1 class="h2 mb-4">Store Settings (Test Version)</h1>
+    
+    <!-- Debug Information -->
+    <div class="alert alert-info mb-4">
+        <h5>Debug Information</h5>
+        <p>Selected Tenant: <strong>{{ selected_tenant }}</strong></p>
+        <p>Tenant Object Exists: <strong>{{ tenant is not none }}</strong></p>
+        <p>Config Type: <strong>{{ config|type }}</strong></p>
+    </div>
+
+    <ul class="nav nav-tabs" id="myTab" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link {% if tab == 'basic' or not tab %}active{% endif %}" id="basic-tab" data-bs-toggle="tab" data-bs-target="#basic-pane" type="button" role="tab" aria-controls="basic-pane" aria-selected="{% if tab == 'basic' or not tab %}true{% else %}false{% endif %}">
+                Basic Settings
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link {% if tab == 'shipping' %}active{% endif %}" id="shipping-tab" data-bs-toggle="tab" data-bs-target="#shipping-pane" type="button" role="tab" aria-controls="shipping-pane" aria-selected="{% if tab == 'shipping' %}true{% else %}false{% endif %}">
+                Shipping
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link {% if tab == 'ai' %}active{% endif %}" id="ai-tab" data-bs-toggle="tab" data-bs-target="#ai-pane" type="button" role="tab" aria-controls="ai-pane" aria-selected="{% if tab == 'ai' %}true{% else %}false{% endif %}">
+                AI Configuration
+            </button>
+        </li>
+    </ul>
+
+    <div class="tab-content pt-4" id="myTabContent">
+        <!-- Basic Settings Tab -->
+        <div class="tab-pane fade {% if tab == 'basic' or not tab %}show active{% endif %}" id="basic-pane" role="tabpanel" aria-labelledby="basic-tab">
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="card shadow-sm mb-4">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Basic Store Settings</h5>
+                        </div>
+                        <div class="card-body">
+                            <p class="text-muted mb-4">
+                                Configure your store's basic information and settings.
+                            </p>
+
+                            <form action="/admin/store-settings-test/basic" method="POST" id="basic-settings-form">
+                                <input type="hidden" name="tab" value="basic">
+                                <div class="mb-3">
+                                    <label for="store_name" class="form-label">Store Name</label>
+                                    <input type="text" class="form-control" id="store_name" name="store_name" value="{{ config.store_name }}">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="store_description" class="form-label">Store Description</label>
+                                    <textarea class="form-control" id="store_description" name="store_description" rows="3">{{ config.store_description }}</textarea>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="contact_email" class="form-label">Contact Email</label>
+                                    <input type="email" class="form-control" id="contact_email" name="contact_email" value="{{ config.contact_email }}">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="currency" class="form-label">Currency</label>
+                                    <select class="form-select" id="currency" name="currency">
+                                        <option value="USD" {% if config.currency == 'USD' %}selected{% endif %}>US Dollar (USD)</option>
+                                        <option value="EUR" {% if config.currency == 'EUR' %}selected{% endif %}>Euro (EUR)</option>
+                                        <option value="GBP" {% if config.currency == 'GBP' %}selected{% endif %}>British Pound (GBP)</option>
+                                        <option value="CAD" {% if config.currency == 'CAD' %}selected{% endif %}>Canadian Dollar (CAD)</option>
+                                        <option value="AUD" {% if config.currency == 'AUD' %}selected{% endif %}>Australian Dollar (AUD)</option>
+                                    </select>
+                                </div>
+                                <div class="d-flex justify-content-end">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="bi bi-save me-2"></i> Save Settings
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Shipping Configuration Tab (Placeholder) -->
+        <div class="tab-pane fade {% if tab == 'shipping' %}show active{% endif %}" id="shipping-pane" role="tabpanel" aria-labelledby="shipping-tab">
+            <div class="alert alert-info">
+                <p>Shipping settings tab (to be implemented)</p>
+            </div>
+        </div>
+
+        <!-- AI Configuration Tab (Placeholder) -->
+        <div class="tab-pane fade {% if tab == 'ai' %}show active{% endif %}" id="ai-pane" role="tabpanel" aria-labelledby="ai-tab">
+            <div class="alert alert-info">
+                <p>AI settings tab (to be implemented)</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Raw Settings Data Display -->
+    <div class="card mt-4">
+        <div class="card-header">
+            <h5 class="card-title mb-0">Raw Settings Data</h5>
+        </div>
+        <div class="card-body">
+            <pre id="rawSettings" style="max-height: 400px; overflow: auto;">{{ config|tojson(indent=2) }}</pre>
+            <a href="/admin/api/store-settings-test" target="_blank" class="btn btn-sm btn-primary mt-2">View API Output</a>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Store settings test page loaded');
+    console.log('Config data:', {{ config|tojson }});
+    
+    // Add inline style to make sure text inputs show proper values
+    const textInputs = document.querySelectorAll('input[type="text"], input[type="email"], textarea');
+    textInputs.forEach(input => {
+        // Check if the value is undefined or null and set to empty string
+        if (input.value === "undefined" || input.value === "null") {
+            input.value = "";
+        }
+    });
+});
+</script>
+{% endblock %}
