@@ -35,45 +35,34 @@ async def ai_config_page(
     status_type: str = "info"
 ):
     """Admin page for AI configuration."""
-    # Get tenant from query parameters or session
-    selected_tenant_slug = tenant or request.query_params.get('tenant') or request.session.get("selected_tenant")
-
+    # Use tenant_utils to get selected tenant
+    from routes.admin.tenant_utils import get_selected_tenant, redirect_to_tenant_selection
+    
+    # AI config doesn't support "all" stores, so allow_all=False
+    selected_tenant_slug, tenant_obj, is_all_tenants = get_selected_tenant(
+        request=request,
+        tenant_param=tenant,
+        allow_all=False
+    )
+    
     # If no tenant is selected, redirect to dashboard with message
-    if not selected_tenant_slug:
-        return RedirectResponse(
-            url="/admin/dashboard?status_message=Please+select+a+store+first&status_type=warning", 
-            status_code=303
-        )
-
-    # Store the selected tenant in session for future requests
-    request.session["selected_tenant"] = selected_tenant_slug
-
-    # Initialize tenant object
-    tenant_obj = None
-
-    # Handle the "all stores" case
-    if selected_tenant_slug and selected_tenant_slug.lower() == "all":
-        logger.info("Using 'All Stores' selection in AI config page")
-        # For "all" tenant, we'll need the first tenant for settings reference
+    if not selected_tenant_slug or not tenant_obj:
+        return redirect_to_tenant_selection("Please select a store first", "warning")
+    
+    # AI Config requires a specific tenant, not "all"
+    if is_all_tenants:
+        # Get list of tenants and use the first one
         tenants_list = tenant_manager.get_all()
         if tenants_list:
             # Use the first tenant's settings as reference
             tenant_obj = tenants_list[0]
-            logger.info(f"Using first tenant {tenant_obj.name} settings as reference for 'All Stores'")
+            selected_tenant_slug = tenant_obj.slug
+            logger.info(f"Using first tenant {tenant_obj.name} settings as reference instead of 'All Stores'")
+            # Update session to use this specific tenant
+            request.session["selected_tenant"] = selected_tenant_slug
         else:
             # No tenants available
-            return RedirectResponse(
-                url="/admin/dashboard?status_message=No+stores+found&status_type=error", 
-                status_code=303
-            )
-    else:
-        # Get actual tenant object
-        tenant_obj = tenant_manager.get_by_slug(selected_tenant_slug)
-        if not tenant_obj:
-            return RedirectResponse(
-                url="/admin/dashboard?status_message=Store+not+found&status_type=error", 
-                status_code=303
-            )
+            return redirect_to_tenant_selection("No stores found", "error")
 
     # Get AI settings
     ai_settings = tenant_obj.settings.get('ai_settings', {}) if hasattr(tenant_obj, 'settings') and tenant_obj.settings else {}
@@ -160,45 +149,34 @@ async def ai_config_configure_page(
     status_type: str = "info"
 ):
     """Admin page for configuring a specific AI provider."""
-    # Get tenant from query parameters or session
-    selected_tenant_slug = tenant or request.query_params.get('tenant') or request.session.get("selected_tenant")
-
+    # Use tenant_utils to get selected tenant
+    from routes.admin.tenant_utils import get_selected_tenant, redirect_to_tenant_selection
+    
+    # AI config doesn't support "all" stores, so allow_all=False
+    selected_tenant_slug, tenant_obj, is_all_tenants = get_selected_tenant(
+        request=request,
+        tenant_param=tenant,
+        allow_all=False
+    )
+    
     # If no tenant is selected, redirect to dashboard with message
-    if not selected_tenant_slug:
-        return RedirectResponse(
-            url="/admin/dashboard?status_message=Please+select+a+store+first&status_type=warning", 
-            status_code=303
-        )
-
-    # Store the selected tenant in session for future requests
-    request.session["selected_tenant"] = selected_tenant_slug
-
-    # Initialize tenant object
-    tenant_obj = None
-
-    # Handle the "all stores" case
-    if selected_tenant_slug and selected_tenant_slug.lower() == "all":
-        logger.info("Using 'All Stores' selection in AI config provider page")
-        # For "all" tenant, we'll need the first tenant for settings reference
+    if not selected_tenant_slug or not tenant_obj:
+        return redirect_to_tenant_selection("Please select a store first", "warning")
+    
+    # AI Config requires a specific tenant, not "all"
+    if is_all_tenants:
+        # Get list of tenants and use the first one
         tenants_list = tenant_manager.get_all()
         if tenants_list:
             # Use the first tenant's settings as reference
             tenant_obj = tenants_list[0]
-            logger.info(f"Using first tenant {tenant_obj.name} settings as reference for 'All Stores'")
+            selected_tenant_slug = tenant_obj.slug
+            logger.info(f"Using first tenant {tenant_obj.name} settings as reference instead of 'All Stores'")
+            # Update session to use this specific tenant
+            request.session["selected_tenant"] = selected_tenant_slug
         else:
             # No tenants available
-            return RedirectResponse(
-                url="/admin/dashboard?status_message=No+stores+found&status_type=error", 
-                status_code=303
-            )
-    else:
-        # Get actual tenant object
-        tenant_obj = tenant_manager.get_by_slug(selected_tenant_slug)
-        if not tenant_obj:
-            return RedirectResponse(
-                url="/admin/dashboard?status_message=Store+not+found&status_type=error", 
-                status_code=303
-            )
+            return redirect_to_tenant_selection("No stores found", "error")
 
     # Get AI settings
     ai_settings = tenant_obj.settings.get('ai_settings', {}) if hasattr(tenant_obj, 'settings') and tenant_obj.settings else {}

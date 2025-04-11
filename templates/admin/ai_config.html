@@ -103,6 +103,11 @@
                 <div class="card-body">
                     <!-- Store Selector -->
                     <div class="mb-3">
+                        <label for="tenant-selector" class="form-label">Store</label>
+                        <select class="form-select" id="tenant-selector" onchange="changeTenant(this.value)">
+                            {% for t in tenants %}
+                            <option value="{{ t.slug }}" {% if selected_tenant == t.slug %}selected{% endif %}>{{ t.name }}</option>
+                            {% endfor %}
                         </select>
                         <div class="form-text text-muted">
                             {% if selected_tenant == 'all' %}
@@ -240,6 +245,18 @@
 
 {% block scripts %}
 <script>
+// Function to handle tenant change
+function changeTenant(tenantSlug) {
+    // Get current URL
+    const url = new URL(window.location.href);
+    
+    // Update the tenant parameter
+    url.searchParams.set('tenant', tenantSlug);
+    
+    // Navigate to the new URL
+    window.location.href = url.toString();
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     const runTestBtn = document.getElementById('runTestBtn');
     const testPrompt = document.getElementById('testPrompt');
