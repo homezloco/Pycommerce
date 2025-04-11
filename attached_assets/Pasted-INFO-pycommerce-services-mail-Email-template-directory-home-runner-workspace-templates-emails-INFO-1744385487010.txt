@@ -1,0 +1,17 @@
+INFO:pycommerce.services.mail:Email template directory: /home/runner/workspace/templates/emails
+INFO:pycommerce.plugins.payment.config:Successfully loaded payment settings from database
+INFO:pycommerce.plugins.payment.config:Using development Stripe credentials
+INFO:pycommerce.plugins.payment.config:Using development PayPal credentials
+INFO:pycommerce.plugins.payment.stripe:Initializing Stripe payment plugin
+INFO:pycommerce.plugins:Registering plugin: stripe_payment v0.1.0
+INFO:pycommerce.plugins.payment.stripe:Initializing Stripe payment plugin
+INFO:pycommerce:Registered payment plugin: stripe
+INFO:pycommerce.plugins.payment.paypal:Initializing PayPal payment plugin
+INFO:pycommerce.plugins:Registering plugin: paypal_payment v0.1.0
+INFO:pycommerce.plugins.payment.paypal:Initializing PayPal payment plugin
+INFO:pycommerce:Registered payment plugin: paypal
+INFO:pycommerce.plugins:Registering plugin: standard_shipping v0.1.0
+INFO:pycommerce.plugins.shipping.standard:Initializing Standard shipping plugin
+INFO:pycommerce:Registered shipping plugin: standard
+INFO:pycommerce.models.tenant:Retrieved tenant by slug demo1 with theme settings: {'primary_color': '#ff0000', 'secondary_color': '#6c757d', 'background_color': '#ffffff', 'text_color': '#212529', 'font_family': 'Arial, sans-serif', 'heading_font_family': 'inherit', 'base_font_size': 16, 'heading_scale': 'moderate', 'container_width': 'standard', 'border_radius': 4, 'spacing_scale': 'moderate', 'header_style': 'standard', 'product_card_style': 'standard', 'button_style': 'standard', 'custom_css': '', 'updated_at': '2025-04-05T14:12:30.907742'}
+Tenant settings: {'theme': {'primary_color': '#ff0000', 'secondary_color': '#6c757d', 'background_color': '#ffffff', 'text_color': '#212529', 'font_family': 'Arial, sans-serif', 'heading_font_family': 'inherit', 'base_font_size': 16, 'heading_scale': 'moderate', 'container_width': 'standard', 'border_radius': 4, 'spacing_scale': 'moderate', 'header_style': 'standard', 'product_card_style': 'standard', 'button_style': 'standard', 'custom_css': '', 'updated_at': '2025-04-05T14:12:30.907742'}}
