@@ -7,27 +7,6 @@
     <div class="d-flex align-items-center justify-content-between mb-4">
         <div class="d-flex align-items-center">
             <h2 class="h4 mb-0 text-gray-800 me-3">{% block dashboard_title %}Dashboard{% endblock %}</h2>
-            
-            <!-- Improved Store Selector -->
-            <div class="dropdown me-3">
-                <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="storeSelector" data-bs-toggle="dropdown" aria-expanded="false">
-                    {% if selected_tenant == "all" %}
-                        <i class="bi bi-shop"></i> All Stores
-                    {% elif selected_tenant %}
-                        <i class="bi bi-shop"></i> {{ tenant.name if tenant and tenant.name else selected_tenant }}
-                    {% else %}
-                        <i class="bi bi-shop"></i> Select Store
-                    {% endif %}
-                </button>
-                <ul class="dropdown-menu" aria-labelledby="storeSelector">
-                    <!-- Allow "All Stores" for products page -->
-                    <li><a class="dropdown-item {% if selected_tenant == 'all' %}active{% endif %}" href="/admin/change-store?tenant=all">All Stores</a></li>
-                    <li><hr class="dropdown-divider"></li>
-                    {% for store in tenants %}
-                    <li><a class="dropdown-item {% if selected_tenant == store.slug %}active{% endif %}" href="/admin/change-store?tenant={{ store.slug }}">{{ store.name }}</a></li>
-                    {% endfor %}
-                </ul>
-            </div>
         </div>
         
         <div>
