@@ -64,7 +64,12 @@ def setup_routes(templates: Jinja2Templates):
         tenant_param = request.query_params.get('tenant')
 
         # Get selected tenant using the utility function
-        selected_tenant_slug, selected_tenant, is_all_tenants = get_selected_tenant(request, tenant_param)
+        result = get_selected_tenant(request, tenant_param)
+        if len(result) == 2:
+            selected_tenant_slug, selected_tenant = result
+            is_all_tenants = (selected_tenant_slug == "all")
+        else:
+            selected_tenant_slug, selected_tenant, is_all_tenants = result
 
         # Determine if all stores is selected
         all_stores_selected = (selected_tenant_slug == "all")
