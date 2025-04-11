@@ -34,6 +34,10 @@ async def marketing_dashboard(
     # Get tenant from query parameters or session
     selected_tenant_slug = tenant or request.session.get("selected_tenant")
 
+    # Handle multi-value tenant slug (list)
+    if isinstance(selected_tenant_slug, list):
+        selected_tenant_slug = selected_tenant_slug[0] if selected_tenant_slug else None
+
     # If no tenant is selected, redirect to dashboard with message
     if not selected_tenant_slug:
         return RedirectResponse(
@@ -119,6 +123,10 @@ async def discounts_page(
     # Get tenant from query parameters or session
     selected_tenant_slug = tenant or request.session.get("selected_tenant")
 
+    # Handle multi-value tenant slug (list)
+    if isinstance(selected_tenant_slug, list):
+        selected_tenant_slug = selected_tenant_slug[0] if selected_tenant_slug else None
+
     # If no tenant is selected, redirect to dashboard with message
     if not selected_tenant_slug:
         return RedirectResponse(
@@ -193,6 +201,10 @@ async def newsletters_page(
     # Get tenant from query parameters or session
     selected_tenant_slug = tenant or request.session.get("selected_tenant")
 
+    # Handle multi-value tenant slug (list)
+    if isinstance(selected_tenant_slug, list):
+        selected_tenant_slug = selected_tenant_slug[0] if selected_tenant_slug else None
+
     # If no tenant is selected, redirect to dashboard with message
     if not selected_tenant_slug:
         return RedirectResponse(
@@ -221,11 +233,11 @@ async def newsletters_page(
         try:
             # First try to get all tenants
             all_tenants = tenant_manager.list() or []
-            
+
             # Simulate fetching newsletter templates for each tenant
             # In a real app, this would query the database
             all_templates = []
-            
+
             # Base templates that we'll duplicate for each tenant
             base_templates = [
                 {
@@ -247,7 +259,7 @@ async def newsletters_page(
                     "click_rate": 24.7
                 }
             ]
-            
+
             for tenant in all_tenants:
                 try:
                     # Create tenant-specific templates by adding tenant name to base templates
@@ -258,12 +270,12 @@ async def newsletters_page(
                         tenant_template["id"] = f"{tenant.id}-{template['id']}"  # Ensure unique ID
                         tenant_template["tenant_name"] = tenant.name
                         tenant_templates.append(tenant_template)
-                    
+
                     all_templates.extend(tenant_templates)
                     logger.info(f"Found {len(tenant_templates)} newsletter templates for tenant {tenant.name}")
                 except Exception as e:
                     logger.error(f"Error fetching newsletter templates for tenant {tenant.name}: {str(e)}")
-            
+
             templates_list = all_templates
             logger.info(f"Found {len(templates_list)} newsletter templates across all stores")
         except Exception as e:
@@ -331,6 +343,10 @@ async def analytics_page(
     """Admin page for analytics."""
     # Get tenant from query parameters or session
     selected_tenant_slug = tenant or request.session.get("selected_tenant")
+
+    # Handle multi-value tenant slug (list)
+    if isinstance(selected_tenant_slug, list):
+        selected_tenant_slug = selected_tenant_slug[0] if selected_tenant_slug else None
 
     # If no tenant is selected, redirect to dashboard with message
     if not selected_tenant_slug:

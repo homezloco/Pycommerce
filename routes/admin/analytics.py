@@ -40,6 +40,10 @@ async def analytics_dashboard(
     # Get tenant from query parameters or session
     selected_tenant_slug = tenant or request.session.get("selected_tenant")
     
+    # Handle multi-value tenant slug (list)
+    if isinstance(selected_tenant_slug, list):
+        selected_tenant_slug = selected_tenant_slug[0] if selected_tenant_slug else None
+    
     # If no tenant is selected, redirect to dashboard with message
     if not selected_tenant_slug:
         return RedirectResponse(

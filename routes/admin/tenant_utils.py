@@ -1,3 +1,77 @@
+
+"""
+Tenant utilities for PyCommerce admin interface.
+
+This module contains common utility functions for tenant selection and context handling
+in admin routes.
+"""
+import logging
+from typing import Optional, Tuple, Union, Any
+
+from fastapi import Request
+from fastapi.responses import RedirectResponse
+
+from pycommerce.models.tenant import TenantManager
+
+logger = logging.getLogger(__name__)
+
+# Initialize managers
+tenant_manager = TenantManager()
+
+def get_selected_tenant(
+    request: Request, 
+    tenant_param: Optional[Union[str, list]] = None,
+    allow_all: bool = True
+) -> Tuple[str, Any, bool]:
+    """
+    Get the selected tenant from various sources with proper handling for all types.
+    
+    Args:
+        request: The FastAPI request object
+        tenant_param: Optional tenant parameter from query or form
+        allow_all: Whether to allow "all" as a valid selection
+        
+    Returns:
+        Tuple containing:
+        - selected tenant slug (string)
+        - tenant object (TenantDTO or None)
+        - is_all_tenants (bool) indicating if "all" tenants were selected
+    """
+    # Get tenant from parameter or session
+    selected_tenant_slug = tenant_param or request.session.get("selected_tenant")
+    
+    # Handle multi-value tenant slug (list)
+    if isinstance(selected_tenant_slug, list):
+        selected_tenant_slug = selected_tenant_slug[0] if selected_tenant_slug else None
+    
+    # Handle "all" selection based on allow_all parameter (case insensitive)
+    if selected_tenant_slug and selected_tenant_slug.lower() == "all":
+        if allow_all:
+            # Keep "all" selection and update session
+            request.session["selected_tenant"] = "all"
+            return "all", None, True
+        else:
+            # Fallback to first tenant if "all" is not allowed
+            tenants = tenant_manager.list()
+            if tenants:
+                selected_tenant_slug = tenants[0].slug
+                request.session["selected_tenant"] = selected_tenant_slug
+            else:
+                selected_tenant_slug = None
+    
+    # If no tenant is selected, return None values
+    if not selected_tenant_slug:
+        return None, None, False
+    
+    # Update session with selected tenant
+    request.session["selected_tenant"] = selected_tenant_slug
+    
+    # Get tenant object
+    tenant_obj = tenant_manager.get_by_slug(selected_tenant_slug)
+    
+    # Return the selected tenant info
+    return selected_tenant_slug, tenant_obj, False
+
 """
 Tenant utility functions for admin routes.
 

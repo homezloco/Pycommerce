@@ -55,19 +55,28 @@ def setup_routes(templates: Jinja2Templates):
                 tenants = get_all_tenants()
             except Exception as e:
                 logging.error(f"Error getting tenants in shipping route: {e}")
-        
+
         # Add "All Stores" virtual tenant
         all_stores = create_virtual_all_tenant()
         tenants_with_all = [all_stores] + tenants
 
         # Get selected tenant parameter from request
         tenant_param = request.query_params.get('tenant')
-        
+
         # Get selected tenant using the utility function
-        selected_tenant_slug, selected_tenant = get_selected_tenant(request, tenant_param)
-        
+        selected_tenant_slug, selected_tenant, is_all_tenants = get_selected_tenant(request, tenant_param)
+
         # Determine if all stores is selected
         all_stores_selected = (selected_tenant_slug == "all")
+
+        # If no tenant is selected, redirect to dashboard with message
+        if not selected_tenant_slug:
+            return redirect_to_tenant_selection(request, "Please select a store first", "warning")
+
+        # If tenant not found (and not "all"), redirect to dashboard
+        if not is_all_tenants and not selected_tenant:
+            return redirect_to_tenant_selection(request, "Store not found", "error")
+
 
         return templates.TemplateResponse(
             "admin/shipping.html",
