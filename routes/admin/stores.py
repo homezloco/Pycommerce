@@ -38,17 +38,39 @@ def setup_routes(templates: Jinja2Templates) -> APIRouter:
         Args:
             request: FastAPI request object
         """
-        tenants = tenant_manager.get_all()
-        
-        # Don't use tenant selection on the stores management page
-        return templates.TemplateResponse(
-            "admin/stores.html",
-            {
-                "request": request,
-                "tenants": tenants,
-                "active_page": "stores"
-            }
-        )
+        try:
+            # Ensure we get all tenants
+            if hasattr(tenant_manager, 'get_all'):
+                tenants = tenant_manager.get_all()
+            elif hasattr(tenant_manager, 'list'):
+                tenants = tenant_manager.list()
+            else:
+                logger.error("TenantManager has no method to list all tenants")
+                tenants = []
+            
+            logger.info(f"Retrieved {len(tenants) if tenants else 0} tenants for stores page")
+            
+            # Don't use tenant selection on the stores management page
+            return templates.TemplateResponse(
+                "admin/stores.html",
+                {
+                    "request": request,
+                    "tenants": tenants,
+                    "active_page": "stores"
+                }
+            )
+        except Exception as e:
+            logger.error(f"Error listing stores: {str(e)}")
+            return templates.TemplateResponse(
+                "admin/stores.html",
+                {
+                    "request": request,
+                    "tenants": [],
+                    "active_page": "stores",
+                    "status_message": f"Error fetching stores: {str(e)}",
+                    "status_type": "danger"
+                }
+            )
     
     @router.get("/stores/new", response_class=HTMLResponse)
     async def new_store_form(

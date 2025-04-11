@@ -8,7 +8,7 @@
         <div class="d-flex align-items-center">
             <h2 class="h4 mb-0 text-gray-800 me-3">{% block dashboard_title %}Dashboard{% endblock %}</h2>
         </div>
-        
+
         <div>
             {% if selected_tenant and selected_tenant != "all" %}
             <a href="/store/{{ selected_tenant }}" class="btn btn-primary btn-sm" target="_blank">
@@ -24,8 +24,49 @@
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
     {% endif %}
-    
+
     <!-- Dashboard Content -->
     {% block dashboard_content %}{% endblock %}
 </div>
+{% endblock %}
+
+{% block store_selector %}
+            <div class="mx-auto d-none d-lg-block">
+                    <form action="/admin/change-store" method="GET" class="d-flex store-selector">
+                        <input type="hidden" name="redirect_url" id="current_path">
+                        <select class="form-select form-select-sm me-2" name="tenant" onchange="this.form.submit()">
+                            {% if not selected_tenant %}
+                            <option value="" selected>Select Store</option>
+                            {% endif %}
+                            <option value="all" {% if selected_tenant == 'all' or (selected_tenant and selected_tenant.slug == 'all') %}selected{% endif %}>All Stores</option>
+                            {% for tenant in tenants %}
+                            <option value="{{ tenant.slug }}" {% if (selected_tenant == tenant.slug) or (selected_tenant and selected_tenant.slug == tenant.slug) %}selected{% endif %}>
+                                {{ tenant.name }}
+                            </option>
+                            {% endfor %}
+                    </select>
+                    </form>
+                    {% if request.path not in ['/admin/settings', '/admin/media', '/admin/stores'] %}
+                    <a href="/admin/stores/add" class="btn btn-sm btn-outline-light">
+                        <i class="bi bi-plus"></i>
+                    </a>
+                    {% endif %}
+                </div>
+{% endblock %}
+
+{% block mobile_store_selector %}
+                <form action="/admin/change-store" method="GET" class="d-flex store-selector-mobile">
+                    <input type="hidden" name="redirect_url" id="mobile_current_path">
+                    <select class="form-select form-select-sm me-1" name="tenant" onchange="this.form.submit()">
+                        {% if not selected_tenant %}
+                        <option value="" selected>Select</option>
+                        {% endif %}
+                        <option value="all" {% if selected_tenant == 'all' or (selected_tenant and selected_tenant.slug == 'all') %}selected{% endif %}>All Stores</option>
+                        {% for tenant in tenants %}
+                        <option value="{{ tenant.slug }}" {% if (selected_tenant == tenant.slug) or (selected_tenant and selected_tenant.slug == tenant.slug) %}selected{% endif %}>
+                            {{ tenant.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </form>
 {% endblock %}
