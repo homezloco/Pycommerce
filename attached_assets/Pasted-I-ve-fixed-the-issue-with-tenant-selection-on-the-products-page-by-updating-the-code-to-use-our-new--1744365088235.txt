@@ -1,0 +1,21 @@
+I've fixed the issue with tenant selection on the products page by updating the code to use our new tenant_utils.py helper functions. The previous issue was related to the change-store endpoint which was redirecting to the dashboard even when it should have returned to the products page. I fixed this by:
+
+✓ Updated change-store route to use our tenant selection helper function
+✓ Added better redirect URL safety checks to avoid infinite loops
+✓ Added more detailed logging for tenant selection changes
+
+Can you please test the admin products page now and check if the "All Stores" selection works correctly? Does switching between tenants from the dropdown keep you on the products page?
+
+it still redirects me to the dashboard when I select all stores INFO:asgi_wsgi_app:Uvicorn: [SQL: SELECT tenants.id AS tenants_id, tenants.name AS tenants_name, tenants.slug AS tenants_slug, tenants.domain AS tenants_domain, tenants.active AS tenants_active, tenants.settings AS tenants_settings, tenants.created_at AS tenants_created_at, tenants.updated_at AS tenants_updated_at
+INFO:asgi_wsgi_app:Uvicorn: FROM tenants
+INFO:asgi_wsgi_app:Uvicorn: WHERE tenants.slug = %(slug_1)s
+INFO:asgi_wsgi_app:Uvicorn: LIMIT %(param_1)s]
+INFO:asgi_wsgi_app:Uvicorn: [parameters: {'slug_1': 'all', 'param_1': 1}]
+INFO:asgi_wsgi_app:Uvicorn: (Background on this error at: https://sqlalche.me/e/20/e3q8)
+INFO:asgi_wsgi_app:Uvicorn: INFO: 127.0.0.1:36566 - "GET /admin/change-store?redirect_url=%2Fadmin%2Fproducts&tenant=all HTTP/1.1" 303 See Other
+INFO:httpx:HTTP Request: GET http://127.0.0.1:8000/admin/change-store?redirect_url=%2Fadmin%2Fproducts&tenant=all "HTTP/1.1 303 See Other"
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.models.tenant:Retrieved tenant by slug demo1 with theme settings: {'primary_color': '#ff0000', 'secondary_color': '#6c757d', 'background_color': '#ffffff', 'text_color': '#212529', 'font_family': 'Arial, sans-serif', 'heading_font_family': 'inherit', 'base_font_size': 16, 'heading_scale': 'moderate', 'container_width': 'standard', 'border_radius': 4, 'spacing_scale': 'moderate', 'header_style': 'standard', 'product_card_style': 'standard', 'button_style': 'standard', 'custom_css': '', 'updated_at': '2025-04-05T14:12:30.907742'}
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.models.product:Querying database for products of tenant: 0a38d2a1-00fe-47ea-a6d2-f1595048aab0
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.models.product:Found 0 products for tenant 0a38d2a1-00fe-47ea-a6d2-f1595048aab0 in database
+INFO:asgi_wsgi_app:Uvicorn: INFO: 127.0.0.1:36566 - "GET /admin/dashboard HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET http://127.0.0.1:8000/admin/dashboard "HTTP/1.1 200 OK"
