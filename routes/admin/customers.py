@@ -12,7 +12,8 @@ from fastapi.templating import Jinja2Templates
 from fastapi.exceptions import HTTPException
 
 from pycommerce.models.tenant import TenantManager
-from pycommerce.models.user import UserManager
+# Use the UserManager class from routes.admin.users which has the get_users_by_tenant method
+from routes.admin.users import UserManager
 
 from routes.admin.tenant_utils import get_selected_tenant
 
@@ -72,11 +73,14 @@ async def customers_page(
         customers = []
         for tenant in tenants:
             try:
-                # Use get_users() as this is the method available in UserManager
-                tenant_customers = user_manager.get_users()
+                # Use the get_users_by_tenant method from UserManager
+                tenant_customers = user_manager.get_users_by_tenant(str(tenant.id))
                 # Add tenant name to each customer for display
                 for customer in tenant_customers:
-                    customer.tenant_name = tenant.name
+                    if isinstance(customer, dict):
+                        customer["tenant_name"] = tenant.name
+                    else:
+                        customer.tenant_name = tenant.name
                 customers.extend(tenant_customers)
             except Exception as e:
                 logger.error(f"Error listing customers for tenant {tenant.id}: {e}")
@@ -84,7 +88,7 @@ async def customers_page(
         logger.info(f"Retrieved {len(customers)} customers across all stores")
     else:
         # Use the get_users_by_tenant method from UserManager
-        customers = user_manager.get_users_by_tenant(tenant_obj.id)
+        customers = user_manager.get_users_by_tenant(str(tenant_obj.id))
         logger.info(f"Retrieved {len(customers)} customers for store {tenant_obj.name}")
 
     return templates.TemplateResponse(
