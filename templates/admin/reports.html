@@ -40,7 +40,7 @@
                         </button>
                     </li>
                 </ul>
-                
+
                 <div class="tab-content p-3 border border-top-0 rounded-bottom" id="reportsTabContent">
                     <!-- Sales Reports Tab -->
                     <div class="tab-pane fade show active" id="sales" role="tabpanel" aria-labelledby="sales-tab">
@@ -72,7 +72,7 @@
                                 </select>
                             </div>
                         </div>
-                        
+
                         <div class="row mb-4">
                             <div class="col-md-3">
                                 <div class="card bg-primary text-white">
@@ -111,7 +111,7 @@
                                 </div>
                             </div>
                         </div>
-                        
+
                         <div class="card mb-4">
                             <div class="card-header">
                                 <h6 class="mb-0">Sales Trend</h6>
@@ -120,7 +120,7 @@
                                 <canvas id="salesChart" height="100"></canvas>
                             </div>
                         </div>
-                        
+
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="card mb-4">
@@ -144,7 +144,7 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <!-- Products Reports Tab -->
                     <div class="tab-pane fade" id="products" role="tabpanel" aria-labelledby="products-tab">
                         <div class="row mb-3">
@@ -166,7 +166,7 @@
                                 </select>
                             </div>
                         </div>
-                        
+
                         <div class="card mb-4">
                             <div class="card-header">
                                 <h6 class="mb-0">Top Selling Products</h6>
@@ -230,7 +230,7 @@
                                 </div>
                             </div>
                         </div>
-                        
+
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="card mb-4">
@@ -291,7 +291,7 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <!-- Customers Reports Tab -->
                     <div class="tab-pane fade" id="customers" role="tabpanel" aria-labelledby="customers-tab">
                         <div class="row mb-3">
@@ -305,7 +305,7 @@
                                 </div>
                             </div>
                         </div>
-                        
+
                         <div class="row mb-4">
                             <div class="col-md-3">
                                 <div class="card bg-primary text-white">
@@ -344,7 +344,7 @@
                                 </div>
                             </div>
                         </div>
-                        
+
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="card mb-4">
@@ -367,7 +367,7 @@
                                 </div>
                             </div>
                         </div>
-                        
+
                         <div class="card">
                             <div class="card-header">
                                 <h6 class="mb-0">Top Customers</h6>
@@ -426,7 +426,7 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <!-- Taxes Reports Tab -->
                     <div class="tab-pane fade" id="taxes" role="tabpanel" aria-labelledby="taxes-tab">
                         <div class="row mb-3">
@@ -456,7 +456,7 @@
                                 </select>
                             </div>
                         </div>
-                        
+
                         <div class="card mb-4">
                             <div class="card-header">
                                 <h6 class="mb-0">Tax Summary</h6>
@@ -490,7 +490,7 @@
                                 </div>
                             </div>
                         </div>
-                        
+
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="card mb-4">
@@ -513,7 +513,7 @@
                                 </div>
                             </div>
                         </div>
-                        
+
                         <div class="card">
                             <div class="card-header">
                                 <h6 class="mb-0">Tax Detail Report</h6>
@@ -612,7 +612,7 @@
                 }
             }
         });
-        
+
         // More charts would be initialized here if the DOM elements exist
         if (document.getElementById('paymentMethodChart')) {
             const paymentCtx = document.getElementById('paymentMethodChart').getContext('2d');
@@ -637,7 +637,7 @@
                 }
             });
         }
-        
+
         if (document.getElementById('categorySalesChart')) {
             const categoryCtx = document.getElementById('categorySalesChart').getContext('2d');
             const categoryChart = new Chart(categoryCtx, {

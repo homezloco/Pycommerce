@@ -28,7 +28,7 @@
         {{ success }}
     </div>
     {% endif %}
-    
+
     {% if warning %}
     <div class="alert alert-warning" role="alert">
         {{ warning }}
@@ -90,7 +90,7 @@
                                                 data-active="{{ 'checked' if category.active else '' }}">
                                             <i class="fas fa-edit"></i>
                                         </button>
-                                        
+
                                         <button type="button" class="btn btn-sm btn-danger" 
                                                 data-bs-toggle="modal" 
                                                 data-bs-target="#deleteCategoryModal"
@@ -133,7 +133,7 @@
                 <div class="card-body">
                     <form action="/admin/categories/create" method="post">
                         <input type="hidden" name="tenant" value="{{ tenant.slug }}">
-                        
+
                         {% if parent_category %}
                         <input type="hidden" name="parent_id" value="{{ parent_category.id }}">
                         {% else %}
@@ -148,30 +148,30 @@
                             <div class="form-text">If selected, this will become a subcategory of the parent.</div>
                         </div>
                         {% endif %}
-                        
+
                         <div class="mb-3">
                             <label for="name" class="form-label">Category Name</label>
                             <input type="text" class="form-control" id="name" name="name" required 
                                    onkeyup="document.getElementById('slug').value = this.value.toLowerCase().replace(/[^a-z0-9]+/g, '-')">
                         </div>
-                        
+
                         <div class="mb-3">
                             <label for="slug" class="form-label">Slug</label>
                             <input type="text" class="form-control" id="slug" name="slug" required 
                                    pattern="[a-z0-9\-]+" title="Lowercase letters, numbers, and hyphens only">
                             <div class="form-text">Used in URLs. Only lowercase letters, numbers, and hyphens.</div>
                         </div>
-                        
+
                         <div class="mb-3">
                             <label for="description" class="form-label">Description (Optional)</label>
                             <textarea class="form-control" id="description" name="description" rows="3"></textarea>
                         </div>
-                        
+
                         <div class="mb-3 form-check">
                             <input type="checkbox" class="form-check-input" id="active" name="active" checked>
                             <label class="form-check-label" for="active">Active</label>
                         </div>
-                        
+
                         <button type="submit" class="btn btn-primary">Create Category</button>
                     </form>
                 </div>
@@ -191,24 +191,24 @@
             <form id="editCategoryForm" method="post">
                 <div class="modal-body">
                     <input type="hidden" name="tenant" value="{{ tenant.slug }}">
-                    
+
                     <div class="mb-3">
                         <label for="edit_name" class="form-label">Category Name</label>
                         <input type="text" class="form-control" id="edit_name" name="name" required>
                     </div>
-                    
+
                     <div class="mb-3">
                         <label for="edit_slug" class="form-label">Slug</label>
                         <input type="text" class="form-control" id="edit_slug" name="slug" required 
                                pattern="[a-z0-9\-]+" title="Lowercase letters, numbers, and hyphens only">
                         <div class="form-text">Used in URLs. Only lowercase letters, numbers, and hyphens.</div>
                     </div>
-                    
+
                     <div class="mb-3">
                         <label for="edit_description" class="form-label">Description (Optional)</label>
                         <textarea class="form-control" id="edit_description" name="description" rows="3"></textarea>
                     </div>
-                    
+
                     <div class="mb-3">
                         <label for="edit_parent_id" class="form-label">Parent Category (Optional)</label>
                         <select class="form-select" id="edit_parent_id" name="parent_id">
@@ -222,7 +222,7 @@
                         </select>
                         <div class="form-text">Warning: Changing parent can affect category hierarchy.</div>
                     </div>
-                    
+
                     <div class="mb-3 form-check">
                         <input type="checkbox" class="form-check-input" id="edit_active" name="active">
                         <label class="form-check-label" for="edit_active">Active</label>
@@ -268,7 +268,7 @@
         const urlParams = new URLSearchParams(window.location.search);
         const error = urlParams.get('error');
         const success = urlParams.get('success');
-        
+
         // Display error/success messages if present
         if (error) {
             const alertDiv = document.createElement('div');
@@ -276,14 +276,14 @@
             alertDiv.innerHTML = error + '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>';
             document.querySelector('.breadcrumb').insertAdjacentElement('afterend', alertDiv);
         }
-        
+
         if (success) {
             const alertDiv = document.createElement('div');
             alertDiv.className = 'alert alert-success alert-dismissible fade show';
             alertDiv.innerHTML = success + '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>';
             document.querySelector('.breadcrumb').insertAdjacentElement('afterend', alertDiv);
         }
-        
+
         // Edit category modal
         const editCategoryModal = document.getElementById('editCategoryModal');
         if (editCategoryModal) {
@@ -295,16 +295,16 @@
                 const categoryDescription = button.getAttribute('data-description');
                 const categoryParent = button.getAttribute('data-parent');
                 const categoryActive = button.getAttribute('data-active');
-                
+
                 // Update form action
                 const form = document.getElementById('editCategoryForm');
                 form.action = `/admin/categories/${categoryId}/update`;
-                
+
                 // Populate form fields
                 document.getElementById('edit_name').value = categoryName;
                 document.getElementById('edit_slug').value = categorySlug;
                 document.getElementById('edit_description').value = categoryDescription;
-                
+
                 // Set parent category if exists
                 const parentSelect = document.getElementById('edit_parent_id');
                 if (parentSelect) {
@@ -313,7 +313,7 @@
                     } else {
                         parentSelect.value = '';
                     }
-                    
+
                     // Disable selecting self as parent
                     for (let i = 0; i < parentSelect.options.length; i++) {
                         if (parentSelect.options[i].value === categoryId) {
@@ -323,12 +323,12 @@
                         }
                     }
                 }
-                
+
                 // Set active status
                 document.getElementById('edit_active').checked = categoryActive === 'checked';
             });
         }
-        
+
         // Delete category modal
         const deleteCategoryModal = document.getElementById('deleteCategoryModal');
         if (deleteCategoryModal) {
@@ -336,16 +336,16 @@
                 const button = event.relatedTarget;
                 const categoryId = button.getAttribute('data-id');
                 const categoryName = button.getAttribute('data-name');
-                
+
                 // Update form action
                 const form = document.getElementById('deleteCategoryForm');
                 form.action = `/admin/categories/${categoryId}/delete`;
-                
+
                 // Update confirmation message
                 document.getElementById('deleteCategoryName').textContent = categoryName;
             });
         }
-        
+
         // Auto-generate slug from name for new categories
         const nameInput = document.getElementById('name');
         const slugInput = document.getElementById('slug');
@@ -358,7 +358,7 @@
                         .replace(/^-+|-+$/g, '');
                 }
             });
-            
+
             // Track if slug has been manually edited
             slugInput.addEventListener('input', function() {
                 this.dataset.manuallyEdited = true;

@@ -25,7 +25,7 @@
         <div class="card-body">
             <form action="/admin/products" method="get" class="row g-3">
                 <input type="hidden" name="tenant" value="{{ selected_tenant_slug }}">
-                
+
                 <div class="col-md-3">
                     <label for="category" class="form-label text-light">Category</label>
                     <select name="category" id="category" class="form-select bg-dark text-light border-secondary">
@@ -35,17 +35,17 @@
                         {% endfor %}
                     </select>
                 </div>
-                
+
                 <div class="col-md-3">
                     <label for="min_price" class="form-label text-light">Min Price</label>
                     <input type="number" class="form-control bg-dark text-light border-secondary" id="min_price" name="min_price" value="{{ min_price or '' }}" step="0.01">
                 </div>
-                
+
                 <div class="col-md-3">
                     <label for="max_price" class="form-label text-light">Max Price</label>
                     <input type="number" class="form-control bg-dark text-light border-secondary" id="max_price" name="max_price" value="{{ max_price or '' }}" step="0.01">
                 </div>
-                
+
                 <div class="col-md-3">
                     <label for="in_stock" class="form-label text-light">Stock Status</label>
                     <select name="in_stock" id="in_stock" class="form-select bg-dark text-light border-secondary">
@@ -54,7 +54,7 @@
                         <option value="false" {% if in_stock == False %}selected{% endif %}>Out of Stock</option>
                     </select>
                 </div>
-                
+
                 <div class="col-12 mt-3">
                     <button type="submit" class="btn btn-primary">Apply Filters</button>
                     <a href="/admin/products?tenant={{ selected_tenant_slug }}" class="btn btn-secondary">Clear Filters</a>
@@ -62,7 +62,7 @@
             </form>
         </div>
     </div>
-    
+
     <!-- Products table -->
     <div class="card bg-dark border-secondary">
         <div class="card-header bg-dark text-light border-secondary d-flex justify-content-between align-items-center">
@@ -113,7 +113,7 @@
                                     <a href="/admin/products/{{ product.id }}?tenant={{ selected_tenant_slug }}" class="btn btn-sm btn-primary">Edit</a>
                                     <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal{{ product.id }}">Delete</button>
                                 </div>
-                                
+
                                 <!-- Delete Modal -->
                                 <div class="modal fade" id="deleteModal{{ product.id }}" tabindex="-1" aria-labelledby="deleteModalLabel{{ product.id }}" aria-hidden="true">
                                     <div class="modal-dialog">
