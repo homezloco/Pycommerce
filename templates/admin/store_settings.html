@@ -5,7 +5,7 @@
 {% block admin_content %}
 <div class="container-fluid">
     <h1 class="h2 mb-4">Store Settings</h1>
-    
+
     <ul class="nav nav-tabs" id="myTab" role="tablist">
         <li class="nav-item" role="presentation">
             <button class="nav-link {% if tab == 'basic' or not tab %}active{% endif %}" id="basic-tab" data-bs-toggle="tab" data-bs-target="#basic-pane" type="button" role="tab" aria-controls="basic-pane" aria-selected="{% if tab == 'basic' or not tab %}true{% else %}false{% endif %}">
@@ -23,7 +23,7 @@
             </button>
         </li>
     </ul>
-    
+
     <div class="tab-content pt-4" id="myTabContent">
         <!-- Basic Settings Tab -->
         <div class="tab-pane fade {% if tab == 'basic' or not tab %}show active{% endif %}" id="basic-pane" role="tabpanel" aria-labelledby="basic-tab">
@@ -37,7 +37,7 @@
                             <p class="text-muted mb-4">
                                 Configure your store's basic information and settings.
                             </p>
-                            
+
                             <form action="/admin/store-settings" method="POST" id="basic-settings-form">
                                 <input type="hidden" name="tab" value="basic">
                                 <div class="mb-3">
@@ -73,7 +73,7 @@
                 </div>
             </div>
         </div>
-        
+
         <!-- Shipping Configuration Tab -->
         <div class="tab-pane fade {% if tab == 'shipping' %}show active{% endif %}" id="shipping-pane" role="tabpanel" aria-labelledby="shipping-tab">
             <div class="row">
@@ -86,13 +86,13 @@
                             <p class="text-muted mb-4">
                                 Configure your store's shipping options and rates. These settings determine how shipping costs are calculated for your customers.
                             </p>
-                            
+
                             <form action="/admin/shipping-settings" method="POST" id="shipping-settings-form">
                                 <input type="hidden" name="tab" value="shipping">
                                 <div class="row mb-4">
                                     <div class="col-md-6">
                                         <h6 class="fw-bold mb-3">Basic Settings</h6>
-                                        
+
                                         <div class="mb-3">
                                             <label for="store_country" class="form-label">Store Country</label>
                                             <select class="form-select" id="store_country" name="store_country">
@@ -124,7 +124,7 @@
 
                                     <div class="col-md-6">
                                         <h6 class="fw-bold mb-3">Advanced Settings</h6>
-                                        
+
                                         <div class="mb-3">
                                             <label for="dimensional_weight_factor" class="form-label">Dimensional Weight Factor</label>
                                             <input type="number" class="form-control" id="dimensional_weight_factor" name="dimensional_weight_factor" value="{{ config.dimensional_weight_factor if config and config.dimensional_weight_factor else 5000 }}" step="1" min="1">
@@ -154,7 +154,7 @@
                 </div>
             </div>
         </div>
-        
+
         <!-- AI Configuration Tab -->
         <div class="tab-pane fade {% if tab == 'ai' %}show active{% endif %}" id="ai-pane" role="tabpanel" aria-labelledby="ai-tab">
             <div class="row">
@@ -167,18 +167,18 @@
                             <p class="text-muted mb-4">
                                 Configure AI provider settings for your store. These settings determine how AI features work in your store, including product descriptions, image generation, and customer support.
                             </p>
-                            
+
                             <form action="/admin/ai-settings" method="POST" id="ai-settings-form">
                                 <input type="hidden" name="tab" value="ai">
                                 <div class="mb-4">
                                     <h6 class="fw-bold mb-3">OpenAI Configuration</h6>
-                                    
+
                                     <div class="mb-3">
                                         <label for="openai_api_key" class="form-label">OpenAI API Key</label>
                                         <input type="password" class="form-control" id="openai_api_key" name="openai_api_key" value="{{ config.openai_api_key if config and config.openai_api_key else '' }}">
                                         <div class="form-text">Your OpenAI API key for text and image generation features.</div>
                                     </div>
-                                    
+
                                     <div class="mb-3">
                                         <label for="openai_model" class="form-label">Default Text Model</label>
                                         <select class="form-select" id="openai_model" name="openai_model">
@@ -187,7 +187,7 @@
                                         </select>
                                         <div class="form-text">The OpenAI model to use for text generation.</div>
                                     </div>
-                                    
+
                                     <div class="mb-3">
                                         <label for="dalle_model" class="form-label">Default Image Model</label>
                                         <select class="form-select" id="dalle_model" name="dalle_model">
@@ -197,29 +197,29 @@
                                         <div class="form-text">The model to use for image generation.</div>
                                     </div>
                                 </div>
-                                
+
                                 <div class="mb-4">
                                     <h6 class="fw-bold mb-3">AI Feature Configuration</h6>
-                                    
+
                                     <div class="form-check form-switch mb-3">
                                         <input class="form-check-input" type="checkbox" id="enable_product_descriptions" name="enable_product_descriptions" {% if config and config.enable_product_descriptions %}checked{% endif %}>
                                         <label class="form-check-label" for="enable_product_descriptions">Enable AI Product Descriptions</label>
                                         <div class="form-text">Automatically generate product descriptions when creating new products.</div>
                                     </div>
-                                    
+
                                     <div class="form-check form-switch mb-3">
                                         <input class="form-check-input" type="checkbox" id="enable_image_generation" name="enable_image_generation" {% if config and config.enable_image_generation %}checked{% endif %}>
                                         <label class="form-check-label" for="enable_image_generation">Enable AI Image Generation</label>
                                         <div class="form-text">Allow generation of product images using AI.</div>
                                     </div>
-                                    
+
                                     <div class="form-check form-switch mb-3">
                                         <input class="form-check-input" type="checkbox" id="enable_chatbot" name="enable_chatbot" {% if config and config.enable_chatbot %}checked{% endif %}>
                                         <label class="form-check-label" for="enable_chatbot">Enable AI Customer Support</label>
                                         <div class="form-text">Add an AI-powered chatbot to your store for customer support.</div>
                                     </div>
                                 </div>
-                                
+
                                 <div class="d-flex justify-content-end">
                                     <button type="submit" class="btn btn-primary">
                                         <i class="bi bi-save me-2"></i> Save AI Settings

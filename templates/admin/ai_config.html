@@ -103,17 +103,6 @@
                 <div class="card-body">
                     <!-- Store Selector -->
                     <div class="mb-3">
-                        <label for="tenant" class="form-label">Store</label>
-                        <select id="tenant" class="form-select" name="tenant" onchange="location.href='/admin/ai-config/configure/{{ selected_provider.id }}?tenant=' + this.value">
-                            <option value="all" {% if selected_tenant == 'all' %}selected{% endif %}>
-                                All Stores
-                            </option>
-                            <option disabled>────────────────</option>
-                            {% for tenant in tenants %}
-                            <option value="{{ tenant.slug }}" {% if tenant.slug == selected_tenant %}selected{% endif %}>
-                                {{ tenant.name }}
-                            </option>
-                            {% endfor %}
                         </select>
                         <div class="form-text text-muted">
                             {% if selected_tenant == 'all' %}
