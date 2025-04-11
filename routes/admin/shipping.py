@@ -14,7 +14,12 @@ try:
     from fastapi.templating import Jinja2Templates
     from fastapi.responses import HTMLResponse
     from pycommerce.models.tenant import TenantManager
-    from routes.admin.tenant_utils import get_selected_tenant, redirect_to_tenant_selection, create_virtual_all_tenant
+    from routes.admin.tenant_utils import (
+        get_selected_tenant, 
+        get_all_tenants,
+        redirect_to_tenant_selection, 
+        create_virtual_all_tenant
+    )
 except ImportError as e:
     logging.error(f"Error importing required modules in shipping.py: {e}")
 
@@ -47,28 +52,22 @@ def setup_routes(templates: Jinja2Templates):
         tenants = []
         if tenant_manager:
             try:
-                tenants = tenant_manager.get_all()
+                tenants = get_all_tenants()
             except Exception as e:
                 logging.error(f"Error getting tenants in shipping route: {e}")
+        
+        # Add "All Stores" virtual tenant
+        all_stores = create_virtual_all_tenant()
+        tenants_with_all = [all_stores] + tenants
 
-        # Use helper function to get selected tenant, handling "All Stores" case
-        selected_tenant, all_stores_selected = get_selected_tenant(request, tenants)
-
-        # Format tenants for template
-        tenants_data = []
-        for tenant in tenants:
-            tenants_data.append({
-                "id": str(tenant.id),
-                "name": tenant.name,
-                "slug": tenant.slug,
-                "domain": tenant.domain,
-                "active": tenant.active
-            })
-
-        # Add "All Stores" option to tenants if applicable
-        if all_stores_selected:
-            tenants_data.insert(0, create_virtual_all_tenant())
-
+        # Get selected tenant parameter from request
+        tenant_param = request.query_params.get('tenant')
+        
+        # Get selected tenant using the utility function
+        selected_tenant_slug, selected_tenant = get_selected_tenant(request, tenant_param)
+        
+        # Determine if all stores is selected
+        all_stores_selected = (selected_tenant_slug == "all")
 
         return templates.TemplateResponse(
             "admin/shipping.html",
@@ -77,8 +76,9 @@ def setup_routes(templates: Jinja2Templates):
                 "active_page": "shipping",
                 "status_message": status_message,
                 "status_type": status_type,
-                "tenants": tenants_data,
-                "selected_tenant": selected_tenant.slug if selected_tenant else None,
+                "tenants": tenants_with_all,
+                "selected_tenant": selected_tenant_slug,
+                "tenant": selected_tenant,
                 "cart_item_count": request.session.get("cart_item_count", 0),
                 "all_stores_selected": all_stores_selected
             }
