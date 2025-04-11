@@ -32,7 +32,7 @@ class ProductResponse(BaseModel):
     categories: List[str] = []
     
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class RecommendationsResponse(BaseModel):
