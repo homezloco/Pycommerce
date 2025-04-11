@@ -728,10 +728,21 @@ async def admin_theme_settings(request: Request, status_message: Optional[str] =
             for t in tenants_list if t and hasattr(t, 'id')
         ]
         
-        # Get selected tenant from query param
-        selected_tenant_slug = request.query_params.get('tenant')
+        # Get selected tenant from query param or session
+        selected_tenant_slug = request.query_params.get('tenant') or request.session.get("selected_tenant")
+        
+        # Handle "all" selection - theme settings need a specific tenant
+        if selected_tenant_slug == "all" and tenants:
+            selected_tenant_slug = tenants[0]["slug"]
+            logger.info(f"'All Stores' selected but using first tenant {selected_tenant_slug} for theme settings")
+        
+        # Fallback if no tenant selected
         if not selected_tenant_slug and tenants:
             selected_tenant_slug = tenants[0]["slug"]
+            
+        # Update session with the selected tenant
+        if selected_tenant_slug:
+            request.session["selected_tenant"] = selected_tenant_slug
             
         # Get the tenant details
         tenant = None
@@ -1052,10 +1063,16 @@ async def admin_plugins(request: Request, status_message: Optional[str] = None, 
             for t in tenants_list if t and hasattr(t, 'id')
         ]
         
-        # Get selected tenant from query param
-        selected_tenant = request.query_params.get('tenant')
+        # Get selected tenant from query param or session
+        selected_tenant = request.query_params.get('tenant') or request.session.get("selected_tenant")
+        
+        # Fallback if no tenant selected
         if not selected_tenant and tenants:
             selected_tenant = tenants[0]["slug"]
+            
+        # Update session with the selected tenant
+        if selected_tenant:
+            request.session["selected_tenant"] = selected_tenant
         
         # Get cart item count if available
         cart_item_count = 0
@@ -2024,13 +2041,26 @@ async def admin_media(
             for t in tenants_list if t and hasattr(t, 'id')
         ]
         
-        # Get selected tenant from query param or session
-        selected_tenant_slug = tenant or request.query_params.get('tenant')
-        if not selected_tenant_slug and tenants:
-            selected_tenant_slug = tenants[0]["slug"]
+        # Get selected tenant from query param, function param, or session
+        selected_tenant_slug = tenant or request.query_params.get('tenant') or request.session.get("selected_tenant")
         
-        selected_tenant = None
-        if selected_tenant_slug:
+        # Special case for "all" stores
+        if selected_tenant_slug == "all":
+            selected_tenant = None
+            logger.info("Using 'All Stores' view for media manager")
+        elif selected_tenant_slug:
+            try:
+                selected_tenant = tenant_manager.get_by_slug(selected_tenant_slug)
+                # If we found a tenant, update the session
+                if selected_tenant:
+                    request.session["selected_tenant"] = selected_tenant_slug
+                    request.session["tenant_id"] = str(selected_tenant.id)
+            except Exception as e:
+                logger.warning(f"Could not get tenant with slug '{selected_tenant_slug}': {str(e)}")
+        
+        # Fallback if no tenant selected
+        if not selected_tenant_slug and not selected_tenant and tenants:
+            selected_tenant_slug = tenants[0]["slug"]
             try:
                 selected_tenant = tenant_manager.get_by_slug(selected_tenant_slug)
             except Exception as e:
