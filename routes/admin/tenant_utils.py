@@ -108,59 +108,64 @@ def get_all_tenants() -> List[Dict[str, Any]]:
         logger.error(f"Error fetching tenants: {str(e)}")
         return []
 
-def get_current_tenant(request, tenant_manager_instance=None):
+def get_current_tenant(request, tenant_manager):
     """
-    Get the current tenant from the request.
+    Get the current tenant based on session and request parameters.
 
     Args:
-        request: The FastAPI request object
-        tenant_manager_instance: Optional tenant manager instance
+        request: The request object
+        tenant_manager: The tenant manager instance
 
     Returns:
-        Tuple of (tenant_object, tenant_id, tenant_slug)
+        Tuple of (tenant object, tenant_id, tenant_slug)
     """
-    tm = tenant_manager_instance or tenant_manager
+    # First check for tenant parameter in query string (highest priority)
+    tenant_slug = request.query_params.get("tenant")
 
-    # Get selected tenant from session or query param
-    tenant_slug = request.query_params.get('tenant') or request.session.get("selected_tenant")
-    tenant_id = request.session.get("tenant_id")
+    # If not in query, check in session
+    if not tenant_slug and "selected_tenant" in request.session:
+        tenant_slug = request.session.get("selected_tenant")
 
-    # If no tenant is selected, try to get the first one
-    if not tenant_slug or not tenant_id:
-        try:
-            tenants = get_all_tenants()
+    # Default to first tenant if none specified
+    if not tenant_slug:
+        tenants = tenant_manager.list()
+        if tenants:
+            tenant_slug = tenants[0].slug
+        else:
+            tenant_slug = None
+
+    # Handle "all" case
+    if tenant_slug and tenant_slug.lower() == "all":
+        tenant_obj = None
+        tenant_id = None
+        tenant_slug = "all"
+
+        # Ensure session is properly set for "all" stores
+        request.session["selected_tenant"] = "all"
+        request.session["tenant_id"] = None
+        request.session["tenant_slug"] = "all"
+    else:
+        # Get the tenant object
+        tenant_obj = tenant_manager.get_by_slug(tenant_slug)
+
+        if tenant_obj:
+            tenant_id = str(tenant_obj.id)
+        else:
+            # Tenant not found, default to first available
+            tenants = tenant_manager.list()
             if tenants:
-                tenant_slug = tenants[0]["slug"]
-                tenant_id = tenants[0]["id"]
-                # Update session
-                request.session["selected_tenant"] = tenant_slug
-                request.session["tenant_id"] = tenant_id
-        except Exception as e:
-            logger.error(f"Error getting default tenant: {str(e)}")
-            return None, None, None
-
-    # Special case for "all" tenants
-    if tenant_slug == "all":
-        return None, None, "all"
-
-    # Get the tenant object
-    tenant_obj = None
-    if tenant_id:
-        try:
-            tenant_obj = tm.get(tenant_id)
-        except Exception as e:
-            logger.error(f"Error getting tenant by ID {tenant_id}: {str(e)}")
-
-    # If tenant not found by ID, try by slug
-    if not tenant_obj and tenant_slug:
-        try:
-            tenant_obj = tm.get_by_slug(tenant_slug)
-            if tenant_obj:
+                tenant_obj = tenants[0]
                 tenant_id = str(tenant_obj.id)
-                # Update session with correct ID
-                request.session["tenant_id"] = tenant_id
-        except Exception as e:
-            logger.error(f"Error getting tenant by slug {tenant_slug}: {str(e)}")
+                tenant_slug = tenant_obj.slug
+            else:
+                tenant_obj = None
+                tenant_id = None
+                tenant_slug = None
+
+    # Update session with current tenant
+    request.session["selected_tenant"] = tenant_slug
+    request.session["tenant_id"] = tenant_id
+    request.session["tenant_slug"] = tenant_slug
 
     return tenant_obj, tenant_id, tenant_slug
 
@@ -319,7 +324,7 @@ def get_items_for_all_tenants(tenant_manager, item_manager, get_method_name, log
 def get_objects_for_all_tenants(tenant_manager, object_manager, get_method_name, id_param_name='tenant_id', logger=None, filters=None, fallback_method_name=None):
     """
     Generalized function to fetch any object type from all tenants.
-    
+
     Args:
         tenant_manager: The tenant manager instance
         object_manager: The manager instance for specific objects
@@ -328,88 +333,88 @@ def get_objects_for_all_tenants(tenant_manager, object_manager, get_method_name,
         logger: Optional logger to use
         filters: Optional dictionary of filters to apply
         fallback_method_name: Optional fallback method name if per-tenant fetch fails
-        
+
     Returns:
         List of objects from all tenants
     """
     if logger is None:
         logger = logging.getLogger(__name__)
-        
+
     if filters is None:
         filters = {}
-        
+
     try:
         # First try to get all tenants
         all_tenants = tenant_manager.list() or []
-        
+
         # Then fetch objects for each tenant and combine them
         all_objects = []
         for tenant in all_tenants:
             try:
                 # Get the method to call
                 get_method = getattr(object_manager, get_method_name)
-                
+
                 # Create kwargs with the tenant ID parameter
                 kwargs = {id_param_name: str(tenant.id)}
                 kwargs.update(filters)
-                
+
                 # Call the method
                 tenant_objects = get_method(**kwargs)
-                
+
                 # Check if result is None
                 if tenant_objects is None:
                     tenant_objects = []
-                    
+
                 # If not a list, make it a list
                 if not isinstance(tenant_objects, list):
                     tenant_objects = [tenant_objects]
-                    
+
                 all_objects.extend(tenant_objects)
                 logger.info(f"Found {len(tenant_objects)} objects for tenant {tenant.name}")
             except Exception as e:
                 logger.error(f"Error fetching objects for tenant {tenant.name}: {str(e)}")
-                
+
         logger.info(f"Found {len(all_objects)} objects across all stores")
-        
+
         # If no objects found and fallback method is provided, try it
         if not all_objects and fallback_method_name and hasattr(object_manager, fallback_method_name):
             logger.info(f"No objects found using tenant queries, trying {fallback_method_name}() method")
             fallback_method = getattr(object_manager, fallback_method_name)
             all_objects = fallback_method(**filters)
-            
+
             # Check if result is None
             if all_objects is None:
                 all_objects = []
-                
+
             # If not a list, make it a list
             if not isinstance(all_objects, list):
                 all_objects = [all_objects]
-                
+
             logger.info(f"Found {len(all_objects)} objects using {fallback_method_name}() method")
-            
+
         return all_objects
     except Exception as e:
         logger.error(f"Error fetching all objects: {str(e)}")
-        
+
         # Fallback to the general method if available
         if fallback_method_name and hasattr(object_manager, fallback_method_name):
             try:
                 fallback_method = getattr(object_manager, fallback_method_name)
                 all_objects = fallback_method(**filters)
-                
+
                 # Check if result is None
                 if all_objects is None:
                     all_objects = []
-                    
+
                 # If not a list, make it a list
                 if not isinstance(all_objects, list):
                     all_objects = [all_objects]
-                    
+
                 logger.info(f"Falling back to {fallback_method_name}() method, found {len(all_objects)} objects")
                 return all_objects
             except Exception as fallback_err:
                 logger.error(f"Error with fallback method: {str(fallback_err)}")
-                
+
         return []
 
 def get_orders_for_all_tenants(tenant_manager, order_manager, logger, filters=None):
@@ -479,7 +484,7 @@ def get_categories_for_all_tenants(tenant_manager, category_manager, logger, inc
     try:
         # First try to get all tenants
         all_tenants = tenant_manager.list() or []
-        
+
         # Then fetch categories for each tenant and combine them
         all_categories = []
         for tenant in all_tenants:

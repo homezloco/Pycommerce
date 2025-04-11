@@ -443,6 +443,9 @@ async def admin_change_store(request: Request, tenant: str = "", redirect_url: s
         # Store in session
         request.session["selected_tenant"] = "all"
         request.session["tenant_id"] = None
+        request.session["tenant_slug"] = "all"
+        
+        logger.info("User selected 'All Stores' for view - setting session variables")
         
         # Check if a redirect_url was provided
         if redirect_url:
