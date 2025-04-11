@@ -52,9 +52,20 @@ async def ai_config_page(
     tenant_obj = None
 
     # Handle the "all stores" case
-    if selected_tenant_slug.lower() == "all":
+    if selected_tenant_slug and selected_tenant_slug.lower() == "all":
         logger.info("Using 'All Stores' selection in AI config page")
-        tenant_obj = type('AllStoresTenant', (), create_virtual_all_tenant())
+        # For "all" tenant, we'll need the first tenant for settings reference
+        tenants_list = tenant_manager.get_all()
+        if tenants_list:
+            # Use the first tenant's settings as reference
+            tenant_obj = tenants_list[0]
+            logger.info(f"Using first tenant {tenant_obj.name} settings as reference for 'All Stores'")
+        else:
+            # No tenants available
+            return RedirectResponse(
+                url="/admin/dashboard?status_message=No+stores+found&status_type=error", 
+                status_code=303
+            )
     else:
         # Get actual tenant object
         tenant_obj = tenant_manager.get_by_slug(selected_tenant_slug)
@@ -65,7 +76,7 @@ async def ai_config_page(
             )
 
     # Get AI settings
-    ai_settings = tenant_obj.settings.get('ai_settings', {}) if tenant_obj.settings else {}
+    ai_settings = tenant_obj.settings.get('ai_settings', {}) if hasattr(tenant_obj, 'settings') and tenant_obj.settings else {}
 
     # Check if OpenAI API key is available
     has_openai_key = bool(os.environ.get("OPENAI_API_KEY"))
@@ -166,9 +177,20 @@ async def ai_config_configure_page(
     tenant_obj = None
 
     # Handle the "all stores" case
-    if selected_tenant_slug.lower() == "all":
+    if selected_tenant_slug and selected_tenant_slug.lower() == "all":
         logger.info("Using 'All Stores' selection in AI config provider page")
-        tenant_obj = type('AllStoresTenant', (), create_virtual_all_tenant())
+        # For "all" tenant, we'll need the first tenant for settings reference
+        tenants_list = tenant_manager.get_all()
+        if tenants_list:
+            # Use the first tenant's settings as reference
+            tenant_obj = tenants_list[0]
+            logger.info(f"Using first tenant {tenant_obj.name} settings as reference for 'All Stores'")
+        else:
+            # No tenants available
+            return RedirectResponse(
+                url="/admin/dashboard?status_message=No+stores+found&status_type=error", 
+                status_code=303
+            )
     else:
         # Get actual tenant object
         tenant_obj = tenant_manager.get_by_slug(selected_tenant_slug)
@@ -179,7 +201,7 @@ async def ai_config_configure_page(
             )
 
     # Get AI settings
-    ai_settings = tenant_obj.settings.get('ai_settings', {}) if tenant_obj.settings else {}
+    ai_settings = tenant_obj.settings.get('ai_settings', {}) if hasattr(tenant_obj, 'settings') and tenant_obj.settings else {}
 
     # Check if OpenAI API key is available
     has_openai_key = bool(os.environ.get("OPENAI_API_KEY"))
