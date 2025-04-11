@@ -37,18 +37,21 @@ async def ai_config_page(
     """Admin page for AI configuration."""
     # Use tenant_utils to get selected tenant
     from routes.admin.tenant_utils import get_selected_tenant, redirect_to_tenant_selection
-    
+
     # AI config doesn't support "all" stores, so allow_all=False
-    selected_tenant_slug, tenant_obj, is_all_tenants = get_selected_tenant(
+    selected_tenant_slug, tenant_obj = get_selected_tenant(
         request=request,
         tenant_param=tenant,
         allow_all=False
     )
-    
+
     # If no tenant is selected, redirect to dashboard with message
     if not selected_tenant_slug or not tenant_obj:
         return redirect_to_tenant_selection("Please select a store first", "warning")
-    
+
+    # Check if this is the "all" tenant (by checking the special ID or properties)
+    is_all_tenants = getattr(tenant_obj, 'is_all_stores', False) or getattr(tenant_obj, 'slug', '') == 'all'
+
     # AI Config requires a specific tenant, not "all"
     if is_all_tenants:
         # Get list of tenants and use the first one
@@ -151,18 +154,21 @@ async def ai_config_configure_page(
     """Admin page for configuring a specific AI provider."""
     # Use tenant_utils to get selected tenant
     from routes.admin.tenant_utils import get_selected_tenant, redirect_to_tenant_selection
-    
+
     # AI config doesn't support "all" stores, so allow_all=False
-    selected_tenant_slug, tenant_obj, is_all_tenants = get_selected_tenant(
+    selected_tenant_slug, tenant_obj = get_selected_tenant(
         request=request,
         tenant_param=tenant,
         allow_all=False
     )
-    
+
     # If no tenant is selected, redirect to dashboard with message
     if not selected_tenant_slug or not tenant_obj:
         return redirect_to_tenant_selection("Please select a store first", "warning")
-    
+
+    # Check if this is the "all" tenant (by checking the special ID or properties)
+    is_all_tenants = getattr(tenant_obj, 'is_all_stores', False) or getattr(tenant_obj, 'slug', '') == 'all'
+
     # AI Config requires a specific tenant, not "all"
     if is_all_tenants:
         # Get list of tenants and use the first one
