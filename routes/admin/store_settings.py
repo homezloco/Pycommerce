@@ -61,9 +61,11 @@ async def store_settings(
             "tenant": tenant_obj,
             "tenants": tenants,
             "active_page": "store-settings",
-            "store_settings": store_settings,
+            "config": store_settings,  # Use config as the template is expecting this variable name
             "status_message": status_message,
-            "status_type": status_type
+            "status_type": status_type,
+            "cart_item_count": request.session.get("cart_item_count", 0),
+            "tab": request.query_params.get("tab", "basic")  # Add tab parameter to control active tab
         }
     )
 
