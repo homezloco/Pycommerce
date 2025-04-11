@@ -527,10 +527,30 @@ async def admin_dashboard(request: Request, status_message: Optional[str] = None
 @app.get("/admin/change-store", response_class=RedirectResponse)
 async def admin_change_store(request: Request, tenant: str = ""):
     """Change the selected store for admin management."""
-    redirect_url = request.query_params.get('redirect_url', '/admin')
+    redirect_url = request.query_params.get('redirect_url', '/admin/dashboard')
+    
+    # Set the selected tenant in session 
     if tenant:
-        return RedirectResponse(url=f"{redirect_url}?tenant={tenant}", status_code=303)
-    return RedirectResponse(url=redirect_url, status_code=303)
+        request.session["selected_tenant"] = tenant
+        # Clear tenant_id if "all" is selected
+        if tenant == "all":
+            request.session["tenant_id"] = ""
+            logger.info("Changed store to 'All Stores'")
+        else:
+            # Try to look up the tenant ID for non-"all" selections
+            try:
+                tenant_obj = tenant_manager.get_by_slug(tenant)
+                if tenant_obj:
+                    request.session["tenant_id"] = str(tenant_obj.id)
+                    logger.info(f"Changed store to {tenant} with ID: {tenant_obj.id}")
+            except Exception as e:
+                logger.error(f"Error looking up tenant ID for slug {tenant}: {str(e)}")
+    
+    # Add status message for success notification
+    return RedirectResponse(
+        url=f"{redirect_url}?status_message=Store+changed+successfully&status_type=success",
+        status_code=303
+    )
 
 # Admin store settings
 @app.get("/admin/store-settings", response_class=HTMLResponse)
