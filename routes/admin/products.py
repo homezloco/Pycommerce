@@ -200,6 +200,7 @@ async def admin_products(
             "categories": categories,
             "tenants": tenants,
             "selected_tenant_slug": selected_tenant_slug,
+            "selected_tenant": selected_tenant_slug,  # Add this to ensure the dropdown shows correctly
             "category": category,
             "min_price": min_price,
             "max_price": max_price,
