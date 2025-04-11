@@ -51,6 +51,8 @@ def setup_routes(app_templates):
     return router
 
 
+from routes.admin.tenant_utils import get_selected_tenant, get_all_tenants, get_objects_for_all_tenants, create_virtual_all_tenant
+
 @router.get("/returns", response_class=HTMLResponse)
 async def returns_list(
     request: Request,
@@ -62,17 +64,16 @@ async def returns_list(
     status_type: str = Query("info")
 ):
     """Returns list page."""
-    # Get the selected tenant
-    selected_tenant_slug = tenant or "tech"
-    
     try:
-        # Get tenant info
-        tenant = tenant_manager.get_by_slug(selected_tenant_slug)
-        if not tenant:
-            return RedirectResponse(
-                url="/admin?status_message=Tenant+not+found&status_type=error",
-                status_code=303
-            )
+        # Get all available tenants
+        tenants = get_all_tenants()
+        
+        # Add "All Stores" virtual tenant
+        all_stores = create_virtual_all_tenant()
+        tenants_with_all = [all_stores] + tenants
+        
+        # Get the selected tenant using tenant_utils
+        selected_tenant_slug, selected_tenant = get_selected_tenant(request, tenant)
         
         # Prepare filters
         filters = {}
@@ -91,8 +92,27 @@ async def returns_list(
             except ValueError:
                 logger.warning(f"Invalid date_to format: {date_to}")
         
-        # Get returns for tenant
-        return_requests = return_manager.get_for_tenant(tenant.id, filters=filters)
+        # Get returns based on tenant selection
+        if selected_tenant_slug == "all":
+            # Get returns for all tenants
+            return_requests = get_objects_for_all_tenants(
+                tenant_manager, 
+                return_manager, 
+                "get_for_tenant", 
+                logger=logger, 
+                filters=filters
+            )
+        else:
+            # Get tenant info
+            tenant_obj = tenant_manager.get_by_slug(selected_tenant_slug)
+            if not tenant_obj:
+                return RedirectResponse(
+                    url="/admin?status_message=Tenant+not+found&status_type=error",
+                    status_code=303
+                )
+            
+            # Get returns for specific tenant
+            return_requests = return_manager.get_for_tenant(tenant_obj.id, filters=filters)
         
         # Prepare data for template
         returns_data = []
@@ -130,7 +150,8 @@ async def returns_list(
                 "request": request,
                 "returns": returns_data,
                 "selected_tenant": selected_tenant_slug,
-                "tenant": tenant,
+                "tenant": selected_tenant,
+                "tenants": tenants_with_all,  # Add all tenants for dropdown
                 "status_options": status_options,
                 "filters": {
                     "status": status,
@@ -163,13 +184,16 @@ async def return_detail(
     status_type: str = Query("info")
 ):
     """Return detail page."""
-    # Get the selected tenant
-    selected_tenant_slug = tenant or "tech"
-    
     try:
+        # Get all available tenants
+        tenants = get_all_tenants()
+        
+        # Get the selected tenant using tenant_utils
+        selected_tenant_slug, selected_tenant = get_selected_tenant(request, tenant, allow_all=False)
+        
         # Get tenant info
-        tenant = tenant_manager.get_by_slug(selected_tenant_slug)
-        if not tenant:
+        tenant_obj = tenant_manager.get_by_slug(selected_tenant_slug)
+        if not tenant_obj:
             return RedirectResponse(
                 url="/admin?status_message=Tenant+not+found&status_type=error",
                 status_code=303
@@ -238,7 +262,8 @@ async def return_detail(
                 "return_items": items_data,
                 "total_refund_amount": total_refund_amount,
                 "selected_tenant": selected_tenant_slug,
-                "tenant": tenant,
+                "tenant": selected_tenant,
+                "tenants": tenants,  # Add all tenants for dropdown
                 "status_options": status_options,
                 "reason_options": reason_options,
                 "status_message": status_message,
