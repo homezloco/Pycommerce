@@ -112,43 +112,52 @@ async def list_customers(
     status_type: str = "info"
 ):
     """Admin page for customer management."""
-    # Get tenant from query parameters or session
-    selected_tenant_slug = tenant or request.session.get("selected_tenant")
+    # Use tenant_utils to get selected tenant
+    from routes.admin.tenant_utils import get_selected_tenant, redirect_to_tenant_selection, get_all_tenants, create_virtual_all_tenant
 
+    # Get tenant parameter from request
+    tenant_param = tenant or request.query_params.get('tenant')
+    
+    # Get selected tenant using the utility function
+    selected_tenant_slug, selected_tenant = get_selected_tenant(request, tenant_param, allow_all=True)
+    
     # If no tenant is selected, redirect to dashboard with message
     if not selected_tenant_slug:
-        return RedirectResponse(
-            url="/admin/dashboard?status_message=Please+select+a+store+first&status_type=warning", 
-            status_code=303
-        )
+        return redirect_to_tenant_selection()
 
-    # Store the selected tenant in session for future requests
-    request.session["selected_tenant"] = selected_tenant_slug
-
-    # Get tenant object
-    tenant_obj = tenant_manager.get_by_slug(selected_tenant_slug)
-    if not tenant_obj:
-        return RedirectResponse(
-            url="/admin/dashboard?status_message=Store+not+found&status_type=error", 
-            status_code=303
-        )
+    # Get tenant object if not "all"
+    tenant_obj = None
+    if selected_tenant_slug != "all":
+        tenant_obj = tenant_manager.get_by_slug(selected_tenant_slug)
+        if not tenant_obj:
+            return RedirectResponse(
+                url="/admin/dashboard?status_message=Store+not+found&status_type=error", 
+                status_code=303
+            )
 
     # Get customers for this tenant or all tenants
-    if selected_tenant_slug.lower() == "all":
+    if selected_tenant_slug == "all":
         try:
             all_tenants = tenant_manager.get_all() or []
             customers = []
             for t in all_tenants:
                 customers.extend(customer_manager.get_customers(tenant_id=str(t.id)))
+            logger.info(f"Fetched customers for all tenants, found {len(customers)} customers")
         except Exception as e:
             logger.error(f"Error fetching customers for all tenants: {e}")
             customers = customer_manager.get_customers() # Fallback
     else:
         customers = customer_manager.get_customers(tenant_id=str(tenant_obj.id))
+        logger.info(f"Fetched customers for tenant {selected_tenant_slug}, found {len(customers)} customers")
 
-
-    # Get all tenants for the sidebar
-    tenants = tenant_manager.get_all()
+    # Get all tenants for the dropdown
+    all_tenants = get_all_tenants()
+    
+    # Add virtual "All Stores" tenant if needed
+    if "all" not in [t.get("slug") for t in all_tenants]:
+        all_tenants_with_all = [create_virtual_all_tenant()] + all_tenants
+    else:
+        all_tenants_with_all = all_tenants
 
     return templates.TemplateResponse(
         "admin/customers.html",
@@ -156,11 +165,12 @@ async def list_customers(
             "request": request,
             "customers": customers,
             "selected_tenant": selected_tenant_slug,
-            "tenant": tenant_obj,
-            "tenants": tenants,
+            "tenant": tenant_obj or selected_tenant,  # Use either tenant object or dict from get_selected_tenant
+            "tenants": all_tenants_with_all,  # Use tenants with "All Stores" option
             "active_page": "customers",
             "status_message": status_message,
-            "status_type": status_type
+            "status_type": status_type,
+            "all_stores_selected": selected_tenant_slug == "all"
         }
     )
 
@@ -171,20 +181,20 @@ async def view_customer(
     tenant: Optional[str] = None
 ):
     """View customer details."""
-    # Get tenant from query parameters or session
-    selected_tenant_slug = tenant or request.session.get("selected_tenant")
-
+    # Use tenant_utils to get selected tenant
+    from routes.admin.tenant_utils import get_selected_tenant, redirect_to_tenant_selection, get_all_tenants, create_virtual_all_tenant
+    
+    # Get tenant parameter from request
+    tenant_param = tenant or request.query_params.get('tenant')
+    
+    # For customer details, we need a specific tenant, not "all"
+    selected_tenant_slug, selected_tenant = get_selected_tenant(request, tenant_param, allow_all=False)
+    
     # If no tenant is selected, redirect to dashboard with message
     if not selected_tenant_slug:
-        return RedirectResponse(
-            url="/admin/dashboard?status_message=Please+select+a+store+first&status_type=warning", 
-            status_code=303
-        )
+        return redirect_to_tenant_selection()
 
-    # Store the selected tenant in session for future requests
-    request.session["selected_tenant"] = selected_tenant_slug
-
-    # Get tenant object
+    # Get tenant object (should not be null since allow_all=False)
     tenant_obj = tenant_manager.get_by_slug(selected_tenant_slug)
     if not tenant_obj:
         return RedirectResponse(
@@ -200,8 +210,14 @@ async def view_customer(
             detail=f"Customer with ID {customer_id} not found"
         )
 
-    # Get all tenants for the sidebar
-    tenants = tenant_manager.get_all()
+    # Get all tenants for the dropdown
+    all_tenants = get_all_tenants()
+    
+    # Add virtual "All Stores" tenant if needed
+    if "all" not in [t.get("slug") for t in all_tenants]:
+        all_tenants_with_all = [create_virtual_all_tenant()] + all_tenants
+    else:
+        all_tenants_with_all = all_tenants
 
     return templates.TemplateResponse(
         "admin/customer_detail.html",
@@ -210,8 +226,9 @@ async def view_customer(
             "customer": customer,
             "selected_tenant": selected_tenant_slug,
             "tenant": tenant_obj,
-            "tenants": tenants,
-            "active_page": "customers"
+            "tenants": all_tenants_with_all,
+            "active_page": "customers",
+            "all_stores_selected": False  # Always false for customer details view
         }
     )
 
