@@ -6,19 +6,6 @@
 <div class="container-fluid py-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h1 class="h2">Dashboard</h1>
-        <div class="d-flex">
-            <select class="form-select form-select-sm me-2" id="time-period">
-                <option value="today" {% if dashboard.time_period == 'today' %}selected{% endif %}>Today</option>
-                <option value="yesterday" {% if dashboard.time_period == 'yesterday' %}selected{% endif %}>Yesterday</option>
-                <option value="last7days" {% if dashboard.time_period == 'last7days' %}selected{% endif %}>Last 7 Days</option>
-                <option value="last30days" {% if dashboard.time_period == 'last30days' %}selected{% endif %}>Last 30 Days</option>
-                <option value="thismonth" {% if dashboard.time_period == 'thismonth' %}selected{% endif %}>This Month</option>
-                <option value="lastmonth" {% if dashboard.time_period == 'lastmonth' %}selected{% endif %}>Last Month</option>
-            </select>
-            <button class="btn btn-sm btn-outline-secondary" id="refresh-dashboard">
-                <i class="bi bi-arrow-repeat"></i> Refresh
-            </button>
-        </div>
     </div>
 
     <!-- Stats Overview -->
@@ -169,7 +156,7 @@
             </div>
         </div>
     </div>
-    
+
     <div class="row">
         <!-- Top Products -->
         <div class="col-md-6 mb-4">
@@ -210,7 +197,7 @@
                 </div>
             </div>
         </div>
-        
+
         <!-- Store Performance -->
         <div class="col-md-6 mb-4">
             <div class="card h-100">
@@ -265,14 +252,14 @@
         const ctx = document.getElementById('salesChart');
         let salesChart;
         let chartType = 'revenue'; // Default to revenue view
-        
+
         // Initial data from server
         const salesData = {
             labels: {{ dashboard.sales_data.dates|tojson }},
             revenueData: {{ dashboard.sales_data.revenue_data|tojson }},
             ordersData: {{ dashboard.sales_data.orders_data|tojson }}
         };
-        
+
         // Initialize chart
         if (ctx) {
             salesChart = new Chart(ctx, {
@@ -333,18 +320,18 @@
                 }
             });
         }
-        
+
         // Toggle between revenue and orders view
         const revenueBtn = document.querySelector('.btn-group .btn:first-child');
         const ordersBtn = document.querySelector('.btn-group .btn:last-child');
-        
+
         if (revenueBtn && ordersBtn) {
             revenueBtn.addEventListener('click', function() {
                 if (!this.classList.contains('active')) {
                     // Update UI
                     this.classList.add('active');
                     ordersBtn.classList.remove('active');
-                    
+
                     // Update chart
                     chartType = 'revenue';
                     salesChart.data.datasets[0].label = 'Revenue';
@@ -354,13 +341,13 @@
                     salesChart.update();
                 }
             });
-            
+
             ordersBtn.addEventListener('click', function() {
                 if (!this.classList.contains('active')) {
                     // Update UI
                     this.classList.add('active');
                     revenueBtn.classList.remove('active');
-                    
+
                     // Update chart
                     chartType = 'orders';
                     salesChart.data.datasets[0].label = 'Orders';
@@ -371,17 +358,17 @@
                 }
             });
         }
-        
+
         // Time period selector functionality
         const timePeriodSelect = document.getElementById('time-period');
         const refreshButton = document.getElementById('refresh-dashboard');
-        
+
         if (timePeriodSelect) {
             timePeriodSelect.addEventListener('change', function() {
                 window.location.href = `/admin/dashboard?time_period=${this.value}`;
             });
         }
-        
+
         if (refreshButton) {
             refreshButton.addEventListener('click', function() {
                 const selectedPeriod = timePeriodSelect ? timePeriodSelect.value : 'last7days';
