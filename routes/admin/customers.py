@@ -83,8 +83,8 @@ async def customers_page(
 
         logger.info(f"Retrieved {len(customers)} customers across all stores")
     else:
-        # Use get_users() as this is the method available in UserManager
-        customers = user_manager.get_users()
+        # Use the get_users_by_tenant method from UserManager
+        customers = user_manager.get_users_by_tenant(tenant_obj.id)
         logger.info(f"Retrieved {len(customers)} customers for store {tenant_obj.name}")
 
     return templates.TemplateResponse(
