@@ -319,6 +319,40 @@ def setup_routes(app_templates):
     templates = app_templates
     return router
 
+@router.get("/api/store-settings", response_class=HTMLResponse)
+async def get_store_settings_api(
+    request: Request,
+    tenant: Optional[str] = None
+):
+    """API endpoint to check store settings data."""
+    # Get tenant from query parameters or session
+    selected_tenant_slug = tenant or request.session.get("selected_tenant")
+    
+    # Get tenant object if we have a selected tenant
+    tenant_obj = None
+    store_settings = {}
+    if selected_tenant_slug:
+        try:
+            tenant_obj = tenant_manager.get_by_slug(selected_tenant_slug)
+            if tenant_obj:
+                # Make sure we have settings initialized
+                store_settings = tenant_obj.settings or {}
+                logger.info(f"API: Retrieved settings for tenant {selected_tenant_slug}: {store_settings}")
+        except Exception as e:
+            logger.error(f"API: Error getting tenant: {str(e)}")
+    
+    # Debug output
+    logger.info(f"API: Settings structure type: {type(store_settings)}")
+    
+    # Return JSON response with settings data
+    from fastapi.responses import JSONResponse
+    return JSONResponse({
+        "tenant_slug": selected_tenant_slug,
+        "tenant_id": str(tenant_obj.id) if tenant_obj else None,
+        "settings": store_settings,
+        "theme": store_settings.get('theme', {})
+    })
+
 
 @router.get("/api/store-settings", response_class=HTMLResponse)
 async def get_store_settings_api(
