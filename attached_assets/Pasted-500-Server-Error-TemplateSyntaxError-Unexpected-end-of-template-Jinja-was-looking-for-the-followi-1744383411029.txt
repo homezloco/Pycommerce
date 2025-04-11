@@ -1,0 +1,63 @@
+500 Server Error
+TemplateSyntaxError: Unexpected end of template. Jinja was looking for the following tags: 'elif' or 'else' or 'endif'. The innermost block that needs to be closed is 'if'.
+Traceback
+
+File templates/admin/base.html, line 443, in template‒
+
+439.                 });
+
+440.             }
+
+441.         });
+
+442.     </script>
+
+443.     {% block scripts %}{% endblock %}
+
+444. </body>
+
+445. </html>
+
+File /home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/jinja2/environment.py, line 942, in handle_exception+
+
+File templates/admin/base_admin.html, line 1, in top-level template code+
+
+File templates/admin/dashboard.html, line 1, in top-level template code+
+
+File /home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/jinja2/environment.py, line 942, in handle_exception+
+
+File /home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/jinja2/environment.py, line 1295, in render+
+
+File /home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/starlette/templating.py, line 40, in __init__+
+
+File /home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/starlette/templating.py, line 209, in TemplateResponse+
+
+File /home/runner/workspace/routes/admin/dashboard.py, line 395, in admin_dashboard+
+
+File /home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/fastapi/routing.py, line 212, in run_endpoint_function+
+
+File /home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/fastapi/routing.py, line 301, in app+
+
+File /home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/starlette/routing.py, line 73, in app+
+
+File /home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/starlette/_exception_handler.py, line 42, in wrapped_app+
+
+File /home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/starlette/_exception_handler.py, line 53, in wrapped_app+
+
+File /home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/starlette/routing.py, line 76, in app+
+
+File /home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/starlette/routing.py, line 288, in handle+
+
+File /home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/starlette/routing.py, line 734, in app+
+
+File /home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/starlette/routing.py, line 714, in __call__+
+
+File /home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/starlette/_exception_handler.py, line 42, in wrapped_app+
+
+File /home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/starlette/_exception_handler.py, line 53, in wrapped_app+
+
+File /home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/starlette/middleware/exceptions.py, line 62, in __call__+
+
+File /home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/starlette/middleware/sessions.py, line 85, in __call__+
+
+File /home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/starlette/middleware/errors.py, line 165, in __call__
