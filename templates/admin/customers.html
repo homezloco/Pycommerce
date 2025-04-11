@@ -46,38 +46,38 @@
                                     <div class="bg-secondary me-2 rounded-circle d-flex justify-content-center align-items-center" style="width: 40px; height: 40px;">
                                         <i class="bi bi-person-fill text-light"></i>
                                     </div>
-                                    {{ getattr(customer, 'name', '') }}
+                                    {{ customer.get('name', '') if customer is mapping else customer.name if hasattr(customer, 'name') else '' }}
                                 </div>
                             </td>
-                            <td>{{ getattr(customer, 'email', '') }}</td>
-                            <td>{{ getattr(customer, 'phone', '') }}</td>
-                            <td>{{ getattr(customer, 'city', '') }}, {{ getattr(customer, 'state', '') }}</td>
+                            <td>{{ customer.get('email', '') if customer is mapping else customer.email if hasattr(customer, 'email') else '' }}</td>
+                            <td>{{ customer.get('phone', '') if customer is mapping else customer.phone if hasattr(customer, 'phone') else '' }}</td>
+                            <td>{{ customer.get('city', '') if customer is mapping else customer.city if hasattr(customer, 'city') else '' }}, {{ customer.get('state', '') if customer is mapping else customer.state if hasattr(customer, 'state') else '' }}</td>
                             <td>
                                 <span class="badge bg-info text-dark">
-                                    {{ getattr(customer, 'orders_count', 0) }} orders
+                                    {{ customer.get('orders_count', 0) if customer is mapping else customer.orders_count if hasattr(customer, 'orders_count') else 0 }} orders
                                 </span>
                             </td>
-                            <td>${{ getattr(customer, 'total_spent', 0) }}</td>
+                            <td>${{ customer.get('total_spent', 0) if customer is mapping else customer.total_spent if hasattr(customer, 'total_spent') else 0 }}</td>
                             <td>
                                 <div class="btn-group">
-                                    <a href="/admin/customers/{{ getattr(customer, 'id', '') }}?tenant={{ selected_tenant }}" class="btn btn-sm btn-primary">View</a>
-                                    <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal{{ getattr(customer, 'id', '') }}">Delete</button>
+                                    <a href="/admin/customers/{{ customer.get('id', '') if customer is mapping else customer.id if hasattr(customer, 'id') else '' }}?tenant={{ selected_tenant }}" class="btn btn-sm btn-primary">View</a>
+                                    <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal{{ customer.get('id', '') if customer is mapping else customer.id if hasattr(customer, 'id') else '' }}">Delete</button>
                                 </div>
 
                                 <!-- Delete Modal -->
-                                <div class="modal fade" id="deleteModal{{ getattr(customer, 'id', '') }}" tabindex="-1" aria-labelledby="deleteModalLabel{{ getattr(customer, 'id', '') }}" aria-hidden="true">
+                                <div class="modal fade" id="deleteModal{{ customer.get('id', '') if customer is mapping else customer.id if hasattr(customer, 'id') else '' }}" tabindex="-1" aria-labelledby="deleteModalLabel{{ customer.get('id', '') if customer is mapping else customer.id if hasattr(customer, 'id') else '' }}" aria-hidden="true">
                                     <div class="modal-dialog">
                                         <div class="modal-content bg-dark text-light">
                                             <div class="modal-header bg-dark border-secondary">
-                                                <h5 class="modal-title" id="deleteModalLabel{{ getattr(customer, 'id', '') }}">Confirm Delete</h5>
+                                                <h5 class="modal-title" id="deleteModalLabel{{ customer.get('id', '') if customer is mapping else customer.id if hasattr(customer, 'id') else '' }}">Confirm Delete</h5>
                                                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                                             </div>
                                             <div class="modal-body">
-                                                Are you sure you want to delete customer <strong>{{ getattr(customer, 'name', '') }}</strong>? This action cannot be undone.
+                                                Are you sure you want to delete customer <strong>{{ customer.get('name', '') if customer is mapping else customer.name if hasattr(customer, 'name') else '' }}</strong>? This action cannot be undone.
                                             </div>
                                             <div class="modal-footer bg-dark border-secondary">
                                                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                                <form action="/admin/customers/{{ getattr(customer, 'id', '') }}/delete" method="post" style="display: inline;">
+                                                <form action="/admin/customers/{{ customer.get('id', '') if customer is mapping else customer.id if hasattr(customer, 'id') else '' }}/delete" method="post" style="display: inline;">
                                                     <input type="hidden" name="tenant" value="{{ selected_tenant }}">
                                                     <button type="submit" class="btn btn-danger">Delete</button>
                                                 </form>
@@ -127,8 +127,9 @@
                                     <h6 class="text-uppercase fw-bold mb-1">Total Orders</h6>
                                     <h2 class="mb-0">
                                         {% set total_orders = 0 %}
-                                        {% for customer in customers %}
-                                            {% set total_orders = total_orders + getattr(customer, 'orders_count', 0) %}
+                                        {% for c in customers %}
+                                            {% set orders = c.get('orders_count', 0) if c is mapping else c.orders_count if hasattr(c, 'orders_count') else 0 %}
+                                            {% set total_orders = total_orders + orders %}
                                         {% endfor %}
                                         {{ total_orders }}
                                     </h2>
@@ -146,8 +147,9 @@
                                     <h6 class="text-uppercase fw-bold mb-1">Total Revenue</h6>
                                     <h2 class="mb-0">$
                                         {% set total_revenue = 0 %}
-                                        {% for customer in customers %}
-                                            {% set total_revenue = total_revenue + getattr(customer, 'total_spent', 0) %}
+                                        {% for c in customers %}
+                                            {% set revenue = c.get('total_spent', 0) if c is mapping else c.total_spent if hasattr(c, 'total_spent') else 0 %}
+                                            {% set total_revenue = total_revenue + revenue %}
                                         {% endfor %}
                                         {{ total_revenue }}
                                     </h2>
