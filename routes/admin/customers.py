@@ -35,22 +35,33 @@ async def customers_page(
     status_type: str = "info"
 ):
     """Admin page for customer management."""
-    # Get selected tenant with utility function
-    selected_tenant_slug, tenant_obj, is_all_tenants = get_selected_tenant(request, tenant)
-
+    # Import tenant utils for consistent tenant selection
+    from routes.admin.tenant_utils import get_selected_tenant, redirect_to_tenant_selection, create_virtual_all_tenant
+    
+    # Get selected tenant using the unified utility
+    selected_tenant_slug, tenant_obj = get_selected_tenant(
+        request=request, 
+        tenant_param=tenant,
+        allow_all=True
+    )
+    
+    # Check if "all" is selected
+    is_all_tenants = (selected_tenant_slug == "all")
+    
     # If no tenant is selected, redirect to dashboard with message
     if not selected_tenant_slug:
-        return RedirectResponse(
-            url="/admin/dashboard?status_message=Please+select+a+store+first&status_type=warning", 
-            status_code=303
-        )
-
+        return redirect_to_tenant_selection()
+    
     # If tenant not found (and not "all"), redirect to dashboard
     if not is_all_tenants and not tenant_obj:
         return RedirectResponse(
             url="/admin/dashboard?status_message=Store+not+found&status_type=error", 
             status_code=303
         )
+        
+    # For "all" tenants case, create a virtual tenant object
+    if is_all_tenants:
+        tenant_obj = create_virtual_all_tenant()
 
     # Get all tenants for the sidebar
     tenants = tenant_manager.get_all()
