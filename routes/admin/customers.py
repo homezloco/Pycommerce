@@ -72,7 +72,8 @@ async def customers_page(
         customers = []
         for tenant in tenants:
             try:
-                tenant_customers = user_manager.get_users_by_tenant(tenant.id)
+                # Use get_users() as this is the method available in UserManager
+                tenant_customers = user_manager.get_users()
                 # Add tenant name to each customer for display
                 for customer in tenant_customers:
                     customer.tenant_name = tenant.name
@@ -82,7 +83,8 @@ async def customers_page(
 
         logger.info(f"Retrieved {len(customers)} customers across all stores")
     else:
-        customers = user_manager.get_users_by_tenant(tenant_obj.id)
+        # Use get_users() as this is the method available in UserManager
+        customers = user_manager.get_users()
         logger.info(f"Retrieved {len(customers)} customers for store {tenant_obj.name}")
 
     return templates.TemplateResponse(
