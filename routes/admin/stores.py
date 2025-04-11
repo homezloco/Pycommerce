@@ -40,8 +40,9 @@ def setup_routes(templates: Jinja2Templates) -> APIRouter:
         """
         tenants = tenant_manager.get_all()
         
+        # Don't use tenant selection on the stores management page
         return templates.TemplateResponse(
-            "admin/stores/list.html",
+            "admin/stores.html",
             {
                 "request": request,
                 "tenants": tenants,
