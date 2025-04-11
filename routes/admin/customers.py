@@ -9,6 +9,7 @@ from typing import Optional
 from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
+from fastapi.exceptions import HTTPException
 
 from pycommerce.models.tenant import TenantManager
 from pycommerce.models.user import UserManager
@@ -37,28 +38,28 @@ async def customers_page(
     """Admin page for customer management."""
     # Import tenant utils for consistent tenant selection
     from routes.admin.tenant_utils import get_selected_tenant, redirect_to_tenant_selection, create_virtual_all_tenant
-    
+
     # Get selected tenant using the unified utility
     selected_tenant_slug, tenant_obj = get_selected_tenant(
         request=request, 
         tenant_param=tenant,
         allow_all=True
     )
-    
+
     # Check if "all" is selected
     is_all_tenants = (selected_tenant_slug == "all")
-    
+
     # If no tenant is selected, redirect to dashboard with message
     if not selected_tenant_slug:
         return redirect_to_tenant_selection()
-    
+
     # If tenant not found (and not "all"), redirect to dashboard
     if not is_all_tenants and not tenant_obj:
         return RedirectResponse(
             url="/admin/dashboard?status_message=Store+not+found&status_type=error", 
             status_code=303
         )
-        
+
     # For "all" tenants case, create a virtual tenant object
     if is_all_tenants:
         tenant_obj = create_virtual_all_tenant()
@@ -71,7 +72,7 @@ async def customers_page(
         customers = []
         for tenant in tenants:
             try:
-                tenant_customers = user_manager.list_by_tenant(tenant.id)
+                tenant_customers = user_manager.get_users_by_tenant(tenant.id)
                 # Add tenant name to each customer for display
                 for customer in tenant_customers:
                     customer.tenant_name = tenant.name
@@ -81,7 +82,7 @@ async def customers_page(
 
         logger.info(f"Retrieved {len(customers)} customers across all stores")
     else:
-        customers = user_manager.list_by_tenant(tenant_obj.id)
+        customers = user_manager.get_users_by_tenant(tenant_obj.id)
         logger.info(f"Retrieved {len(customers)} customers for store {tenant_obj.name}")
 
     return templates.TemplateResponse(
@@ -107,49 +108,49 @@ async def view_customer(
     """View customer details."""
     # Use tenant_utils to get selected tenant
     from routes.admin.tenant_utils import get_selected_tenant, redirect_to_tenant_selection, get_all_tenants, create_virtual_all_tenant
-    
+
     # Get tenant parameter from request
     tenant_param = tenant or request.query_params.get('tenant')
-    
+
     # For customer details, we need a specific tenant, not "all"
     selected_tenant_slug, selected_tenant = get_selected_tenant(request, tenant_param, allow_all=False)
-    
+
     # If no tenant is selected, redirect to dashboard with message
     if not selected_tenant_slug:
         return redirect_to_tenant_selection()
-    
+
     # Get tenant object (should not be null since allow_all=False)
-    tenant_obj = tenant_manager.get_by_slug(selected_tenant_slug)
-    if not tenant_obj:
+    # Use the tenant object from get_selected_tenant instead of fetching again
+    if not selected_tenant:
         return RedirectResponse(
             url="/admin/dashboard?status_message=Store+not+found&status_type=error", 
             status_code=303
         )
-    
+
     # Get customer
-    customer = customer_manager.get_customer(customer_id)
+    customer = user_manager.get_user(customer_id) # Assuming get_user is the correct method.  get_customer is undefined.
     if not customer:
         raise HTTPException(
             status_code=404,
             detail=f"Customer with ID {customer_id} not found"
         )
-    
+
     # Get all tenants for the dropdown
-    all_tenants = get_all_tenants()
-    
+    all_tenants = tenant_manager.get_all() #Fixed this line as well.
+
     # Add virtual "All Stores" tenant if needed
-    if "all" not in [t.get("slug") for t in all_tenants]:
+    if "all" not in [t.slug for t in all_tenants]:
         all_tenants_with_all = [create_virtual_all_tenant()] + all_tenants
     else:
         all_tenants_with_all = all_tenants
-    
+
     return templates.TemplateResponse(
         "admin/customer_detail.html",
         {
             "request": request,
             "customer": customer,
             "selected_tenant": selected_tenant_slug,
-            "tenant": tenant_obj,
+            "tenant": selected_tenant, # Using selected_tenant here
             "tenants": all_tenants_with_all,
             "active_page": "customers",
             "all_stores_selected": False  # Always false for customer details view
