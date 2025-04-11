@@ -110,7 +110,28 @@ class UserManager:
     @staticmethod
     def get_users_by_tenant(tenant_id):
         # Placeholder - Replace with actual database query
-        return [{"id": f"{tenant_id}_1", "name": f"User in Tenant {tenant_id}"}, {"id": f"{tenant_id}_2", "name": f"Another User in Tenant {tenant_id}"}]
+        return [
+            {
+                "id": f"{tenant_id}_1", 
+                "name": f"Customer One in {tenant_id}",
+                "email": "customer1@example.com",
+                "phone": "555-123-4567",
+                "city": "Seattle", 
+                "state": "WA",
+                "orders_count": 3,
+                "total_spent": 249.99
+            }, 
+            {
+                "id": f"{tenant_id}_2", 
+                "name": f"Customer Two in {tenant_id}",
+                "email": "customer2@example.com",
+                "phone": "555-987-6543",
+                "city": "Portland", 
+                "state": "OR",
+                "orders_count": 1,
+                "total_spent": 129.50
+            }
+        ]
 
     @staticmethod
     def get_all_users():

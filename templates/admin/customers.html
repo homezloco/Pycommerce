@@ -46,38 +46,38 @@
                                     <div class="bg-secondary me-2 rounded-circle d-flex justify-content-center align-items-center" style="width: 40px; height: 40px;">
                                         <i class="bi bi-person-fill text-light"></i>
                                     </div>
-                                    {{ customer.name }}
+                                    {{ getattr(customer, 'name', '') }}
                                 </div>
                             </td>
-                            <td>{{ customer.email }}</td>
-                            <td>{{ customer.phone }}</td>
-                            <td>{{ customer.city }}, {{ customer.state }}</td>
+                            <td>{{ getattr(customer, 'email', '') }}</td>
+                            <td>{{ getattr(customer, 'phone', '') }}</td>
+                            <td>{{ getattr(customer, 'city', '') }}, {{ getattr(customer, 'state', '') }}</td>
                             <td>
                                 <span class="badge bg-info text-dark">
-                                    {{ customer.orders_count }} orders
+                                    {{ getattr(customer, 'orders_count', 0) }} orders
                                 </span>
                             </td>
-                            <td>${{ customer.total_spent }}</td>
+                            <td>${{ getattr(customer, 'total_spent', 0) }}</td>
                             <td>
                                 <div class="btn-group">
-                                    <a href="/admin/customers/{{ customer.id }}?tenant={{ selected_tenant }}" class="btn btn-sm btn-primary">View</a>
-                                    <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal{{ customer.id }}">Delete</button>
+                                    <a href="/admin/customers/{{ getattr(customer, 'id', '') }}?tenant={{ selected_tenant }}" class="btn btn-sm btn-primary">View</a>
+                                    <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal{{ getattr(customer, 'id', '') }}">Delete</button>
                                 </div>
-                                
+
                                 <!-- Delete Modal -->
-                                <div class="modal fade" id="deleteModal{{ customer.id }}" tabindex="-1" aria-labelledby="deleteModalLabel{{ customer.id }}" aria-hidden="true">
+                                <div class="modal fade" id="deleteModal{{ getattr(customer, 'id', '') }}" tabindex="-1" aria-labelledby="deleteModalLabel{{ getattr(customer, 'id', '') }}" aria-hidden="true">
                                     <div class="modal-dialog">
                                         <div class="modal-content bg-dark text-light">
                                             <div class="modal-header bg-dark border-secondary">
-                                                <h5 class="modal-title" id="deleteModalLabel{{ customer.id }}">Confirm Delete</h5>
+                                                <h5 class="modal-title" id="deleteModalLabel{{ getattr(customer, 'id', '') }}">Confirm Delete</h5>
                                                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                                             </div>
                                             <div class="modal-body">
-                                                Are you sure you want to delete customer <strong>{{ customer.name }}</strong>? This action cannot be undone.
+                                                Are you sure you want to delete customer <strong>{{ getattr(customer, 'name', '') }}</strong>? This action cannot be undone.
                                             </div>
                                             <div class="modal-footer bg-dark border-secondary">
                                                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                                <form action="/admin/customers/{{ customer.id }}/delete" method="post" style="display: inline;">
+                                                <form action="/admin/customers/{{ getattr(customer, 'id', '') }}/delete" method="post" style="display: inline;">
                                                     <input type="hidden" name="tenant" value="{{ selected_tenant }}">
                                                     <button type="submit" class="btn btn-danger">Delete</button>
                                                 </form>
@@ -128,7 +128,7 @@
                                     <h2 class="mb-0">
                                         {% set total_orders = 0 %}
                                         {% for customer in customers %}
-                                            {% set total_orders = total_orders + customer.orders_count %}
+                                            {% set total_orders = total_orders + getattr(customer, 'orders_count', 0) %}
                                         {% endfor %}
                                         {{ total_orders }}
                                     </h2>
@@ -147,7 +147,7 @@
                                     <h2 class="mb-0">$
                                         {% set total_revenue = 0 %}
                                         {% for customer in customers %}
-                                            {% set total_revenue = total_revenue + customer.total_spent %}
+                                            {% set total_revenue = total_revenue + getattr(customer, 'total_spent', 0) %}
                                         {% endfor %}
                                         {{ total_revenue }}
                                     </h2>
