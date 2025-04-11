@@ -121,37 +121,8 @@ async def admin_products(
     if selected_tenant_slug.lower() == "all":
         # Fetch all products when "All Stores" is selected
         logger.info("Fetching products for all stores")
-        try:
-            # First try to get all tenants
-            all_tenants = tenant_manager.list() or []
-            
-            # Then fetch products for each tenant and combine them
-            all_products = []
-            for tenant in all_tenants:
-                try:
-                    tenant_products = product_manager.get_by_tenant(
-                        tenant_id=str(tenant.id),
-                        **filters
-                    )
-                    all_products.extend(tenant_products)
-                    logger.info(f"Found {len(tenant_products)} products for tenant {tenant.name}")
-                except Exception as e:
-                    logger.error(f"Error fetching products for tenant {tenant.name}: {str(e)}")
-            
-            products = all_products
-            logger.info(f"Found {len(products)} products across all stores")
-            
-            # If no products found, fall back to list() method
-            if not products:
-                logger.info("No products found using tenant queries, trying list() method")
-                products = product_manager.list(**filters)
-                logger.info(f"Found {len(products)} products using list() method")
-                
-        except Exception as e:
-            logger.error(f"Error fetching all products: {str(e)}")
-            # Fallback to the general list method
-            products = product_manager.list(**filters)
-            logger.info(f"Falling back to list() method, found {len(products)} products")
+        from routes.admin.tenant_utils import get_products_for_all_tenants
+        products = get_products_for_all_tenants(tenant_manager, product_manager, logger, filters)
     else:
         # Fetch products for specific tenant
         logger.info(f"Fetching products for tenant: {tenant_obj.name} (ID: {tenant_obj.id})")

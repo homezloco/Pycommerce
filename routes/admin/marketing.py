@@ -33,17 +33,17 @@ async def marketing_dashboard(
     """Admin page for marketing dashboard."""
     # Get tenant from query parameters or session
     selected_tenant_slug = tenant or request.session.get("selected_tenant")
-    
+
     # If no tenant is selected, redirect to dashboard with message
     if not selected_tenant_slug:
         return RedirectResponse(
             url="/admin/dashboard?status_message=Please+select+a+store+first&status_type=warning", 
             status_code=303
         )
-    
+
     # Store the selected tenant in session for future requests
     request.session["selected_tenant"] = selected_tenant_slug
-    
+
     # Get tenant object
     tenant_obj = tenant_manager.get_by_slug(selected_tenant_slug)
     if not tenant_obj:
@@ -51,10 +51,10 @@ async def marketing_dashboard(
             url="/admin/dashboard?status_message=Store+not+found&status_type=error", 
             status_code=303
         )
-    
+
     # Get all tenants for the sidebar
     tenants = tenant_manager.get_all()
-    
+
     # Marketing metrics (in a real app, these would come from a database)
     metrics = {
         "total_visitors": 1250,
@@ -64,7 +64,7 @@ async def marketing_dashboard(
         "newsletter_subscribers": 425,
         "active_discounts": 2
     }
-    
+
     # Recent campaigns (in a real app, these would come from a database)
     campaigns = [
         {
@@ -95,7 +95,7 @@ async def marketing_dashboard(
             }
         }
     ]
-    
+
     return templates.TemplateResponse(
         "admin/marketing.html",
         {
@@ -121,17 +121,17 @@ async def discounts_page(
     """Admin page for discount management."""
     # Get tenant from query parameters or session
     selected_tenant_slug = tenant or request.session.get("selected_tenant")
-    
+
     # If no tenant is selected, redirect to dashboard with message
     if not selected_tenant_slug:
         return RedirectResponse(
             url="/admin/dashboard?status_message=Please+select+a+store+first&status_type=warning", 
             status_code=303
         )
-    
+
     # Store the selected tenant in session for future requests
     request.session["selected_tenant"] = selected_tenant_slug
-    
+
     # Get tenant object
     tenant_obj = tenant_manager.get_by_slug(selected_tenant_slug)
     if not tenant_obj:
@@ -139,10 +139,10 @@ async def discounts_page(
             url="/admin/dashboard?status_message=Store+not+found&status_type=error", 
             status_code=303
         )
-    
+
     # Get all tenants for the sidebar
     tenants = tenant_manager.get_all()
-    
+
     # Discounts (in a real app, these would come from a database)
     discounts = [
         {
@@ -170,7 +170,7 @@ async def discounts_page(
             "used_count": 42
         }
     ]
-    
+
     return templates.TemplateResponse(
         "admin/marketing_discounts.html",
         {
@@ -195,17 +195,17 @@ async def newsletters_page(
     """Admin page for newsletter management."""
     # Get tenant from query parameters or session
     selected_tenant_slug = tenant or request.session.get("selected_tenant")
-    
+
     # If no tenant is selected, redirect to dashboard with message
     if not selected_tenant_slug:
         return RedirectResponse(
             url="/admin/dashboard?status_message=Please+select+a+store+first&status_type=warning", 
             status_code=303
         )
-    
+
     # Store the selected tenant in session for future requests
     request.session["selected_tenant"] = selected_tenant_slug
-    
+
     # Get tenant object
     tenant_obj = tenant_manager.get_by_slug(selected_tenant_slug)
     if not tenant_obj:
@@ -213,10 +213,10 @@ async def newsletters_page(
             url="/admin/dashboard?status_message=Store+not+found&status_type=error", 
             status_code=303
         )
-    
+
     # Get all tenants for the sidebar
     tenants = tenant_manager.get_all()
-    
+
     # Newsletter templates (in a real app, these would come from a database)
     templates_list = [
         {
@@ -238,7 +238,7 @@ async def newsletters_page(
             "click_rate": 24.7
         }
     ]
-    
+
     # Subscriber statistics
     subscriber_stats = {
         "total": 425,
@@ -251,7 +251,7 @@ async def newsletters_page(
             "imported": 65
         }
     }
-    
+
     return templates.TemplateResponse(
         "admin/marketing_newsletters.html",
         {
@@ -278,17 +278,17 @@ async def analytics_page(
     """Admin page for analytics."""
     # Get tenant from query parameters or session
     selected_tenant_slug = tenant or request.session.get("selected_tenant")
-    
+
     # If no tenant is selected, redirect to dashboard with message
     if not selected_tenant_slug:
         return RedirectResponse(
             url="/admin/dashboard?status_message=Please+select+a+store+first&status_type=warning", 
             status_code=303
         )
-    
+
     # Store the selected tenant in session for future requests
     request.session["selected_tenant"] = selected_tenant_slug
-    
+
     # Get tenant object
     tenant_obj = tenant_manager.get_by_slug(selected_tenant_slug)
     if not tenant_obj:
@@ -296,13 +296,13 @@ async def analytics_page(
             url="/admin/dashboard?status_message=Store+not+found&status_type=error", 
             status_code=303
         )
-    
+
     # Get all tenants for the sidebar
     tenants = tenant_manager.get_all()
-    
+
     # Period can be: today, week, month, year
     period = period or "month"
-    
+
     # Analytics data (in a real app, these would come from a database)
     analytics = {
         "visitors": {
@@ -336,7 +336,7 @@ async def analytics_page(
             "other": 5.5
         }
     }
-    
+
     return templates.TemplateResponse(
         "admin/analytics.html",
         {
@@ -355,13 +355,13 @@ async def analytics_page(
 def setup_routes(app_templates):
     """
     Set up routes with the given templates.
-    
+
     Args:
         app_templates: Jinja2Templates instance from the main app
     """
     global templates
     templates = app_templates
-    
+
     # Add direct routes for common URLs to redirect to the proper route
     @router.get("/newsletters", response_class=HTMLResponse)
     async def newsletters_redirect(
@@ -373,5 +373,5 @@ def setup_routes(app_templates):
         if tenant:
             redirect_url += f"?tenant={tenant}"
         return RedirectResponse(url=redirect_url, status_code=303)
-        
+
     return router
