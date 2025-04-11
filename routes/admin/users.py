@@ -124,26 +124,78 @@ user_manager = UserManager()
 @router.get("/users", response_class=HTMLResponse)
 async def list_users(
     request: Request,
+    tenant: Optional[str] = None,
     status_message: Optional[str] = None,
     status_type: str = "info"
 ):
     """Admin page for user management."""
-    # Get users
-    users = user_manager.get_users()
+    # Get tenant from query parameters or session
+    selected_tenant_slug = tenant or request.session.get("selected_tenant")
+
+    # If no tenant is selected, redirect to dashboard with message
+    if not selected_tenant_slug:
+        return RedirectResponse(
+            url="/admin/dashboard?status_message=Please+select+a+store+first&status_type=warning", 
+            status_code=303
+        )
+
+    # Store the selected tenant in session for future requests
+    request.session["selected_tenant"] = selected_tenant_slug
+
+    # Get tenant object
+    tenant_obj = tenant_manager.get_by_slug(selected_tenant_slug)
+    if not tenant_obj and selected_tenant_slug.lower() != "all":
+        return RedirectResponse(
+            url="/admin/dashboard?status_message=Store+not+found&status_type=error", 
+            status_code=303
+        )
+
+    # Handle "all" tenant slug case
+    if selected_tenant_slug.lower() == "all":
+        logger.info("Using 'All Stores' selection in users page")
+        from routes.admin.tenant_utils import create_virtual_all_tenant
+        tenant_obj = type('AllStoresTenant', (), create_virtual_all_tenant())
+        # Get users for all tenants
+        try:
+            # First try to get all tenants
+            all_tenants = tenant_manager.get_all() or []
+            
+            # Then fetch users for each tenant and combine them
+            all_users = []
+            for tenant in all_tenants:
+                try:
+                    tenant_users = user_manager.get_users_by_tenant(tenant_id=str(tenant.id))
+                    all_users.extend(tenant_users)
+                    logger.info(f"Found {len(tenant_users)} users for tenant {tenant.name}")
+                except Exception as e:
+                    logger.error(f"Error fetching users for tenant {tenant.name}: {str(e)}")
+            
+            users = all_users
+            logger.info(f"Found {len(users)} users across all stores")
+            
+            # If no users found, fall back to get_all_users method
+            if not users:
+                logger.info("No users found using tenant queries, trying get_all_users() method")
+                users = user_manager.get_all_users()
+                logger.info(f"Found {len(users)} users using get_all_users() method")
+        except Exception as e:
+            logger.error(f"Error fetching all users: {str(e)}")
+            # Fallback to the general get_users method
+            users = user_manager.get_users()
+            logger.info(f"Falling back to get_users() method, found {len(users)} users")
+    else:
+        # Get users for specific tenant
+        users = user_manager.get_users()
 
     # Get all tenants for the sidebar
     tenants = tenant_manager.get_all()
-
-    # Get selected tenant from session
-    selected_tenant_slug = request.session.get("selected_tenant")
-    tenant = next((t for t in tenants if t.slug == selected_tenant_slug), tenants[0] if tenants else None)
 
     return templates.TemplateResponse(
         "admin/users.html",
         {
             "request": request,
             "users": users,
-            "tenant": tenant,
+            "tenant": tenant_obj,
             "selected_tenant": selected_tenant_slug,
             "tenants": tenants,
             "active_page": "users",

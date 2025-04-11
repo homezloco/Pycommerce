@@ -12,6 +12,8 @@ from fastapi import APIRouter, Request, Form, Depends
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 
+from pycommerce.models.tenant import TenantManager
+
 # Configure logging
 logger = logging.getLogger(__name__)
 
@@ -20,6 +22,13 @@ router = APIRouter(tags=["admin_settings"])
 
 # Global variables initialized in setup_routes
 templates = None
+
+# Initialize managers
+try:
+    tenant_manager = TenantManager()
+except Exception as e:
+    logger.error(f"Error initializing TenantManager: {e}")
+    tenant_manager = None
 
 @router.get("/admin/settings", response_class=HTMLResponse)
 async def settings(request: Request):

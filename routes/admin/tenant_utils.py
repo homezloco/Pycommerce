@@ -316,6 +316,102 @@ def get_items_for_all_tenants(tenant_manager, item_manager, get_method_name, log
             return all_items
         return []
 
+def get_objects_for_all_tenants(tenant_manager, object_manager, get_method_name, id_param_name='tenant_id', logger=None, filters=None, fallback_method_name=None):
+    """
+    Generalized function to fetch any object type from all tenants.
+    
+    Args:
+        tenant_manager: The tenant manager instance
+        object_manager: The manager instance for specific objects
+        get_method_name: The method name to use to get objects for a tenant
+        id_param_name: The parameter name for tenant ID (default: 'tenant_id')
+        logger: Optional logger to use
+        filters: Optional dictionary of filters to apply
+        fallback_method_name: Optional fallback method name if per-tenant fetch fails
+        
+    Returns:
+        List of objects from all tenants
+    """
+    if logger is None:
+        logger = logging.getLogger(__name__)
+        
+    if filters is None:
+        filters = {}
+        
+    try:
+        # First try to get all tenants
+        all_tenants = tenant_manager.list() or []
+        
+        # Then fetch objects for each tenant and combine them
+        all_objects = []
+        for tenant in all_tenants:
+            try:
+                # Get the method to call
+                get_method = getattr(object_manager, get_method_name)
+                
+                # Create kwargs with the tenant ID parameter
+                kwargs = {id_param_name: str(tenant.id)}
+                kwargs.update(filters)
+                
+                # Call the method
+                tenant_objects = get_method(**kwargs)
+                
+                # Check if result is None
+                if tenant_objects is None:
+                    tenant_objects = []
+                    
+                # If not a list, make it a list
+                if not isinstance(tenant_objects, list):
+                    tenant_objects = [tenant_objects]
+                    
+                all_objects.extend(tenant_objects)
+                logger.info(f"Found {len(tenant_objects)} objects for tenant {tenant.name}")
+            except Exception as e:
+                logger.error(f"Error fetching objects for tenant {tenant.name}: {str(e)}")
+                
+        logger.info(f"Found {len(all_objects)} objects across all stores")
+        
+        # If no objects found and fallback method is provided, try it
+        if not all_objects and fallback_method_name and hasattr(object_manager, fallback_method_name):
+            logger.info(f"No objects found using tenant queries, trying {fallback_method_name}() method")
+            fallback_method = getattr(object_manager, fallback_method_name)
+            all_objects = fallback_method(**filters)
+            
+            # Check if result is None
+            if all_objects is None:
+                all_objects = []
+                
+            # If not a list, make it a list
+            if not isinstance(all_objects, list):
+                all_objects = [all_objects]
+                
+            logger.info(f"Found {len(all_objects)} objects using {fallback_method_name}() method")
+            
+        return all_objects
+    except Exception as e:
+        logger.error(f"Error fetching all objects: {str(e)}")
+        
+        # Fallback to the general method if available
+        if fallback_method_name and hasattr(object_manager, fallback_method_name):
+            try:
+                fallback_method = getattr(object_manager, fallback_method_name)
+                all_objects = fallback_method(**filters)
+                
+                # Check if result is None
+                if all_objects is None:
+                    all_objects = []
+                    
+                # If not a list, make it a list
+                if not isinstance(all_objects, list):
+                    all_objects = [all_objects]
+                    
+                logger.info(f"Falling back to {fallback_method_name}() method, found {len(all_objects)} objects")
+                return all_objects
+            except Exception as fallback_err:
+                logger.error(f"Error with fallback method: {str(fallback_err)}")
+                
+        return []
+
 def get_orders_for_all_tenants(tenant_manager, order_manager, logger, filters=None):
     """
     Fetch orders from all tenants.
