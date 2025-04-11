@@ -43,6 +43,10 @@
                                 <div class="mb-3">
                                     <label for="store_name" class="form-label">Store Name</label>
                                     <input type="text" class="form-control" id="store_name" name="store_name" value="{{ config.store_name if config and config.store_name else '' }}">
+                                    <!-- Debug info to help troubleshoot -->
+                                    <div class="d-none">
+                                        <pre>{{ config }}</pre>
+                                    </div>
                                 </div>
                                 <div class="mb-3">
                                     <label for="store_description" class="form-label">Store Description</label>

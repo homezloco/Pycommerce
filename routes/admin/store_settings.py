@@ -76,13 +76,23 @@ async def store_settings(
     logger.info(f"Rendering store settings with tenant: {tenant_obj.slug if tenant_obj else 'None'}")
     logger.info(f"Settings data: {store_settings}")
     
-    # Ensure settings are properly structured 
-    # The template expects direct access to settings fields, not nested structure
+    # Log settings before processing
+    logger.info(f"Original settings data: {store_settings}")
+    
+    # Create a copy of settings to avoid modifying the original
+    processed_settings = dict(store_settings)
+    
     # If settings are nested within 'theme', extract them to top-level
-    if 'theme' in store_settings and isinstance(store_settings['theme'], dict):
-        theme_settings = store_settings['theme']
+    if 'theme' in processed_settings and isinstance(processed_settings['theme'], dict):
+        theme_settings = processed_settings['theme']
         # Merge theme settings with top-level settings for backward compatibility
-        store_settings.update(theme_settings)
+        processed_settings.update(theme_settings)
+    
+    # Log the processed settings
+    logger.info(f"Processed settings for template: {processed_settings}")
+    
+    # Replace original settings with processed version
+    store_settings = processed_settings
     
     # Add display_tenant_selector flag for consistency with other admin pages
     return templates.TemplateResponse(
@@ -94,6 +104,7 @@ async def store_settings(
             "tenants": tenants,
             "active_page": "store-settings",
             "config": store_settings,  # This is the key variable for the template
+            "theme": store_settings.get('theme', {}),  # Add theme settings directly for compatibility
             "status_message": status_message,
             "status_type": status_type,
             "cart_item_count": cart_item_count,
