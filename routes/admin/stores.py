@@ -97,6 +97,21 @@ def setup_routes(templates: Jinja2Templates) -> APIRouter:
             }
         )
     
+    @router.get("/stores/add", response_class=HTMLResponse)
+    async def add_store_redirect(
+        request: Request
+    ):
+        """
+        Redirect /stores/add to /stores/new for compatibility.
+        
+        Args:
+            request: FastAPI request object
+        """
+        return RedirectResponse(
+            "/admin/stores/new",
+            status_code=status.HTTP_302_FOUND
+        )
+    
     @router.post("/stores/new", response_class=HTMLResponse)
     async def create_store(
         request: Request,
