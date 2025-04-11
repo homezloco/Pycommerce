@@ -28,17 +28,17 @@ _managers_initialized = False
 def setup_routes(templates_instance: Jinja2Templates):
     """
     Set up routes for category management.
-    
+
     Args:
         templates_instance: Jinja2 templates instance
-        
+
     Returns:
         APIRouter: FastAPI router
     """
     global templates, router, tenant_manager, category_manager, _managers_initialized
     templates = templates_instance
     router = APIRouter()
-    
+
     # Initialize managers only once, and only when this function is called (not at import time)
     if not _managers_initialized:
         try:
@@ -48,7 +48,7 @@ def setup_routes(templates_instance: Jinja2Templates):
             # Add compatibility method
             if not hasattr(tenant_manager, 'get_tenant_by_slug'):
                 tenant_manager.get_tenant_by_slug = tenant_manager.get_by_slug
-            
+
             # Initialize category manager
             try:
                 from pycommerce.models.category import CategoryManager
@@ -60,7 +60,7 @@ def setup_routes(templates_instance: Jinja2Templates):
             except Exception as e:
                 logger.error(f"Error initializing CategoryManager: {e}")
                 category_manager = None
-                
+
             _managers_initialized = True
             logger.info("Manager initialization complete")
         except Exception as e:
@@ -70,7 +70,7 @@ def setup_routes(templates_instance: Jinja2Templates):
                 tenant_manager = TenantManager()
             if not category_manager:
                 category_manager = None
-    
+
     @router.get("/admin/categories", response_class=HTMLResponse)
     async def categories_page(
         request: Request,
@@ -79,7 +79,7 @@ def setup_routes(templates_instance: Jinja2Templates):
     ):
         """
         Render the categories management page.
-        
+
         Args:
             request: The request object
             tenant: The tenant slug
@@ -92,18 +92,19 @@ def setup_routes(templates_instance: Jinja2Templates):
         parent_category = None
         parent_breadcrumbs = []
         error_message = None
-        
+
         # Check if tenant is specified in the URL or use the one from session
-        if not tenant:
-            tenant = request.session.get("selected_tenant", "tech")
-        
+        selected_tenant_slug = tenant
+        if not selected_tenant_slug:
+            selected_tenant_slug = request.session.get("selected_tenant", "tech")
+
         # Get current tenant
-        logger.info(f"Attempting to access categories for tenant: {tenant}")
-        current_tenant = tenant_manager.get_tenant_by_slug(tenant)
+        logger.info(f"Attempting to access categories for tenant: {selected_tenant_slug}")
+        current_tenant = tenant_manager.get_tenant_by_slug(selected_tenant_slug)
         if not current_tenant:
             # Instead of redirecting, log the issue and try to get the first tenant
-            logger.warning(f"Tenant with slug '{tenant}' not found, trying to find another tenant")
-            
+            logger.warning(f"Tenant with slug '{selected_tenant_slug}' not found, trying to find another tenant")
+
             # Try different method names for compatibility
             try:
                 if hasattr(tenant_manager, 'get_all_tenants'):
@@ -114,7 +115,7 @@ def setup_routes(templates_instance: Jinja2Templates):
                     tenants = tenant_manager.list()
                 else:
                     tenants = []
-                    
+
                 if tenants and len(tenants) > 0:
                     current_tenant = tenants[0]
                     logger.info(f"Using first available tenant: {current_tenant.name} ({current_tenant.slug})")
@@ -124,7 +125,7 @@ def setup_routes(templates_instance: Jinja2Templates):
             except Exception as e:
                 logger.error(f"Error finding alternative tenant: {e}")
                 return RedirectResponse(url="/admin/tenants")
-        
+
         # Get all tenants for store selector
         try:
             if hasattr(tenant_manager, 'get_all_tenants'):
@@ -139,91 +140,128 @@ def setup_routes(templates_instance: Jinja2Templates):
         except Exception as e:
             logger.error(f"Error getting all tenants: {e}")
             all_tenants = []
-        
+
         # Initialize context with what we have so far
         context = {
             "request": request,
             "active_page": "categories",
             "tenant": current_tenant,
             "tenants": all_tenants,
-            "selected_tenant": tenant,
+            "selected_tenant": selected_tenant_slug,
             "categories": [],
             "parent_category": None,
             "parent_breadcrumbs": [],
             "error": None,
             "success": None
         }
-        
+
         # Check if CategoryManager is available
         if not category_manager:
             context["error"] = "Category management is not available. The CategoryManager module could not be loaded."
             return templates.TemplateResponse("admin/categories.html", context)
-        
+
         # Get categories and process them
         try:
-            # First fetch all categories for this tenant
-            tenant_categories = category_manager.get_all_categories(current_tenant.id)
-            
-            # Handle None case
-            if tenant_categories is None:
-                tenant_categories = []
-                logger.error(f"Failed to get categories for tenant: {current_tenant.id}")
-                context["error"] = "Failed to retrieve categories. Please try again later."
-            
-            # Filter categories based on parent_id
-            if parent_id:
-                # Get the parent category
-                parent_category = category_manager.get_category(parent_id)
-                if parent_category:
-                    # Check if this parent belongs to the current tenant
-                    if parent_category.tenant_id != current_tenant.id:
-                        context["error"] = "Selected category does not belong to this tenant."
-                        return templates.TemplateResponse("admin/categories.html", context)
-                    
-                    # Build breadcrumb path
-                    breadcrumbs = []
-                    current_parent = parent_category
-                    while current_parent:
-                        breadcrumbs.insert(0, current_parent)
-                        if current_parent.parent_id:
-                            current_parent = category_manager.get_category(current_parent.parent_id)
-                        else:
-                            current_parent = None
-                    
-                    context["parent_category"] = parent_category
-                    context["parent_breadcrumbs"] = breadcrumbs
-                    
-                    # Get categories with this parent
-                    categories = [cat for cat in tenant_categories 
-                                if cat.parent_id == parent_id]
-                else:
-                    # Invalid parent ID, show root categories
-                    context["error"] = "Selected parent category not found."
-                    categories = [cat for cat in tenant_categories 
-                                if not cat.parent_id]
+            if selected_tenant_slug.lower() == "all":
+                # Fetch categories from all tenants
+                logger.info("Fetching categories from all tenants")
+                try:
+                    all_tenants = tenant_manager.list() or []
+                    all_categories = []
+
+                    for tenant in all_tenants:
+                        try:
+                            if category_manager:
+                                tenant_categories = category_manager.get_all_categories(
+                                    tenant_id=str(tenant.id),
+                                    include_inactive=True
+                                )
+                                logger.info(f"Found {len(tenant_categories)} categories for tenant {tenant.name}")
+
+                                # Add tenant name to category objects for display
+                                for category in tenant_categories:
+                                    category.tenant_name = tenant.name
+                                    all_categories.append(category)
+                            else:
+                                logger.warning(f"Category manager not available for tenant {tenant.name}")
+                        except Exception as e:
+                            logger.error(f"Error fetching categories for tenant {tenant.name}: {str(e)}")
+
+                    categories = all_categories
+                    logger.info(f"Found {len(categories)} categories across all stores")
+
+                    if not categories:
+                        error_message = "No categories found across all stores."
+                except Exception as e:
+                    logger.error(f"Error fetching categories from all tenants: {str(e)}")
+                    categories = []
+                    error_message = f"Error fetching categories: {str(e)}"
             else:
-                # Show root categories (those without parents)
-                categories = [cat for cat in tenant_categories 
-                             if not cat.parent_id]
-            
-            # Calculate product and subcategory counts for each category
-            for category in categories:
-                # Get direct products in this category
-                products_in_category = category_manager.get_products_in_category(category.id, include_subcategories=False)
-                category.product_count = len(products_in_category) if products_in_category else 0
-                
-                # Count subcategories - reuse tenant_categories to avoid extra database queries
-                subcategories = [cat for cat in tenant_categories 
-                               if cat.parent_id == category.id]
-                category.subcategory_count = len(subcategories) if subcategories else 0
-            
+                # Get categories for a specific tenant
+                logger.info(f"Getting categories for tenant: {current_tenant.name}")
+                tenant_categories = category_manager.get_all_categories(current_tenant.id)
+
+                # Handle None case
+                if tenant_categories is None:
+                    tenant_categories = []
+                    logger.error(f"Failed to get categories for tenant: {current_tenant.id}")
+                    context["error"] = "Failed to retrieve categories. Please try again later."
+
+                # Filter categories based on parent_id
+                if parent_id:
+                    # Get the parent category
+                    parent_category = category_manager.get_category(parent_id)
+                    if parent_category:
+                        # Check if this parent belongs to the current tenant
+                        if parent_category.tenant_id != current_tenant.id:
+                            context["error"] = "Selected category does not belong to this tenant."
+                            return templates.TemplateResponse("admin/categories.html", context)
+
+                        # Build breadcrumb path
+                        breadcrumbs = []
+                        current_parent = parent_category
+                        while current_parent:
+                            breadcrumbs.insert(0, current_parent)
+                            if current_parent.parent_id:
+                                current_parent = category_manager.get_category(current_parent.parent_id)
+                            else:
+                                current_parent = None
+
+                        context["parent_category"] = parent_category
+                        context["parent_breadcrumbs"] = breadcrumbs
+
+                        # Get categories with this parent
+                        categories = [cat for cat in tenant_categories 
+                                    if cat.parent_id == parent_id]
+                    else:
+                        # Invalid parent ID, show root categories
+                        context["error"] = "Selected parent category not found."
+                        categories = [cat for cat in tenant_categories 
+                                    if not cat.parent_id]
+                else:
+                    # Show root categories (those without parents)
+                    categories = [cat for cat in tenant_categories 
+                                 if not cat.parent_id]
+
+                # Calculate product and subcategory counts for each category
+                for category in categories:
+                    # Get direct products in this category
+                    products_in_category = category_manager.get_products_in_category(category.id, include_subcategories=False)
+                    category.product_count = len(products_in_category) if products_in_category else 0
+
+                    # Count subcategories - reuse tenant_categories to avoid extra database queries
+                    subcategories = [cat for cat in tenant_categories 
+                                   if cat.parent_id == category.id]
+                    category.subcategory_count = len(subcategories) if subcategories else 0
+
             # Update context with processed categories
             context["categories"] = categories
-            
+            context["error"] = error_message
+
         except Exception as e:
             logger.error(f"Error fetching categories: {e}")
             context["error"] = f"Error fetching categories: {str(e)}"
-        
+
         # Return the template response
         return templates.TemplateResponse("admin/categories.html", context)
 
@@ -239,7 +277,7 @@ def setup_routes(templates_instance: Jinja2Templates):
     ):
         """
         Create a new category.
-        
+
         Args:
             request: The request object
             tenant: The tenant slug
@@ -253,16 +291,16 @@ def setup_routes(templates_instance: Jinja2Templates):
         current_tenant = tenant_manager.get_tenant_by_slug(tenant)
         if not current_tenant:
             return RedirectResponse(url="/admin/tenants")
-        
+
         # Initialize redirect URL
         redirect_url = f"/admin/categories?tenant={tenant}"
         if parent_id:
             redirect_url += f"&parent_id={parent_id}"
-        
+
         # Check if CategoryManager is available
         if not category_manager:
             return RedirectResponse(url=f"{redirect_url}&error=Category management is not available")
-        
+
         try:
             # Create the category
             category = category_manager.create_category(
@@ -273,13 +311,13 @@ def setup_routes(templates_instance: Jinja2Templates):
                 parent_id=parent_id,
                 active=active
             )
-            
+
             # Redirect to categories page with success message
             return RedirectResponse(
                 url=f"{redirect_url}&success=Category {name} created successfully", 
                 status_code=303
             )
-        
+
         except Exception as e:
             logger.error(f"Error creating category: {e}")
             return RedirectResponse(
@@ -300,7 +338,7 @@ def setup_routes(templates_instance: Jinja2Templates):
     ):
         """
         Update an existing category.
-        
+
         Args:
             category_id: The category ID to update
             request: The request object
@@ -315,22 +353,22 @@ def setup_routes(templates_instance: Jinja2Templates):
         current_tenant = tenant_manager.get_tenant_by_slug(tenant)
         if not current_tenant:
             return RedirectResponse(url="/admin/tenants")
-        
+
         # Initialize redirect URL (to the parent view if applicable)
         category = category_manager.get_category(category_id) if category_manager else None
         displayed_parent_id = parent_id if parent_id else (category.parent_id if category else None)
-        
+
         redirect_url = f"/admin/categories?tenant={tenant}"
         if displayed_parent_id:
             redirect_url += f"&parent_id={displayed_parent_id}"
-        
+
         # Check if CategoryManager is available
         if not category_manager:
             return RedirectResponse(
                 url=f"{redirect_url}&error=Category management is not available",
                 status_code=303
             )
-        
+
         try:
             # Update the category
             updated_category = category_manager.update_category(
@@ -341,19 +379,19 @@ def setup_routes(templates_instance: Jinja2Templates):
                 parent_id=parent_id,
                 active=active
             )
-            
+
             if not updated_category:
                 return RedirectResponse(
                     url=f"{redirect_url}&error=Category not found",
                     status_code=303
                 )
-            
+
             # Redirect to categories page with success message
             return RedirectResponse(
                 url=f"{redirect_url}&success=Category {name} updated successfully", 
                 status_code=303
             )
-        
+
         except Exception as e:
             logger.error(f"Error updating category: {e}")
             return RedirectResponse(
@@ -369,7 +407,7 @@ def setup_routes(templates_instance: Jinja2Templates):
     ):
         """
         Delete a category.
-        
+
         Args:
             category_id: The category ID to delete
             request: The request object
@@ -379,47 +417,47 @@ def setup_routes(templates_instance: Jinja2Templates):
         current_tenant = tenant_manager.get_tenant_by_slug(tenant)
         if not current_tenant:
             return RedirectResponse(url="/admin/tenants")
-        
+
         # Get the category to find its parent for redirect
         category = category_manager.get_category(category_id) if category_manager else None
         parent_id = category.parent_id if category else None
-        
+
         # Initialize redirect URL
         redirect_url = f"/admin/categories?tenant={tenant}"
         if parent_id:
             redirect_url += f"&parent_id={parent_id}"
-        
+
         # Check if CategoryManager is available
         if not category_manager:
             return RedirectResponse(
                 url=f"{redirect_url}&error=Category management is not available",
                 status_code=303
             )
-        
+
         try:
             # Remember the name for the success message
             category_name = category.name if category else "Unknown"
-            
+
             # Delete the category
             success = category_manager.delete_category(category_id)
-            
+
             if not success:
                 return RedirectResponse(
                     url=f"{redirect_url}&error=Failed to delete category. It may have subcategories or not exist.",
                     status_code=303
                 )
-            
+
             # Redirect to categories page with success message
             return RedirectResponse(
                 url=f"{redirect_url}&success=Category {category_name} deleted successfully", 
                 status_code=303
             )
-        
+
         except Exception as e:
             logger.error(f"Error deleting category: {e}")
             return RedirectResponse(
                 url=f"{redirect_url}&error={str(e)}",
                 status_code=303
             )
-            
+
     return router

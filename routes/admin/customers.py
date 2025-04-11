@@ -25,7 +25,7 @@ tenant_manager = TenantManager()
 
 class CustomerManager:
     """Simple customer manager class for store customers."""
-    
+
     @staticmethod
     def get_customers(tenant_id=None):
         """Return a list of customers for a tenant (in a real app, this would query the database)."""
@@ -60,7 +60,7 @@ class CustomerManager:
                 "total_spent": 42.99
             }
         ]
-    
+
     @staticmethod
     def get_customer(customer_id):
         """Return a customer by ID (in a real app, this would query the database)."""
@@ -114,17 +114,17 @@ async def list_customers(
     """Admin page for customer management."""
     # Get tenant from query parameters or session
     selected_tenant_slug = tenant or request.session.get("selected_tenant")
-    
+
     # If no tenant is selected, redirect to dashboard with message
     if not selected_tenant_slug:
         return RedirectResponse(
             url="/admin/dashboard?status_message=Please+select+a+store+first&status_type=warning", 
             status_code=303
         )
-    
+
     # Store the selected tenant in session for future requests
     request.session["selected_tenant"] = selected_tenant_slug
-    
+
     # Get tenant object
     tenant_obj = tenant_manager.get_by_slug(selected_tenant_slug)
     if not tenant_obj:
@@ -132,13 +132,24 @@ async def list_customers(
             url="/admin/dashboard?status_message=Store+not+found&status_type=error", 
             status_code=303
         )
-    
-    # Get customers for this tenant
-    customers = customer_manager.get_customers(tenant_id=str(tenant_obj.id))
-    
+
+    # Get customers for this tenant or all tenants
+    if selected_tenant_slug.lower() == "all":
+        try:
+            all_tenants = tenant_manager.get_all() or []
+            customers = []
+            for t in all_tenants:
+                customers.extend(customer_manager.get_customers(tenant_id=str(t.id)))
+        except Exception as e:
+            logger.error(f"Error fetching customers for all tenants: {e}")
+            customers = customer_manager.get_customers() # Fallback
+    else:
+        customers = customer_manager.get_customers(tenant_id=str(tenant_obj.id))
+
+
     # Get all tenants for the sidebar
     tenants = tenant_manager.get_all()
-    
+
     return templates.TemplateResponse(
         "admin/customers.html",
         {
@@ -162,17 +173,17 @@ async def view_customer(
     """View customer details."""
     # Get tenant from query parameters or session
     selected_tenant_slug = tenant or request.session.get("selected_tenant")
-    
+
     # If no tenant is selected, redirect to dashboard with message
     if not selected_tenant_slug:
         return RedirectResponse(
             url="/admin/dashboard?status_message=Please+select+a+store+first&status_type=warning", 
             status_code=303
         )
-    
+
     # Store the selected tenant in session for future requests
     request.session["selected_tenant"] = selected_tenant_slug
-    
+
     # Get tenant object
     tenant_obj = tenant_manager.get_by_slug(selected_tenant_slug)
     if not tenant_obj:
@@ -180,7 +191,7 @@ async def view_customer(
             url="/admin/dashboard?status_message=Store+not+found&status_type=error", 
             status_code=303
         )
-    
+
     # Get customer
     customer = customer_manager.get_customer(customer_id)
     if not customer:
@@ -188,10 +199,10 @@ async def view_customer(
             status_code=404,
             detail=f"Customer with ID {customer_id} not found"
         )
-    
+
     # Get all tenants for the sidebar
     tenants = tenant_manager.get_all()
-    
+
     return templates.TemplateResponse(
         "admin/customer_detail.html",
         {
@@ -207,7 +218,7 @@ async def view_customer(
 def setup_routes(app_templates):
     """
     Set up routes with the given templates.
-    
+
     Args:
         app_templates: Jinja2Templates instance from the main app
     """
