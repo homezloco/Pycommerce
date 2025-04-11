@@ -134,23 +134,28 @@
                 <div class="mb-1 text-center">
                     <span class="badge text-bg-primary d-inline-block mb-1">
                         <i class="bi bi-shop"></i>
-                        {% if selected_tenant %}
-                            {% if selected_tenant == 'all' or selected_tenant.slug == 'all' %}
-                                All Stores
-                            {% else %}
-                                {% if selected_tenant.slug %}
-                                    {{ selected_tenant.name }}
+                        {% if display_tenant_selector is not defined or display_tenant_selector != False %}
+                            {% if selected_tenant %}
+                                {% if selected_tenant == 'all' or selected_tenant.slug == 'all' %}
+                                    All Stores
                                 {% else %}
-                                    {{ selected_tenant }}
+                                    {% if selected_tenant.slug %}
+                                        {{ selected_tenant.name }}
+                                    {% else %}
+                                        {{ selected_tenant }}
+                                    {% endif %}
                                 {% endif %}
+                            {% else %}
+                                No Store Selected
                             {% endif %}
                         {% else %}
-                            No Store Selected
+                            Store Management
                         {% endif %}
                     </span>
                 </div>
 
                 <!-- Mobile Store Selector -->
+                {% if display_tenant_selector is not defined or display_tenant_selector != False %}
                 <form action="/admin/change-store" method="GET" class="d-flex store-selector-mobile">
                     <input type="hidden" name="redirect_url" id="mobile_current_path">
                     <select class="form-select form-select-sm me-1" name="tenant" onchange="this.form.submit()">
@@ -199,6 +204,7 @@
 
                 <!-- Desktop Store Selector Dropdown - Only visible on large screens -->
                 <div class="mx-auto d-none d-lg-block">
+                    {% if display_tenant_selector is not defined or display_tenant_selector != False %}
                     <form action="/admin/change-store" method="GET" class="d-flex store-selector">
                         <input type="hidden" name="redirect_url" id="current_path">
                         <select class="form-select form-select-sm me-2" name="tenant" onchange="this.form.submit()">
@@ -214,6 +220,7 @@
                             {% endfor %}
                     </select>
                     </form>
+                    {% endif %}
                     {% if request.path not in ['/admin/settings', '/admin/media', '/admin/stores'] %}
                     <a href="/admin/stores/add" class="btn btn-sm btn-outline-light">
                         <i class="bi bi-plus"></i>
