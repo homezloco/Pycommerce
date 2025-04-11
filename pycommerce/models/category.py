@@ -389,7 +389,7 @@ class CategoryManager:
             # Use eager loading when available
             try:
                 from sqlalchemy.orm import joinedload
-                query = Product.query.options(joinedload(Product.categories))
+                query = Product.query.options(joinedload(Product.category_objects))
             except (ImportError, AttributeError):
                 query = Product.query
             

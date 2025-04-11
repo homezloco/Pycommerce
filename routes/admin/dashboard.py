@@ -391,7 +391,7 @@ async def admin_dashboard_data(
     return JSONResponse(content=sales_data)
 
 @router.get("/change-store", response_class=RedirectResponse)
-async def admin_change_store(request: Request, tenant: str = ""):
+async def admin_change_store(request: Request, tenant: str = "", redirect_url: str = ""):
     """Change the selected store for admin management."""
     if tenant:
         # Verify tenant exists
@@ -399,10 +399,27 @@ async def admin_change_store(request: Request, tenant: str = ""):
         if tenant_obj:
             # Store in session
             request.session["selected_tenant"] = tenant
-            return RedirectResponse(
-                url="/admin/dashboard?status_message=Store+changed+successfully&status_type=success", 
-                status_code=303
-            )
+            
+            # If a redirect URL is provided, use it; otherwise default to the referrer or dashboard
+            if not redirect_url:
+                # Try to get the referrer (the page that linked to this endpoint)
+                referrer = request.headers.get("referer")
+                if referrer:
+                    # Extract the path from the referrer URL
+                    from urllib.parse import urlparse
+                    parsed_url = urlparse(referrer)
+                    redirect_url = parsed_url.path
+                else:
+                    # If no referrer, default to dashboard
+                    redirect_url = "/admin/dashboard"
+            
+            # Append success message to the redirect URL
+            if "?" in redirect_url:
+                redirect_url += "&status_message=Store+changed+successfully&status_type=success"
+            else:
+                redirect_url += "?status_message=Store+changed+successfully&status_type=success"
+                
+            return RedirectResponse(url=redirect_url, status_code=303)
     
     # If tenant doesn't exist or no tenant provided, redirect back to dashboard
     return RedirectResponse(url="/admin/dashboard", status_code=303)
