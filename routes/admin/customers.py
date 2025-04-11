@@ -74,22 +74,28 @@ async def customers_page(
         for tenant in tenants:
             try:
                 # Use the get_users_by_tenant method from UserManager
-                tenant_customers = user_manager.get_users_by_tenant(str(tenant.id))
+                tenant_id = tenant.id if hasattr(tenant, 'id') else tenant.get('id')
+                tenant_name = tenant.name if hasattr(tenant, 'name') else tenant.get('name')
+                
+                tenant_customers = user_manager.get_users_by_tenant(str(tenant_id))
                 # Add tenant name to each customer for display
                 for customer in tenant_customers:
                     if isinstance(customer, dict):
-                        customer["tenant_name"] = tenant.name
+                        customer["tenant_name"] = tenant_name
                     else:
-                        customer.tenant_name = tenant.name
+                        customer.tenant_name = tenant_name
                 customers.extend(tenant_customers)
             except Exception as e:
-                logger.error(f"Error listing customers for tenant {tenant.id}: {e}")
+                logger.error(f"Error listing customers for tenant {tenant_id}: {e}")
 
         logger.info(f"Retrieved {len(customers)} customers across all stores")
     else:
         # Use the get_users_by_tenant method from UserManager
-        customers = user_manager.get_users_by_tenant(str(tenant_obj.id))
-        logger.info(f"Retrieved {len(customers)} customers for store {tenant_obj.name}")
+        tenant_id = tenant_obj.id if hasattr(tenant_obj, 'id') else tenant_obj.get('id')
+        tenant_name = tenant_obj.name if hasattr(tenant_obj, 'name') else tenant_obj.get('name')
+        
+        customers = user_manager.get_users_by_tenant(str(tenant_id))
+        logger.info(f"Retrieved {len(customers)} customers for store {tenant_name}")
 
     return templates.TemplateResponse(
         "admin/customers.html",
