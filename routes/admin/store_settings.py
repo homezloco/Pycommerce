@@ -62,13 +62,8 @@ async def store_settings(
                 # Make sure we have settings initialized
                 store_settings = tenant_obj.settings or {}
                 logger.info(f"Retrieved settings for tenant {selected_tenant_slug}: {store_settings}")
-            else:
-                logger.warning(f"No tenant found with slug '{selected_tenant_slug}'")
         except Exception as e:
             logger.error(f"Error getting tenant: {str(e)}")
-            # Add trace for debugging
-            import traceback
-            logger.error(traceback.format_exc())
 
     # Get cart item count if available
     cart_item_count = request.session.get("cart_item_count", 0)
@@ -118,7 +113,7 @@ async def store_settings(
         **store_settings
     }
 
-    # Log the processed settings
+    # Log processed settings for debugging
     logger.info(f"Processed settings for template: {processed_settings}")
 
     # Include the raw settings for debugging too
@@ -143,7 +138,7 @@ async def store_settings(
         }
     )
 
-@router.post("/store-settings", response_class=RedirectResponse)
+@router.post("/store-settings/basic", response_class=RedirectResponse)
 async def update_basic_settings(
     request: Request,
     tab: str = Form("basic"),
@@ -383,6 +378,148 @@ async def get_store_settings_api(
         response_data["error"] = error_message
         
     return response_data
+
+@router.post("/api/store-settings", response_class=JSONResponse)
+async def store_settings_save(
+    request: Request
+):
+    """API endpoint to save store settings."""
+    # Get tenant
+    tenant_slug = request.session.get("selected_tenant")
+    if not tenant_slug:
+        return JSONResponse(
+            status_code=400,
+            content={"error": "No tenant selected"}
+        )
+
+    # Get tenant object
+    tenant_obj = tenant_manager.get_by_slug(tenant_slug)
+    if not tenant_obj:
+        return JSONResponse(
+            status_code=404,
+            content={"error": f"Tenant not found: {tenant_slug}"}
+        )
+
+    # Get settings from request body
+    try:
+        settings = await request.json()
+        logger.info(f"[API] Received settings update: {settings}")
+    except Exception as e:
+        logger.error(f"[API] Error parsing JSON: {str(e)}")
+        return JSONResponse(
+            status_code=400,
+            content={"error": f"Invalid JSON: {str(e)}"}
+        )
+
+    # Update tenant settings
+    try:
+        # Initialize settings object if it doesn't exist
+        if not hasattr(tenant_obj, 'settings') or not tenant_obj.settings:
+            tenant_obj.settings = {}
+
+        # Merge new settings with existing settings
+        tenant_obj.settings.update(settings)
+
+        # Save tenant
+        tenant_manager.update(tenant_obj.id, {"settings": tenant_obj.settings})
+
+        logger.info(f"[API] Updated settings for tenant {tenant_slug}")
+
+        return {
+            "success": True,
+            "message": "Settings saved successfully",
+            "tenant_id": str(tenant_obj.id),
+            "tenant_slug": tenant_slug
+        }
+    except Exception as e:
+        logger.error(f"[API] Error saving settings: {str(e)}")
+        return JSONResponse(
+            status_code=500,
+            content={"error": f"Error saving settings: {str(e)}"}
+        )
+
+@router.post("/api/store-settings/reset", response_class=JSONResponse)
+async def store_settings_reset(
+    request: Request
+):
+    """API endpoint to reset store settings to defaults."""
+    # Get tenant
+    tenant_slug = request.session.get("selected_tenant")
+    if not tenant_slug:
+        return JSONResponse(
+            status_code=400,
+            content={"error": "No tenant selected"}
+        )
+
+    # Get tenant object
+    tenant_obj = tenant_manager.get_by_slug(tenant_slug)
+    if not tenant_obj:
+        return JSONResponse(
+            status_code=404,
+            content={"error": f"Tenant not found: {tenant_slug}"}
+        )
+
+    # Default settings
+    default_settings = {
+        "store_name": tenant_obj.name,
+        "store_description": "",
+        "contact_email": "",
+        "currency": "USD",
+        "primary_color": "#3498db",
+        "secondary_color": "#6c757d",
+        "background_color": "#ffffff",
+        "text_color": "#212529",
+        "font_family": "Arial, sans-serif",
+        "store_country": "US",
+        "enable_shipping": True,
+        "flat_rate_shipping": 5.99,
+        "free_shipping_threshold": 50.00,
+        "dimensional_weight_factor": 200,
+        "express_shipping_multiplier": 1.75,
+        "flat_rate_domestic": 5.99,
+        "flat_rate_international": 19.99,
+        "ai_settings": {
+            "openai_model": "gpt-3.5-turbo",
+            "dalle_model": "dall-e-2",
+            "enable_description_generation": False,
+            "enable_image_generation": False,
+            "enable_chatbot": False
+        }
+    }
+
+    # Update tenant settings
+    try:
+        # Initialize settings object if it doesn't exist
+        if not hasattr(tenant_obj, 'settings') or not tenant_obj.settings:
+            tenant_obj.settings = {}
+
+        # Keep theme settings if they exist
+        theme_settings = tenant_obj.settings.get("theme", {})
+
+        # Apply default settings
+        tenant_obj.settings = default_settings
+
+        # Restore theme settings
+        if theme_settings:
+            tenant_obj.settings["theme"] = theme_settings
+
+        # Save tenant
+        tenant_manager.update(tenant_obj.id, {"settings": tenant_obj.settings})
+
+        logger.info(f"[API] Reset settings for tenant {tenant_slug}")
+
+        return {
+            "success": True,
+            "message": "Settings reset successfully",
+            "tenant_id": str(tenant_obj.id),
+            "tenant_slug": tenant_slug
+        }
+    except Exception as e:
+        logger.error(f"[API] Error resetting settings: {str(e)}")
+        return JSONResponse(
+            status_code=500,
+            content={"error": f"Error resetting settings: {str(e)}"}
+        )
 
 def setup_routes(app_templates):
     """

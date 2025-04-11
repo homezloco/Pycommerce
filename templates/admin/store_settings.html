@@ -1,247 +1,145 @@
+{% extends "admin/base_admin.html" %}
 
-{% extends 'admin/base_admin.html' %}
+{% block title %}Store Settings{% endblock %}
 
-{% block title %}PyCommerce - Store Settings{% endblock %}
-
-{% block admin_content %}
-<div class="container-fluid">
-    <h1 class="h2 mb-4">Store Settings</h1>
-
+{% block content %}
+<div class="container-fluid px-4">
+    <h1 class="mt-4">Store Settings</h1>
     <div class="card mb-4">
         <div class="card-header">
             <i class="fas fa-cog me-1"></i>
             Store Configuration
         </div>
         <div class="card-body">
-            <h5>Debug Information</h5>
-            <p>Selected Tenant: <strong>{{ selected_tenant }}</strong></p>
-            <p>Tenant Object Exists: <strong>{{ tenant is not none }}</strong></p>
-            <p>Config Type: <strong>{{ config.__class__.__name__ }}</strong></p>
-        </div>
-    </div>
-
-    <ul class="nav nav-tabs" id="myTab" role="tablist">
-        <li class="nav-item" role="presentation">
-            <button class="nav-link {% if tab == 'basic' or not tab %}active{% endif %}" id="basic-tab" data-bs-toggle="tab" data-bs-target="#basic-pane" type="button" role="tab" aria-controls="basic-pane" aria-selected="{% if tab == 'basic' or not tab %}true{% else %}false{% endif %}">
-                Basic Settings
-            </button>
-        </li>
-        <li class="nav-item" role="presentation">
-            <button class="nav-link {% if tab == 'shipping' %}active{% endif %}" id="shipping-tab" data-bs-toggle="tab" data-bs-target="#shipping-pane" type="button" role="tab" aria-controls="shipping-pane" aria-selected="{% if tab == 'shipping' %}true{% else %}false{% endif %}">
-                Shipping
-            </button>
-        </li>
-        <li class="nav-item" role="presentation">
-            <button class="nav-link {% if tab == 'ai' %}active{% endif %}" id="ai-tab" data-bs-toggle="tab" data-bs-target="#ai-pane" type="button" role="tab" aria-controls="ai-pane" aria-selected="{% if tab == 'ai' %}true{% else %}false{% endif %}">
-                AI Configuration
-            </button>
-        </li>
-    </ul>
-
-    <div class="tab-content pt-4" id="myTabContent">
-        <!-- Basic Settings Tab -->
-        <div class="tab-pane fade {% if tab == 'basic' or not tab %}show active{% endif %}" id="basic-pane" role="tabpanel" aria-labelledby="basic-tab">
             <div class="row">
-                <div class="col-md-12">
-                    <div class="card shadow-sm mb-4">
-                        <div class="card-header">
-                            <h5 class="card-title mb-0">Basic Store Settings</h5>
-                        </div>
-                        <div class="card-body">
-                            <p class="text-muted mb-4">
-                                Configure your store's basic information and settings.
-                            </p>
-
-                            <form action="/admin/store-settings" method="POST" id="basic-settings-form">
-                                <input type="hidden" name="tab" value="basic">
+                <div class="col-md-3">
+                    <div class="nav flex-column nav-pills me-3" id="v-pills-tab" role="tablist" aria-orientation="vertical">
+                        <button class="nav-link active" id="v-pills-basic-tab" data-bs-toggle="pill" data-bs-target="#v-pills-basic" type="button" role="tab" aria-controls="v-pills-basic" aria-selected="true">Basic Settings</button>
+                        <button class="nav-link" id="v-pills-shipping-tab" data-bs-toggle="pill" data-bs-target="#v-pills-shipping" type="button" role="tab" aria-controls="v-pills-shipping" aria-selected="false">Shipping</button>
+                        <button class="nav-link" id="v-pills-ai-tab" data-bs-toggle="pill" data-bs-target="#v-pills-ai" type="button" role="tab" aria-controls="v-pills-ai" aria-selected="false">AI Configuration</button>
+                    </div>
+                </div>
+                <div class="col-md-9">
+                    <form id="storeSettingsForm" method="POST">
+                        <div class="tab-content" id="v-pills-tabContent">
+                            <!-- Basic Settings Tab -->
+                            <div class="tab-pane fade show active" id="v-pills-basic" role="tabpanel" aria-labelledby="v-pills-basic-tab">
+                                <h4>Basic Store Settings</h4>
                                 <div class="mb-3">
                                     <label for="store_name" class="form-label">Store Name</label>
-                                    <input type="text" class="form-control" id="store_name" name="store_name" value="{{ config.store_name if config and config.store_name else '' }}">
+                                    <input type="text" class="form-control" id="store_name" name="store_name">
                                 </div>
                                 <div class="mb-3">
                                     <label for="store_description" class="form-label">Store Description</label>
-                                    <textarea class="form-control" id="store_description" name="store_description" rows="3">{{ config.store_description if config and config.store_description else '' }}</textarea>
+                                    <textarea class="form-control" id="store_description" name="store_description" rows="3"></textarea>
                                 </div>
                                 <div class="mb-3">
                                     <label for="contact_email" class="form-label">Contact Email</label>
-                                    <input type="email" class="form-control" id="contact_email" name="contact_email" value="{{ config.contact_email if config and config.contact_email else '' }}">
+                                    <input type="email" class="form-control" id="contact_email" name="contact_email">
                                 </div>
                                 <div class="mb-3">
                                     <label for="currency" class="form-label">Currency</label>
                                     <select class="form-select" id="currency" name="currency">
-                                        <option value="USD" {% if config and config.currency == 'USD' %}selected{% endif %}>US Dollar (USD)</option>
-                                        <option value="EUR" {% if config and config.currency == 'EUR' %}selected{% endif %}>Euro (EUR)</option>
-                                        <option value="GBP" {% if config and config.currency == 'GBP' %}selected{% endif %}>British Pound (GBP)</option>
-                                        <option value="CAD" {% if config and config.currency == 'CAD' %}selected{% endif %}>Canadian Dollar (CAD)</option>
-                                        <option value="AUD" {% if config and config.currency == 'AUD' %}selected{% endif %}>Australian Dollar (AUD)</option>
+                                        <option value="USD">US Dollar (USD)</option>
+                                        <option value="EUR">Euro (EUR)</option>
+                                        <option value="GBP">British Pound (GBP)</option>
+                                        <option value="CAD">Canadian Dollar (CAD)</option>
+                                        <option value="AUD">Australian Dollar (AUD)</option>
                                     </select>
                                 </div>
-                                <div class="d-flex justify-content-end">
-                                    <button type="submit" class="btn btn-primary">
-                                        <i class="bi bi-save me-2"></i> Save Settings
-                                    </button>
+                            </div>
+
+                            <!-- Shipping Tab -->
+                            <div class="tab-pane fade" id="v-pills-shipping" role="tabpanel" aria-labelledby="v-pills-shipping-tab">
+                                <h4>Shipping Configuration</h4>
+                                <div class="mb-3">
+                                    <label for="store_country" class="form-label">Store Country</label>
+                                    <select class="form-select" id="store_country" name="store_country">
+                                        <option value="US">United States</option>
+                                        <option value="CA">Canada</option>
+                                        <option value="GB">United Kingdom</option>
+                                        <option value="AU">Australia</option>
+                                        <option value="DE">Germany</option>
+                                    </select>
                                 </div>
-                            </form>
+                                <div class="mb-3">
+                                    <label for="store_postal_code" class="form-label">Store Postal Code</label>
+                                    <input type="text" class="form-control" id="store_postal_code" name="store_postal_code">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="free_shipping_threshold" class="form-label">Free Shipping Threshold</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">$</span>
+                                        <input type="number" class="form-control" id="free_shipping_threshold" name="free_shipping_threshold" step="0.01">
+                                    </div>
+                                    <div class="form-text">Orders above this amount qualify for free shipping</div>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="dimensional_weight_factor" class="form-label">Dimensional Weight Factor</label>
+                                    <input type="number" class="form-control" id="dimensional_weight_factor" name="dimensional_weight_factor">
+                                    <div class="form-text">Factor used to calculate dimensional weight (L×W×H÷factor)</div>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="express_shipping_multiplier" class="form-label">Express Shipping Multiplier</label>
+                                    <input type="number" class="form-control" id="express_shipping_multiplier" name="express_shipping_multiplier" step="0.01">
+                                    <div class="form-text">Multiplier for express shipping rates (e.g., 1.75 = 75% more)</div>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="flat_rate_domestic" class="form-label">Flat Rate Domestic Shipping</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">$</span>
+                                        <input type="number" class="form-control" id="flat_rate_domestic" name="flat_rate_domestic" step="0.01">
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="flat_rate_international" class="form-label">Flat Rate International Shipping</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">$</span>
+                                        <input type="number" class="form-control" id="flat_rate_international" name="flat_rate_international" step="0.01">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- AI Configuration Tab -->
+                            <div class="tab-pane fade" id="v-pills-ai" role="tabpanel" aria-labelledby="v-pills-ai-tab">
+                                <h4>AI Configuration</h4>
+                                <div class="mb-3">
+                                    <label for="openai_api_key" class="form-label">OpenAI API Key</label>
+                                    <input type="password" class="form-control" id="openai_api_key" name="openai_api_key">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="openai_model" class="form-label">OpenAI Model</label>
+                                    <select class="form-select" id="openai_model" name="openai_model">
+                                        <option value="gpt-4">GPT-4</option>
+                                        <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="dalle_model" class="form-label">DALL-E Model</label>
+                                    <select class="form-select" id="dalle_model" name="dalle_model">
+                                        <option value="dall-e-3">DALL-E 3</option>
+                                        <option value="dall-e-2">DALL-E 2</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3 form-check">
+                                    <input type="checkbox" class="form-check-input" id="enable_description_generation" name="enable_description_generation">
+                                    <label class="form-check-label" for="enable_description_generation">Enable Product Description Generation</label>
+                                </div>
+                                <div class="mb-3 form-check">
+                                    <input type="checkbox" class="form-check-input" id="enable_image_generation" name="enable_image_generation">
+                                    <label class="form-check-label" for="enable_image_generation">Enable Image Generation</label>
+                                </div>
+                                <div class="mb-3 form-check">
+                                    <input type="checkbox" class="form-check-input" id="enable_chatbot" name="enable_chatbot">
+                                    <label class="form-check-label" for="enable_chatbot">Enable AI Shopping Assistant</label>
+                                </div>
+                            </div>
                         </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Shipping Configuration Tab -->
-        <div class="tab-pane fade {% if tab == 'shipping' %}show active{% endif %}" id="shipping-pane" role="tabpanel" aria-labelledby="shipping-tab">
-            <div class="row">
-                <div class="col-md-12">
-                    <div class="card shadow-sm mb-4">
-                        <div class="card-header">
-                            <h5 class="card-title mb-0">Shipping Configuration</h5>
+                        <div class="mt-4">
+                            <button type="submit" class="btn btn-primary">Save Settings</button>
+                            <button type="button" class="btn btn-secondary" id="resetButton">Reset</button>
                         </div>
-                        <div class="card-body">
-                            <p class="text-muted mb-4">
-                                Configure your store's shipping options and rates. These settings determine how shipping costs are calculated for your customers.
-                            </p>
-
-                            <form action="/admin/shipping-settings" method="POST" id="shipping-settings-form">
-                                <input type="hidden" name="tab" value="shipping">
-                                <div class="row mb-4">
-                                    <div class="col-md-6">
-                                        <h6 class="fw-bold mb-3">Basic Settings</h6>
-
-                                        <div class="mb-3">
-                                            <label for="store_country" class="form-label">Store Country</label>
-                                            <select class="form-select" id="store_country" name="store_country">
-                                                <option value="US" {% if config and config.store_country == 'US' %}selected{% endif %}>United States</option>
-                                                <option value="CA" {% if config and config.store_country == 'CA' %}selected{% endif %}>Canada</option>
-                                                <option value="GB" {% if config and config.store_country == 'GB' %}selected{% endif %}>United Kingdom</option>
-                                                <option value="AU" {% if config and config.store_country == 'AU' %}selected{% endif %}>Australia</option>
-                                                <option value="DE" {% if config and config.store_country == 'DE' %}selected{% endif %}>Germany</option>
-                                                <option value="FR" {% if config and config.store_country == 'FR' %}selected{% endif %}>France</option>
-                                            </select>
-                                            <div class="form-text">The country where your store is located.</div>
-                                        </div>
-
-                                        <div class="mb-3">
-                                            <label for="store_postal_code" class="form-label">Store Postal/ZIP Code</label>
-                                            <input type="text" class="form-control" id="store_postal_code" name="store_postal_code" value="{{ config.store_postal_code if config and config.store_postal_code else '' }}">
-                                            <div class="form-text">Used for distance calculations.</div>
-                                        </div>
-
-                                        <div class="mb-3">
-                                            <label for="free_shipping_threshold" class="form-label">Free Shipping Threshold</label>
-                                            <div class="input-group">
-                                                <span class="input-group-text">$</span>
-                                                <input type="number" class="form-control" id="free_shipping_threshold" name="free_shipping_threshold" value="{{ config.free_shipping_threshold if config and config.free_shipping_threshold else 0 }}" step="0.01" min="0">
-                                            </div>
-                                            <div class="form-text">Orders above this amount qualify for free shipping. Set to 0 to disable.</div>
-                                        </div>
-                                    </div>
-
-                                    <div class="col-md-6">
-                                        <h6 class="fw-bold mb-3">Advanced Settings</h6>
-
-                                        <div class="mb-3">
-                                            <label for="dimensional_weight_factor" class="form-label">Dimensional Weight Factor</label>
-                                            <input type="number" class="form-control" id="dimensional_weight_factor" name="dimensional_weight_factor" value="{{ config.dimensional_weight_factor if config and config.dimensional_weight_factor else 5000 }}" step="1" min="1">
-                                            <div class="form-text">Conversion factor for calculating dimensional weight (kg/m³).</div>
-                                        </div>
-
-                                        <div class="mb-3">
-                                            <label for="express_multiplier" class="form-label">Express Shipping Multiplier</label>
-                                            <input type="number" class="form-control" id="express_multiplier" name="express_multiplier" value="{{ config.express_multiplier if config and config.express_multiplier else 1.75 }}" step="0.01" min="1">
-                                            <div class="form-text">Multiplier for express shipping rates (e.g., 1.75 = 75% more than standard).</div>
-                                        </div>
-
-                                        <!-- Add these fields for backwards compatibility -->
-                                        <input type="hidden" name="flat_rate_domestic" value="{{ config.flat_rate_domestic if config and config.flat_rate_domestic else 5.00 }}">
-                                        <input type="hidden" name="flat_rate_international" value="{{ config.flat_rate_international if config and config.flat_rate_international else 15.00 }}">
-                                    </div>
-                                </div>
-
-                                <div class="d-flex justify-content-end">
-                                    <button type="submit" class="btn btn-primary">
-                                        <i class="bi bi-save me-2"></i> Save Settings
-                                    </button>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- AI Configuration Tab -->
-        <div class="tab-pane fade {% if tab == 'ai' %}show active{% endif %}" id="ai-pane" role="tabpanel" aria-labelledby="ai-tab">
-            <div class="row">
-                <div class="col-md-12">
-                    <div class="card shadow-sm mb-4">
-                        <div class="card-header">
-                            <h5 class="card-title mb-0">AI Integration Settings</h5>
-                        </div>
-                        <div class="card-body">
-                            <p class="text-muted mb-4">
-                                Configure AI provider settings for your store. These settings determine how AI features work in your store, including product descriptions, image generation, and customer support.
-                            </p>
-
-                            <form action="/admin/ai-settings" method="POST" id="ai-settings-form">
-                                <input type="hidden" name="tab" value="ai">
-                                <div class="mb-4">
-                                    <h6 class="fw-bold mb-3">OpenAI Configuration</h6>
-
-                                    <div class="mb-3">
-                                        <label for="openai_api_key" class="form-label">OpenAI API Key</label>
-                                        <input type="password" class="form-control" id="openai_api_key" name="openai_api_key" value="{{ config.openai_api_key if config and config.openai_api_key else '' }}">
-                                        <div class="form-text">Your OpenAI API key for text and image generation features.</div>
-                                    </div>
-
-                                    <div class="mb-3">
-                                        <label for="openai_model" class="form-label">Default Text Model</label>
-                                        <select class="form-select" id="openai_model" name="openai_model">
-                                            <option value="gpt-4" {% if config and config.openai_model == 'gpt-4' %}selected{% endif %}>GPT-4 (Most Powerful)</option>
-                                            <option value="gpt-3.5-turbo" {% if config and config.openai_model == 'gpt-3.5-turbo' %}selected{% endif %}>GPT-3.5 Turbo (Fast & Efficient)</option>
-                                        </select>
-                                        <div class="form-text">The OpenAI model to use for text generation.</div>
-                                    </div>
-
-                                    <div class="mb-3">
-                                        <label for="dalle_model" class="form-label">Default Image Model</label>
-                                        <select class="form-select" id="dalle_model" name="dalle_model">
-                                            <option value="dall-e-3" {% if config and config.dalle_model == 'dall-e-3' %}selected{% endif %}>DALL-E 3 (Highest Quality)</option>
-                                            <option value="dall-e-2" {% if config and config.dalle_model == 'dall-e-2' %}selected{% endif %}>DALL-E 2 (Faster)</option>
-                                        </select>
-                                        <div class="form-text">The model to use for image generation.</div>
-                                    </div>
-                                </div>
-
-                                <div class="mb-4">
-                                    <h6 class="fw-bold mb-3">AI Feature Configuration</h6>
-
-                                    <div class="form-check form-switch mb-3">
-                                        <input class="form-check-input" type="checkbox" id="enable_product_descriptions" name="enable_product_descriptions" {% if config and config.enable_product_descriptions %}checked{% endif %}>
-                                        <label class="form-check-label" for="enable_product_descriptions">Enable AI Product Descriptions</label>
-                                        <div class="form-text">Automatically generate product descriptions when creating new products.</div>
-                                    </div>
-
-                                    <div class="form-check form-switch mb-3">
-                                        <input class="form-check-input" type="checkbox" id="enable_image_generation" name="enable_image_generation" {% if config and config.enable_image_generation %}checked{% endif %}>
-                                        <label class="form-check-label" for="enable_image_generation">Enable AI Image Generation</label>
-                                        <div class="form-text">Allow generation of product images using AI.</div>
-                                    </div>
-
-                                    <div class="form-check form-switch mb-3">
-                                        <input class="form-check-input" type="checkbox" id="enable_chatbot" name="enable_chatbot" {% if config and config.enable_chatbot %}checked{% endif %}>
-                                        <label class="form-check-label" for="enable_chatbot">Enable AI Customer Support</label>
-                                        <div class="form-text">Add an AI-powered chatbot to your store for customer support.</div>
-                                    </div>
-                                </div>
-
-                                <div class="d-flex justify-content-end">
-                                    <button type="submit" class="btn btn-primary">
-                                        <i class="bi bi-save me-2"></i> Save AI Settings
-                                    </button>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
+                    </form>
                 </div>
             </div>
         </div>
@@ -250,137 +148,158 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('Store settings page loaded');
-
-    // Display initial form values based on server-provided data
-    const serverConfig = {{ config|tojson }};
-    console.log('Server provided config:', serverConfig);
-    
-    // Function to safely set form element values
-    function populateElement(id, value) {
-        const element = document.getElementById(id);
-        if (!element) {
-            console.warn(`Element #${id} not found`);
-            return;
-        }
-        
-        if (element.type === 'checkbox') {
-            element.checked = Boolean(value);
-        } else {
-            element.value = value !== undefined && value !== null ? value : '';
-        }
-        console.log(`Set ${id} = ${element.type === 'checkbox' ? element.checked : element.value}`);
-    }
-
-    // Main function to populate all form values
-    function populateFormValues(settings) {
-        if (!settings || typeof settings !== 'object') {
-            console.error('Invalid settings object:', settings);
-            return;
-        }
-        
-        console.log('Populating form with settings object');
-        
-        // Basic Settings
-        populateElement('store_name', settings.store_name);
-        populateElement('store_description', settings.store_description);
-        populateElement('contact_email', settings.contact_email);
-        populateElement('currency', settings.currency || 'USD');
-        
-        // Shipping Settings
-        populateElement('store_country', settings.store_country || 'US');
-        populateElement('store_postal_code', settings.store_postal_code);
-        populateElement('free_shipping_threshold', settings.free_shipping_threshold || 50);
-        populateElement('dimensional_weight_factor', settings.dimensional_weight_factor || 200);
-        populateElement('express_multiplier', settings.express_multiplier || 1.75);
-        
-        // AI Settings
-        populateElement('openai_api_key', settings.openai_api_key);
-        populateElement('openai_model', settings.openai_model || 'gpt-3.5-turbo');
-        populateElement('dalle_model', settings.dalle_model || 'dall-e-2');
-        populateElement('enable_product_descriptions', settings.enable_product_descriptions);
-        populateElement('enable_image_generation', settings.enable_image_generation);
-        populateElement('enable_chatbot', settings.enable_chatbot);
-        
-        // Additional settings for theme
-        if (settings.logo_position) {
-            populateElement('logo_position', settings.logo_position);
-        }
-    }
-    
-    // Add debug information panel
-    function createDebugPanel(settings) {
-        // Remove any existing debug panel first
-        const existingPanel = document.querySelector('.debug-panel');
-        if (existingPanel) {
-            existingPanel.remove();
-        }
-        
-        const debugPanel = document.createElement('div');
-        debugPanel.className = 'container-fluid mt-4 p-3 bg-light border debug-panel';
-        debugPanel.innerHTML = `
-            <h5>Debug Information</h5>
-            <p>Raw settings data for troubleshooting purposes:</p>
-            <div class="row">
-                <div class="col-md-12">
-                    <pre style="max-height: 300px; overflow: auto;">${JSON.stringify(settings, null, 2)}</pre>
-                </div>
-            </div>
-            <a href="/admin/api/store-settings" target="_blank" class="btn btn-sm btn-primary">View API Output</a>
-        `;
-        
-        // Add the debug panel to the page
-        const container = document.querySelector('.container-fluid');
-        if (container) {
-            container.appendChild(debugPanel);
-        } else {
-            document.body.appendChild(debugPanel);
-        }
-    }
-    
-    // Process steps:
-    // 1. First, populate with server-side data
-    if (serverConfig && Object.keys(serverConfig).length > 0) {
-        populateFormValues(serverConfig);
-        createDebugPanel(serverConfig);
-    }
-    
-    // 2. Then try to fetch the latest data from API
-    console.log('Fetching settings from API...');
+    // Fetch current settings
     fetch('/admin/api/store-settings')
-        .then(response => {
-            if (!response.ok) {
-                throw new Error(`API returned status ${response.status}`);
-            }
-            return response.json();
-        })
+        .then(response => response.json())
         .then(data => {
-            console.log('Successfully fetched settings from API:', data);
-            if (data && data.settings) {
-                populateFormValues(data.settings);
-                createDebugPanel(data.settings);
-            } else {
-                console.warn('API response missing settings object:', data);
+            console.log('Settings data:', data);
+
+            // Populate form with settings data
+            const settings = data.settings || {};
+
+            // Basic Settings
+            if (document.getElementById('store_name')) {
+                document.getElementById('store_name').value = settings.store_name || '';
+            }
+            if (document.getElementById('store_description')) {
+                document.getElementById('store_description').value = settings.store_description || '';
+            }
+            if (document.getElementById('contact_email')) {
+                document.getElementById('contact_email').value = settings.contact_email || '';
+            }
+            if (document.getElementById('currency')) {
+                document.getElementById('currency').value = settings.currency || 'USD';
+            }
+
+            // Shipping Settings
+            if (document.getElementById('store_country')) {
+                document.getElementById('store_country').value = settings.store_country || 'US';
+            }
+            if (document.getElementById('store_postal_code')) {
+                document.getElementById('store_postal_code').value = settings.store_postal_code || '';
+            }
+            if (document.getElementById('free_shipping_threshold')) {
+                document.getElementById('free_shipping_threshold').value = settings.free_shipping_threshold || 50.00;
+            }
+            if (document.getElementById('dimensional_weight_factor')) {
+                document.getElementById('dimensional_weight_factor').value = settings.dimensional_weight_factor || 200;
+            }
+            if (document.getElementById('express_shipping_multiplier')) {
+                document.getElementById('express_shipping_multiplier').value = settings.express_shipping_multiplier || 1.75;
+            }
+            if (document.getElementById('flat_rate_domestic')) {
+                document.getElementById('flat_rate_domestic').value = settings.flat_rate_domestic || settings.flat_rate_shipping || 5.99;
+            }
+            if (document.getElementById('flat_rate_international')) {
+                document.getElementById('flat_rate_international').value = settings.flat_rate_international || 19.99;
+            }
+
+            // AI Configuration
+            const aiSettings = settings.ai_settings || {};
+
+            if (document.getElementById('openai_api_key')) {
+                document.getElementById('openai_api_key').value = aiSettings.openai_api_key || '';
+            }
+            if (document.getElementById('openai_model')) {
+                document.getElementById('openai_model').value = aiSettings.openai_model || 'gpt-3.5-turbo';
+            }
+            if (document.getElementById('dalle_model')) {
+                document.getElementById('dalle_model').value = aiSettings.dalle_model || 'dall-e-2';
+            }
+            if (document.getElementById('enable_description_generation')) {
+                document.getElementById('enable_description_generation').checked = aiSettings.enable_description_generation || false;
+            }
+            if (document.getElementById('enable_image_generation')) {
+                document.getElementById('enable_image_generation').checked = aiSettings.enable_image_generation || false;
+            }
+            if (document.getElementById('enable_chatbot')) {
+                document.getElementById('enable_chatbot').checked = aiSettings.enable_chatbot || false;
             }
         })
         .catch(error => {
             console.error('Error fetching settings:', error);
-            // We already populated with server data, so just show error in console
         });
-        
-    // Bind event listeners for form tabs
-    const tabButtons = document.querySelectorAll('[data-bs-toggle="tab"]');
-    tabButtons.forEach(button => {
-        button.addEventListener('click', function(e) {
-            // When tab is clicked, update URL parameter without refreshing
-            const tabId = this.getAttribute('id');
-            const tabName = tabId.replace('-tab', '');
-            
-            // Update URL with tab parameter
-            const url = new URL(window.location.href);
-            url.searchParams.set('tab', tabName);
-            window.history.replaceState({}, '', url);
+
+    // Handle form submission
+    document.getElementById('storeSettingsForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        // Collect form data
+        const formData = new FormData(this);
+        const settings = {};
+
+        // Basic settings
+        settings.store_name = formData.get('store_name');
+        settings.store_description = formData.get('store_description');
+        settings.contact_email = formData.get('contact_email');
+        settings.currency = formData.get('currency');
+
+        // Shipping settings
+        settings.store_country = formData.get('store_country');
+        settings.store_postal_code = formData.get('store_postal_code');
+        settings.free_shipping_threshold = parseFloat(formData.get('free_shipping_threshold') || '50.00');
+        settings.dimensional_weight_factor = parseInt(formData.get('dimensional_weight_factor') || '200');
+        settings.express_shipping_multiplier = parseFloat(formData.get('express_shipping_multiplier') || '1.75');
+        settings.flat_rate_domestic = parseFloat(formData.get('flat_rate_domestic') || '5.99');
+        settings.flat_rate_international = parseFloat(formData.get('flat_rate_international') || '19.99');
+
+        // AI settings
+        settings.ai_settings = {
+            openai_api_key: formData.get('openai_api_key'),
+            openai_model: formData.get('openai_model'),
+            dalle_model: formData.get('dalle_model'),
+            enable_description_generation: formData.get('enable_description_generation') === 'on',
+            enable_image_generation: formData.get('enable_image_generation') === 'on',
+            enable_chatbot: formData.get('enable_chatbot') === 'on'
+        };
+
+        // Send data to server
+        fetch('/admin/api/store-settings', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(settings)
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('Settings saved:', data);
+            // Show success message
+            alert('Settings saved successfully!');
+        })
+        .catch(error => {
+            console.error('Error saving settings:', error);
+            alert('Error saving settings. Please try again.');
         });
+    });
+
+    // Handle reset button
+    document.getElementById('resetButton').addEventListener('click', function() {
+        if (confirm('Are you sure you want to reset all settings to defaults?')) {
+            fetch('/admin/api/store-settings/reset', {
+                method: 'POST'
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('Settings reset:', data);
+                // Reload the page to show default settings
+                window.location.reload();
+            })
+            .catch(error => {
+                console.error('Error resetting settings:', error);
+                alert('Error resetting settings. Please try again.');
+            });
+        }
     });
 });
 </script>
