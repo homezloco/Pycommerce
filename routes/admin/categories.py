@@ -74,7 +74,7 @@ def setup_routes(templates_instance: Jinja2Templates):
     @router.get("/admin/categories", response_class=HTMLResponse)
     async def categories_page(
         request: Request,
-        tenant: str = Query("tech", description="Tenant slug"),  # Default to tech tenant instead of default
+        tenant: str = Query(None, description="Tenant slug"),
         parent_id: Optional[str] = Query(None, description="Parent category ID to filter by")
     ):
         """
@@ -92,6 +92,10 @@ def setup_routes(templates_instance: Jinja2Templates):
         parent_category = None
         parent_breadcrumbs = []
         error_message = None
+        
+        # Check if tenant is specified in the URL or use the one from session
+        if not tenant:
+            tenant = request.session.get("selected_tenant", "tech")
         
         # Get current tenant
         logger.info(f"Attempting to access categories for tenant: {tenant}")
