@@ -109,6 +109,62 @@ def get_all_tenants() -> List[Dict[str, Any]]:
         logger.error(f"Error fetching tenants: {str(e)}")
         return []
 
+def get_current_tenant(request, tenant_manager_instance=None):
+    """
+    Get the current tenant from the request.
+    
+    Args:
+        request: The FastAPI request object
+        tenant_manager_instance: Optional tenant manager instance
+        
+    Returns:
+        Tuple of (tenant_object, tenant_id, tenant_slug)
+    """
+    tm = tenant_manager_instance or tenant_manager
+    
+    # Get selected tenant from session or query param
+    tenant_slug = request.query_params.get('tenant') or request.session.get("selected_tenant")
+    tenant_id = request.session.get("tenant_id")
+    
+    # If no tenant is selected, try to get the first one
+    if not tenant_slug or not tenant_id:
+        try:
+            tenants = get_all_tenants()
+            if tenants:
+                tenant_slug = tenants[0]["slug"]
+                tenant_id = tenants[0]["id"]
+                # Update session
+                request.session["selected_tenant"] = tenant_slug
+                request.session["tenant_id"] = tenant_id
+        except Exception as e:
+            logger.error(f"Error getting default tenant: {str(e)}")
+            return None, None, None
+    
+    # Special case for "all" tenants
+    if tenant_slug == "all":
+        return None, None, "all"
+    
+    # Get the tenant object
+    tenant_obj = None
+    if tenant_id:
+        try:
+            tenant_obj = tm.get(tenant_id)
+        except Exception as e:
+            logger.error(f"Error getting tenant by ID {tenant_id}: {str(e)}")
+    
+    # If tenant not found by ID, try by slug
+    if not tenant_obj and tenant_slug:
+        try:
+            tenant_obj = tm.get_by_slug(tenant_slug)
+            if tenant_obj:
+                tenant_id = str(tenant_obj.id)
+                # Update session with correct ID
+                request.session["tenant_id"] = tenant_id
+        except Exception as e:
+            logger.error(f"Error getting tenant by slug {tenant_slug}: {str(e)}")
+    
+    return tenant_obj, tenant_id, tenant_slug
+
 def get_tenant_object(tenant_id_or_slug: str) -> Optional[TenantDTO]:
     """
     Get tenant object by ID or slug.
