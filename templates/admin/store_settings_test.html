@@ -12,7 +12,7 @@
         <h5>Debug Information</h5>
         <p>Selected Tenant: <strong>{{ selected_tenant }}</strong></p>
         <p>Tenant Object Exists: <strong>{{ tenant is not none }}</strong></p>
-        <p>Config Type: <strong>{{ config|type }}</strong></p>
+        <p>Config Type: <strong>{{ config.__class__.__name__ }}</strong></p>
     </div>
 
     <ul class="nav nav-tabs" id="myTab" role="tablist">
