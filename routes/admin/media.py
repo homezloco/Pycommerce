@@ -45,8 +45,15 @@ async def admin_media(
     status_type: str = "info"
 ):
     """Admin page for managing media files."""
-    # Get tenant from query parameters or session
-    selected_tenant_slug = tenant or request.session.get("selected_tenant")
+    # Import tenant utils for consistent tenant selection
+    from routes.admin.tenant_utils import get_selected_tenant, create_virtual_all_tenant
+    
+    # Get selected tenant using the unified utility
+    selected_tenant_slug, tenant_obj, is_all_tenants = get_selected_tenant(
+        request=request, 
+        tenant_param=tenant,
+        allow_all=True
+    )
     
     # If no tenant is selected, redirect to dashboard with message
     if not selected_tenant_slug:
@@ -55,16 +62,11 @@ async def admin_media(
             status_code=303
         )
     
-    # Store the selected tenant in session for future requests
-    request.session["selected_tenant"] = selected_tenant_slug
-    
-    # Get tenant object
-    tenant_obj = tenant_manager.get_by_slug(selected_tenant_slug)
-    if not tenant_obj:
-        return RedirectResponse(
-            url="/admin/dashboard?status_message=Store+not+found&status_type=error", 
-            status_code=303
-        )
+    # Special handling for "all" tenant
+    if is_all_tenants:
+        logger.info("Media manager showing data for all stores")
+        # Create a virtual "All Stores" tenant
+        tenant_obj = type('AllStoresTenant', (), create_virtual_all_tenant())
         
     # Get all tenants for the dropdown menu
     tenants = tenant_manager.get_all()
