@@ -76,41 +76,49 @@ async def store_settings(
     logger.info(f"Rendering store settings with tenant: {tenant_obj.slug if tenant_obj else 'None'}")
     logger.info(f"Settings data: {store_settings}")
     
-    # Log settings before processing
-    logger.info(f"Original settings data: {store_settings}")
-    
-    # Create a copy of settings to avoid modifying the original
-    processed_settings = dict(store_settings)
-    
-    # If settings are nested within 'theme', extract them to top-level
-    if 'theme' in processed_settings and isinstance(processed_settings['theme'], dict):
-        theme_settings = processed_settings['theme']
-        # Merge theme settings with top-level settings for backward compatibility
-        processed_settings.update(theme_settings)
-    elif isinstance(processed_settings, dict):
-        # If there's no theme key but we have top-level settings that look like theme settings,
-        # ensure they're properly structured for the template
-        # Common theme properties to check for
-        theme_properties = [
-            'primary_color', 'secondary_color', 'background_color', 
-            'text_color', 'font_family', 'heading_font_family'
-        ]
+    # Process settings to ensure we have all expected fields with defaults
+    processed_settings = {
+        # Basic settings with defaults
+        "store_name": store_settings.get("store_name", ""),
+        "store_description": store_settings.get("store_description", ""),
+        "contact_email": store_settings.get("contact_email", ""),
+        "currency": store_settings.get("currency", "USD"),
+
+        # Theme/color settings
+        "primary_color": store_settings.get("primary_color", "#3498db"),
+        "secondary_color": store_settings.get("secondary_color", "#6c757d"),
+        "background_color": store_settings.get("background_color", "#ffffff"),
+        "text_color": store_settings.get("text_color", "#212529"),
+        "font_family": store_settings.get("font_family", "Arial, sans-serif"),
+
+        # Shipping settings
+        "store_country": store_settings.get("store_country", "US"),
+        "enable_shipping": store_settings.get("enable_shipping", True),
+        "store_postal_code": store_settings.get("store_postal_code", ""),
+        "free_shipping_threshold": store_settings.get("free_shipping_threshold", 50.00),
+        "dimensional_weight_factor": store_settings.get("dimensional_weight_factor", 200),
+        "express_multiplier": store_settings.get("express_multiplier", 1.75),
+        "flat_rate_domestic": store_settings.get("flat_rate_domestic", 5.99),
+        "flat_rate_international": store_settings.get("flat_rate_international", 19.99),
         
-        # If any theme properties exist at the top level, make sure they're accessible
-        if any(prop in processed_settings for prop in theme_properties):
-            logger.info(f"Found theme properties at top level: {[prop for prop in theme_properties if prop in processed_settings]}")
+        # AI settings
+        "openai_api_key": store_settings.get("openai_api_key", ""),
+        "openai_model": store_settings.get("openai_model", "gpt-3.5-turbo"),
+        "dalle_model": store_settings.get("dalle_model", "dall-e-2"),
+        "enable_product_descriptions": store_settings.get("enable_product_descriptions", False),
+        "enable_image_generation": store_settings.get("enable_image_generation", False),
+        "enable_chatbot": store_settings.get("enable_chatbot", False),
+
+        # Add additional keys from the original settings to maintain data
+        **store_settings
+    }
+    
+    # If theme settings are present, ensure they're accessible
+    if 'theme' in store_settings and isinstance(store_settings['theme'], dict):
+        processed_settings.update(store_settings['theme'])
     
     # Log the processed settings
     logger.info(f"Processed settings for template: {processed_settings}")
-    
-    # Replace original settings with processed version
-    store_settings = processed_settings
-    
-    # Ensure we have a valid config object for the template
-    template_config = dict(store_settings)
-    
-    # For debugging - log exactly what we're sending to the template
-    logger.info(f"Final template config: {template_config}")
     
     # Add display_tenant_selector flag for consistency with other admin pages
     return templates.TemplateResponse(
@@ -121,7 +129,7 @@ async def store_settings(
             "tenant": tenant_obj,
             "tenants": tenants,
             "active_page": "store-settings",
-            "config": template_config,  # This is the key variable for the template
+            "config": processed_settings,  # Use processed settings
             "theme": store_settings.get('theme', {}),  # Add theme settings directly for compatibility
             "status_message": status_message,
             "status_type": status_type,

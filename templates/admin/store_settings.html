@@ -243,7 +243,43 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('Store settings page loaded');
     
     // Debug information
-    console.log('Config data:', JSON.parse(JSON.stringify({{ config|tojson }})));
+    console.log('Config data:', {{ config|tojson }});
+    
+    // Safely populate form values
+    function populateElement(id, value) {
+        const el = document.getElementById(id);
+        if (el) {
+            if (el.type === 'checkbox') {
+                el.checked = !!value;
+            } else {
+                el.value = value || '';
+            }
+        }
+    }
+    
+    // Get settings data
+    const settings = {{ config|tojson }};
+    
+    // Basic Settings Tab
+    populateElement('store_name', settings.store_name);
+    populateElement('store_description', settings.store_description);
+    populateElement('contact_email', settings.contact_email);
+    populateElement('currency', settings.currency || 'USD');
+    
+    // Shipping Settings
+    populateElement('store_country', settings.store_country || 'US');
+    populateElement('store_postal_code', settings.store_postal_code);
+    populateElement('free_shipping_threshold', settings.free_shipping_threshold || 50);
+    populateElement('dimensional_weight_factor', settings.dimensional_weight_factor || 200);
+    populateElement('express_multiplier', settings.express_multiplier || 1.75);
+    
+    // AI settings
+    populateElement('openai_api_key', settings.openai_api_key);
+    populateElement('openai_model', settings.openai_model || 'gpt-3.5-turbo');
+    populateElement('dalle_model', settings.dalle_model || 'dall-e-2');
+    populateElement('enable_product_descriptions', settings.enable_product_descriptions);
+    populateElement('enable_image_generation', settings.enable_image_generation);
+    populateElement('enable_chatbot', settings.enable_chatbot);
     
     // Add a debug div to show settings data
     const debugDiv = document.createElement('div');
@@ -253,14 +289,16 @@ document.addEventListener('DOMContentLoaded', function() {
         <p>This section shows the raw settings data for troubleshooting purposes.</p>
         <div class="row">
             <div class="col-md-12">
-                <pre style="max-height: 300px; overflow: auto;">Config data: ${JSON.stringify({{ config|tojson }}, null, 2)}</pre>
+                <pre style="max-height: 300px; overflow: auto;">Config data: ${JSON.stringify(settings, null, 2)}</pre>
             </div>
         </div>
         <a href="/admin/api/store-settings" target="_blank" class="btn btn-sm btn-primary">View API Output</a>
     `;
     
     const adminContent = document.querySelector('#myTabContent');
-    adminContent.parentNode.appendChild(debugDiv);
+    if (adminContent) {
+        adminContent.parentNode.appendChild(debugDiv);
+    }
 });
 </script>
 {% endblock %}
