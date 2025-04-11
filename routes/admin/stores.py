@@ -57,7 +57,10 @@ def setup_routes(templates: Jinja2Templates) -> APIRouter:
                 {
                     "request": request,
                     "tenants": tenants,
-                    "active_page": "stores"
+                    "active_page": "stores",
+                    # Explicitly set these to None to prevent the tenant selector from showing
+                    "selected_tenant": None,
+                    "display_tenant_selector": False
                 }
             )
         except Exception as e:
