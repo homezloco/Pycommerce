@@ -17,7 +17,7 @@
             </button>
         </div>
     </div>
-    
+
     <div class="card shadow-sm mb-4">
         <div class="card-body">
             <div class="mb-4">
@@ -58,7 +58,7 @@
                     </div>
                 </form>
             </div>
-            
+
             <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4 mb-4">
                 {% for item in media_files %}
                 <div class="col">
@@ -135,7 +135,7 @@
                 </div>
                 {% endfor %}
             </div>
-            
+
             {% if pagination.total > pagination.limit %}
             <nav aria-label="Page navigation">
                 <ul class="pagination justify-content-center">
@@ -501,10 +501,10 @@
         // Check if we're in a callback context (called from another component)
         if (window.mediaSelectionCallback) {
             window.mediaSelectionCallback(id, url, name);
-            
+
             // Clear the callback
             window.mediaSelectionCallback = null;
-            
+
             // Close any open media selector modal
             const modal = bootstrap.Modal.getInstance(document.getElementById('mediaSelectorModal'));
             if (modal) {
@@ -517,63 +517,63 @@
             });
         }
     }
-    
+
     // Function to show the edit media modal
     function showEditModal(id, name, altText, description) {
         document.getElementById('edit_media_id').value = id;
         document.getElementById('edit_name').value = name;
         document.getElementById('edit_alt_text').value = altText;
         document.getElementById('edit_description').value = description;
-        
+
         const modal = new bootstrap.Modal(document.getElementById('editMediaModal'));
         modal.show();
     }
-    
+
     // Function to show the resize modal
     function showResizeModal(id, width, height) {
         document.getElementById('resize_media_id').value = id;
         document.getElementById('resize_width').value = width;
         document.getElementById('resize_height').value = height;
         document.getElementById('original_dimensions').textContent = `${width}×${height}`;
-        
+
         // Setup aspect ratio maintenance
         const widthInput = document.getElementById('resize_width');
         const heightInput = document.getElementById('resize_height');
         const maintainRatio = document.getElementById('maintain_aspect_ratio');
-        
+
         const aspectRatio = width / height;
-        
+
         widthInput.addEventListener('input', function() {
             if (maintainRatio.checked) {
                 heightInput.value = Math.round(this.value / aspectRatio);
             }
         });
-        
+
         heightInput.addEventListener('input', function() {
             if (maintainRatio.checked) {
                 widthInput.value = Math.round(this.value * aspectRatio);
             }
         });
-        
+
         const modal = new bootstrap.Modal(document.getElementById('resizeImageModal'));
         modal.show();
     }
-    
+
     // Function to show the crop modal
     function showCropModal(id, url, width, height) {
         document.getElementById('crop_media_id').value = id;
         document.getElementById('crop_image').src = url;
         document.getElementById('crop_image_dimensions').textContent = `${width}×${height}`;
-        
+
         const modal = new bootstrap.Modal(document.getElementById('cropImageModal'));
         modal.show();
-        
+
         // Initialize cropping area after modal is shown
         modal._element.addEventListener('shown.bs.modal', function () {
             // Simple cropping implementation
             const image = document.getElementById('crop_image');
             const container = document.getElementById('crop-container');
-            
+
             // Create crop selection box
             const cropBox = document.createElement('div');
             cropBox.style.position = 'absolute';
@@ -581,84 +581,83 @@
             cropBox.style.backgroundColor = 'rgba(255, 255, 255, 0.2)';
             cropBox.style.cursor = 'move';
             cropBox.style.display = 'none';
-            
+
             container.style.position = 'relative';
             container.appendChild(cropBox);
-            
+
             let startX, startY, isDrawing = false;
             let imageRect;
-            
+
             // Set initial position when mouse down
             container.addEventListener('mousedown', function(e) {
                 imageRect = image.getBoundingClientRect();
                 startX = e.clientX - imageRect.left;
                 startY = e.clientY - imageRect.top;
-                
+
                 // Reset crop box
                 cropBox.style.left = startX + 'px';
                 cropBox.style.top = startY + 'px';
                 cropBox.style.width = '0px';
                 cropBox.style.height = '0px';
                 cropBox.style.display = 'block';
-                
+
                 isDrawing = true;
-                
-                updateCropInputs(startX, startY, startX, startY);
-            });
-            
+
+                updateCropInputs(startX, startY, startX, startY);            });
+
             // Draw the box as mouse moves
             container.addEventListener('mousemove', function(e) {
                 if (!isDrawing) return;
-                
+
                 const x = e.clientX - imageRect.left;
                 const y = e.clientY - imageRect.top;
-                
+
                 const width = x - startX;
                 const height = y - startY;
-                
+
                 if (width > 0) {
                     cropBox.style.width = width + 'px';
                 } else {
                     cropBox.style.left = x + 'px';
                     cropBox.style.width = (startX - x) + 'px';
                 }
-                
+
                 if (height > 0) {
                     cropBox.style.height = height + 'px';
                 } else {
                     cropBox.style.top = y + 'px';
                     cropBox.style.height = (startY - y) + 'px';
                 }
-                
+
                 // Update form inputs
                 updateCropCoordinates();
             });
-            
+
             // Finish drawing when mouse up
             container.addEventListener('mouseup', function() {
                 isDrawing = false;
                 updateCropCoordinates();
             });
-            
+
             // Update hidden form inputs with the crop coordinates
             function updateCropCoordinates() {
                 const boxRect = cropBox.getBoundingClientRect();
                 const imageRect = image.getBoundingClientRect();
-                
+
                 const left = Math.max(0, Math.round((boxRect.left - imageRect.left) * (width / image.width)));
                 const top = Math.max(0, Math.round((boxRect.top - imageRect.top) * (height / image.height)));
                 const right = Math.min(width, Math.round((boxRect.right - imageRect.left) * (width / image.width)));
                 const bottom = Math.min(height, Math.round((boxRect.bottom - imageRect.top) * (height / image.height)));
-                
+
                 updateCropInputs(left, top, right, bottom);
             }
-            
+
             function updateCropInputs(left, top, right, bottom) {
                 document.getElementById('crop_left').value = left;
                 document.getElementById('crop_top').value = top;
                 document.getElementById('crop_right').value = right;
                 document.getElementById('crop_bottom').value = bottom;
-                
+
                 // Update display values
                 document.getElementById('crop_display_left').value = left;
                 document.getElementById('crop_display_top').value = top;
@@ -667,22 +666,22 @@
             }
         });
     }
-    
+
     // Function to confirm deletion
     function confirmDelete(id, name) {
         document.getElementById('mediaNameToDelete').textContent = name;
         document.getElementById('confirmDeleteBtn').href = `/admin/media/delete/${id}`;
-        
+
         const modal = new bootstrap.Modal(document.getElementById('deleteConfirmModal'));
         modal.show();
     }
-    
+
     // Show loading indicator when generating images
     document.addEventListener('DOMContentLoaded', function() {
         const generateForm = document.querySelector('#generateImageModal form');
         const loadingIndicator = document.getElementById('aiGenerationLoading');
         const generateButton = document.getElementById('generateButton');
-        
+
         if (generateForm && loadingIndicator && generateButton) {
             generateForm.addEventListener('submit', function() {
                 loadingIndicator.classList.remove('d-none');
@@ -690,22 +689,22 @@
                 generateButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Generating...';
             });
         }
-        
+
         // Function to load media for the selector modal
         window.loadMediaSelector = function(callback) {
             // Store callback function
             window.mediaSelectionCallback = callback;
-            
+
             // Show modal
             const modal = new bootstrap.Modal(document.getElementById('mediaSelectorModal'));
             modal.show();
-            
+
             // Load media (simplified - in a real app, you'd fetch from API)
             fetch('/api/media?file_type=image')
                 .then(response => response.json())
                 .then(data => {
                     const mediaGrid = document.getElementById('mediaSelectorGrid');
-                    
+
                     if (data.media && data.media.length > 0) {
                         let html = '';
                         data.media.forEach(item => {
@@ -736,14 +735,14 @@
                     mediaGrid.innerHTML = '<div class="col-12 text-center py-5"><p class="text-danger">Error loading media</p></div>';
                 });
         };
-        
+
         // Filter media in selector
         const searchBtn = document.getElementById('searchMediaBtn');
         if (searchBtn) {
             searchBtn.addEventListener('click', function() {
                 const searchTerm = document.getElementById('searchMedia').value;
                 const fileType = document.getElementById('filterMediaType').value;
-                
+
                 // Build query parameters
                 let queryParams = '';
                 if (searchTerm) {
@@ -753,10 +752,10 @@
                     if (queryParams) queryParams += '&';
                     queryParams += `file_type=${encodeURIComponent(fileType)}`;
                 }
-                
+
                 // Fetch filtered media
                 const url = `/api/media${queryParams ? '?' + queryParams : ''}`;
-                
+
                 const mediaGrid = document.getElementById('mediaSelectorGrid');
                 mediaGrid.innerHTML = `
                     <div class="col-12 text-center py-5">
@@ -766,7 +765,7 @@
                         <p class="mt-3">Loading media...</p>
                     </div>
                 `;
-                
+
                 fetch(url)
                     .then(response => response.json())
                     .then(data => {
