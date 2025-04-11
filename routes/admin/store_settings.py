@@ -62,8 +62,13 @@ async def store_settings(
                 # Make sure we have settings initialized
                 store_settings = tenant_obj.settings or {}
                 logger.info(f"Retrieved settings for tenant {selected_tenant_slug}: {store_settings}")
+            else:
+                logger.warning(f"No tenant found with slug '{selected_tenant_slug}'")
         except Exception as e:
             logger.error(f"Error getting tenant: {str(e)}")
+            # Add trace for debugging
+            import traceback
+            logger.error(traceback.format_exc())
 
     # Get cart item count if available
     cart_item_count = request.session.get("cart_item_count", 0)
@@ -315,23 +320,33 @@ async def get_store_settings_api(
     """API endpoint to check store settings data."""
     # Get tenant from query parameters or session
     tenant_slug = tenant or request.session.get("selected_tenant")
+    
+    logger.info(f"[API] Requested settings for tenant slug: {tenant_slug}")
 
     # Get tenant object if we have a selected tenant
     tenant_obj = None
     settings = {}
     tenant_id = None
+    error_message = None
 
-    if tenant_slug:
+    if not tenant_slug:
+        error_message = "No tenant selected"
+        logger.warning(f"[API] {error_message}")
+    else:
         try:
             tenant_obj = tenant_manager.get_by_slug(tenant_slug)
             if tenant_obj and hasattr(tenant_obj, 'settings'):
                 settings = tenant_obj.settings or {}
                 tenant_id = str(tenant_obj.id)
-                logger.info(f"[API] Retrieved settings for tenant {tenant_slug}: {settings}")
+                logger.info(f"[API] Retrieved settings for tenant {tenant_slug} (ID: {tenant_id})")
             else:
-                logger.warning(f"[API] Could not retrieve settings for tenant {tenant_slug}")
+                error_message = f"Could not retrieve valid tenant for slug: {tenant_slug}"
+                logger.warning(f"[API] {error_message}")
         except Exception as e:
-            logger.error(f"[API] Error getting tenant: {str(e)}")
+            error_message = f"Error retrieving tenant: {str(e)}"
+            logger.error(f"[API] {error_message}")
+            import traceback
+            logger.error(traceback.format_exc())
 
     # Build basic settings if not present with defaults
     if not settings:
@@ -347,20 +362,27 @@ async def get_store_settings_api(
             "font_family": "Arial, sans-serif",
             "store_country": "US",
             "enable_shipping": True,
-            "flat_rate_shipping": 5.99,
+            "flat_rate_domestic": 5.99,
+            "flat_rate_international": 19.99,
             "free_shipping_threshold": 50.00,
             "dimensional_weight_factor": 200,
-            "express_shipping_multiplier": 1.75,
+            "express_multiplier": 1.75,
             "logo_position": "left"
         }
 
     # Return JSON response with settings data
-    return {
+    response_data = {
         "tenant_id": tenant_id,
         "tenant_slug": tenant_slug,
         "settings": settings,
         "theme": settings.get('theme', {})
     }
+    
+    # Add error message if there was one
+    if error_message:
+        response_data["error"] = error_message
+        
+    return response_data
 
 def setup_routes(app_templates):
     """

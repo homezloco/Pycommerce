@@ -252,115 +252,136 @@
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Store settings page loaded');
 
-    // Safely populate form values
+    // Display initial form values based on server-provided data
+    const serverConfig = {{ config|tojson }};
+    console.log('Server provided config:', serverConfig);
+    
+    // Function to safely set form element values
     function populateElement(id, value) {
-        const el = document.getElementById(id);
-        if (el) {
-            if (el.type === 'checkbox') {
-                el.checked = !!value;
-            } else {
-                el.value = value !== undefined && value !== null ? value : '';
-            }
-            console.log(`Populated ${id} with value:`, value);
-        } else {
-            console.log(`Element with id ${id} not found`);
-        }
-    }
-
-    // Use the server-provided config data first
-    const initialConfig = {{ config|tojson }};
-    console.log('Initial config data from server:', initialConfig);
-
-    // Populate form with server-side data first
-    if (initialConfig && Object.keys(initialConfig).length > 0) {
-        populateFormValues(initialConfig);
-    }
-
-    // Then fetch the latest settings from API for consistency
-    fetch('/admin/api/store-settings')
-        .then(response => {
-            if (!response.ok) {
-                throw new Error(`API response error: ${response.status}`);
-            }
-            return response.json();
-        })
-        .then(data => {
-            console.log('Fetched settings from API:', data);
-            const settings = data.settings || {};
-
-            // Now populate the form after successful fetch
-            populateFormValues(settings);
-
-            // Add debug information
-            addDebugInfo(settings);
-        })
-        .catch(error => {
-            console.error('Error fetching settings:', error);
-            
-            // Already populated with template data above, just add debug info
-            addDebugInfo(initialConfig);
-        });
-
-    function populateFormValues(settings) {
-        if (!settings) {
-            console.error('No settings data to populate form');
+        const element = document.getElementById(id);
+        if (!element) {
+            console.warn(`Element #${id} not found`);
             return;
         }
+        
+        if (element.type === 'checkbox') {
+            element.checked = Boolean(value);
+        } else {
+            element.value = value !== undefined && value !== null ? value : '';
+        }
+        console.log(`Set ${id} = ${element.type === 'checkbox' ? element.checked : element.value}`);
+    }
 
-        console.log('Populating form with settings:', settings);
-
-        // Basic Settings Tab
+    // Main function to populate all form values
+    function populateFormValues(settings) {
+        if (!settings || typeof settings !== 'object') {
+            console.error('Invalid settings object:', settings);
+            return;
+        }
+        
+        console.log('Populating form with settings object');
+        
+        // Basic Settings
         populateElement('store_name', settings.store_name);
         populateElement('store_description', settings.store_description);
         populateElement('contact_email', settings.contact_email);
         populateElement('currency', settings.currency || 'USD');
-
+        
         // Shipping Settings
         populateElement('store_country', settings.store_country || 'US');
         populateElement('store_postal_code', settings.store_postal_code);
         populateElement('free_shipping_threshold', settings.free_shipping_threshold || 50);
         populateElement('dimensional_weight_factor', settings.dimensional_weight_factor || 200);
         populateElement('express_multiplier', settings.express_multiplier || 1.75);
-
-        // AI settings
+        
+        // AI Settings
         populateElement('openai_api_key', settings.openai_api_key);
         populateElement('openai_model', settings.openai_model || 'gpt-3.5-turbo');
         populateElement('dalle_model', settings.dalle_model || 'dall-e-2');
         populateElement('enable_product_descriptions', settings.enable_product_descriptions);
         populateElement('enable_image_generation', settings.enable_image_generation);
         populateElement('enable_chatbot', settings.enable_chatbot);
+        
+        // Additional settings for theme
+        if (settings.logo_position) {
+            populateElement('logo_position', settings.logo_position);
+        }
     }
-
-    function addDebugInfo(settings) {
-        // Add a debug div to show settings data
-        const debugDiv = document.createElement('div');
-        debugDiv.className = 'container-fluid mt-4 p-3 bg-light border';
-        debugDiv.innerHTML = `
+    
+    // Add debug information panel
+    function createDebugPanel(settings) {
+        // Remove any existing debug panel first
+        const existingPanel = document.querySelector('.debug-panel');
+        if (existingPanel) {
+            existingPanel.remove();
+        }
+        
+        const debugPanel = document.createElement('div');
+        debugPanel.className = 'container-fluid mt-4 p-3 bg-light border debug-panel';
+        debugPanel.innerHTML = `
             <h5>Debug Information</h5>
-            <p>This section shows the raw settings data for troubleshooting purposes.</p>
+            <p>Raw settings data for troubleshooting purposes:</p>
             <div class="row">
                 <div class="col-md-12">
-                    <pre style="max-height: 300px; overflow: auto;">Config data: ${JSON.stringify(settings, null, 2)}</pre>
+                    <pre style="max-height: 300px; overflow: auto;">${JSON.stringify(settings, null, 2)}</pre>
                 </div>
             </div>
             <a href="/admin/api/store-settings" target="_blank" class="btn btn-sm btn-primary">View API Output</a>
         `;
-
-        // Remove existing debug div if it exists
-        const existingDebug = document.querySelector('.container-fluid.mt-4.p-3.bg-light.border');
-        if (existingDebug) {
-            existingDebug.remove();
-        }
-
-        const adminContent = document.querySelector('#myTabContent');
-        if (adminContent && adminContent.parentNode) {
-            adminContent.parentNode.appendChild(debugDiv);
+        
+        // Add the debug panel to the page
+        const container = document.querySelector('.container-fluid');
+        if (container) {
+            container.appendChild(debugPanel);
         } else {
-            console.error('Could not find #myTabContent to attach debug info');
-            // Fallback - add to body
-            document.body.appendChild(debugDiv);
+            document.body.appendChild(debugPanel);
         }
     }
+    
+    // Process steps:
+    // 1. First, populate with server-side data
+    if (serverConfig && Object.keys(serverConfig).length > 0) {
+        populateFormValues(serverConfig);
+        createDebugPanel(serverConfig);
+    }
+    
+    // 2. Then try to fetch the latest data from API
+    console.log('Fetching settings from API...');
+    fetch('/admin/api/store-settings')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`API returned status ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('Successfully fetched settings from API:', data);
+            if (data && data.settings) {
+                populateFormValues(data.settings);
+                createDebugPanel(data.settings);
+            } else {
+                console.warn('API response missing settings object:', data);
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching settings:', error);
+            // We already populated with server data, so just show error in console
+        });
+        
+    // Bind event listeners for form tabs
+    const tabButtons = document.querySelectorAll('[data-bs-toggle="tab"]');
+    tabButtons.forEach(button => {
+        button.addEventListener('click', function(e) {
+            // When tab is clicked, update URL parameter without refreshing
+            const tabId = this.getAttribute('id');
+            const tabName = tabId.replace('-tab', '');
+            
+            // Update URL with tab parameter
+            const url = new URL(window.location.href);
+            url.searchParams.set('tab', tabName);
+            window.history.replaceState({}, '', url);
+        });
+    });
 });
 </script>
 {% endblock %}
