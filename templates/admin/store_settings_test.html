@@ -53,7 +53,7 @@
                                 <input type="hidden" name="tab" value="basic">
                                 <div class="mb-3">
                                     <label for="store_name" class="form-label">Store Name</label>
-                                    <input type="text" class="form-control" id="store_name" name="store_name" value="{{ config.store_name if config.store_name else '' }}">
+                                    <input type="text" class="form-control" id="store_name" name="store_name" value="{{ config.store_name }}">
                                 </div>
                                 <div class="mb-3">
                                     <label for="store_description" class="form-label">Store Description</label>
@@ -118,12 +118,29 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('Config data:', {{ config|tojson }});
     
     // Add inline style to make sure text inputs show proper values
-    const textInputs = document.querySelectorAll('input[type="text"], input[type="email"], textarea');
+    const textInputs = document.querySelectorAll('input[type="text"], input[type="email"], textarea, select');
     textInputs.forEach(input => {
         // Check if the value is undefined or null and set to empty string
         if (input.value === "undefined" || input.value === "null") {
             input.value = "";
         }
+        
+        // For select elements, ensure options are properly selected
+        if (input.tagName === 'SELECT') {
+            const configKey = input.id;
+            const configValue = {{ config|tojson }}[configKey];
+            if (configValue) {
+                input.value = configValue;
+            }
+        }
+    });
+    
+    // Add event listeners for form submission
+    const forms = document.querySelectorAll('form');
+    forms.forEach(form => {
+        form.addEventListener('submit', function(e) {
+            console.log('Form submitted:', form.id);
+        });
     });
 });
 </script>

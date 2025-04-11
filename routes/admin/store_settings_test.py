@@ -90,7 +90,20 @@ async def store_settings_test(
         "background_color": store_settings.get("background_color", "#ffffff"),
         "text_color": store_settings.get("text_color", "#212529"),
         "font_family": store_settings.get("font_family", "Arial, sans-serif"),
+        
+        # Shipping settings
+        "store_country": store_settings.get("store_country", "US"),
+        "enable_shipping": store_settings.get("enable_shipping", True),
+        "flat_rate_shipping": store_settings.get("flat_rate_shipping", 5.99),
+        
+        # Add additional keys from the original settings to maintain data
+        **store_settings
     }
+    
+    # Make sure processed_settings has all needed methods/functions
+    # Add dictionary methods if they're being called in the template
+    processed_settings["keys"] = lambda: processed_settings.keys()
+    processed_settings["__len__"] = lambda: len(processed_settings)
     
     # Log processed settings for debugging
     logger.info(f"[TEST] Processed settings for template: {processed_settings}")

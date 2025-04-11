@@ -20,7 +20,8 @@ app, templates = create_app()
 # Register store settings test routes
 try:
     from routes.admin.store_settings_test import setup_routes
-    app.include_router(setup_routes(templates))
+    test_routes_router = setup_routes(templates)
+    app.include_router(test_routes_router)
     logger.info("Store settings test routes registered successfully")
 except ImportError as e:
     logger.warning(f"Failed to register store settings test routes: {str(e)}")
