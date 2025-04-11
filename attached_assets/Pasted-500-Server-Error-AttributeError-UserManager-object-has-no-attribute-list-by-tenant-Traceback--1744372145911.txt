@@ -1,0 +1,47 @@
+500 Server Error
+AttributeError: 'UserManager' object has no attribute 'list_by_tenant'
+Traceback
+
+File /home/runner/workspace/routes/admin/customers.py, line 84, in customers_page‒
+
+81.
+
+82.         logger.info(f"Retrieved {len(customers)} customers across all stores")
+
+83.     else:
+
+84.         customers = user_manager.list_by_tenant(tenant_obj.id)
+
+85.         logger.info(f"Retrieved {len(customers)} customers for store {tenant_obj.name}")
+
+86.
+
+87.     return templates.TemplateResponse(
+
+File /home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/fastapi/routing.py, line 212, in run_endpoint_function+
+
+File /home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/fastapi/routing.py, line 301, in app+
+
+File /home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/starlette/routing.py, line 73, in app+
+
+File /home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/starlette/_exception_handler.py, line 42, in wrapped_app+
+
+File /home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/starlette/_exception_handler.py, line 53, in wrapped_app+
+
+File /home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/starlette/routing.py, line 76, in app+
+
+File /home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/starlette/routing.py, line 288, in handle+
+
+File /home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/starlette/routing.py, line 734, in app+
+
+File /home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/starlette/routing.py, line 714, in __call__+
+
+File /home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/starlette/_exception_handler.py, line 42, in wrapped_app+
+
+File /home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/starlette/_exception_handler.py, line 53, in wrapped_app+
+
+File /home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/starlette/middleware/exceptions.py, line 62, in __call__+
+
+File /home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/starlette/middleware/sessions.py, line 85, in __call__+
+
+File /home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/starlette/middleware/errors.py, line 165, in __call__
