@@ -393,12 +393,28 @@ async def admin_dashboard_data(
 @router.get("/change-store", response_class=RedirectResponse)
 async def admin_change_store(request: Request, tenant: str = "", redirect_url: str = ""):
     """Change the selected store for admin management."""
-    if tenant:
+    # Special handling for "all" tenant selection
+    if tenant and tenant.lower() == "all":
+        logger.info(f"User selected 'All Stores' for view")
+        # Store in session
+        request.session["selected_tenant"] = "all"
+        request.session["tenant_id"] = None
+        
+        # Always redirect to products page for 'all' selection
+        # since it's the main page that supports viewing all stores
+        return RedirectResponse(
+            url="/admin/products?tenant=all&status_message=Showing+products+from+all+stores&status_type=success",
+            status_code=303
+        )
+    
+    # Regular tenant selection
+    elif tenant:
         # Verify tenant exists
         tenant_obj = tenant_manager.get_by_slug(tenant)
         if tenant_obj:
             # Store in session
             request.session["selected_tenant"] = tenant
+            request.session["tenant_id"] = str(tenant_obj.id)
             
             # If a redirect URL is provided, use it; otherwise default to the referrer or dashboard
             if not redirect_url:
