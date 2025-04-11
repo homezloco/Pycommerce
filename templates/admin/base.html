@@ -136,8 +136,9 @@
                         {% if not selected_tenant %}
                         <option value="" selected>Select</option>
                         {% endif %}
+                        <option value="all" {% if selected_tenant and selected_tenant.slug == 'all' %}selected{% endif %}>All Stores</option>
                         {% for tenant in tenants %}
-                        <option value="{{ tenant.slug }}" {% if selected_tenant == tenant.slug %}selected{% endif %}>
+                        <option value="{{ tenant.slug }}" {% if selected_tenant and selected_tenant.slug == tenant.slug %}selected{% endif %}>
                             {{ tenant.name }}
                         </option>
                         {% endfor %}
@@ -163,8 +164,9 @@
                             {% if not selected_tenant %}
                             <option value="" selected>Select Store</option>
                             {% endif %}
+                            <option value="all" {% if selected_tenant and selected_tenant.slug == 'all' %}selected{% endif %}>All Stores</option>
                             {% for tenant in tenants %}
-                            <option value="{{ tenant.slug }}" {% if selected_tenant == tenant.slug %}selected{% endif %}>
+                            <option value="{{ tenant.slug }}" {% if selected_tenant and selected_tenant.slug == tenant.slug %}selected{% endif %}>
                                 <span class="store-status-indicator {% if tenant.active %}status-active{% else %}status-inactive{% endif %}"></span>
                                 {{ tenant.name }}
                             </option>

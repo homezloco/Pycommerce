@@ -92,7 +92,8 @@ class MarketAnalysisService:
         Get sales trends for a specific time period.
         
         Args:
-            tenant_id: Optional ID of the tenant to filter sales for
+            tenant_id: Optional ID of the tenant to filter sales for. 
+                       If empty string or None, data from all tenants will be included.
             start_date: Start date in ISO format (YYYY-MM-DD)
             end_date: End date in ISO format (YYYY-MM-DD)
             category: Optional product category to filter by
@@ -110,8 +111,42 @@ class MarketAnalysisService:
                 start_date = start_datetime.strftime("%Y-%m-%d")
                 end_date = end_datetime.strftime("%Y-%m-%d")
             
-            # Get orders for the specified time period
-            orders = self.order_manager.get_for_tenant(tenant_id)
+            # Get orders based on whether we're looking at all tenants or a specific one
+            if not tenant_id:
+                # Get orders from all tenants using direct SQL query
+                logger.info("Getting orders from all tenants for sales trends")
+                try:
+                    from sqlalchemy import text
+                    from app import db, app
+                    
+                    with app.app_context():
+                        order_results = db.session.execute(
+                            text("""
+                                SELECT * FROM orders
+                                WHERE created_at >= :start_date
+                                AND created_at <= :end_date
+                            """),
+                            {
+                                "start_date": f"{start_date} 00:00:00",
+                                "end_date": f"{end_date} 23:59:59"
+                            }
+                        ).fetchall()
+                        
+                        # Get all orders from all tenants
+                        tenants = self.tenant_manager.list()
+                        orders = []
+                        for tenant in tenants:
+                            tenant_orders = self.order_manager.get_for_tenant(str(tenant.id))
+                            orders.extend(tenant_orders)
+                        
+                        logger.info(f"Found {len(orders)} orders across all tenants")
+                except Exception as e:
+                    logger.error(f"Error getting all orders: {str(e)}")
+                    orders = []
+            else:
+                # Get orders for the specific tenant
+                logger.info(f"Getting orders for tenant {tenant_id} for sales trends")
+                orders = self.order_manager.get_for_tenant(tenant_id)
             
             # Filter orders by date if dates are provided
             if start_date and end_date:
@@ -252,7 +287,7 @@ class MarketAnalysisService:
                                         cat_name = cat_result[0]
                                         # Skip very short category names
                                         if isinstance(cat_name, str) and len(cat_name) <= 1:
-                                            logger.warning(f"Found short category name from DB: '{cat_name}', skipping")
+                                            logger.debug(f"Found short category name from DB: '{cat_name}', skipping")
                                             continue
                                             
                                         # Log the category value for debugging
@@ -313,23 +348,41 @@ class MarketAnalysisService:
                 from app import db, app
                 
                 with app.app_context():
-                    # First collect all order IDs for the tenant and timeframe
-                    order_ids_query = text("""
-                        SELECT id FROM orders 
-                        WHERE tenant_id = :tenant_id 
-                          AND created_at >= :start_date
-                          AND created_at <= :end_date
-                    """)
-                    
-                    # Execute with proper date formatting
-                    order_results = db.session.execute(
-                        order_ids_query,
-                        {
-                            "tenant_id": tenant_id,
-                            "start_date": f"{start_date} 00:00:00",
-                            "end_date": f"{end_date} 23:59:59"
-                        }
-                    ).fetchall()
+                    # Prepare the query based on whether we're looking at all tenants or a specific one
+                    if not tenant_id:
+                        # All tenants case - no tenant filter
+                        order_ids_query = text("""
+                            SELECT id FROM orders 
+                            WHERE created_at >= :start_date
+                              AND created_at <= :end_date
+                        """)
+                        
+                        # Execute with proper date formatting
+                        order_results = db.session.execute(
+                            order_ids_query,
+                            {
+                                "start_date": f"{start_date} 00:00:00",
+                                "end_date": f"{end_date} 23:59:59"
+                            }
+                        ).fetchall()
+                    else:
+                        # Specific tenant case
+                        order_ids_query = text("""
+                            SELECT id FROM orders 
+                            WHERE tenant_id = :tenant_id 
+                              AND created_at >= :start_date
+                              AND created_at <= :end_date
+                        """)
+                        
+                        # Execute with proper date formatting
+                        order_results = db.session.execute(
+                            order_ids_query,
+                            {
+                                "tenant_id": tenant_id,
+                                "start_date": f"{start_date} 00:00:00",
+                                "end_date": f"{end_date} 23:59:59"
+                            }
+                        ).fetchall()
                     
                     # Extract order IDs
                     if order_results:

@@ -129,7 +129,7 @@ def setup_routes(templates):
         tenant_obj, tenant_id, tenant_slug = get_current_tenant(request, tenant_manager)
         
         # Log the tenant ID being used
-        logger.info(f"Using tenant_id: {tenant_id} for sales trends (slug: {tenant_slug})")
+        logger.info(f"Using tenant_id: {tenant_id} for sales trends")
         
         # If no dates provided, default to last 30 days
         if not start_date or not end_date:
@@ -154,9 +154,7 @@ def setup_routes(templates):
                 {
                     "id": str(t.id),
                     "name": t.name,
-                    "slug": t.slug,
-                    "domain": t.domain if hasattr(t, 'domain') else None,
-                    "active": t.active if hasattr(t, 'active') else True
+                    "slug": t.slug
                 }
                 for t in tenants_list if t and hasattr(t, 'id')
             ]
@@ -165,21 +163,10 @@ def setup_routes(templates):
         
         # Determine selected tenant for the UI
         selected_tenant = None
-        if tenant_slug == "all":
-            # Create a special entry for the "All Stores" option
-            selected_tenant = {
-                "id": "",
-                "name": "All Stores",
-                "slug": "all",
-                "domain": None,
-                "active": True
-            }
-            logger.info("Using 'All Stores' view for sales trends")
-        else:
-            for tenant in tenants:
-                if tenant.get("id") == tenant_id:
-                    selected_tenant = tenant
-                    break
+        for tenant in tenants:
+            if tenant.get("id") == tenant_id:
+                selected_tenant = tenant
+                break
         
         # Get product manager for categories
         product_manager = ProductManager()
@@ -229,7 +216,7 @@ def setup_routes(templates):
         tenant_obj, tenant_id, tenant_slug = get_current_tenant(request, tenant_manager)
         
         # Log the tenant ID being used
-        logger.info(f"Using tenant_id: {tenant_id} for demand forecast (slug: {tenant_slug})")
+        logger.info(f"Using tenant_id: {tenant_id} for demand forecast")
         
         # Get forecast data
         forecast = market_analysis_service.forecast_demand(
@@ -269,7 +256,7 @@ def setup_routes(templates):
         tenant_obj, tenant_id, tenant_slug = get_current_tenant(request, tenant_manager)
         
         # Log the tenant ID being used
-        logger.info(f"Using tenant_id: {tenant_id} for market insights (slug: {tenant_slug})")
+        logger.info(f"Using tenant_id: {tenant_id} for market insights")
         
         # Get market insights
         insights = market_analysis_service.get_market_insights(tenant_id=tenant_id)
@@ -282,9 +269,7 @@ def setup_routes(templates):
                 {
                     "id": str(t.id),
                     "name": t.name,
-                    "slug": t.slug,
-                    "domain": t.domain if hasattr(t, 'domain') else None,
-                    "active": t.active if hasattr(t, 'active') else True
+                    "slug": t.slug
                 }
                 for t in tenants_list if t and hasattr(t, 'id')
             ]
@@ -293,21 +278,10 @@ def setup_routes(templates):
         
         # Determine selected tenant for the UI
         selected_tenant = None
-        if tenant_slug == "all":
-            # Create a special entry for the "All Stores" option
-            selected_tenant = {
-                "id": "",
-                "name": "All Stores",
-                "slug": "all",
-                "domain": None,
-                "active": True
-            }
-            logger.info("Using 'All Stores' view for market insights")
-        else:
-            for tenant in tenants:
-                if tenant.get("id") == tenant_id:
-                    selected_tenant = tenant
-                    break
+        for tenant in tenants:
+            if tenant.get("id") == tenant_id:
+                selected_tenant = tenant
+                break
         
         # Template context
         context = {
@@ -325,6 +299,8 @@ def setup_routes(templates):
         
         return templates.TemplateResponse("admin/market_insights.html", context)
     
+
+    
     @router.get("/category-performance", response_class=HTMLResponse)
     async def category_performance(
         request: Request,
@@ -335,7 +311,7 @@ def setup_routes(templates):
         tenant_obj, tenant_id, tenant_slug = get_current_tenant(request, tenant_manager)
         
         # Log the tenant ID being used
-        logger.info(f"Using tenant_id: {tenant_id} for category performance (slug: {tenant_slug})")
+        logger.info(f"Using tenant_id: {tenant_id} for category performance")
         
         # Get category performance data
         category_perf = market_analysis_service.get_category_performance(
@@ -351,9 +327,7 @@ def setup_routes(templates):
                 {
                     "id": str(t.id),
                     "name": t.name,
-                    "slug": t.slug,
-                    "domain": t.domain if hasattr(t, 'domain') else None,
-                    "active": t.active if hasattr(t, 'active') else True
+                    "slug": t.slug
                 }
                 for t in tenants_list if t and hasattr(t, 'id')
             ]
@@ -362,21 +336,10 @@ def setup_routes(templates):
         
         # Determine selected tenant for the UI
         selected_tenant = None
-        if tenant_slug == "all":
-            # Create a special entry for the "All Stores" option
-            selected_tenant = {
-                "id": "",
-                "name": "All Stores",
-                "slug": "all",
-                "domain": None,
-                "active": True
-            }
-            logger.info("Using 'All Stores' view for category performance")
-        else:
-            for tenant in tenants:
-                if tenant.get("id") == tenant_id:
-                    selected_tenant = tenant
-                    break
+        for tenant in tenants:
+            if tenant.get("id") == tenant_id:
+                selected_tenant = tenant
+                break
         
         # Template context
         context = {
@@ -409,7 +372,7 @@ def setup_routes(templates):
         tenant_obj, tenant_id, tenant_slug = get_current_tenant(request, tenant_manager)
         
         # Log the tenant ID being used
-        logger.info(f"[API] Using tenant_id: {tenant_id} for sales trends API (slug: {tenant_slug})")
+        logger.info(f"[API] Using tenant_id: {tenant_id} for sales trends API")
         
         # Get sales trend data
         sales_trends = market_analysis_service.get_sales_trends(
@@ -432,7 +395,7 @@ def setup_routes(templates):
         tenant_obj, tenant_id, tenant_slug = get_current_tenant(request, tenant_manager)
         
         # Log the tenant ID being used
-        logger.info(f"[API] Using tenant_id: {tenant_id} for demand forecast API (slug: {tenant_slug})")
+        logger.info(f"[API] Using tenant_id: {tenant_id} for demand forecast API")
         
         # Get forecast data
         forecast = market_analysis_service.forecast_demand(
@@ -450,7 +413,7 @@ def setup_routes(templates):
         tenant_obj, tenant_id, tenant_slug = get_current_tenant(request, tenant_manager)
         
         # Log the tenant ID being used
-        logger.info(f"[API] Using tenant_id: {tenant_id} for insights API (slug: {tenant_slug})")
+        logger.info(f"[API] Using tenant_id: {tenant_id} for insights API")
         
         # Get market insights
         insights = market_analysis_service.get_market_insights(tenant_id=tenant_id)
@@ -467,7 +430,7 @@ def setup_routes(templates):
         tenant_obj, tenant_id, tenant_slug = get_current_tenant(request, tenant_manager)
         
         # Log the tenant ID being used
-        logger.info(f"[API] Using tenant_id: {tenant_id} for category performance API (slug: {tenant_slug})")
+        logger.info(f"[API] Using tenant_id: {tenant_id} for category performance API")
         
         # Get category performance data
         category_perf = market_analysis_service.get_category_performance(

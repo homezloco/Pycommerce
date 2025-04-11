@@ -103,7 +103,16 @@
 <div class="container-fluid">
   <div class="row">
     <div class="col-12">
-      <h1 class="mb-4">Market Analysis Dashboard</h1>
+      <h1 class="mb-4">
+        Market Analysis Dashboard
+        {% if selected_tenant %}
+          {% if selected_tenant.slug == 'all' %}
+            <small class="text-muted">(All Stores)</small>
+          {% else %}
+            <small class="text-muted">({{ selected_tenant.name }})</small>
+          {% endif %}
+        {% endif %}
+      </h1>
       
       <!-- Time Period Selector -->
       <div class="period-selector">

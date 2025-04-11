@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 def get_current_tenant(
     request: Request, 
     tenant_manager: TenantManager,
-    default_tenant_slug: str = "tech"
+    default_tenant_slug: str = "all"
 ) -> Tuple[Any, str, str]:
     """
     Get the current tenant based on session data and URL parameters.
@@ -26,6 +26,9 @@ def get_current_tenant(
     2. Session value for 'selected_tenant'
     3. Session value for 'tenant_id' (with lookup to get the slug)
     4. Default tenant slug provided
+    
+    Special value 'all' for tenant_slug means to use data from all tenants.
+    In this case, tenant_obj will be None and tenant_id will be an empty string.
     
     Args:
         request: FastAPI request object
@@ -84,8 +87,18 @@ def get_current_tenant(
         tenant_slug = default_tenant_slug
         logger.info(f"Using default tenant: {tenant_slug}")
     
-    # Now get or confirm the tenant object and ID
-    if not tenant_obj:
+    # Handle "all" slug special case
+    if tenant_slug == "all":
+        # Special case: "all" means to use data from all tenants
+        # Set tenant_obj to None and tenant_id to empty string
+        tenant_obj = None
+        tenant_id = ""
+        # Update session values for consistency
+        request.session["selected_tenant"] = "all"
+        request.session["tenant_id"] = ""
+        logger.info("Using 'all' tenants mode")
+    # Now get or confirm the tenant object and ID if not "all"
+    elif not tenant_obj:
         try:
             tenant_obj = tenant_manager.get_by_slug(tenant_slug)
             
