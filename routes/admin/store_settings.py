@@ -87,12 +87,30 @@ async def store_settings(
         theme_settings = processed_settings['theme']
         # Merge theme settings with top-level settings for backward compatibility
         processed_settings.update(theme_settings)
+    elif isinstance(processed_settings, dict):
+        # If there's no theme key but we have top-level settings that look like theme settings,
+        # ensure they're properly structured for the template
+        # Common theme properties to check for
+        theme_properties = [
+            'primary_color', 'secondary_color', 'background_color', 
+            'text_color', 'font_family', 'heading_font_family'
+        ]
+        
+        # If any theme properties exist at the top level, make sure they're accessible
+        if any(prop in processed_settings for prop in theme_properties):
+            logger.info(f"Found theme properties at top level: {[prop for prop in theme_properties if prop in processed_settings]}")
     
     # Log the processed settings
     logger.info(f"Processed settings for template: {processed_settings}")
     
     # Replace original settings with processed version
     store_settings = processed_settings
+    
+    # Ensure we have a valid config object for the template
+    template_config = dict(store_settings)
+    
+    # For debugging - log exactly what we're sending to the template
+    logger.info(f"Final template config: {template_config}")
     
     # Add display_tenant_selector flag for consistency with other admin pages
     return templates.TemplateResponse(
@@ -103,7 +121,7 @@ async def store_settings(
             "tenant": tenant_obj,
             "tenants": tenants,
             "active_page": "store-settings",
-            "config": store_settings,  # This is the key variable for the template
+            "config": template_config,  # This is the key variable for the template
             "theme": store_settings.get('theme', {}),  # Add theme settings directly for compatibility
             "status_message": status_message,
             "status_type": status_type,
@@ -292,3 +310,38 @@ def setup_routes(app_templates):
     global templates
     templates = app_templates
     return router
+
+
+@router.get("/api/store-settings", response_class=HTMLResponse)
+async def get_store_settings_api(
+    request: Request,
+    tenant: Optional[str] = None
+):
+    """API endpoint to check store settings data."""
+    # Get tenant from query parameters or session
+    selected_tenant_slug = tenant or request.session.get("selected_tenant")
+    
+    # Get tenant object if we have a selected tenant
+    tenant_obj = None
+    store_settings = {}
+    if selected_tenant_slug:
+        try:
+            tenant_obj = tenant_manager.get_by_slug(selected_tenant_slug)
+            if tenant_obj:
+                # Make sure we have settings initialized
+                store_settings = tenant_obj.settings or {}
+                logger.info(f"API: Retrieved settings for tenant {selected_tenant_slug}: {store_settings}")
+        except Exception as e:
+            logger.error(f"API: Error getting tenant: {str(e)}")
+    
+    # Debug output
+    logger.info(f"API: Settings structure type: {type(store_settings)}")
+    
+    # Return JSON response with settings data
+    from fastapi.responses import JSONResponse
+    return JSONResponse({
+        "tenant_slug": selected_tenant_slug,
+        "tenant_id": str(tenant_obj.id) if tenant_obj else None,
+        "settings": store_settings,
+        "theme": store_settings.get('theme', {})
+    })

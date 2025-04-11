@@ -241,6 +241,26 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Store settings page loaded');
+    
+    // Debug information
+    console.log('Config data:', JSON.parse(JSON.stringify({{ config|tojson }})));
+    
+    // Add a debug div to show settings data
+    const debugDiv = document.createElement('div');
+    debugDiv.className = 'container-fluid mt-4 p-3 bg-light border';
+    debugDiv.innerHTML = `
+        <h5>Debug Information</h5>
+        <p>This section shows the raw settings data for troubleshooting purposes.</p>
+        <div class="row">
+            <div class="col-md-12">
+                <pre style="max-height: 300px; overflow: auto;">Config data: ${JSON.stringify({{ config|tojson }}, null, 2)}</pre>
+            </div>
+        </div>
+        <a href="/admin/api/store-settings" target="_blank" class="btn btn-sm btn-primary">View API Output</a>
+    `;
+    
+    const adminContent = document.querySelector('#myTabContent');
+    adminContent.parentNode.appendChild(debugDiv);
 });
 </script>
 {% endblock %}
