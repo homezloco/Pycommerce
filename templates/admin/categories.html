@@ -190,7 +190,6 @@
             </div>
             <form id="editCategoryForm" method="post">
                 <div class="modal-body">
-                    <input type="hidden" name="tenant" value="{{ tenant.slug }}">
 
                     <div class="mb-3">
                         <label for="edit_name" class="form-label">Category Name</label>
@@ -250,7 +249,6 @@
                 <p class="text-danger">This action cannot be undone. Categories with subcategories cannot be deleted.</p>
             </div>
             <form id="deleteCategoryForm" method="post">
-                <input type="hidden" name="tenant" value="{{ tenant.slug }}">
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn btn-danger">Delete Category</button>

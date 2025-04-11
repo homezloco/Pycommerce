@@ -23,15 +23,6 @@
             <div class="mb-4">
                 <form action="/admin/media" method="get" class="row g-3">
                     <div class="col-md-3">
-                        <label for="tenant" class="form-label">Store</label>
-                        <select class="form-select" id="tenant" name="tenant_id">
-                            <option value="">All Stores</option>
-                            {% for t in tenants %}
-                            <option value="{{ t.id }}" {% if selected_tenant == t.id %}selected{% endif %}>{{ t.name }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div class="col-md-3">
                         <label for="file_type" class="form-label">File Type</label>
                         <select class="form-select" id="file_type" name="file_type">
                             <option value="">All Types</option>

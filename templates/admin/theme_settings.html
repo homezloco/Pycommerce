@@ -30,20 +30,12 @@
                     <i class="fas fa-paint-brush me-1"></i>
                     Theme Settings for {{ tenant.name }}
                 </div>
-                <div>
-                    <form method="GET" action="/admin/theme-settings" class="d-flex">
-                        <select name="tenant" class="form-select me-2" onchange="this.form.submit()">
-                            {% for t in tenants %}
-                            <option value="{{ t.slug }}" {% if t.slug == tenant.slug %}selected{% endif %}>{{ t.name }}</option>
-                            {% endfor %}
-                        </select>
-                    </form>
-                </div>
+                
             </div>
         </div>
         <div class="card-body">
             <form method="POST" action="/admin/theme-settings">
-                <input type="hidden" name="tenant_slug" value="{{ tenant.slug }}">
+                
                 <div class="row">
                     <div class="col-md-6 mb-4">
                         <div class="card h-100">
