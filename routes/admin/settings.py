@@ -85,6 +85,7 @@ async def settings(request: Request):
             "request": request,
             "active_page": "settings",
             "is_global_settings": True,  # Flag to indicate these are global settings
+            "display_tenant_selector": False,  # Hide tenant selector on global settings
             **settings_data
         }
     )

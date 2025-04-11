@@ -144,6 +144,8 @@ async def admin_media(
         "pages": max(1, (len(media_files) + 11) // 12)  # Total pages (ceiling division)
     }
 
+    cart_item_count = request.session.get("cart_item_count", 0)
+
     return templates.TemplateResponse(
         "admin/media.html",
         {
@@ -159,8 +161,10 @@ async def admin_media(
             "has_openai_key": has_openai_key,
             "status_message": status_message,
             "status_type": status_type,
-            "cart_item_count": request.session.get("cart_item_count", 0),
-            "pagination": pagination
+            "cart_item_count": cart_item_count,
+            "pagination": pagination,
+            "display_tenant_selector": False,
+            "active_page": "media"
         }
     )
 
@@ -266,7 +270,7 @@ async def admin_generate_image(
         logger.error(f"Error generating image: {str(e)}")
         error_message = f"Error generating image: {str(e)}"
         return RedirectResponse(
-            url=f"/admin/media?status_message={error_message}&status_type=danger", 
+            url=f"/admin/media?status_message={error_message}&status_type=danger",
             status_code=303
         )
 
