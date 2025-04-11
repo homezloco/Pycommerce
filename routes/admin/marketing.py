@@ -48,13 +48,31 @@ async def marketing_dashboard(
     # Store the selected tenant in session for future requests
     request.session["selected_tenant"] = selected_tenant_slug
 
-    # Get tenant object
-    tenant_obj = tenant_manager.get_by_slug(selected_tenant_slug)
-    if not tenant_obj:
-        return RedirectResponse(
-            url="/admin/dashboard?status_message=Store+not+found&status_type=error", 
-            status_code=303
-        )
+    # Handle 'all' tenant selection
+    tenant_obj = None
+    if selected_tenant_slug.lower() == "all":
+        logger.info("Using 'All Stores' selection for marketing dashboard")
+        # Use a placeholder tenant object for the template
+        tenant_obj = {
+            "id": "all",
+            "name": "All Stores",
+            "slug": "all"
+        }
+    else:
+        # Get tenant object for a specific tenant
+        try:
+            tenant_obj = tenant_manager.get_by_slug(selected_tenant_slug)
+            if not tenant_obj:
+                return RedirectResponse(
+                    url="/admin/dashboard?status_message=Store+not+found&status_type=error", 
+                    status_code=303
+                )
+        except Exception as e:
+            logger.error(f"Error fetching tenant {selected_tenant_slug}: {str(e)}")
+            return RedirectResponse(
+                url="/admin/dashboard?status_message=Error+loading+store:+{str(e)}&status_type=error", 
+                status_code=303
+            )
 
     # Get all tenants for the sidebar
     tenants = tenant_manager.get_all()
@@ -137,13 +155,31 @@ async def discounts_page(
     # Store the selected tenant in session for future requests
     request.session["selected_tenant"] = selected_tenant_slug
 
-    # Get tenant object
-    tenant_obj = tenant_manager.get_by_slug(selected_tenant_slug)
-    if not tenant_obj:
-        return RedirectResponse(
-            url="/admin/dashboard?status_message=Store+not+found&status_type=error", 
-            status_code=303
-        )
+    # Handle 'all' tenant selection
+    tenant_obj = None
+    if selected_tenant_slug.lower() == "all":
+        logger.info("Using 'All Stores' selection for discount management")
+        # Use a placeholder tenant object for the template
+        tenant_obj = {
+            "id": "all",
+            "name": "All Stores",
+            "slug": "all"
+        }
+    else:
+        # Get tenant object for a specific tenant
+        try:
+            tenant_obj = tenant_manager.get_by_slug(selected_tenant_slug)
+            if not tenant_obj:
+                return RedirectResponse(
+                    url="/admin/dashboard?status_message=Store+not+found&status_type=error", 
+                    status_code=303
+                )
+        except Exception as e:
+            logger.error(f"Error fetching tenant {selected_tenant_slug}: {str(e)}")
+            return RedirectResponse(
+                url="/admin/dashboard?status_message=Error+loading+store:+{str(e)}&status_type=error", 
+                status_code=303
+            )
 
     # Get all tenants for the sidebar
     tenants = tenant_manager.get_all()
@@ -215,13 +251,31 @@ async def newsletters_page(
     # Store the selected tenant in session for future requests
     request.session["selected_tenant"] = selected_tenant_slug
 
-    # Get tenant object
-    tenant_obj = tenant_manager.get_by_slug(selected_tenant_slug)
-    if not tenant_obj:
-        return RedirectResponse(
-            url="/admin/dashboard?status_message=Store+not+found&status_type=error", 
-            status_code=303
-        )
+    # Handle 'all' tenant selection
+    tenant_obj = None
+    if selected_tenant_slug.lower() == "all":
+        logger.info("Using 'All Stores' selection for newsletter management")
+        # Use a placeholder tenant object for the template
+        tenant_obj = {
+            "id": "all",
+            "name": "All Stores",
+            "slug": "all"
+        }
+    else:
+        # Get tenant object for a specific tenant
+        try:
+            tenant_obj = tenant_manager.get_by_slug(selected_tenant_slug)
+            if not tenant_obj:
+                return RedirectResponse(
+                    url="/admin/dashboard?status_message=Store+not+found&status_type=error", 
+                    status_code=303
+                )
+        except Exception as e:
+            logger.error(f"Error fetching tenant {selected_tenant_slug}: {str(e)}")
+            return RedirectResponse(
+                url="/admin/dashboard?status_message=Error+loading+store:+{str(e)}&status_type=error", 
+                status_code=303
+            )
 
     # Get all tenants for the sidebar
     tenants = tenant_manager.get_all()
@@ -358,13 +412,31 @@ async def analytics_page(
     # Store the selected tenant in session for future requests
     request.session["selected_tenant"] = selected_tenant_slug
 
-    # Get tenant object
-    tenant_obj = tenant_manager.get_by_slug(selected_tenant_slug)
-    if not tenant_obj:
-        return RedirectResponse(
-            url="/admin/dashboard?status_message=Store+not+found&status_type=error", 
-            status_code=303
-        )
+    # Handle 'all' tenant selection
+    tenant_obj = None
+    if selected_tenant_slug.lower() == "all":
+        logger.info("Using 'All Stores' selection for analytics dashboard")
+        # Use a placeholder tenant object for the template
+        tenant_obj = {
+            "id": "all",
+            "name": "All Stores",
+            "slug": "all"
+        }
+    else:
+        # Get tenant object for a specific tenant
+        try:
+            tenant_obj = tenant_manager.get_by_slug(selected_tenant_slug)
+            if not tenant_obj:
+                return RedirectResponse(
+                    url="/admin/dashboard?status_message=Store+not+found&status_type=error", 
+                    status_code=303
+                )
+        except Exception as e:
+            logger.error(f"Error fetching tenant {selected_tenant_slug}: {str(e)}")
+            return RedirectResponse(
+                url="/admin/dashboard?status_message=Error+loading+store:+{str(e)}&status_type=error", 
+                status_code=303
+            )
 
     # Get all tenants for the sidebar
     tenants = tenant_manager.get_all()
