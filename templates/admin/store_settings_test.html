@@ -13,6 +13,8 @@
         <p>Selected Tenant: <strong>{{ selected_tenant }}</strong></p>
         <p>Tenant Object Exists: <strong>{{ tenant is not none }}</strong></p>
         <p>Config Type: <strong>{{ config.__class__.__name__ }}</strong></p>
+        <p>Has Settings: <strong>{{ config|length > 0 }}</strong></p>
+        <p>Available Settings Keys: <strong>{{ config.keys()|join(', ') }}</strong></p>
     </div>
 
     <ul class="nav nav-tabs" id="myTab" role="tablist">
@@ -51,15 +53,15 @@
                                 <input type="hidden" name="tab" value="basic">
                                 <div class="mb-3">
                                     <label for="store_name" class="form-label">Store Name</label>
-                                    <input type="text" class="form-control" id="store_name" name="store_name" value="{{ config.store_name }}">
+                                    <input type="text" class="form-control" id="store_name" name="store_name" value="{{ config.store_name if config.store_name else '' }}">
                                 </div>
                                 <div class="mb-3">
                                     <label for="store_description" class="form-label">Store Description</label>
-                                    <textarea class="form-control" id="store_description" name="store_description" rows="3">{{ config.store_description }}</textarea>
+                                    <textarea class="form-control" id="store_description" name="store_description" rows="3">{{ config.store_description if config.store_description else '' }}</textarea>
                                 </div>
                                 <div class="mb-3">
                                     <label for="contact_email" class="form-label">Contact Email</label>
-                                    <input type="email" class="form-control" id="contact_email" name="contact_email" value="{{ config.contact_email }}">
+                                    <input type="email" class="form-control" id="contact_email" name="contact_email" value="{{ config.contact_email if config.contact_email else '' }}">
                                 </div>
                                 <div class="mb-3">
                                     <label for="currency" class="form-label">Currency</label>

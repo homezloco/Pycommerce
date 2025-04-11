@@ -76,7 +76,29 @@ async def store_settings_test(
     logger.info(f"[TEST] Rendering store settings with tenant: {tenant_obj.slug if tenant_obj else 'None'}")
     logger.info(f"[TEST] Settings data: {store_settings}")
     
-    # Return template data for debugging
+    # Process settings to ensure we have all expected fields with defaults
+    processed_settings = {
+        # Basic settings with defaults
+        "store_name": store_settings.get("store_name", ""),
+        "store_description": store_settings.get("store_description", ""),
+        "contact_email": store_settings.get("contact_email", ""),
+        "currency": store_settings.get("currency", "USD"),
+        
+        # Theme/color settings
+        "primary_color": store_settings.get("primary_color", "#3498db"),
+        "secondary_color": store_settings.get("secondary_color", "#6c757d"),
+        "background_color": store_settings.get("background_color", "#ffffff"),
+        "text_color": store_settings.get("text_color", "#212529"),
+        "font_family": store_settings.get("font_family", "Arial, sans-serif"),
+    }
+    
+    # Log processed settings for debugging
+    logger.info(f"[TEST] Processed settings for template: {processed_settings}")
+    
+    # Include the raw settings for debugging too
+    processed_settings["_raw"] = store_settings
+    
+    # Return template data with processed settings
     return templates.TemplateResponse(
         "admin/store_settings_test.html",
         {
@@ -85,7 +107,7 @@ async def store_settings_test(
             "tenant": tenant_obj,
             "tenants": tenants,
             "active_page": "store-settings",
-            "config": store_settings,  # Pass raw settings directly
+            "config": processed_settings,  # Use processed settings
             "theme": store_settings.get('theme', {}),  # Add theme settings directly
             "status_message": status_message,
             "status_type": status_type,
@@ -125,6 +147,9 @@ async def update_basic_settings_test(
         # Get current settings or initialize empty dict
         settings = tenant_obj.settings or {}
         
+        # Log current settings before update
+        logger.info(f"[TEST] Current settings before update: {settings}")
+        
         # Update settings
         settings.update({
             "store_name": store_name,
@@ -133,7 +158,11 @@ async def update_basic_settings_test(
             "currency": currency
         })
         
+        # Log settings after update
+        logger.info(f"[TEST] Updated settings: {settings}")
+        
         # Save settings
+        logger.info(f"[TEST] Updating settings for tenant ID: {tenant_obj.id}")
         tenant_manager.update_settings(str(tenant_obj.id), settings)
         
         # Return to settings page with success message
