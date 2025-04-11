@@ -127,13 +127,23 @@ async def admin_dashboard(
     # Get tenants
     tenants = tenant_manager.get_all()
     
-    # Get selected tenant from session or use the first tenant
-    selected_tenant_slug = request.session.get("selected_tenant")
+    # Import tenant utils for consistent tenant selection
+    from routes.admin.tenant_utils import get_selected_tenant, create_virtual_all_tenant
+    
+    # Get selected tenant using the unified utility
+    selected_tenant_slug = request.query_params.get('tenant') or request.session.get("selected_tenant")
     selected_tenant = None
     
-    if selected_tenant_slug:
+    # Special handling for "all" tenant
+    if selected_tenant_slug and selected_tenant_slug.lower() == "all":
+        logger.info("Dashboard showing data for all stores")
+        request.session["selected_tenant"] = "all"
+        request.session["tenant_id"] = None
+        # Create a virtual "All Stores" tenant
+        selected_tenant = type('AllStoresTenant', (), create_virtual_all_tenant())
+    elif selected_tenant_slug:
         selected_tenant = tenant_manager.get_by_slug(selected_tenant_slug)
-    
+        
     # If no tenant is selected or the selected tenant doesn't exist,
     # use the first available tenant
     if not selected_tenant and tenants:
@@ -164,7 +174,14 @@ async def admin_dashboard(
         try:
             # Get counts and summary data for the selected tenant
             try:
-                products = product_manager.get_by_tenant(str(selected_tenant.id))
+                # If "All Stores" is selected, get all products
+                if selected_tenant_slug and selected_tenant_slug.lower() == "all":
+                    products = product_manager.list()
+                    logger.info(f"Fetching all products across all stores")
+                else:
+                    products = product_manager.get_by_tenant(str(selected_tenant.id))
+                    logger.info(f"Fetching products for tenant: {selected_tenant.slug}")
+                
                 dashboard_data["products_count"] = len(products)
                 
                 # If no products, use mock data

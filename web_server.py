@@ -539,16 +539,28 @@ async def admin_change_store(request: Request, tenant: str = ""):
     # Get the redirect URL from query parameters
     redirect_url = request.query_params.get('redirect_url', '/admin/dashboard')
     
-    # EMERGENCY FIX: Direct handling for 'all' tenant case
+    # Handle 'all' tenant case
     if tenant and tenant.lower() == "all":
-        logger.info("CRITICAL FIX: Handling 'All Stores' selection with direct redirect")
+        logger.info("Handling 'All Stores' selection")
         # Set session variables
         request.session["selected_tenant"] = "all"
         request.session["tenant_id"] = None
         
-        # ALWAYS redirect to products page for 'all' selection with explicit tenant param
+        # Get the redirect URL from query parameters or use products as fallback
+        redirect_url = request.query_params.get('redirect_url', '/admin/products')
+        
+        # Add tenant=all parameter to the redirect URL
+        if "?" in redirect_url:
+            redirect_url += "&tenant=all"
+        else:
+            redirect_url += "?tenant=all"
+        
+        # Add success message
+        if "status_message" not in redirect_url:
+            redirect_url += "&status_message=Showing+all+stores&status_type=success"
+            
         return RedirectResponse(
-            url="/admin/products?tenant=all&status_message=Showing+all+stores&status_type=success",
+            url=redirect_url,
             status_code=303
         )
     
