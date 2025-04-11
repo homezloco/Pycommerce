@@ -259,19 +259,31 @@ document.addEventListener('DOMContentLoaded', function() {
             if (el.type === 'checkbox') {
                 el.checked = !!value;
             } else {
-                el.value = value || '';
+                el.value = value !== undefined && value !== null ? value : '';
             }
+            console.log(`Populated ${id} with value:`, value);
         } else {
             console.log(`Element with id ${id} not found`);
         }
     }
 
-    // Debug information
-    console.log('Config data:', {{ config|tojson }});
+    // Use the server-provided config data first
+    const initialConfig = {{ config|tojson }};
+    console.log('Initial config data from server:', initialConfig);
 
-    // Always fetch the latest settings from API for consistency
+    // Populate form with server-side data first
+    if (initialConfig && Object.keys(initialConfig).length > 0) {
+        populateFormValues(initialConfig);
+    }
+
+    // Then fetch the latest settings from API for consistency
     fetch('/admin/api/store-settings')
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`API response error: ${response.status}`);
+            }
+            return response.json();
+        })
         .then(data => {
             console.log('Fetched settings from API:', data);
             const settings = data.settings || {};
@@ -285,15 +297,18 @@ document.addEventListener('DOMContentLoaded', function() {
         .catch(error => {
             console.error('Error fetching settings:', error);
             
-            // Fallback to template data if API fetch fails
-            const settings = {{ config|tojson }};
-            if (settings && Object.keys(settings).length > 0) {
-                populateFormValues(settings);
-                addDebugInfo(settings);
-            }
+            // Already populated with template data above, just add debug info
+            addDebugInfo(initialConfig);
         });
 
     function populateFormValues(settings) {
+        if (!settings) {
+            console.error('No settings data to populate form');
+            return;
+        }
+
+        console.log('Populating form with settings:', settings);
+
         // Basic Settings Tab
         populateElement('store_name', settings.store_name);
         populateElement('store_description', settings.store_description);
@@ -331,9 +346,19 @@ document.addEventListener('DOMContentLoaded', function() {
             <a href="/admin/api/store-settings" target="_blank" class="btn btn-sm btn-primary">View API Output</a>
         `;
 
+        // Remove existing debug div if it exists
+        const existingDebug = document.querySelector('.container-fluid.mt-4.p-3.bg-light.border');
+        if (existingDebug) {
+            existingDebug.remove();
+        }
+
         const adminContent = document.querySelector('#myTabContent');
-        if (adminContent) {
+        if (adminContent && adminContent.parentNode) {
             adminContent.parentNode.appendChild(debugDiv);
+        } else {
+            console.error('Could not find #myTabContent to attach debug info');
+            // Fallback - add to body
+            document.body.appendChild(debugDiv);
         }
     }
 });
