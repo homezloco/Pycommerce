@@ -1,3 +1,4 @@
+
 """
 Admin routes for store settings.
 
@@ -7,7 +8,7 @@ import logging
 from typing import Dict, Optional, List, Any
 
 from fastapi import APIRouter, Form, HTTPException, Request, status, Depends
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 
 from pycommerce.models.tenant import TenantManager
@@ -112,14 +113,13 @@ async def store_settings(
         **store_settings
     }
 
-    # If theme settings are present, ensure they're accessible
-    if 'theme' in store_settings and isinstance(store_settings['theme'], dict):
-        processed_settings.update(store_settings['theme'])
-
     # Log the processed settings
     logger.info(f"Processed settings for template: {processed_settings}")
 
-    # Add display_tenant_selector flag for consistency with other admin pages
+    # Include the raw settings for debugging too
+    processed_settings["_raw"] = store_settings
+
+    # Return template data with processed settings
     return templates.TemplateResponse(
         "admin/store_settings.html",
         {
@@ -129,7 +129,7 @@ async def store_settings(
             "tenants": tenants,
             "active_page": "store-settings",
             "config": processed_settings,  # Use processed settings
-            "theme": store_settings.get('theme', {}),  # Add theme settings directly for compatibility
+            "theme": store_settings.get('theme', {}),  # Add theme settings directly
             "status_message": status_message,
             "status_type": status_type,
             "cart_item_count": cart_item_count,
@@ -307,6 +307,61 @@ async def update_ai_settings(
             status_code=status.HTTP_303_SEE_OTHER
         )
 
+@router.get("/api/store-settings", response_class=JSONResponse)
+async def get_store_settings_api(
+    request: Request,
+    tenant: Optional[str] = None
+):
+    """API endpoint to check store settings data."""
+    # Get tenant from query parameters or session
+    tenant_slug = tenant or request.session.get("selected_tenant")
+
+    # Get tenant object if we have a selected tenant
+    tenant_obj = None
+    settings = {}
+    tenant_id = None
+
+    if tenant_slug:
+        try:
+            tenant_obj = tenant_manager.get_by_slug(tenant_slug)
+            if tenant_obj and hasattr(tenant_obj, 'settings'):
+                settings = tenant_obj.settings or {}
+                tenant_id = str(tenant_obj.id)
+                logger.info(f"[API] Retrieved settings for tenant {tenant_slug}: {settings}")
+            else:
+                logger.warning(f"[API] Could not retrieve settings for tenant {tenant_slug}")
+        except Exception as e:
+            logger.error(f"[API] Error getting tenant: {str(e)}")
+
+    # Build basic settings if not present with defaults
+    if not settings:
+        settings = {
+            "store_name": "",
+            "store_description": "",
+            "contact_email": "",
+            "currency": "USD",
+            "primary_color": "#3498db",
+            "secondary_color": "#6c757d",
+            "background_color": "#ffffff",
+            "text_color": "#212529",
+            "font_family": "Arial, sans-serif",
+            "store_country": "US",
+            "enable_shipping": True,
+            "flat_rate_shipping": 5.99,
+            "free_shipping_threshold": 50.00,
+            "dimensional_weight_factor": 200,
+            "express_shipping_multiplier": 1.75,
+            "logo_position": "left"
+        }
+
+    # Return JSON response with settings data
+    return {
+        "tenant_id": tenant_id,
+        "tenant_slug": tenant_slug,
+        "settings": settings,
+        "theme": settings.get('theme', {})
+    }
+
 def setup_routes(app_templates):
     """
     Set up routes with the given templates.
@@ -317,74 +372,3 @@ def setup_routes(app_templates):
     global templates
     templates = app_templates
     return router
-
-@router.get("/api/store-settings", response_class=HTMLResponse)
-async def get_store_settings_api(
-    request: Request,
-    tenant: Optional[str] = None
-):
-    """API endpoint to check store settings data."""
-    # Get tenant from query parameters or session
-    selected_tenant_slug = tenant or request.session.get("selected_tenant")
-
-    # Get tenant object if we have a selected tenant
-    tenant_obj = None
-    store_settings = {}
-    if selected_tenant_slug:
-        try:
-            tenant_obj = tenant_manager.get_by_slug(selected_tenant_slug)
-            if tenant_obj:
-                # Make sure we have settings initialized
-                store_settings = tenant_obj.settings or {}
-                logger.info(f"API: Retrieved settings for tenant {selected_tenant_slug}: {store_settings}")
-        except Exception as e:
-            logger.error(f"API: Error getting tenant: {str(e)}")
-
-    # Process settings to ensure we have all expected fields with defaults
-    processed_settings = {
-        # Basic settings with defaults
-        "store_name": store_settings.get("store_name", ""),
-        "store_description": store_settings.get("store_description", ""),
-        "contact_email": store_settings.get("contact_email", ""),
-        "currency": store_settings.get("currency", "USD"),
-
-        # Theme/color settings
-        "primary_color": store_settings.get("primary_color", "#3498db"),
-        "secondary_color": store_settings.get("secondary_color", "#6c757d"),
-        "background_color": store_settings.get("background_color", "#ffffff"),
-        "text_color": store_settings.get("text_color", "#212529"),
-        "font_family": store_settings.get("font_family", "Arial, sans-serif"),
-
-        # Shipping settings
-        "store_country": store_settings.get("store_country", "US"),
-        "enable_shipping": store_settings.get("enable_shipping", True),
-        "store_postal_code": store_settings.get("store_postal_code", ""),
-        "free_shipping_threshold": store_settings.get("free_shipping_threshold", 50.00),
-        "dimensional_weight_factor": store_settings.get("dimensional_weight_factor", 200),
-        "express_multiplier": store_settings.get("express_multiplier", 1.75),
-        "flat_rate_domestic": store_settings.get("flat_rate_domestic", 5.99),
-        "flat_rate_international": store_settings.get("flat_rate_international", 19.99),
-
-        # AI settings
-        "openai_api_key": store_settings.get("openai_api_key", ""),
-        "openai_model": store_settings.get("openai_model", "gpt-3.5-turbo"),
-        "dalle_model": store_settings.get("dalle_model", "dall-e-2"),
-        "enable_product_descriptions": store_settings.get("enable_product_descriptions", False),
-        "enable_image_generation": store_settings.get("enable_image_generation", False),
-        "enable_chatbot": store_settings.get("enable_chatbot", False),
-
-        # Add additional keys from the original settings to maintain data
-        **store_settings
-    }
-
-    # Debug output
-    logger.info(f"API: Processed settings for API response: {processed_settings}")
-
-    # Return JSON response with settings data
-    from fastapi.responses import JSONResponse
-    return JSONResponse({
-        "tenant_slug": selected_tenant_slug,
-        "tenant_id": str(tenant_obj.id) if tenant_obj else None,
-        "settings": processed_settings,
-        "theme": store_settings.get('theme', {})
-    })
