@@ -529,24 +529,42 @@ async def admin_change_store(request: Request, tenant: str = ""):
     """Change the selected store for admin management."""
     redirect_url = request.query_params.get('redirect_url', '/admin/dashboard')
     
-    # Set the selected tenant in session 
-    if tenant:
-        request.session["selected_tenant"] = tenant
-        # Clear tenant_id if "all" is selected
-        if tenant == "all":
-            request.session["tenant_id"] = ""
-            logger.info("Changed store to 'All Stores'")
-        else:
-            # Try to look up the tenant ID for non-"all" selections
-            try:
-                tenant_obj = tenant_manager.get_by_slug(tenant)
-                if tenant_obj:
-                    request.session["tenant_id"] = str(tenant_obj.id)
-                    logger.info(f"Changed store to {tenant} with ID: {tenant_obj.id}")
-            except Exception as e:
-                logger.error(f"Error looking up tenant ID for slug {tenant}: {str(e)}")
+    # Set the selected tenant in session using our helper function
+    try:
+        from routes.admin.tenant_utils import get_selected_tenant
+        
+        # Get all tenants
+        tenants_list = tenant_manager.list() or []
+        tenants = [
+            {
+                "id": str(t.id),
+                "name": t.name,
+                "slug": t.slug,
+                "domain": t.domain if hasattr(t, 'domain') else None,
+                "active": t.active if hasattr(t, 'active') else True
+            }
+            for t in tenants_list if t and hasattr(t, 'id')
+        ]
+        
+        # Use get_selected_tenant to handle session updates
+        # This function handles "all" selection and sets session variables
+        get_selected_tenant(
+            request=request, 
+            tenants=tenants, 
+            tenant_param=tenant,
+            allow_all=True
+        )
+        
+        logger.info(f"Changed store to {tenant}")
+    except Exception as e:
+        logger.error(f"Error changing selected tenant: {str(e)}")
     
-    # Add status message for success notification
+    # Make sure the redirect URL doesn't redirect back to change-store
+    # to avoid potential infinite loops
+    if redirect_url.startswith('/admin/change-store'):
+        redirect_url = '/admin/dashboard'
+    
+    # Add status message for success notification and redirect
     return RedirectResponse(
         url=f"{redirect_url}?status_message=Store+changed+successfully&status_type=success",
         status_code=303
@@ -1363,28 +1381,39 @@ async def admin_products(
     # Get all tenants for the dropdown
     tenants = []
     try:
+        from routes.admin.tenant_utils import get_selected_tenant
+        
         tenants_list = tenant_manager.list() or []
         tenants = [
             {
                 "id": str(t.id),
                 "name": t.name,
-                "slug": t.slug
+                "slug": t.slug,
+                "domain": t.domain if hasattr(t, 'domain') else None,
+                "active": t.active if hasattr(t, 'active') else True
             }
             for t in tenants_list if t and hasattr(t, 'id')
         ]
-    except Exception as e:
-        logger.error(f"Error fetching tenants: {str(e)}")
-    
-    # Get filtered products
-    products_list = []
-    tenant_obj = None
-    
-    if tenant:
-        # Try to get tenant by slug
-        try:
-            tenant_obj = tenant_manager.get_by_slug(tenant)
-        except Exception as e:
-            logger.warning(f"Tenant not found with slug '{tenant}': {str(e)}")
+        
+        # Use our utility to handle tenant selection - allow "all" selection for products
+        selected_tenant_slug, selected_tenant_obj = get_selected_tenant(
+            request=request, 
+            tenants=tenants, 
+            tenant_param=tenant,
+            allow_all=True
+        )
+        
+        # Set tenant and tenant_obj for the rest of the function
+        tenant = selected_tenant_slug
+        tenant_obj = None
+        
+        # Get tenant object if not 'all'
+        if tenant != "all":
+            try:
+                tenant_obj = tenant_manager.get_by_slug(tenant)
+                logger.info(f"Fetching products for tenant: {tenant_obj.name} (ID: {tenant_obj.id})")
+            except Exception as e:
+                logger.warning(f"Tenant not found with slug '{tenant}': {str(e)}")
     
     try:
         # Get all products with filters
