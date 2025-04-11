@@ -527,9 +527,32 @@ async def admin_dashboard(request: Request, status_message: Optional[str] = None
 @app.get("/admin/change-store", response_class=RedirectResponse)
 async def admin_change_store(request: Request, tenant: str = ""):
     """Change the selected store for admin management."""
+    # Get the redirect URL from query parameters
     redirect_url = request.query_params.get('redirect_url', '/admin/dashboard')
     
-    # Set the selected tenant in session using our helper function
+    # CRITICAL FIX: Handle "all" tenant selection as a special case
+    # This is the most direct solution to the tenant selection issue
+    if tenant and tenant.lower() == "all":
+        # Store the "all" selection directly in the session
+        request.session["selected_tenant"] = "all"
+        request.session["tenant_id"] = None
+        
+        # Force redirect to products page with "all" stores when specifically requested
+        logger.info(f"All Stores selected. Redirecting to {redirect_url}")
+        
+        # Explicitly handle redirection to products page
+        if '/admin/products' in redirect_url or redirect_url == '/admin/dashboard':
+            return RedirectResponse(
+                url="/admin/products?tenant=all&status_message=Showing+all+stores&status_type=success",
+                status_code=303
+            )
+        
+        return RedirectResponse(
+            url=f"{redirect_url}?status_message=Showing+all+stores&status_type=success",
+            status_code=303
+        )
+    
+    # Normal tenant selection (not "all")
     try:
         from routes.admin.tenant_utils import get_selected_tenant
         
@@ -546,16 +569,15 @@ async def admin_change_store(request: Request, tenant: str = ""):
             for t in tenants_list if t and hasattr(t, 'id')
         ]
         
-        # Use get_selected_tenant to handle session updates
-        # This function handles "all" selection and sets session variables
-        get_selected_tenant(
+        # Use get_selected_tenant to handle session updates for normal tenants
+        selected_tenant_slug, _ = get_selected_tenant(
             request=request, 
             tenants=tenants, 
             tenant_param=tenant,
-            allow_all=True
+            allow_all=False  # We already handled the "all" case above
         )
         
-        logger.info(f"Changed store to {tenant}")
+        logger.info(f"Changed store to {selected_tenant_slug}")
     except Exception as e:
         logger.error(f"Error changing selected tenant: {str(e)}")
     
@@ -563,24 +585,6 @@ async def admin_change_store(request: Request, tenant: str = ""):
     # to avoid potential infinite loops
     if redirect_url.startswith('/admin/change-store'):
         redirect_url = '/admin/dashboard'
-    
-    # Log debug information for tenant selection and redirect
-    logger.info(f"Tenant selected: '{tenant}', Redirect URL: '{redirect_url}'")
-    
-    # Always use the specified redirect_url for "all" stores selection, with stricter condition
-    # This fixes the issue with "all" redirecting to dashboard
-    if tenant.lower() == "all":
-        logger.info(f"'All Stores' selected - ensuring proper redirect to {redirect_url}")
-        
-        # Ensure we're not redirecting back to change-store to avoid loops
-        if redirect_url.startswith('/admin/change-store'):
-            redirect_url = '/admin/products'
-            logger.info(f"Prevented loop - redirecting to {redirect_url} instead")
-            
-        return RedirectResponse(
-            url=f"{redirect_url}?status_message=Showing+all+stores&status_type=success",
-            status_code=303
-        )
     
     # Add status message for success notification and redirect
     return RedirectResponse(

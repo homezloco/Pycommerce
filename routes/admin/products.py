@@ -89,17 +89,20 @@ async def admin_products(
     # Store the selected tenant in session
     request.session["selected_tenant"] = selected_tenant_slug
     
-    # Handle "all" tenant slug case
-    if selected_tenant_slug == "all":
+    # Handle "all" tenant slug case (case insensitive)
+    if selected_tenant_slug and selected_tenant_slug.lower() == "all":
         logger.info("Using 'All Stores' selection in products page")
-        # Create a virtual tenant object for "All Stores"
-        tenant_obj = type('AllStoresTenant', (), {
-            'id': 'all',
-            'name': 'All Stores',
-            'slug': 'all',
-            'domain': None,
-            'active': True
-        })()
+        # Create a virtual tenant object for "All Stores" with all required attributes
+        class AllStoresTenant:
+            def __init__(self):
+                self.id = 'all'
+                self.name = 'All Stores'
+                self.slug = 'all'
+                self.domain = None
+                self.active = True
+        
+        tenant_obj = AllStoresTenant()
+        logger.info(f"Created virtual tenant object for All Stores with id={tenant_obj.id}")
     else:
         # Get tenant object
         tenant_obj = tenant_manager.get_by_slug(selected_tenant_slug)
