@@ -346,6 +346,16 @@ class CategoryManager:
         Returns:
             List of Category objects
         """
+        # Use Flask's app_context if available
+        if flask_app is not None and hasattr(flask_app, 'app_context'):
+            with flask_app.app_context():
+                return self._get_product_categories(product_id)
+        else:
+            # Fallback if we can't find a Flask app
+            return self._get_product_categories(product_id)
+    
+    def _get_product_categories(self, product_id: str) -> List[Any]:
+        """Internal implementation of get_product_categories."""
         try:
             # Get product-category associations
             associations = ProductCategory.query.filter_by(product_id=product_id).all()

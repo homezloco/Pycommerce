@@ -439,7 +439,8 @@ class MarketAnalysisService:
                                             id=product_id,
                                             name=product_name,
                                             price=price,
-                                            tenant_id=tenant_id
+                                            tenant_id=tenant_id,
+                                            sku=f"SKU-{product_id[-8:]}"  # Generate a placeholder SKU from the product ID
                                         )
                                         # Cache it for future lookups
                                         self.product_cache[product_id] = mock_product
@@ -787,8 +788,38 @@ class MarketAnalysisService:
             
             # Get all products for the tenant
             try:
-                # Try different methods of getting products for a tenant
-                if hasattr(self.product_manager, 'get_products_by_tenant'):
+                # Special handling for "all tenants" case
+                if tenant_id is None or tenant_id == "":
+                    # Just use the product cache from direct SQL queries
+                    products = []
+                    for product_data in sales_data.get("top_products", []):
+                        try:
+                            product_id = product_data["id"]
+                            product = None
+                            
+                            # First check the cache
+                            if hasattr(self, 'product_cache') and product_id in self.product_cache:
+                                product = self.product_cache[product_id]
+                                logger.debug(f"Retrieved product {product_id} from cache for insights")
+                            # If not in cache, we'll create a simple representation with the data we have
+                            else:
+                                # Create a simple product object with the data we have
+                                product = SimpleProduct(
+                                    id=product_id,
+                                    name=product_data.get("name", "Unknown Product"),
+                                    price=product_data.get("price", 0.0),
+                                    sku=product_data.get("sku", f"SKU-{product_id[:8]}")
+                                )
+                                # Add to cache for future use
+                                if hasattr(self, 'product_cache'):
+                                    self.product_cache[product_id] = product
+                            
+                            if product:
+                                products.append(product)
+                        except Exception as e:
+                            logger.error(f"Error processing product from sales data: {e}")
+                # Normal tenant-specific case            
+                elif hasattr(self.product_manager, 'get_products_by_tenant'):
                     products = self.product_manager.get_products_by_tenant(tenant_id)
                 elif hasattr(self.product_manager, 'get_by_tenant'):
                     products = self.product_manager.get_by_tenant(tenant_id)
