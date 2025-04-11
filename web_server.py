@@ -866,9 +866,10 @@ async def admin_ai_config(
     """Admin page for AI configuration."""
     # Get all tenants for the store selector
     tenants = []
-    selected_tenant = None
     
     try:
+        from routes.admin.tenant_utils import get_selected_tenant
+        
         tenants_list = tenant_manager.list() or []
         tenants = [
             {
@@ -881,16 +882,14 @@ async def admin_ai_config(
             for t in tenants_list if t and hasattr(t, 'id')
         ]
         
-        # Get selected tenant from query param
-        selected_tenant_slug = request.query_params.get('tenant')
-        if selected_tenant_slug:
-            for tenant in tenants:
-                if tenant["slug"] == selected_tenant_slug:
-                    selected_tenant = tenant
-                    break
-        elif tenants:
-            selected_tenant = tenants[0]
-            selected_tenant_slug = selected_tenant["slug"]
+        # Get selected tenant using the helper function
+        # AI config doesn't support "all" stores, so allow_all=False
+        selected_tenant_slug, selected_tenant = get_selected_tenant(
+            request=request, 
+            tenants=tenants, 
+            tenant_param=request.query_params.get('tenant'),
+            allow_all=False
+        )
         
         # Get cart item count if available
         cart_item_count = 0
@@ -1051,6 +1050,8 @@ async def admin_plugins(request: Request, status_message: Optional[str] = None, 
     # Get all tenants for the store selector
     tenants = []
     try:
+        from routes.admin.tenant_utils import get_selected_tenant
+        
         tenants_list = tenant_manager.list() or []
         tenants = [
             {
@@ -1063,16 +1064,16 @@ async def admin_plugins(request: Request, status_message: Optional[str] = None, 
             for t in tenants_list if t and hasattr(t, 'id')
         ]
         
-        # Get selected tenant from query param or session
-        selected_tenant = request.query_params.get('tenant') or request.session.get("selected_tenant")
+        # Get selected tenant using the helper function - plugins work with "all" stores selection
+        selected_tenant_slug, selected_tenant_obj = get_selected_tenant(
+            request=request, 
+            tenants=tenants, 
+            tenant_param=request.query_params.get('tenant'),
+            allow_all=True
+        )
         
-        # Fallback if no tenant selected
-        if not selected_tenant and tenants:
-            selected_tenant = tenants[0]["slug"]
-            
-        # Update session with the selected tenant
-        if selected_tenant:
-            request.session["selected_tenant"] = selected_tenant
+        # For plugins page we only need the slug, not the full tenant object
+        selected_tenant = selected_tenant_slug
         
         # Get cart item count if available
         cart_item_count = 0

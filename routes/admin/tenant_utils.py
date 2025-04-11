@@ -1,135 +1,101 @@
 """
-Utility functions for tenant management in admin routes.
+Tenant utility functions for admin routes.
 
-This module provides utility functions for consistent tenant handling
-across all admin routes in PyCommerce.
+This module provides helper functions for tenant selection and management
+across the admin interface to ensure consistent behavior.
 """
-import logging
-from typing import Optional, Dict, Any, Tuple
 
+import logging
+from typing import Dict, List, Optional, Tuple, Any, Union
 from fastapi import Request
+
 from pycommerce.models.tenant import TenantManager
 
 logger = logging.getLogger(__name__)
 
-def get_current_tenant(
-    request: Request, 
-    tenant_manager: TenantManager,
-    default_tenant_slug: str = "all"
-) -> Tuple[Any, str, str]:
+# Initialize tenant manager
+tenant_manager = TenantManager()
+
+def get_selected_tenant(request, tenants, tenant_param=None, allow_all=False):
     """
-    Get the current tenant based on session data and URL parameters.
-    
-    This utility function provides consistent tenant selection logic for all admin routes.
-    It prioritizes tenant selection in this order:
-    1. Request query parameter 'tenant'
-    2. Session value for 'selected_tenant'
-    3. Session value for 'tenant_id' (with lookup to get the slug)
-    4. Default tenant slug provided
-    
-    Special value 'all' for tenant_slug means to use data from all tenants.
-    In this case, tenant_obj will be None and tenant_id will be an empty string.
+    Get the selected tenant based on request parameters and session data.
     
     Args:
-        request: FastAPI request object
-        tenant_manager: Instance of TenantManager
-        default_tenant_slug: Default tenant slug to use if no tenant is found
+        request: The FastAPI request object
+        tenants: List of tenant dictionaries
+        tenant_param: Optional tenant parameter from URL or form
+        allow_all: Whether to allow "all" as a valid selection
         
     Returns:
-        Tuple of (tenant_object, tenant_id, tenant_slug)
+        Tuple of (selected_tenant_slug, selected_tenant_dict)
     """
-    # First check if there's a tenant parameter in the request
-    query_tenant = request.query_params.get('tenant')
+    # Get selected tenant from param, query param, or session
+    selected_tenant_slug = tenant_param or request.query_params.get('tenant') or request.session.get("selected_tenant")
+    selected_tenant = None
     
-    # Get tenant from session - prioritize selected_tenant (from store switcher)
-    session_tenant_slug = request.session.get("selected_tenant")
-    session_tenant_id = request.session.get("tenant_id")
+    # Handle "all" selection based on allow_all
+    if selected_tenant_slug == "all":
+        if allow_all:
+            # Keep "all" selection and update session
+            request.session["selected_tenant"] = "all"
+            request.session["tenant_id"] = None
+            return "all", None
+        elif tenants:
+            # Switch to first tenant if "all" not allowed
+            selected_tenant_slug = tenants[0]["slug"]
+            logger.info(f"'All Stores' selected but using first tenant {selected_tenant_slug}")
     
-    # The tenant slug we'll use
-    tenant_slug = None
+    # Find the tenant in the tenants list
+    if selected_tenant_slug:
+        for tenant in tenants:
+            if tenant["slug"] == selected_tenant_slug:
+                selected_tenant = tenant
+                # Update session
+                request.session["selected_tenant"] = selected_tenant_slug
+                request.session["tenant_id"] = tenant["id"]
+                break
     
-    # Initialize tenant_obj and tenant_id for later use
-    tenant_obj = None
-    tenant_id = ""  # Initialize as empty string instead of None
-    
-    # Priority 1: Use query parameter if available
-    if query_tenant:
-        tenant_slug = query_tenant
-        logger.info(f"Using tenant from query parameter: {tenant_slug}")
-    
-    # Priority 2: Use session tenant slug if available
-    elif session_tenant_slug:
-        tenant_slug = session_tenant_slug
-        logger.info(f"Using tenant from session (selected_tenant): {tenant_slug}")
-    
-    # Priority 3: Try to lookup tenant by ID from session
-    elif session_tenant_id:
-        logger.info(f"Looking up tenant by ID from session: {session_tenant_id}")
-        # Try to find the tenant by ID
-        try:
-            # Get all tenants and find the one with matching ID
-            tenants_list = tenant_manager.list() or []
-            for tenant in tenants_list:
-                if str(tenant.id) == str(session_tenant_id):
-                    tenant_obj = tenant
-                    tenant_slug = tenant.slug
-                    tenant_id = str(tenant.id)
-                    logger.info(f"Found tenant {tenant_slug} by ID: {tenant_id}")
-                    break
-            
-            if not tenant_obj:
-                logger.warning(f"No tenant found for ID: {session_tenant_id}")
-        except Exception as e:
-            logger.error(f"Error looking up tenant by ID: {e}")
-    
-    # Priority 4: Use default tenant slug
-    if not tenant_slug:
-        tenant_slug = default_tenant_slug
-        logger.info(f"Using default tenant: {tenant_slug}")
-    
-    # Handle "all" slug special case
-    if tenant_slug == "all":
-        # Special case: "all" means to use data from all tenants
-        # Set tenant_obj to None and tenant_id to empty string
-        tenant_obj = None
-        tenant_id = ""
-        # Update session values for consistency
-        request.session["selected_tenant"] = "all"
-        request.session["tenant_id"] = ""
-        logger.info("Using 'all' tenants mode")
-    # Now get or confirm the tenant object and ID if not "all"
-    elif not tenant_obj:
-        try:
-            tenant_obj = tenant_manager.get_by_slug(tenant_slug)
-            
-            if tenant_obj:
-                tenant_id = str(tenant_obj.id)
-                # Update session values for consistency
-                request.session["selected_tenant"] = tenant_slug
-                request.session["tenant_id"] = tenant_id
-                logger.info(f"Found tenant_id: {tenant_id} for slug: {tenant_slug}")
-            else:
-                logger.warning(f"No tenant found for slug: {tenant_slug}")
-                # Try to get first available tenant
-                try:
-                    tenants_list = tenant_manager.list() or []
-                    if tenants_list and len(tenants_list) > 0:
-                        tenant_obj = tenants_list[0]
-                        tenant_id = str(tenant_obj.id)
-                        tenant_slug = tenant_obj.slug
-                        # Update session
-                        request.session["selected_tenant"] = tenant_slug
-                        request.session["tenant_id"] = tenant_id
-                        logger.info(f"Using first available tenant: {tenant_slug} ({tenant_id})")
-                except Exception as e:
-                    logger.error(f"Error finding alternative tenant: {e}")
-        except Exception as e:
-            logger.error(f"Error looking up tenant by slug: {e}")
-    
-    # Ensure we always return string values, not None
-    if tenant_id is None:
-        tenant_id = ""
-    if tenant_slug is None:
-        tenant_slug = default_tenant_slug
+    # Fallback if no tenant selected or found
+    if not selected_tenant and tenants:
+        selected_tenant = tenants[0]
+        selected_tenant_slug = selected_tenant["slug"]
+        # Update session
+        request.session["selected_tenant"] = selected_tenant_slug
+        request.session["tenant_id"] = selected_tenant["id"]
         
-    return tenant_obj, tenant_id, tenant_slug
+    return selected_tenant_slug, selected_tenant
+    
+def get_current_tenant(request: Request):
+    """
+    Get the current tenant based on session data or query parameters.
+    
+    This function is used by the market analysis routes to get the current tenant
+    for filtering market data.
+    
+    Args:
+        request: The FastAPI request object
+        
+    Returns:
+        The tenant object or None
+    """
+    # Get tenant from query param or session
+    tenant_slug = request.query_params.get('tenant') or request.session.get("selected_tenant")
+    
+    # Special case for "all" tenants
+    if tenant_slug == "all":
+        return None
+        
+    # Get tenant by slug if we have one
+    if tenant_slug:
+        try:
+            return tenant_manager.get_by_slug(tenant_slug)
+        except Exception as e:
+            logger.warning(f"Could not get tenant with slug '{tenant_slug}': {str(e)}")
+    
+    # Fallback: get first tenant
+    tenants = tenant_manager.list()
+    if tenants and len(tenants) > 0:
+        return tenants[0]
+    
+    # If no tenants found
+    return None
