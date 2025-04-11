@@ -77,7 +77,7 @@ async def admin_products(
 ):
     """Admin products page using original template."""
     # Get tenant from query parameters or session
-    selected_tenant_slug = tenant or request.session.get("selected_tenant")
+    selected_tenant_slug = tenant or request.query_params.get('tenant') or request.session.get("selected_tenant")
     
     # If no tenant is selected, redirect to dashboard with message
     if not selected_tenant_slug:
@@ -102,15 +102,21 @@ async def admin_products(
                 self.active = True
         
         tenant_obj = AllStoresTenant()
+        # Ensure session is correct
+        request.session["selected_tenant"] = "all"
+        request.session["tenant_id"] = None
         logger.info(f"Created virtual tenant object for All Stores with id={tenant_obj.id}")
     else:
         # Get tenant object
         tenant_obj = tenant_manager.get_by_slug(selected_tenant_slug)
         if not tenant_obj:
+            logger.error(f"Tenant with slug {selected_tenant_slug} not found")
             return RedirectResponse(
                 url="/admin/dashboard?status_message=Store+not+found&status_type=error", 
                 status_code=303
             )
+        # Update session with tenant ID
+        request.session["tenant_id"] = str(tenant_obj.id)
     
     # Build filters
     filters = {}
@@ -124,7 +130,7 @@ async def admin_products(
         filters["in_stock"] = in_stock
     
     # Fetch products
-    if selected_tenant_slug == "all":
+    if selected_tenant_slug.lower() == "all":
         # Fetch all products when "All Stores" is selected
         logger.info("Fetching products for all stores")
         products = product_manager.list(**filters)

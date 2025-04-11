@@ -487,9 +487,18 @@ async def admin_dashboard(request: Request, status_message: Optional[str] = None
         ]
         
         # Get selected tenant from query param or session
-        selected_tenant = request.query_params.get('tenant')
-        if not selected_tenant and tenants:
+        selected_tenant = request.query_params.get('tenant') or request.session.get("selected_tenant")
+        
+        # Handle "all" tenant selection case
+        if selected_tenant and selected_tenant.lower() == "all":
+            logger.info("Dashboard handling 'All Stores' tenant selection")
+            selected_tenant = "all"
+            # Ensure it stays in the session
+            request.session["selected_tenant"] = "all"
+        elif not selected_tenant and tenants:
+            # Default to first tenant if none is selected
             selected_tenant = tenants[0]["slug"]
+            logger.info(f"No tenant selected for dashboard, defaulting to {selected_tenant}")
         
         # Get cart item count if available
         cart_item_count = 0
@@ -530,63 +539,42 @@ async def admin_change_store(request: Request, tenant: str = ""):
     # Get the redirect URL from query parameters
     redirect_url = request.query_params.get('redirect_url', '/admin/dashboard')
     
-    # CRITICAL FIX: Handle "all" tenant selection as a special case
-    # This is the most direct solution to the tenant selection issue
+    # EMERGENCY FIX: Direct handling for 'all' tenant case
     if tenant and tenant.lower() == "all":
-        # Store the "all" selection directly in the session
+        logger.info("CRITICAL FIX: Handling 'All Stores' selection with direct redirect")
+        # Set session variables
         request.session["selected_tenant"] = "all"
         request.session["tenant_id"] = None
         
-        # Force redirect to products page with "all" stores when specifically requested
-        logger.info(f"All Stores selected. Redirecting to {redirect_url}")
-        
-        # Explicitly handle redirection to products page
-        if '/admin/products' in redirect_url or redirect_url == '/admin/dashboard':
-            return RedirectResponse(
-                url="/admin/products?tenant=all&status_message=Showing+all+stores&status_type=success",
-                status_code=303
-            )
-        
+        # ALWAYS redirect to products page for 'all' selection with explicit tenant param
         return RedirectResponse(
-            url=f"{redirect_url}?status_message=Showing+all+stores&status_type=success",
+            url="/admin/products?tenant=all&status_message=Showing+all+stores&status_type=success",
             status_code=303
         )
     
-    # Normal tenant selection (not "all")
+    # For regular tenants
     try:
-        from routes.admin.tenant_utils import get_selected_tenant
+        # Set the selected tenant in session
+        request.session["selected_tenant"] = tenant
         
-        # Get all tenants
-        tenants_list = tenant_manager.list() or []
-        tenants = [
-            {
-                "id": str(t.id),
-                "name": t.name,
-                "slug": t.slug,
-                "domain": t.domain if hasattr(t, 'domain') else None,
-                "active": t.active if hasattr(t, 'active') else True
-            }
-            for t in tenants_list if t and hasattr(t, 'id')
-        ]
+        # Get the tenant ID if possible
+        try:
+            tenant_obj = tenant_manager.get_by_slug(tenant)
+            if tenant_obj:
+                request.session["tenant_id"] = str(tenant_obj.id)
+                logger.info(f"Set tenant_id in session to {str(tenant_obj.id)}")
+        except Exception as e:
+            logger.error(f"Error getting tenant by slug: {str(e)}")
         
-        # Use get_selected_tenant to handle session updates for normal tenants
-        selected_tenant_slug, _ = get_selected_tenant(
-            request=request, 
-            tenants=tenants, 
-            tenant_param=tenant,
-            allow_all=False  # We already handled the "all" case above
-        )
-        
-        logger.info(f"Changed store to {selected_tenant_slug}")
+        logger.info(f"Changed store to {tenant}")
     except Exception as e:
         logger.error(f"Error changing selected tenant: {str(e)}")
     
     # Make sure the redirect URL doesn't redirect back to change-store
-    # to avoid potential infinite loops
     if redirect_url.startswith('/admin/change-store'):
         redirect_url = '/admin/dashboard'
     
-    # Add status message for success notification and redirect
+    # Redirect back to the original page
     return RedirectResponse(
         url=f"{redirect_url}?status_message=Store+changed+successfully&status_type=success",
         status_code=303
