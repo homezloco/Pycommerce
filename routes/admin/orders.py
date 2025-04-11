@@ -163,23 +163,28 @@ async def admin_orders(
     status_type: str = "info"
 ):
     """Admin page for order management."""
-    # Get tenant from session
-    selected_tenant_slug = request.session.get("selected_tenant")
+    # Use tenant_utils to get selected tenant
+    from routes.admin.tenant_utils import get_selected_tenant, redirect_to_tenant_selection
 
+    # Get selected tenant parameter from request
+    tenant_param = request.query_params.get('tenant')
+    
+    # Get selected tenant using the utility function
+    selected_tenant_slug, selected_tenant = get_selected_tenant(request, tenant_param)
+    
     # If no tenant is selected, redirect to dashboard with message
     if not selected_tenant_slug:
-        return RedirectResponse(
-            url="/admin/dashboard?status_message=Please+select+a+store+first&status_type=warning", 
-            status_code=303
-        )
+        return redirect_to_tenant_selection()
 
-    # Get tenant object using tenant_manager
-    tenant = tenant_manager.get_by_slug(selected_tenant_slug)
-    if not tenant:
-        return RedirectResponse(
-            url="/admin/dashboard?status_message=Store+not+found&status_type=error", 
-            status_code=303
-        )
+    # Handle the case where we need a tenant object but "all" was selected
+    tenant = None
+    if selected_tenant_slug != "all":
+        tenant = tenant_manager.get_by_slug(selected_tenant_slug)
+        if not tenant:
+            return RedirectResponse(
+                url="/admin/dashboard?status_message=Store+not+found&status_type=error", 
+                status_code=303
+            )
 
     # Convert status string to enum if provided
     order_status = None
@@ -272,14 +277,25 @@ async def admin_orders(
     # Get all tenants for the store selector
     tenants = tenant_manager.list()
     
+    # Get all tenants for dropdown from tenant_utils
+    from routes.admin.tenant_utils import get_all_tenants
+    all_tenants = get_all_tenants()
+    
+    # Add virtual "All Stores" tenant if needed
+    if "all" not in [t.get("slug") for t in all_tenants]:
+        from routes.admin.tenant_utils import create_virtual_all_tenant
+        all_tenants_with_all = [create_virtual_all_tenant()] + all_tenants
+    else:
+        all_tenants_with_all = all_tenants
+    
     return templates.TemplateResponse(
         "admin/orders.html",
         {
             "request": request,
             "orders": orders_data,
             "selected_tenant": selected_tenant_slug,
-            "tenant": tenant,
-            "tenants": tenants,  # Pass all tenants for the dropdown
+            "tenant": tenant or selected_tenant,  # Use either the tenant object or the dict from tenant_utils
+            "tenants": all_tenants_with_all,  # Pass all tenants for the dropdown
             "status_options": status_options,
             "filters": {
                 "status": status,
@@ -289,7 +305,8 @@ async def admin_orders(
             },
             "status_message": status_message,
             "status_type": status_type,
-            "cart_item_count": request.session.get("cart_item_count", 0)
+            "cart_item_count": request.session.get("cart_item_count", 0),
+            "all_stores_selected": selected_tenant_slug == "all"
         }
     )
 
