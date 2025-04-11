@@ -51,6 +51,7 @@ def setup_routes(templates: Jinja2Templates) -> APIRouter:
             logger.info(f"Retrieved {len(tenants) if tenants else 0} tenants for stores page")
             
             # Don't use tenant selection on the stores management page
+            logger.info(f"Retrieved {len(tenants) if tenants else 0} tenants for stores page")
             return templates.TemplateResponse(
                 "admin/stores.html",
                 {
