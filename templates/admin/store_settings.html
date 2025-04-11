@@ -251,38 +251,37 @@ document.addEventListener('DOMContentLoaded', function() {
             } else {
                 el.value = value || '';
             }
+        } else {
+            console.log(`Element with id ${id} not found`);
         }
     }
 
     // Debug information
     console.log('Config data:', {{ config|tojson }});
 
-    // Get settings data from the template
-    let settings = {{ config|tojson }};
+    // Always fetch the latest settings from API for consistency
+    fetch('/admin/api/store-settings')
+        .then(response => response.json())
+        .then(data => {
+            console.log('Fetched settings from API:', data);
+            const settings = data.settings || {};
 
-    // Check if settings have been loaded correctly from template
-    if (!settings || Object.keys(settings).length === 0) {
-        // Fetch settings from API as fallback
-        fetch('/admin/api/store-settings')
-            .then(response => response.json())
-            .then(data => {
-                console.log('Fetched settings from API:', data);
-                settings = data.settings || {};
+            // Now populate the form after successful fetch
+            populateFormValues(settings);
 
-                // Now populate the form after successful fetch
+            // Add debug information
+            addDebugInfo(settings);
+        })
+        .catch(error => {
+            console.error('Error fetching settings:', error);
+            
+            // Fallback to template data if API fetch fails
+            const settings = {{ config|tojson }};
+            if (settings && Object.keys(settings).length > 0) {
                 populateFormValues(settings);
-
-                // Add debug information
                 addDebugInfo(settings);
-            })
-            .catch(error => {
-                console.error('Error fetching settings:', error);
-            });
-    } else {
-        // If settings are already available in template, use them
-        populateFormValues(settings);
-        addDebugInfo(settings);
-    }
+            }
+        });
 
     function populateFormValues(settings) {
         // Basic Settings Tab
