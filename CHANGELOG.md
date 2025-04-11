@@ -40,6 +40,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Improved database query efficiency
 
 ### Fixed
+- [2025-04-11] Fixed revenue calculation inconsistency between dashboard and market analysis pages, ensuring only completed orders (SHIPPED, DELIVERED, COMPLETED) are counted for revenue metrics
+- [2025-04-11] Created test orders with various statuses to validate proper revenue calculation across product categories
 - [2025-04-10] Fixed store selector dropdown on admin categories page by adding proper tenant context variables
 - [2025-04-10] Implemented flexible tenant retrieval with multiple fallback methods to handle different TenantManager implementations
 - [2025-04-10] Fixed CategoryManager SQLAlchemy session issues with eager loading for relationships
