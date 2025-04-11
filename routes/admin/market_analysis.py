@@ -64,21 +64,137 @@ def setup_routes(templates):
         end_date = datetime.now()
         start_date = end_date - timedelta(days=30)
         
-        # Get sales trend data
-        sales_trends = market_analysis_service.get_sales_trends(
-            tenant_id=tenant_id,
-            start_date=start_date.strftime("%Y-%m-%d"),
-            end_date=end_date.strftime("%Y-%m-%d")
-        )
-        
-        # Get market insights
-        insights = market_analysis_service.get_market_insights(tenant_id=tenant_id)
-        
-        # Get category performance for the month
-        category_performance = market_analysis_service.get_category_performance(
-            tenant_id=tenant_id,
-            period="month"
-        )
+        # Handle all stores selection
+        if tenant_slug.lower() == "all":
+            logger.info("Using 'All Stores' selection for market analysis dashboard")
+            
+            # Get all tenants
+            all_tenants = tenant_manager.list() or []
+            
+            # Initialize combined data structures
+            combined_sales_trends = {"data": {
+                "daily_sales": [],
+                "weekly_sales": [],
+                "monthly_sales": [],
+                "top_selling_products": [],
+                "sales_by_category": {}
+            }}
+            
+            combined_insights = {"data": {
+                "trending_products": [],
+                "seasonal_trends": [],
+                "competitive_analysis": {},
+                "price_sensitivity": {},
+                "customer_segments": {}
+            }}
+            
+            combined_category_performance = {"data": {
+                "categories": [],
+                "performance_metrics": {},
+                "growth_rates": {},
+                "conversion_rates": {}
+            }}
+            
+            # Collect data from all tenants
+            for tenant in all_tenants:
+                try:
+                    # Get sales trends for this tenant
+                    tenant_sales = market_analysis_service.get_sales_trends(
+                        tenant_id=str(tenant.id),
+                        start_date=start_date.strftime("%Y-%m-%d"),
+                        end_date=end_date.strftime("%Y-%m-%d")
+                    )
+                    
+                    if "data" in tenant_sales:
+                        # Combine top selling products
+                        if "top_selling_products" in tenant_sales["data"]:
+                            combined_sales_trends["data"]["top_selling_products"].extend(
+                                tenant_sales["data"]["top_selling_products"]
+                            )
+                        
+                        # Combine sales by category
+                        if "sales_by_category" in tenant_sales["data"]:
+                            for category, value in tenant_sales["data"]["sales_by_category"].items():
+                                if category in combined_sales_trends["data"]["sales_by_category"]:
+                                    combined_sales_trends["data"]["sales_by_category"][category] += value
+                                else:
+                                    combined_sales_trends["data"]["sales_by_category"][category] = value
+                    
+                    # Get market insights for this tenant
+                    tenant_insights = market_analysis_service.get_market_insights(
+                        tenant_id=str(tenant.id)
+                    )
+                    
+                    if "data" in tenant_insights:
+                        # Combine trending products
+                        if "trending_products" in tenant_insights["data"]:
+                            combined_insights["data"]["trending_products"].extend(
+                                tenant_insights["data"]["trending_products"]
+                            )
+                    
+                    # Get category performance for this tenant
+                    tenant_category = market_analysis_service.get_category_performance(
+                        tenant_id=str(tenant.id),
+                        period="month"
+                    )
+                    
+                    if "data" in tenant_category:
+                        # Combine categories
+                        if "categories" in tenant_category["data"]:
+                            for category in tenant_category["data"]["categories"]:
+                                if category not in combined_category_performance["data"]["categories"]:
+                                    combined_category_performance["data"]["categories"].append(category)
+                        
+                        # Combine performance metrics
+                        if "performance_metrics" in tenant_category["data"]:
+                            for category, metrics in tenant_category["data"]["performance_metrics"].items():
+                                if category in combined_category_performance["data"]["performance_metrics"]:
+                                    # Average the metrics
+                                    for metric, value in metrics.items():
+                                        combined_category_performance["data"]["performance_metrics"][category][metric] += value
+                                else:
+                                    combined_category_performance["data"]["performance_metrics"][category] = metrics.copy()
+                    
+                    logger.info(f"Added market data for tenant {tenant.name}")
+                except Exception as e:
+                    logger.error(f"Error getting market data for tenant {tenant.id}: {str(e)}")
+            
+            # Sort combined top selling products by sales
+            combined_sales_trends["data"]["top_selling_products"] = sorted(
+                combined_sales_trends["data"]["top_selling_products"],
+                key=lambda x: x.get("sales", 0),
+                reverse=True
+            )[:10]  # Limit to top 10
+            
+            # Sort combined trending products by trend score
+            combined_insights["data"]["trending_products"] = sorted(
+                combined_insights["data"]["trending_products"],
+                key=lambda x: x.get("trend_score", 0),
+                reverse=True
+            )[:10]  # Limit to top 10
+            
+            # Use the combined data
+            sales_trends = combined_sales_trends
+            insights = combined_insights
+            category_performance = combined_category_performance
+            
+            logger.info(f"Combined market analysis data for all stores")
+        else:
+            # Get sales trend data for a single tenant
+            sales_trends = market_analysis_service.get_sales_trends(
+                tenant_id=tenant_id,
+                start_date=start_date.strftime("%Y-%m-%d"),
+                end_date=end_date.strftime("%Y-%m-%d")
+            )
+            
+            # Get market insights
+            insights = market_analysis_service.get_market_insights(tenant_id=tenant_id)
+            
+            # Get category performance for the month
+            category_performance = market_analysis_service.get_category_performance(
+                tenant_id=tenant_id,
+                period="month"
+            )
         
         # Determine selected tenant for the UI
         selected_tenant = None

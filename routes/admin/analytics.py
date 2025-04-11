@@ -105,12 +105,129 @@ async def analytics_dashboard(
     
     # Get analytics data from our service
     try:
-        analytics_data = analytics_service.get_order_analytics(
-            tenant_id=tenant_obj.id,
-            start_date=start_datetime,
-            end_date=end_datetime,
-            previous_period=True
-        )
+        if selected_tenant_slug.lower() == "all":
+            # Fetch analytics for all tenants
+            logger.info("Fetching analytics for all stores")
+            try:
+                # First try to get all tenants
+                all_tenants = tenant_manager.list() or []
+                
+                # Initialize combined analytics data
+                combined_analytics = {
+                    "summary": {
+                        "orders": 0,
+                        "revenue": 0.0,
+                        "avg_order_value": 0.0,
+                        "conversion_rate": 0.0,
+                    },
+                    "comparison": {
+                        "orders": 0.0,
+                        "revenue": 0.0,
+                        "avg_order_value": 0.0,
+                        "conversion_rate": 0.0,
+                    },
+                    "orders_by_day": [],
+                    "top_products": [],
+                    "traffic_sources": {
+                        "direct": 0,
+                        "organic": 0,
+                        "referral": 0,
+                        "social": 0,
+                        "email": 0,
+                    },
+                    "device_types": {
+                        "desktop": 0,
+                        "mobile": 0,
+                        "tablet": 0,
+                    },
+                    "customer_locations": {}
+                }
+                
+                # Fetch analytics for each tenant and combine them
+                for tenant in all_tenants:
+                    try:
+                        tenant_analytics = analytics_service.get_order_analytics(
+                            tenant_id=str(tenant.id),
+                            start_date=start_datetime,
+                            end_date=end_datetime,
+                            previous_period=True
+                        )
+                        
+                        # Add to combined summary
+                        if "summary" in tenant_analytics:
+                            combined_analytics["summary"]["orders"] += tenant_analytics["summary"].get("orders", 0)
+                            combined_analytics["summary"]["revenue"] += tenant_analytics["summary"].get("revenue", 0.0)
+                            # We'll recalculate average order value later
+                        
+                        # Add to top products
+                        if "top_products" in tenant_analytics:
+                            combined_analytics["top_products"].extend(tenant_analytics["top_products"])
+                        
+                        # Add to location data
+                        if "customer_locations" in tenant_analytics:
+                            for location, count in tenant_analytics["customer_locations"].items():
+                                if location in combined_analytics["customer_locations"]:
+                                    combined_analytics["customer_locations"][location] += count
+                                else:
+                                    combined_analytics["customer_locations"][location] = count
+                                    
+                        # Add traffic sources
+                        if "traffic_sources" in tenant_analytics:
+                            for source, count in tenant_analytics["traffic_sources"].items():
+                                combined_analytics["traffic_sources"][source] += count
+                        
+                        # Add device types
+                        if "device_types" in tenant_analytics:
+                            for device, count in tenant_analytics["device_types"].items():
+                                combined_analytics["device_types"][device] += count
+                                
+                        logger.info(f"Added analytics for tenant {tenant.name}")
+                    except Exception as e:
+                        logger.error(f"Error fetching analytics for tenant {tenant.name}: {str(e)}")
+                
+                # Calculate average order value for combined data
+                if combined_analytics["summary"]["orders"] > 0:
+                    combined_analytics["summary"]["avg_order_value"] = combined_analytics["summary"]["revenue"] / combined_analytics["summary"]["orders"]
+                
+                # Sort top products by revenue and limit to top 10
+                combined_analytics["top_products"] = sorted(
+                    combined_analytics["top_products"], 
+                    key=lambda x: x.get("revenue", 0), 
+                    reverse=True
+                )[:10]
+                
+                analytics_data = combined_analytics
+                logger.info(f"Combined analytics data for all stores")
+            except Exception as e:
+                logger.error(f"Error combining analytics data: {str(e)}")
+                # Fallback to empty structure
+                analytics_data = {
+                    "summary": {
+                        "orders": 0,
+                        "revenue": 0.0,
+                        "avg_order_value": 0.0,
+                        "conversion_rate": 0.0,
+                    },
+                    "comparison": {
+                        "orders": 0.0,
+                        "revenue": 0.0,
+                        "avg_order_value": 0.0,
+                        "conversion_rate": 0.0,
+                    },
+                    "orders_by_day": [],
+                    "top_products": [],
+                    "traffic_sources": {},
+                    "device_types": {},
+                    "customer_locations": {}
+                }
+        else:
+            # Regular single tenant analytics
+            analytics_data = analytics_service.get_order_analytics(
+                tenant_id=tenant_obj.id,
+                start_date=start_datetime,
+                end_date=end_datetime,
+                previous_period=True
+            )
         
         # Add period information to the analytics data
         analytics_data["period"] = period

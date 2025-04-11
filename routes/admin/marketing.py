@@ -215,26 +215,82 @@ async def newsletters_page(
     tenants = tenant_manager.get_all()
 
     # Newsletter templates (in a real app, these would come from a database)
-    templates_list = [
-        {
-            "id": "1",
-            "name": "Monthly Newsletter",
-            "subject": "What's New This Month?",
-            "created_at": "2023-01-15",
-            "last_sent": "2023-06-01",
-            "open_rate": 42.5,
-            "click_rate": 12.3
-        },
-        {
-            "id": "2",
-            "name": "Welcome Email",
-            "subject": "Welcome to Our Store!",
-            "created_at": "2023-02-10",
-            "last_sent": "2023-06-15",
-            "open_rate": 68.2,
-            "click_rate": 24.7
-        }
-    ]
+    if selected_tenant_slug.lower() == "all":
+        # Fetch newsletter templates for all tenants
+        logger.info("Fetching newsletter templates for all stores")
+        try:
+            # First try to get all tenants
+            all_tenants = tenant_manager.list() or []
+            
+            # Simulate fetching newsletter templates for each tenant
+            # In a real app, this would query the database
+            all_templates = []
+            
+            # Base templates that we'll duplicate for each tenant
+            base_templates = [
+                {
+                    "id": "1",
+                    "name": "Monthly Newsletter",
+                    "subject": "What's New This Month?",
+                    "created_at": "2023-01-15",
+                    "last_sent": "2023-06-01",
+                    "open_rate": 42.5,
+                    "click_rate": 12.3
+                },
+                {
+                    "id": "2",
+                    "name": "Welcome Email",
+                    "subject": "Welcome to Our Store!",
+                    "created_at": "2023-02-10",
+                    "last_sent": "2023-06-15",
+                    "open_rate": 68.2,
+                    "click_rate": 24.7
+                }
+            ]
+            
+            for tenant in all_tenants:
+                try:
+                    # Create tenant-specific templates by adding tenant name to base templates
+                    tenant_templates = []
+                    for template in base_templates:
+                        # Create a new copy of the template with tenant info
+                        tenant_template = template.copy()
+                        tenant_template["id"] = f"{tenant.id}-{template['id']}"  # Ensure unique ID
+                        tenant_template["tenant_name"] = tenant.name
+                        tenant_templates.append(tenant_template)
+                    
+                    all_templates.extend(tenant_templates)
+                    logger.info(f"Found {len(tenant_templates)} newsletter templates for tenant {tenant.name}")
+                except Exception as e:
+                    logger.error(f"Error fetching newsletter templates for tenant {tenant.name}: {str(e)}")
+            
+            templates_list = all_templates
+            logger.info(f"Found {len(templates_list)} newsletter templates across all stores")
+        except Exception as e:
+            logger.error(f"Error fetching all newsletter templates: {str(e)}")
+            templates_list = []
+    else:
+        # Regular single tenant newsletter templates
+        templates_list = [
+            {
+                "id": "1",
+                "name": "Monthly Newsletter",
+                "subject": "What's New This Month?",
+                "created_at": "2023-01-15",
+                "last_sent": "2023-06-01",
+                "open_rate": 42.5,
+                "click_rate": 12.3
+            },
+            {
+                "id": "2",
+                "name": "Welcome Email",
+                "subject": "Welcome to Our Store!",
+                "created_at": "2023-02-10",
+                "last_sent": "2023-06-15",
+                "open_rate": 68.2,
+                "click_rate": 24.7
+            }
+        ]
 
     # Subscriber statistics
     subscriber_stats = {

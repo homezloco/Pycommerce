@@ -94,16 +94,43 @@ async def admin_media(
     if isinstance(is_ai_generated, bool):
         bool_is_ai_generated = is_ai_generated
     
-    # If tenant is selected, filter by it, otherwise show all media
-    selected_tenant_id = str(tenant_obj.id) if selected_tenant_slug else None
-    
     # Get all media files that match the criteria
-    media_files = media_service.list_media(
-        tenant_id=selected_tenant_id,
-        file_type=file_type,
-        is_ai_generated=bool_is_ai_generated,
-        search_term=search_term
-    )
+    if selected_tenant_slug.lower() == "all":
+        # Fetch media for all tenants
+        logger.info("Fetching media for all stores")
+        try:
+            # First try to get all tenants
+            all_tenants = tenant_manager.list() or []
+            
+            # Then fetch media for each tenant and combine them
+            all_media_files = []
+            for tenant in all_tenants:
+                try:
+                    tenant_media = media_service.list_media(
+                        tenant_id=str(tenant.id),
+                        file_type=file_type,
+                        is_ai_generated=bool_is_ai_generated,
+                        search_term=search_term
+                    )
+                    all_media_files.extend(tenant_media)
+                    logger.info(f"Found {len(tenant_media)} media files for tenant {tenant.name}")
+                except Exception as e:
+                    logger.error(f"Error fetching media for tenant {tenant.name}: {str(e)}")
+            
+            media_files = all_media_files
+            logger.info(f"Found {len(media_files)} media files across all stores")
+        except Exception as e:
+            logger.error(f"Error fetching all media files: {str(e)}")
+            media_files = []
+    else:
+        # Fetch media for specific tenant
+        selected_tenant_id = str(tenant_obj.id) if tenant_obj else None
+        media_files = media_service.list_media(
+            tenant_id=selected_tenant_id,
+            file_type=file_type,
+            is_ai_generated=bool_is_ai_generated,
+            search_term=search_term
+        )
     
     # Filter by sharing level if specified (this must be done in Python since MediaService 
     # doesn't directly support filtering by sharing_level in the JSON metadata)
