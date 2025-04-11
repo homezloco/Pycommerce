@@ -17,6 +17,14 @@ from app_factory import create_app
 
 app, templates = create_app()
 
+# Register store settings test routes
+try:
+    from routes.admin.store_settings_test import setup_routes
+    app.include_router(setup_routes(templates))
+    logger.info("Store settings test routes registered successfully")
+except ImportError as e:
+    logger.warning(f"Failed to register store settings test routes: {str(e)}")
+
 # Register API routes
 try:
     from pycommerce.api.routes import register_api_routes
