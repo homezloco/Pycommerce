@@ -49,6 +49,9 @@ class MarketAnalysisService:
         self.order_manager = OrderManager()
         self.tenant_manager = TenantManager()
         
+        # Initialize product cache to improve performance and prevent lookup failures
+        self.product_cache = {}
+        
         # Initialize category manager
         try:
             self.category_manager = CategoryManager()
@@ -370,6 +373,27 @@ class MarketAnalysisService:
                                     # Fallback to a generic name using the ID
                                     product_name = f"Product {product_id[-6:]}"
                                     
+                                # Store product in cache for later ORM lookups
+                                if product_id not in self.product_cache:
+                                    # Create a placeholder product object with the minimal data we have
+                                    # This will prevent "product not found" errors when accessing these products later
+                                    from pycommerce.models.product import Product
+                                    try:
+                                        price = float(product[4]) if product[4] is not None else 0.0
+                                        
+                                        # Create a minimal product object with the data we have
+                                        mock_product = Product(
+                                            id=product_id,
+                                            name=product_name,
+                                            price=price,
+                                            tenant_id=tenant_id
+                                        )
+                                        # Cache it for future lookups
+                                        self.product_cache[product_id] = mock_product
+                                        logger.debug(f"Created cache entry for product: {product_name} (ID: {product_id})")
+                                    except Exception as cache_err:
+                                        logger.warning(f"Could not create cache entry for product {product_id}: {cache_err}")
+                                    
                                 # Add to our results list
                                 top_products_data.append({
                                     "id": product_id,
@@ -525,12 +549,18 @@ class MarketAnalysisService:
             Dictionary containing forecast data
         """
         try:
-            # Get the product details - first try SDK manager
+            # First check if we have this product in our cache
             product = None
-            try:
-                product = self.product_manager.get(product_id)
-            except Exception as e:
-                logger.debug(f"Failed to get product from SDK manager: {e}")
+            if hasattr(self, 'product_cache') and product_id in self.product_cache:
+                product = self.product_cache[product_id]
+                logger.debug(f"Retrieved product {product_id} from cache: {product.name}")
+            
+            # If not in cache, try SDK manager
+            if not product:
+                try:
+                    product = self.product_manager.get(product_id)
+                except Exception as e:
+                    logger.debug(f"Failed to get product from SDK manager: {e}")
                 
             # If that fails, try Flask product manager
             if not product and hasattr(self, 'flask_product_manager') and self.flask_product_manager:
@@ -714,7 +744,20 @@ class MarketAnalysisService:
                     products = []
                     for product_data in sales_data.get("top_products", []):
                         try:
-                            product = self.product_manager.get(product_data["id"])
+                            product_id = product_data["id"]
+                            product = None
+                            
+                            # First check the cache
+                            if hasattr(self, 'product_cache') and product_id in self.product_cache:
+                                product = self.product_cache[product_id]
+                                logger.debug(f"Retrieved product {product_id} from cache for insights")
+                            else:
+                                # Try standard product manager
+                                try:
+                                    product = self.product_manager.get(product_id)
+                                except Exception as e:
+                                    logger.debug(f"Could not get product {product_id} from product manager: {e}")
+
                             if product:
                                 products.append(product)
                         except Exception as e:
@@ -909,12 +952,18 @@ class MarketAnalysisService:
                         # Skip further product lookup since we have cached data
                         continue
                     
-                    # First try to get from SDK product manager
+                    # First check if we have this product in our cache
                     product = None
-                    try:
-                        product = self.product_manager.get(product_id)
-                    except Exception as sdk_error:
-                        logger.debug(f"Could not retrieve product {product_id} from SDK manager: {str(sdk_error)}")
+                    if hasattr(self, 'product_cache') and product_id in self.product_cache:
+                        product = self.product_cache[product_id]
+                        logger.debug(f"Retrieved product {product_id} from cache for category performance")
+                    
+                    # If not in cache, try SDK product manager
+                    if not product:
+                        try:
+                            product = self.product_manager.get(product_id)
+                        except Exception as sdk_error:
+                            logger.debug(f"Could not retrieve product {product_id} from SDK manager: {str(sdk_error)}")
                     
                     # If not found, try Flask product manager
                     if not product and hasattr(self, 'flask_product_manager') and self.flask_product_manager:
