@@ -171,8 +171,11 @@
                     </select>
                 </form>
                 <script>
-                    // Set the current path as the redirect URL for mobile
-                    document.getElementById('mobile_current_path').value = window.location.pathname;
+                    // Set the current path as the redirect URL for mobile (with null check)
+                    const mobilePathElement = document.getElementById('mobile_current_path');
+                    if (mobilePathElement) {
+                        mobilePathElement.value = window.location.pathname;
+                    }
                 </script>
                 {% endif %}
             </div>
@@ -230,8 +233,11 @@
                 </div>
 
                 <script>
-                    // Set the current path as the redirect URL
-                    document.getElementById('current_path').value = window.location.pathname;
+                    // Set the current path as the redirect URL (with null check)
+                    const currentPathElement = document.getElementById('current_path');
+                    if (currentPathElement) {
+                        currentPathElement.value = window.location.pathname;
+                    }
                 </script>
             </div>
 
