@@ -13,7 +13,7 @@ from fastapi.templating import Jinja2Templates
 
 from pycommerce.models.page_builder import PageManager, PageSectionManager, ContentBlockManager, PageTemplateManager
 from pycommerce.models.tenant import TenantManager
-from pycommerce.services.wysiwyg_service import WYSIWYGService
+from pycommerce.services.wysiwyg_service import WysiwygService
 
 logger = logging.getLogger(__name__)
 
@@ -29,7 +29,7 @@ page_manager = PageManager()
 section_manager = PageSectionManager()
 block_manager = ContentBlockManager()
 template_manager = PageTemplateManager()
-wysiwyg_service = WYSIWYGService()
+wysiwyg_service = WysiwygService()
 
 def setup_routes(jinja_templates: Jinja2Templates = None):
     """Setup page builder routes with the given templates."""
