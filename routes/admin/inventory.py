@@ -119,19 +119,20 @@ else:
     
     # Sort by stock level (low to high)
     inventory_items.sort(key=lambda x: x.stock)
-    
-    return templates.TemplateResponse(
-        "admin/inventory.html",
-        {
-            "request": request,
-            "inventory_items": inventory_items,
-            "tenants": tenants,
-            "selected_tenant": tenant_obj,
-            "selected_tenant_slug": selected_tenant_slug,
-            "filters": filters,
-            "title": "Inventory Management"
-        }
-    )
+
+# Return the template response outside the else block
+return templates.TemplateResponse(
+    "admin/inventory.html",
+    {
+        "request": request,
+        "inventory_items": inventory_items,
+        "tenants": tenants,
+        "selected_tenant": tenant_obj,
+        "selected_tenant_slug": selected_tenant_slug,
+        "filters": filters,
+        "title": "Inventory Management"
+    }
+)
 
 @router.get("/{inventory_id}", response_class=HTMLResponse)
 async def inventory_detail(
