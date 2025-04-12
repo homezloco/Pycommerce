@@ -1,4 +1,3 @@
-
 """
 Inventory-related models and management.
 
@@ -29,7 +28,7 @@ class InventoryTransactionType(str, Enum):
     ADJUSTMENT = "adjustment"    # Manual inventory adjustment
     RETURN = "return"            # Customer return
     DAMAGED = "damaged"          # Inventory damaged or lost
-    TRANSFER = "transfer"        # Inventory transferred between locations
+    TRANSFER = "transfer"          # Inventory transferred between locations
 
 
 # Import InventoryRecord from the registry instead of redefining it
