@@ -8,6 +8,7 @@ deploymentTarget = "autoscale"
 run = ["gunicorn", "--bind", "0.0.0.0:5000", "main:app"]
 
 [workflows]
+runButton = "Run Page Builder Migration"
 
 [[workflows.workflow]]
 name = "Project"
@@ -80,6 +81,10 @@ args = "python main.py"
 name = "Run Page Builder Migration"
 author = 34384132
 mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "export DATABASE_URL=sqlite:///pycommerce.db"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"

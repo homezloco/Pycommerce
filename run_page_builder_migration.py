@@ -4,12 +4,14 @@ Script to run the page builder migration and create necessary tables.
 """
 
 import logging
+from sqlalchemy import create_engine
 from migrations.add_page_builder_tables import run_migration
 from pycommerce.models.page_builder import (
     Page, PageSection, ContentBlock, PageTemplate,
     PageManager, PageSectionManager, ContentBlockManager, PageTemplateManager
 )
 from pycommerce.core.db import SessionLocal
+from pycommerce.core.config import settings
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
