@@ -1,4 +1,3 @@
-
 """
 Script to run the page builder migration and create necessary tables.
 """
@@ -20,11 +19,11 @@ logger = logging.getLogger(__name__)
 def main():
     """Run page builder migration and verify tables."""
     logger.info("Running page builder migration...")
-    
+
     # Get database URL from environment variable or use a default
-    db_uri = os.environ.get('DATABASE_URL', 'sqlite:///pycommerce.db')
+    db_uri = os.environ.get('DATABASE_URL', 'postgresql://postgres:postgres@localhost:5432/pycommerce')
     logger.info(f"Using database URI: {db_uri}")
-    
+
     # Ensure the database URL is properly formatted
     if db_uri and not db_uri.startswith(('sqlite://', 'postgresql://', 'mysql://')):
         logger.warning(f"Database URI format may be invalid: {db_uri}")
@@ -32,11 +31,11 @@ def main():
         if 'postgres' in db_uri and not db_uri.startswith('postgresql://'):
             db_uri = f"postgresql://{db_uri}"
             logger.info(f"Modified database URI to: {db_uri}")
-    
+
     try:
         # Run the migration to create tables
         run_migration(db_uri)
-        
+
         # Verify tables were created by creating a test session
         session = SessionLocal()
         try:
@@ -45,13 +44,13 @@ def main():
             section_count = session.query(PageSection).count()
             block_count = session.query(ContentBlock).count()
             template_count = session.query(PageTemplate).count()
-            
+
             logger.info(f"Page builder tables verified successfully:")
             logger.info(f"- Pages: {page_count}")
             logger.info(f"- Page Sections: {section_count}")
             logger.info(f"- Content Blocks: {block_count}")
             logger.info(f"- Page Templates: {template_count}")
-            
+
             # Create a default template
             template_manager = PageTemplateManager(session)
             if template_count == 0:
@@ -89,7 +88,7 @@ def main():
             raise
         finally:
             session.close()
-        
+
         logger.info("Page builder migration completed successfully.")
     except Exception as e:
         logger.error(f"Error during migration: {str(e)}")
