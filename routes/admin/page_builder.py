@@ -4,14 +4,16 @@ Admin routes for page builder.
 This module provides routes for managing custom pages in the admin interface.
 """
 import logging
-from typing import Dict, Optional, List
+import json
+from typing import Dict, Optional, List, Any
 
 from fastapi import APIRouter, Form, HTTPException, Request, status
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 
-from pycommerce.models.page_builder import PageManager, PageSectionManager, ContentBlockManager
+from pycommerce.models.page_builder import PageManager, PageSectionManager, ContentBlockManager, PageTemplateManager
 from pycommerce.models.tenant import TenantManager
+from pycommerce.services.wysiwyg_service import WYSIWYGService
 
 logger = logging.getLogger(__name__)
 
@@ -26,6 +28,14 @@ tenant_manager = TenantManager()
 page_manager = PageManager()
 section_manager = PageSectionManager()
 block_manager = ContentBlockManager()
+template_manager = PageTemplateManager()
+wysiwyg_service = WYSIWYGService()
+
+def setup_routes(jinja_templates: Jinja2Templates = None):
+    """Setup page builder routes with the given templates."""
+    global templates
+    templates = jinja_templates
+    return router
 
 @router.get("/pages", response_class=HTMLResponse)
 async def pages_list(
@@ -904,7 +914,7 @@ async def page_update(
 
         return RedirectResponse(
             url=f"/admin/pages/edit/{page_id}?tenant={tenant_slug}&status_message=Error+updating+page:+{str(e)}&status_type=danger",
-            status_code=status.HTTP_33_SEE_OTHER
+            status_code=status.HTTP_303_SEE_OTHER
         )
 
 

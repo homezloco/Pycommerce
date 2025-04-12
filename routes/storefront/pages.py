@@ -11,7 +11,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 
 from pycommerce.models.tenant import TenantManager
-from pycommerce.models.page_builder import PageManager
+from pycommerce.models.page_builder import PageManager, PageSectionManager, ContentBlockManager
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -23,6 +23,8 @@ router = APIRouter(tags=["pages"])
 templates = None
 tenant_manager = TenantManager()
 page_manager = PageManager()
+section_manager = PageSectionManager()
+block_manager = ContentBlockManager()
 
 def setup_routes(jinja_templates: Jinja2Templates = None):
     """
@@ -55,10 +57,22 @@ async def page(request: Request, slug: str):
         return RedirectResponse(url="/stores")
     
     # Get the page by slug
-    page_data = page_manager.get_page_by_slug(tenant.id, slug)
+    page_data = page_manager.get_by_slug(str(tenant.id), slug)
     
     if not page_data:
         return RedirectResponse(url="/")
+    
+    # Get page sections
+    sections = section_manager.list_by_page(str(page_data.id))
+
+    # Get blocks for each section
+    sections_with_blocks = []
+    for section in sections:
+        blocks = block_manager.list_by_section(str(section.id))
+        sections_with_blocks.append({
+            "section": section,
+            "blocks": blocks
+        })
     
     # Render the page
     return templates.TemplateResponse(
@@ -67,7 +81,8 @@ async def page(request: Request, slug: str):
             "request": request,
             "tenant": tenant,
             "page": page_data,
-            "content": page_data.get("content", ""),
-            "title": page_data.get("title", "Page")
+            "sections": sections_with_blocks,
+            "content": page_data.content if hasattr(page_data, "content") else "",
+            "title": page_data.title
         }
     )

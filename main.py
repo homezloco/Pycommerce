@@ -35,6 +35,7 @@ if __name__ == "__main__":
     pages.setup_routes(app)
 
     # Set up admin routes with the templates
+    dashboard.setup_routes(templates)
     admin_products.setup_routes(templates)
     orders.setup_routes(templates)
     customers.setup_routes(templates)
