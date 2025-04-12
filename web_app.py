@@ -341,3 +341,45 @@ async def debug_products_inline(request: Request):
     """
 
     return HTMLResponse(content=html)
+
+#app_factory.py
+from fastapi import FastAPI, Request, Depends
+from fastapi.templating import Jinja2Templates
+from fastapi.staticfiles import StaticFiles
+from fastapi.middleware.sessions import SessionMiddleware
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import sessionmaker
+from database import get_db
+from routes.admin import dashboard, store_settings, products, orders, stores
+from routes.admin import categories, users, media, marketing, shipping, plugins
+from routes.admin import inventory, settings, analytics, market_analysis, returns
+from routes.admin import ai_config, theme_settings, page_builder
+
+def create_app():
+    app = FastAPI()
+    templates = Jinja2Templates(directory="templates")
+    app.mount("/static", StaticFiles(directory="static"), name="static")
+    app.add_middleware(SessionMiddleware, secret_key="mysecretkey")
+
+    # Register admin routes
+    app.include_router(dashboard.setup_routes(templates))
+    app.include_router(store_settings.setup_routes(templates))
+    app.include_router(products.setup_routes(templates))
+    app.include_router(orders.setup_routes(templates))
+    app.include_router(stores.setup_routes(templates))
+    app.include_router(media.setup_routes(templates))
+    app.include_router(categories.setup_routes(templates))
+    app.include_router(users.setup_routes(templates))
+    app.include_router(marketing.setup_routes(templates))
+    app.include_router(shipping.setup_routes(templates))
+    app.include_router(plugins.setup_routes(templates))
+    app.include_router(inventory.setup_routes(templates))
+    app.include_router(settings.setup_routes(templates))
+    app.include_router(analytics.setup_routes(templates))
+    app.include_router(market_analysis.setup_routes(templates))
+    app.include_router(returns.setup_routes(templates))
+    app.include_router(ai_config.setup_routes(templates))
+    app.include_router(theme_settings.setup_routes(templates))
+    app.include_router(page_builder.setup_routes(templates))
+
+    return app, templates

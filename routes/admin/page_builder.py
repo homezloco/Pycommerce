@@ -1,10 +1,219 @@
-
 """
-Admin routes for the page builder.
+Admin routes for page builder.
 
-This module provides routes for the page builder in the admin interface.
+This module provides routes for managing custom pages in the admin interface.
 """
+import logging
+from typing import Dict, Optional, List
 
+from fastapi import APIRouter, Form, HTTPException, Request, status
+from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.templating import Jinja2Templates
+
+from pycommerce.models.page_builder import PageManager, PageSectionManager, ContentBlockManager
+from pycommerce.models.tenant import TenantManager
+
+logger = logging.getLogger(__name__)
+
+# Create router
+router = APIRouter(prefix="/admin", tags=["admin"])
+
+# Template setup will be passed from main app
+templates = None
+
+# Initialize managers
+tenant_manager = TenantManager()
+page_manager = PageManager()
+section_manager = PageSectionManager()
+block_manager = ContentBlockManager()
+
+@router.get("/pages", response_class=HTMLResponse)
+async def pages_list(
+    request: Request,
+    tenant: Optional[str] = None,
+    status_message: Optional[str] = None,
+    status_type: str = "info"
+):
+    """Admin page for listing custom pages."""
+    # Get all tenants for the sidebar
+    tenants = tenant_manager.get_all()
+
+    # Get tenant from query parameters or session
+    selected_tenant_slug = tenant or request.session.get("selected_tenant")
+
+    # If no tenant is selected and we have tenants, select the first one
+    if not selected_tenant_slug and tenants:
+        selected_tenant_slug = tenants[0].slug
+
+    # Store the selected tenant in session for future requests
+    if selected_tenant_slug:
+        request.session["selected_tenant"] = selected_tenant_slug
+
+    # Get tenant object and pages
+    tenant_obj = None
+    pages = []
+    if selected_tenant_slug:
+        tenant_obj = tenant_manager.get_by_slug(selected_tenant_slug)
+        if tenant_obj:
+            pages = page_manager.list_by_tenant(str(tenant_obj.id), include_unpublished=True)
+
+    return templates.TemplateResponse(
+        "admin/pages/list.html",
+        {
+            "request": request,
+            "selected_tenant": selected_tenant_slug,
+            "tenant": tenant_obj,
+            "tenants": tenants,
+            "active_page": "pages",
+            "pages": pages,
+            "status_message": status_message,
+            "status_type": status_type
+        }
+    )
+
+@router.get("/pages/create", response_class=HTMLResponse)
+async def create_page_form(
+    request: Request,
+    tenant: Optional[str] = None
+):
+    """Admin page for creating a new custom page."""
+    # Get all tenants for the sidebar
+    tenants = tenant_manager.get_all()
+
+    # Get tenant from query parameters or session
+    selected_tenant_slug = tenant or request.session.get("selected_tenant")
+
+    # If no tenant is selected and we have tenants, select the first one
+    if not selected_tenant_slug and tenants:
+        selected_tenant_slug = tenants[0].slug
+
+    # Store the selected tenant in session for future requests
+    if selected_tenant_slug:
+        request.session["selected_tenant"] = selected_tenant_slug
+
+    # Get tenant object
+    tenant_obj = None
+    if selected_tenant_slug:
+        tenant_obj = tenant_manager.get_by_slug(selected_tenant_slug)
+
+    return templates.TemplateResponse(
+        "admin/pages/create.html",
+        {
+            "request": request,
+            "selected_tenant": selected_tenant_slug,
+            "tenant": tenant_obj,
+            "tenants": tenants,
+            "active_page": "pages"
+        }
+    )
+
+@router.post("/pages/create", response_class=RedirectResponse)
+async def create_page(
+    request: Request,
+    tenant_id: str = Form(...),
+    title: str = Form(...),
+    slug: str = Form(...),
+    meta_description: Optional[str] = Form(None),
+    is_published: bool = Form(False)
+):
+    """Create a new custom page."""
+    try:
+        # Create page
+        page_data = {
+            "tenant_id": tenant_id,
+            "title": title,
+            "slug": slug,
+            "meta_description": meta_description,
+            "is_published": is_published
+        }
+
+        page = page_manager.create(page_data)
+
+        # Get tenant slug for redirect
+        tenant = tenant_manager.get(tenant_id)
+        tenant_slug = tenant.slug if tenant else None
+
+        return RedirectResponse(
+            url=f"/admin/pages/edit/{page.id}?tenant={tenant_slug}&status_message=Page+created+successfully&status_type=success",
+            status_code=status.HTTP_303_SEE_OTHER
+        )
+    except Exception as e:
+        logger.error(f"Error creating page: {str(e)}")
+        return RedirectResponse(
+            url=f"/admin/pages?tenant={tenant_slug if tenant_slug else ''}&status_message=Error+creating+page:+{str(e)}&status_type=danger",
+            status_code=status.HTTP_303_SEE_OTHER
+        )
+
+@router.get("/pages/edit/{page_id}", response_class=HTMLResponse)
+async def edit_page(
+    request: Request,
+    page_id: str,
+    tenant: Optional[str] = None,
+    status_message: Optional[str] = None,
+    status_type: str = "info"
+):
+    """Admin page for editing a custom page."""
+    # Get all tenants for the sidebar
+    tenants = tenant_manager.get_all()
+
+    # Get tenant from query parameters or session
+    selected_tenant_slug = tenant or request.session.get("selected_tenant")
+
+    # If no tenant is selected and we have tenants, select the first one
+    if not selected_tenant_slug and tenants:
+        selected_tenant_slug = tenants[0].slug
+
+    # Store the selected tenant in session for future requests
+    if selected_tenant_slug:
+        request.session["selected_tenant"] = selected_tenant_slug
+
+    # Get page
+    page = page_manager.get(page_id)
+    if not page:
+        raise HTTPException(status_code=404, detail="Page not found")
+
+    # Get page sections and blocks
+    sections = section_manager.list_by_page(page_id)
+    sections_with_blocks = []
+    for section in sections:
+        blocks = block_manager.list_by_section(str(section.id))
+        sections_with_blocks.append({
+            "section": section,
+            "blocks": blocks
+        })
+
+    # Get tenant object
+    tenant_obj = tenant_manager.get(page.tenant_id)
+
+    return templates.TemplateResponse(
+        "admin/pages/editor.html",
+        {
+            "request": request,
+            "selected_tenant": selected_tenant_slug,
+            "tenant": tenant_obj,
+            "tenants": tenants,
+            "active_page": "pages",
+            "page": page,
+            "sections": sections_with_blocks,
+            "status_message": status_message,
+            "status_type": status_type
+        }
+    )
+
+def setup_routes(app_templates):
+    """
+    Set up routes with the given templates.
+
+    Args:
+        app_templates: Jinja2Templates instance from the main app
+    """
+    global templates
+    templates = app_templates
+    return router
+
+
+class ContentBlockManager:
+    """Manager for content block operations."""
 import logging
 import json
 import os
@@ -49,9 +258,9 @@ async def list_pages(request: Request):
     tenant_id = request.session.get("tenant_id")
     if not tenant_id:
         return RedirectResponse("/admin/stores", status_code=status.HTTP_302_FOUND)
-    
+
     pages = page_manager.list_by_tenant(tenant_id, include_unpublished=True)
-    
+
     return templates.TemplateResponse(
         "admin/pages/list.html",
         {
@@ -67,9 +276,9 @@ async def create_page_form(request: Request):
     tenant_id = request.session.get("tenant_id")
     if not tenant_id:
         return RedirectResponse("/admin/stores", status_code=status.HTTP_302_FOUND)
-    
+
     page_templates = template_manager.list_templates()
-    
+
     return templates.TemplateResponse(
         "admin/pages/create.html",
         {
@@ -92,7 +301,7 @@ async def create_page(
     tenant_id = request.session.get("tenant_id")
     if not tenant_id:
         return RedirectResponse("/admin/stores", status_code=status.HTTP_302_FOUND)
-    
+
     # Create page
     page_data = {
         "tenant_id": tenant_id,
@@ -103,10 +312,10 @@ async def create_page(
         "is_published": False,
         "layout_data": {}
     }
-    
+
     try:
         page = page_manager.create(page_data)
-        
+
         # If template selected, apply template data
         if template_id:
             template = template_manager.get(template_id)
@@ -120,7 +329,7 @@ async def create_page(
                         "position": section_data.get("position", 0),
                         "settings": section_data.get("settings", {})
                     })
-                    
+
                     # Create blocks if specified in template
                     template_blocks = section_data.get("blocks", [])
                     for block_data in template_blocks:
@@ -131,7 +340,7 @@ async def create_page(
                             "content": block_data.get("content", {}),
                             "settings": block_data.get("settings", {})
                         })
-        
+
         # Redirect to editor
         return RedirectResponse(f"/admin/pages/edit/{page.id}", status_code=status.HTTP_302_FOUND)
     except Exception as e:
@@ -147,20 +356,20 @@ async def edit_page(request: Request, page_id: str):
     tenant_id = request.session.get("tenant_id")
     if not tenant_id:
         return RedirectResponse("/admin/stores", status_code=status.HTTP_302_FOUND)
-    
+
     page = page_manager.get(page_id)
     if not page or page.tenant_id != tenant_id:
         return RedirectResponse("/admin/pages", status_code=status.HTTP_302_FOUND)
-    
+
     sections = section_manager.list_by_page(page_id)
-    
+
     # Get blocks for each section
     section_blocks = {}
     for section in sections:
         section_blocks[str(section.id)] = block_manager.list_by_section(section.id)
-    
+
     media_items = media_service.list_media(tenant_id)
-    
+
     return templates.TemplateResponse(
         "admin/pages/editor.html",
         {
@@ -186,7 +395,7 @@ async def update_page(
             status_code=status.HTTP_401_UNAUTHORIZED,
             content={"detail": "Unauthorized"}
         )
-    
+
     try:
         page = page_manager.get(page_id)
         if not page or page.tenant_id != tenant_id:
@@ -194,7 +403,7 @@ async def update_page(
                 status_code=status.HTTP_404_NOT_FOUND,
                 content={"detail": "Page not found"}
             )
-        
+
         updated_page = page_manager.update(page_id, page_data)
         return JSONResponse(content={"success": True, "page": {
             "id": str(updated_page.id),
@@ -218,7 +427,7 @@ async def delete_page(request: Request, page_id: str):
             status_code=status.HTTP_401_UNAUTHORIZED,
             content={"detail": "Unauthorized"}
         )
-    
+
     try:
         page = page_manager.get(page_id)
         if not page or page.tenant_id != tenant_id:
@@ -226,7 +435,7 @@ async def delete_page(request: Request, page_id: str):
                 status_code=status.HTTP_404_NOT_FOUND,
                 content={"detail": "Page not found"}
             )
-        
+
         success = page_manager.delete(page_id)
         if success:
             return JSONResponse(content={"success": True})
@@ -255,7 +464,7 @@ async def create_section(
             status_code=status.HTTP_401_UNAUTHORIZED,
             content={"detail": "Unauthorized"}
         )
-    
+
     try:
         page = page_manager.get(page_id)
         if not page or page.tenant_id != tenant_id:
@@ -263,10 +472,10 @@ async def create_section(
                 status_code=status.HTTP_404_NOT_FOUND,
                 content={"detail": "Page not found"}
             )
-        
+
         section_data["page_id"] = page_id
         section = section_manager.create(section_data)
-        
+
         return JSONResponse(content={
             "success": True,
             "section": {
@@ -296,7 +505,7 @@ async def create_block(
             status_code=status.HTTP_401_UNAUTHORIZED,
             content={"detail": "Unauthorized"}
         )
-    
+
     try:
         section = section_manager.get(section_id)
         if not section:
@@ -304,17 +513,17 @@ async def create_block(
                 status_code=status.HTTP_404_NOT_FOUND,
                 content={"detail": "Section not found"}
             )
-        
+
         page = page_manager.get(section.page_id)
         if not page or page.tenant_id != tenant_id:
             return JSONResponse(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 content={"detail": "Unauthorized"}
             )
-        
+
         block_data["section_id"] = section_id
         block = block_manager.create(block_data)
-        
+
         return JSONResponse(content={
             "success": True,
             "block": {
@@ -346,18 +555,18 @@ async def pages_list(
     """Admin page listing all pages."""
     # Get all tenants for the sidebar
     tenants = tenant_manager.get_all()
-    
+
     # Get tenant from query parameters or session
     selected_tenant_slug = tenant or request.session.get("selected_tenant")
-    
+
     # If no tenant is selected and we have tenants, select the first one
     if not selected_tenant_slug and tenants:
         selected_tenant_slug = tenants[0].slug
-    
+
     # Store the selected tenant in session for future requests
     if selected_tenant_slug:
         request.session["selected_tenant"] = selected_tenant_slug
-    
+
     # Get tenant object and pages
     tenant_obj = None
     pages = []
@@ -366,7 +575,7 @@ async def pages_list(
         if tenant_obj:
             # Get pages for the tenant
             pages = page_manager.list_by_tenant(str(tenant_obj.id), include_unpublished=True)
-    
+
     return templates.TemplateResponse(
         "admin/pages/list.html",
         {
@@ -396,37 +605,37 @@ async def page_create_form(
     """Admin form to create a new page."""
     # Get all tenants for the sidebar
     tenants = tenant_manager.get_all()
-    
+
     # Get tenant from query parameters or session
     selected_tenant_slug = tenant or request.session.get("selected_tenant")
-    
+
     # If no tenant is selected and we have tenants, select the first one
     if not selected_tenant_slug and tenants:
         selected_tenant_slug = tenants[0].slug
-    
+
     # Store the selected tenant in session for future requests
     if selected_tenant_slug:
         request.session["selected_tenant"] = selected_tenant_slug
-    
+
     # Get tenant object
     tenant_obj = None
     if selected_tenant_slug:
         tenant_obj = tenant_manager.get_by_slug(selected_tenant_slug)
-    
+
     # Get page template if specified
     template = None
     if template_id:
         template = template_manager.get(template_id)
-    
+
     # Get available page templates
     templates_list = template_manager.list_templates()
-    
+
     # Get editor configuration
     editor_config = wysiwyg_service.get_editor_config('tinymce', {
         'tenant_id': str(tenant_obj.id) if tenant_obj else None,
         'media_browse_url': '/admin/api/media'
     })
-    
+
     return templates.TemplateResponse(
         "admin/pages/create.html",
         {
@@ -465,7 +674,7 @@ async def page_create(
                 status_code=404,
                 detail=f"Tenant with ID {tenant_id} not found"
             )
-        
+
         # Check if the slug is already in use
         existing_page = page_manager.get_by_slug(tenant_id, slug)
         if existing_page:
@@ -473,12 +682,12 @@ async def page_create(
                 url=f"/admin/pages/create?tenant={tenant.slug}&status_message=A+page+with+this+slug+already+exists&status_type=danger",
                 status_code=status.HTTP_303_SEE_OTHER
             )
-        
+
         # Process the content if provided
         processed_content = None
         if content:
             processed_content, media_refs = wysiwyg_service.process_editor_content(content, tenant_id)
-        
+
         # Create initial layout data
         layout_data = None
         if template_id:
@@ -491,7 +700,7 @@ async def page_create(
                 "type": "page",
                 "sections": []
             }
-        
+
         # Create the page
         page_data = {
             "tenant_id": tenant_id,
@@ -502,9 +711,9 @@ async def page_create(
             "is_published": is_published,
             "layout_data": layout_data
         }
-        
+
         page = page_manager.create(page_data)
-        
+
         # If we have content, create a default section with a text block
         if processed_content and page:
             # Create a main content section
@@ -517,9 +726,9 @@ async def page_create(
                     "background": "white"
                 }
             }
-            
+
             section = section_manager.create(section_data)
-            
+
             # Create a text block with the content
             block_data = {
                 "section_id": str(section.id),
@@ -532,9 +741,9 @@ async def page_create(
                     "width": "normal"
                 }
             }
-            
+
             block_manager.create(block_data)
-        
+
         return RedirectResponse(
             url=f"/admin/pages/edit/{page.id}?tenant={tenant.slug}&status_message=Page+created+successfully&status_type=success",
             status_code=status.HTTP_303_SEE_OTHER
@@ -563,7 +772,7 @@ async def page_edit_form(
             status_code=404,
             detail=f"Page with ID {page_id} not found"
         )
-    
+
     # Get the tenant
     tenant_obj = tenant_manager.get(str(page.tenant_id))
     if not tenant_obj:
@@ -571,17 +780,17 @@ async def page_edit_form(
             status_code=404,
             detail=f"Tenant with ID {page.tenant_id} not found"
         )
-    
+
     # Get all tenants for the sidebar
     tenants = tenant_manager.get_all()
-    
+
     # Set the selected tenant
     selected_tenant_slug = tenant_obj.slug
     request.session["selected_tenant"] = selected_tenant_slug
-    
+
     # Get page sections
     sections = section_manager.list_by_page(page_id)
-    
+
     # Get blocks for each section
     sections_with_blocks = []
     for section in sections:
@@ -590,13 +799,13 @@ async def page_edit_form(
             "section": section,
             "blocks": blocks
         })
-    
+
     # Get editor configuration
     editor_config = wysiwyg_service.get_editor_config('tinymce', {
         'tenant_id': str(tenant_obj.id),
         'media_browse_url': '/admin/api/media'
     })
-    
+
     return templates.TemplateResponse(
         "admin/pages/edit.html",
         {
@@ -634,7 +843,7 @@ async def page_update(
                 status_code=404,
                 detail=f"Page with ID {page_id} not found"
             )
-        
+
         # Get the tenant
         tenant = tenant_manager.get(str(page.tenant_id))
         if not tenant:
@@ -642,7 +851,7 @@ async def page_update(
                 status_code=404,
                 detail=f"Tenant with ID {page.tenant_id} not found"
             )
-        
+
         # Check if the slug is already in use by another page
         existing_page = page_manager.get_by_slug(str(page.tenant_id), slug)
         if existing_page and str(existing_page.id) != page_id:
@@ -650,7 +859,7 @@ async def page_update(
                 url=f"/admin/pages/edit/{page_id}?tenant={tenant.slug}&status_message=A+different+page+with+this+slug+already+exists&status_type=danger",
                 status_code=status.HTTP_303_SEE_OTHER
             )
-        
+
         # Parse layout data if provided
         parsed_layout_data = None
         if layout_data:
@@ -661,7 +870,7 @@ async def page_update(
                     url=f"/admin/pages/edit/{page_id}?tenant={tenant.slug}&status_message=Invalid+layout+data+format&status_type=danger",
                     status_code=status.HTTP_303_SEE_OTHER
                 )
-        
+
         # Update the page
         page_data = {
             "title": title,
@@ -670,12 +879,12 @@ async def page_update(
             "meta_description": meta_description,
             "is_published": is_published
         }
-        
+
         if parsed_layout_data:
             page_data["layout_data"] = parsed_layout_data
-        
+
         page_manager.update(page_id, page_data)
-        
+
         return RedirectResponse(
             url=f"/admin/pages/edit/{page_id}?tenant={tenant.slug}&status_message=Page+updated+successfully&status_type=success",
             status_code=status.HTTP_303_SEE_OTHER
@@ -692,10 +901,10 @@ async def page_update(
                     tenant_slug = tenant.slug
         except:
             pass
-        
+
         return RedirectResponse(
             url=f"/admin/pages/edit/{page_id}?tenant={tenant_slug}&status_message=Error+updating+page:+{str(e)}&status_type=danger",
-            status_code=status.HTTP_303_SEE_OTHER
+            status_code=status.HTTP_33_SEE_OTHER
         )
 
 
@@ -713,14 +922,14 @@ async def page_delete(
                 status_code=404,
                 detail=f"Page with ID {page_id} not found"
             )
-        
+
         # Get the tenant for redirect
         tenant = tenant_manager.get(str(page.tenant_id))
         tenant_slug = tenant.slug if tenant else ""
-        
+
         # Delete the page
         page_manager.delete(page_id)
-        
+
         return RedirectResponse(
             url=f"/admin/pages?tenant={tenant_slug}&status_message=Page+deleted+successfully&status_type=success",
             status_code=status.HTTP_303_SEE_OTHER
@@ -737,7 +946,7 @@ async def page_delete(
                     tenant_slug = tenant.slug
         except:
             pass
-        
+
         return RedirectResponse(
             url=f"/admin/pages?tenant={tenant_slug}&status_message=Error+deleting+page:+{str(e)}&status_type=danger",
             status_code=status.HTTP_303_SEE_OTHER
@@ -757,7 +966,7 @@ async def page_preview(
             status_code=404,
             detail=f"Page with ID {page_id} not found"
         )
-    
+
     # Get the tenant
     tenant = tenant_manager.get(str(page.tenant_id))
     if not tenant:
@@ -765,10 +974,10 @@ async def page_preview(
             status_code=404,
             detail=f"Tenant with ID {page.tenant_id} not found"
         )
-    
+
     # Get page sections
     sections = section_manager.list_by_page(page_id)
-    
+
     # Get blocks for each section
     sections_with_blocks = []
     for section in sections:
@@ -777,7 +986,7 @@ async def page_preview(
             "section": section,
             "blocks": blocks
         })
-    
+
     return templates.TemplateResponse(
         "store/page.html",
         {
@@ -799,13 +1008,13 @@ async def page_templates_list(
     """Admin page listing all page templates."""
     # Get all tenants for the sidebar
     tenants = tenant_manager.get_all()
-    
+
     # Get selected tenant from session
     selected_tenant_slug = request.session.get("selected_tenant")
-    
+
     # Get templates
     templates_list = template_manager.list_templates()
-    
+
     return templates.TemplateResponse(
         "admin/pages/templates.html",
         {
@@ -852,7 +1061,7 @@ async def update_section(
         section = section_manager.update(section_id, section_data)
         if not section:
             raise HTTPException(status_code=404, detail=f"Section with ID {section_id} not found")
-        
+
         return {
             "id": str(section.id),
             "page_id": str(section.page_id),
@@ -876,7 +1085,7 @@ async def delete_section(section_id: str):
         success = section_manager.delete(section_id)
         if not success:
             raise HTTPException(status_code=404, detail=f"Section with ID {section_id} not found")
-        
+
         return {"success": True, "message": "Section deleted successfully"}
     except HTTPException:
         raise
@@ -903,11 +1112,11 @@ async def create_block(
                         tenant_id = str(page.tenant_id)
             except:
                 pass
-            
+
             html_content = block_data["content"]["html"]
             processed_html, media_refs = wysiwyg_service.process_editor_content(html_content, tenant_id)
             block_data["content"]["html"] = processed_html
-        
+
         block = block_manager.create(block_data)
         return {
             "id": str(block.id),
@@ -945,15 +1154,15 @@ async def update_block(
                             tenant_id = str(page.tenant_id)
             except:
                 pass
-            
+
             html_content = block_data["content"]["html"]
             processed_html, media_refs = wysiwyg_service.process_editor_content(html_content, tenant_id)
             block_data["content"]["html"] = processed_html
-        
+
         block = block_manager.update(block_id, block_data)
         if not block:
             raise HTTPException(status_code=404, detail=f"Block with ID {block_id} not found")
-        
+
         return {
             "id": str(block.id),
             "section_id": str(block.section_id),
@@ -978,7 +1187,7 @@ async def delete_block(block_id: str):
         success = block_manager.delete(block_id)
         if not success:
             raise HTTPException(status_code=404, detail=f"Block with ID {block_id} not found")
-        
+
         return {"success": True, "message": "Block deleted successfully"}
     except HTTPException:
         raise
@@ -990,7 +1199,7 @@ async def delete_block(block_id: str):
 def setup_routes(app_templates):
     """
     Set up routes with the given templates.
-    
+
     Args:
         app_templates: Jinja2Templates instance from the main app
     """
