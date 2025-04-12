@@ -62,8 +62,8 @@ def init_db() -> None:
             MediaFile
         )
         
-        # Also import important models that might define tables
-        # But don't redefine models that are already in the registry
+        # Explicitly import models that define tables but aren't in the registry
+        # We need to ensure they're imported before creating tables
         from pycommerce.models.inventory import InventoryTransaction
         
         # Create tables with checkfirst=True to avoid errors for existing tables

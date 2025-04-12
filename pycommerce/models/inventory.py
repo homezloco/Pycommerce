@@ -1,7 +1,7 @@
 """
 Inventory-related models and management.
 
-This module defines the InventoryRecord model and InventoryManager class
+This module defines the InventoryTransaction model and InventoryManager class
 for managing product inventory in the PyCommerce SDK.
 """
 
@@ -28,12 +28,11 @@ class InventoryTransactionType(str, Enum):
     ADJUSTMENT = "adjustment"    # Manual inventory adjustment
     RETURN = "return"            # Customer return
     DAMAGED = "damaged"          # Inventory damaged or lost
-    TRANSFER = "transfer"          # Inventory transferred between locations
+    TRANSFER = "transfer"        # Inventory transferred between locations
 
 
-# Import InventoryRecord from the registry instead of redefining it
+# Import InventoryRecord from the registry
 from pycommerce.models.db_registry import InventoryRecord
-# Ensure we're using the same InventoryRecord model everywhere
 
 
 class InventoryTransaction(Base):
@@ -41,6 +40,7 @@ class InventoryTransaction(Base):
     Represents a transaction affecting inventory.
     """
     __tablename__ = "inventory_transactions"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     inventory_record_id = Column(String(36), ForeignKey("inventory_records.id"), nullable=False)
@@ -52,9 +52,6 @@ class InventoryTransaction(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     created_by = Column(String(100), nullable=True)  # User who created the transaction
     metadata = Column(JSON, nullable=True)
-
-    # Relationships
-    inventory_record = relationship("InventoryRecord", back_populates="transactions")
 
     def __repr__(self):
         return f"<InventoryTransaction {self.id} of type {self.transaction_type}>"
