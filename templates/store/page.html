@@ -1,0 +1,168 @@
+
+{% extends "base.html" %}
+
+{% block title %}{{ page.meta_title or page.title }} - {{ tenant.name }}{% endblock %}
+
+{% block meta %}
+{% if page.meta_description %}
+<meta name="description" content="{{ page.meta_description }}">
+{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="page-container">
+    {% for section_data in sections %}
+    <div class="page-section page-section-{{ section_data.section.section_type }}" 
+         style="{% if section_data.section.settings and section_data.section.settings.background %}background-color: {{ section_data.section.settings.background }};{% endif %}
+                {% if section_data.section.settings and section_data.section.settings.padding %}padding: {{ section_data.section.settings.padding|replace('small', '10px')|replace('medium', '30px')|replace('large', '60px') }};{% endif %}">
+        <div class="container {% if section_data.section.settings and section_data.section.settings.width %}section-width-{{ section_data.section.settings.width }}{% endif %}">
+            {% for block in section_data.blocks %}
+                <div class="content-block content-block-{{ block.block_type }} 
+                            {% if block.settings and block.settings.alignment %}text-{{ block.settings.alignment }}{% endif %}
+                            {% if block.settings and block.settings.width %}block-width-{{ block.settings.width }}{% endif %}"
+                     style="{% if block.settings and block.settings.margin %}margin: {{ block.settings.margin|replace('none', '0')|replace('small', '10px')|replace('medium', '20px')|replace('large', '40px') }};{% endif %}">
+                    
+                    {% if block.block_type == 'text' and block.content %}
+                        <div class="text-content">
+                            {{ block.content.html|safe }}
+                        </div>
+                    {% elif block.block_type == 'image' and block.content %}
+                        <div class="image-content">
+                            {% if block.content.src %}
+                                <img src="{{ block.content.src }}" alt="{{ block.content.alt or '' }}" class="img-fluid">
+                            {% endif %}
+                        </div>
+                    {% elif block.block_type == 'button' and block.content %}
+                        <div class="button-content">
+                            <a href="{{ block.content.url or '#' }}" class="btn {{ block.settings.style or 'btn-primary' }}">
+                                {{ block.content.text or 'Click Here' }}
+                            </a>
+                        </div>
+                    {% elif block.block_type == 'product' and block.content %}
+                        <div class="product-content">
+                            <!-- Product display would be implemented here -->
+                            <div class="card">
+                                <div class="card-body">
+                                    <h5 class="card-title">{{ block.content.product_name or 'Product' }}</h5>
+                                    <a href="/{{ tenant.slug }}/products/{{ block.content.product_id }}" class="btn btn-sm btn-outline-primary">View Product</a>
+                                </div>
+                            </div>
+                        </div>
+                    {% elif block.block_type == 'video' and block.content %}
+                        <div class="video-content">
+                            {% if block.content.url %}
+                                <!-- Video embed would be implemented here -->
+                                <div class="ratio ratio-16x9">
+                                    <iframe src="{{ block.content.url }}" allowfullscreen></iframe>
+                                </div>
+                            {% endif %}
+                        </div>
+                    {% elif block.block_type == 'form' and block.content %}
+                        <div class="form-content">
+                            <!-- Form display would be implemented here -->
+                            <div class="card">
+                                <div class="card-body">
+                                    <h5 class="card-title">{{ block.content.form_type|capitalize }} Form</h5>
+                                    <form action="/{{ tenant.slug }}/forms/submit" method="post">
+                                        {% if block.content.form_type == 'contact' %}
+                                            <div class="mb-3">
+                                                <label for="name" class="form-label">Name</label>
+                                                <input type="text" class="form-control" id="name" name="name" required>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label for="email" class="form-label">Email</label>
+                                                <input type="email" class="form-control" id="email" name="email" required>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label for="message" class="form-label">Message</label>
+                                                <textarea class="form-control" id="message" name="message" rows="3" required></textarea>
+                                            </div>
+                                        {% elif block.content.form_type == 'newsletter' %}
+                                            <div class="mb-3">
+                                                <label for="email" class="form-label">Email</label>
+                                                <input type="email" class="form-control" id="email" name="email" required>
+                                            </div>
+                                        {% endif %}
+                                        <button type="submit" class="btn btn-primary">{{ block.content.button_text or 'Submit' }}</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    {% else %}
+                        <div class="unknown-block">
+                            Unknown block type: {{ block.block_type }}
+                        </div>
+                    {% endif %}
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+{% if preview_mode %}
+<div class="preview-mode-indicator">
+    <div class="alert alert-info">
+        Preview Mode - This page is not visible to customers until published.
+    </div>
+</div>
+{% endif %}
+
+<style>
+    .page-section {
+        width: 100%;
+    }
+    
+    .section-width-narrow {
+        max-width: 768px;
+        margin: 0 auto;
+    }
+    
+    .section-width-normal {
+        max-width: 1140px;
+        margin: 0 auto;
+    }
+    
+    .section-width-wide {
+        max-width: 1400px;
+        margin: 0 auto;
+    }
+    
+    .section-width-full {
+        width: 100%;
+    }
+    
+    .content-block {
+        margin-bottom: 20px;
+    }
+    
+    .block-width-narrow {
+        max-width: 576px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    
+    .block-width-normal {
+        max-width: 768px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    
+    .block-width-wide {
+        max-width: 992px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    
+    .block-width-full {
+        width: 100%;
+    }
+    
+    .preview-mode-indicator {
+        position: fixed;
+        bottom: 20px;
+        left: 20px;
+        z-index: 1000;
+    }
+</style>
+{% endblock %}

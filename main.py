@@ -21,7 +21,32 @@ app = proxy_to_uvicorn
 
 if __name__ == "__main__":
     import uvicorn
-    
+    from fastapi.templating import Jinja2Templates
+    from routes.storefront import home, products, cart, checkout, pages
+    from routes.admin import dashboard, products as admin_products, orders, customers, settings, plugins, tenants, media, inventory, analytics, page_builder
+
+    templates = Jinja2Templates(directory="templates")
+
+    # Set up storefront routes
+    home.setup_routes(app)
+    products.setup_routes(app)
+    cart.setup_routes(app)
+    checkout.setup_routes(app)
+    pages.setup_routes(app)
+
+    # Set up admin routes with the templates
+    admin_products.setup_routes(templates)
+    orders.setup_routes(templates)
+    customers.setup_routes(templates)
+    settings.setup_routes(templates)
+    plugins.setup_routes(templates)
+    tenants.setup_routes(templates)
+    media.setup_routes(templates)
+    inventory.setup_routes(templates)
+    analytics.setup_routes(templates)
+    page_builder.setup_routes(templates)
+
+
     # Run with uvicorn directly when file is executed
     # Pass application as an import string to enable 'reload' or 'workers'
     uvicorn.run("web_app:app", host="0.0.0.0", port=5000, reload=True)

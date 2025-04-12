@@ -1,0 +1,232 @@
+
+/* Page Builder Styles */
+
+/* Section Layout */
+.page-section {
+    padding: 30px 0;
+    position: relative;
+    overflow: hidden;
+}
+
+.page-section-hero {
+    padding: 60px 0;
+    background-size: cover;
+    background-position: center;
+    color: #fff;
+}
+
+.page-section-content {
+    padding: 40px 0;
+}
+
+.page-section-cta {
+    padding: 60px 0;
+    text-align: center;
+    background-color: #f8f9fa;
+}
+
+.page-section-products {
+    padding: 40px 0;
+    background-color: #fff;
+}
+
+.page-section-features {
+    padding: 50px 0;
+    background-color: #f8f9fa;
+}
+
+.page-section-testimonials {
+    padding: 60px 0;
+    background-color: #e9ecef;
+}
+
+/* Section Width Classes */
+.section-width-narrow {
+    max-width: 768px;
+    margin: 0 auto;
+}
+
+.section-width-normal {
+    max-width: 1140px;
+    margin: 0 auto;
+}
+
+.section-width-wide {
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.section-width-full {
+    width: 100%;
+}
+
+/* Content Blocks */
+.content-block {
+    margin-bottom: 2rem;
+}
+
+.content-block-text img {
+    max-width: 100%;
+    height: auto;
+}
+
+.content-block-image img {
+    max-width: 100%;
+    height: auto;
+}
+
+.content-block-video {
+    position: relative;
+    overflow: hidden;
+    padding-top: 56.25%; /* 16:9 Aspect Ratio */
+}
+
+.content-block-video iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border: 0;
+}
+
+.content-block-product {
+    border: 1px solid #dee2e6;
+    border-radius: 0.25rem;
+    padding: 1rem;
+    transition: all 0.3s ease;
+}
+
+.content-block-product:hover {
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+.content-block-form {
+    padding: 1.5rem;
+    border: 1px solid #dee2e6;
+    border-radius: 0.25rem;
+    background-color: #f8f9fa;
+}
+
+/* Width variations for content blocks */
+.block-width-narrow {
+    max-width: 576px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.block-width-normal {
+    max-width: 768px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.block-width-wide {
+    max-width: 992px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.block-width-full {
+    width: 100%;
+}
+
+/* Alignment classes */
+.text-left {
+    text-align: left;
+}
+
+.text-center {
+    text-align: center;
+}
+
+.text-right {
+    text-align: right;
+}
+
+/* Preview mode indicator */
+.preview-mode-indicator {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    z-index: 1000;
+}
+
+/* Hero section specific styles */
+.hero-content {
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.hero-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+}
+
+.hero-subtitle {
+    font-size: 1.25rem;
+    margin-bottom: 2rem;
+}
+
+/* Features section specific styles */
+.features-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 2rem;
+}
+
+.feature-item {
+    text-align: center;
+    padding: 1.5rem;
+}
+
+.feature-icon {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+    color: #007bff;
+}
+
+.feature-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+/* Testimonials section specific styles */
+.testimonial-item {
+    text-align: center;
+    padding: 2rem;
+    background-color: #fff;
+    border-radius: 0.5rem;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+.testimonial-quote {
+    font-size: 1.125rem;
+    font-style: italic;
+    margin-bottom: 1rem;
+}
+
+.testimonial-author {
+    font-weight: 600;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .page-section {
+        padding: 30px 15px;
+    }
+    
+    .hero-title {
+        font-size: 2rem;
+    }
+    
+    .hero-subtitle {
+        font-size: 1rem;
+    }
+    
+    .features-grid {
+        grid-template-columns: 1fr;
+    }
+}
