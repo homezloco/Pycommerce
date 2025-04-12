@@ -7,6 +7,7 @@ This module provides routes for the page builder in the admin interface.
 
 import logging
 import json
+import os
 from typing import Dict, List, Optional, Any
 
 from fastapi import APIRouter, HTTPException, Request, Form, Body, Depends, Query
@@ -27,8 +28,9 @@ logger = logging.getLogger(__name__)
 # Create router
 router = APIRouter(prefix="/admin", tags=["admin"])
 
-# Template setup will be passed from main app
-templates = None
+# Initialize templates
+templates_dir = os.path.join(os.getcwd(), "templates")
+templates = Jinja2Templates(directory=templates_dir)
 
 # Initialize managers
 tenant_manager = TenantManager()
@@ -40,6 +42,295 @@ template_manager = PageTemplateManager()
 # Initialize services
 wysiwyg_service = WysiwygService()
 media_service = MediaService()
+
+@router.get("/pages", response_class=HTMLResponse)
+async def list_pages(request: Request):
+    """List all pages."""
+    tenant_id = request.session.get("tenant_id")
+    if not tenant_id:
+        return RedirectResponse("/admin/stores", status_code=status.HTTP_302_FOUND)
+    
+    pages = page_manager.list_by_tenant(tenant_id, include_unpublished=True)
+    
+    return templates.TemplateResponse(
+        "admin/pages/list.html",
+        {
+            "request": request,
+            "pages": pages,
+            "active_page": "pages"
+        }
+    )
+
+@router.get("/pages/create", response_class=HTMLResponse)
+async def create_page_form(request: Request):
+    """Show page creation form."""
+    tenant_id = request.session.get("tenant_id")
+    if not tenant_id:
+        return RedirectResponse("/admin/stores", status_code=status.HTTP_302_FOUND)
+    
+    page_templates = template_manager.list_templates()
+    
+    return templates.TemplateResponse(
+        "admin/pages/create.html",
+        {
+            "request": request,
+            "templates": page_templates,
+            "active_page": "pages"
+        }
+    )
+
+@router.post("/pages/create")
+async def create_page(
+    request: Request,
+    title: str = Form(...),
+    slug: str = Form(...),
+    meta_title: str = Form(None),
+    meta_description: str = Form(None),
+    template_id: str = Form(None)
+):
+    """Create a new page."""
+    tenant_id = request.session.get("tenant_id")
+    if not tenant_id:
+        return RedirectResponse("/admin/stores", status_code=status.HTTP_302_FOUND)
+    
+    # Create page
+    page_data = {
+        "tenant_id": tenant_id,
+        "title": title,
+        "slug": slug,
+        "meta_title": meta_title or title,
+        "meta_description": meta_description or "",
+        "is_published": False,
+        "layout_data": {}
+    }
+    
+    try:
+        page = page_manager.create(page_data)
+        
+        # If template selected, apply template data
+        if template_id:
+            template = template_manager.get(template_id)
+            if template and template.template_data:
+                # Create sections from template
+                template_sections = template.template_data.get("sections", [])
+                for section_data in template_sections:
+                    section = section_manager.create({
+                        "page_id": page.id,
+                        "section_type": section_data.get("section_type", "content"),
+                        "position": section_data.get("position", 0),
+                        "settings": section_data.get("settings", {})
+                    })
+                    
+                    # Create blocks if specified in template
+                    template_blocks = section_data.get("blocks", [])
+                    for block_data in template_blocks:
+                        block_manager.create({
+                            "section_id": section.id,
+                            "block_type": block_data.get("block_type", "text"),
+                            "position": block_data.get("position", 0),
+                            "content": block_data.get("content", {}),
+                            "settings": block_data.get("settings", {})
+                        })
+        
+        # Redirect to editor
+        return RedirectResponse(f"/admin/pages/edit/{page.id}", status_code=status.HTTP_302_FOUND)
+    except Exception as e:
+        logger.error(f"Error creating page: {str(e)}")
+        return JSONResponse(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            content={"detail": f"Failed to create page: {str(e)}"}
+        )
+
+@router.get("/pages/edit/{page_id}", response_class=HTMLResponse)
+async def edit_page(request: Request, page_id: str):
+    """Edit page using visual page builder."""
+    tenant_id = request.session.get("tenant_id")
+    if not tenant_id:
+        return RedirectResponse("/admin/stores", status_code=status.HTTP_302_FOUND)
+    
+    page = page_manager.get(page_id)
+    if not page or page.tenant_id != tenant_id:
+        return RedirectResponse("/admin/pages", status_code=status.HTTP_302_FOUND)
+    
+    sections = section_manager.list_by_page(page_id)
+    
+    # Get blocks for each section
+    section_blocks = {}
+    for section in sections:
+        section_blocks[str(section.id)] = block_manager.list_by_section(section.id)
+    
+    media_items = media_service.list_media(tenant_id)
+    
+    return templates.TemplateResponse(
+        "admin/pages/editor.html",
+        {
+            "request": request,
+            "page": page,
+            "sections": sections,
+            "section_blocks": section_blocks,
+            "media_items": media_items,
+            "active_page": "pages"
+        }
+    )
+
+@router.post("/pages/update/{page_id}")
+async def update_page(
+    request: Request,
+    page_id: str,
+    page_data: Dict[str, Any] = Body(...)
+):
+    """Update page settings."""
+    tenant_id = request.session.get("tenant_id")
+    if not tenant_id:
+        return JSONResponse(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            content={"detail": "Unauthorized"}
+        )
+    
+    try:
+        page = page_manager.get(page_id)
+        if not page or page.tenant_id != tenant_id:
+            return JSONResponse(
+                status_code=status.HTTP_404_NOT_FOUND,
+                content={"detail": "Page not found"}
+            )
+        
+        updated_page = page_manager.update(page_id, page_data)
+        return JSONResponse(content={"success": True, "page": {
+            "id": str(updated_page.id),
+            "title": updated_page.title,
+            "slug": updated_page.slug,
+            "is_published": updated_page.is_published
+        }})
+    except Exception as e:
+        logger.error(f"Error updating page: {str(e)}")
+        return JSONResponse(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            content={"detail": f"Failed to update page: {str(e)}"}
+        )
+
+@router.post("/pages/delete/{page_id}")
+async def delete_page(request: Request, page_id: str):
+    """Delete a page."""
+    tenant_id = request.session.get("tenant_id")
+    if not tenant_id:
+        return JSONResponse(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            content={"detail": "Unauthorized"}
+        )
+    
+    try:
+        page = page_manager.get(page_id)
+        if not page or page.tenant_id != tenant_id:
+            return JSONResponse(
+                status_code=status.HTTP_404_NOT_FOUND,
+                content={"detail": "Page not found"}
+            )
+        
+        success = page_manager.delete(page_id)
+        if success:
+            return JSONResponse(content={"success": True})
+        else:
+            return JSONResponse(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                content={"detail": "Failed to delete page"}
+            )
+    except Exception as e:
+        logger.error(f"Error deleting page: {str(e)}")
+        return JSONResponse(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            content={"detail": f"Failed to delete page: {str(e)}"}
+        )
+
+@router.post("/pages/sections/create/{page_id}")
+async def create_section(
+    request: Request,
+    page_id: str,
+    section_data: Dict[str, Any] = Body(...)
+):
+    """Create a new section in a page."""
+    tenant_id = request.session.get("tenant_id")
+    if not tenant_id:
+        return JSONResponse(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            content={"detail": "Unauthorized"}
+        )
+    
+    try:
+        page = page_manager.get(page_id)
+        if not page or page.tenant_id != tenant_id:
+            return JSONResponse(
+                status_code=status.HTTP_404_NOT_FOUND,
+                content={"detail": "Page not found"}
+            )
+        
+        section_data["page_id"] = page_id
+        section = section_manager.create(section_data)
+        
+        return JSONResponse(content={
+            "success": True,
+            "section": {
+                "id": str(section.id),
+                "section_type": section.section_type,
+                "position": section.position,
+                "settings": section.settings
+            }
+        })
+    except Exception as e:
+        logger.error(f"Error creating section: {str(e)}")
+        return JSONResponse(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            content={"detail": f"Failed to create section: {str(e)}"}
+        )
+
+@router.post("/pages/blocks/create/{section_id}")
+async def create_block(
+    request: Request,
+    section_id: str,
+    block_data: Dict[str, Any] = Body(...)
+):
+    """Create a new content block in a section."""
+    tenant_id = request.session.get("tenant_id")
+    if not tenant_id:
+        return JSONResponse(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            content={"detail": "Unauthorized"}
+        )
+    
+    try:
+        section = section_manager.get(section_id)
+        if not section:
+            return JSONResponse(
+                status_code=status.HTTP_404_NOT_FOUND,
+                content={"detail": "Section not found"}
+            )
+        
+        page = page_manager.get(section.page_id)
+        if not page or page.tenant_id != tenant_id:
+            return JSONResponse(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                content={"detail": "Unauthorized"}
+            )
+        
+        block_data["section_id"] = section_id
+        block = block_manager.create(block_data)
+        
+        return JSONResponse(content={
+            "success": True,
+            "block": {
+                "id": str(block.id),
+                "block_type": block.block_type,
+                "position": block.position,
+                "content": block.content,
+                "settings": block.settings
+            }
+        })
+    except Exception as e:
+        logger.error(f"Error creating block: {str(e)}")
+        return JSONResponse(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            content={"detail": f"Failed to create block: {str(e)}"}
+        )
 
 
 @router.get("/pages", response_class=HTMLResponse)

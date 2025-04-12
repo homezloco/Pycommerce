@@ -76,6 +76,15 @@ args = "alembic upgrade head"
 task = "shell.exec"
 args = "python main.py"
 
+[[workflows.workflow]]
+name = "Run Page Builder Migration"
+author = 34384132
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python run_page_builder_migration.py"
+
 [[ports]]
 localPort = 5000
 externalPort = 80
