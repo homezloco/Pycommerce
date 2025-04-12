@@ -25,6 +25,14 @@ def main():
     db_uri = os.environ.get('DATABASE_URL', 'sqlite:///pycommerce.db')
     logger.info(f"Using database URI: {db_uri}")
     
+    # Ensure the database URL is properly formatted
+    if db_uri and not db_uri.startswith(('sqlite://', 'postgresql://', 'mysql://')):
+        logger.warning(f"Database URI format may be invalid: {db_uri}")
+        # Try to fix common issues like missing protocol
+        if 'postgres' in db_uri and not db_uri.startswith('postgresql://'):
+            db_uri = f"postgresql://{db_uri}"
+            logger.info(f"Modified database URI to: {db_uri}")
+    
     try:
         # Run the migration to create tables
         run_migration(db_uri)

@@ -21,7 +21,7 @@ pages = Table(
     'pages',
     metadata,
     Column('id', UUID(as_uuid=True), primary_key=True, default=uuid.uuid4),
-    Column('tenant_id', UUID(as_uuid=True), ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False),
+    Column('tenant_id', UUID(as_uuid=True), nullable=False),
     Column('title', String(255), nullable=False),
     Column('slug', String(255), nullable=False),
     Column('meta_title', String(255), nullable=True),
@@ -82,21 +82,32 @@ def run_migration(db_uri=None):
         db_uri = os.environ.get('DATABASE_URL', 'sqlite:///pycommerce.db')
 
     print(f"Using database URI: {db_uri}")
-    engine = create_engine(db_uri)
-    
-    from sqlalchemy import inspect
-    inspector = inspect(engine)
-    existing_tables = inspector.get_table_names()
-    
-    # Check if tables already exist
-    if 'page_sections' in existing_tables:
-        print("Page builder tables already exist, skipping creation")
-        return
+    try:
+        engine = create_engine(db_uri)
         
-    # Create tables
-    metadata.create_all(engine)
-
-    print("Created page builder tables")
+        # Test connection
+        connection = engine.connect()
+        connection.close()
+        
+        from sqlalchemy import inspect
+        inspector = inspect(engine)
+        existing_tables = inspector.get_table_names()
+        
+        # Check if tables already exist
+        if 'page_sections' in existing_tables:
+            print("Page builder tables already exist, skipping creation")
+            return
+        
+        # Check if tenants table exists
+        if 'tenants' not in existing_tables:
+            print("Warning: 'tenants' table not found. Foreign key constraint might fail.")
+            
+        # Create tables
+        metadata.create_all(engine)
+        print("Created page builder tables")
+    except Exception as e:
+        print(f"Error during migration: {str(e)}")
+        raise
 
 
 if __name__ == "__main__":
