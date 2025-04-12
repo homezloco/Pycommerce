@@ -79,6 +79,7 @@ async def theme_settings_page(
             "tenants": tenants,
             "active_page": "theme-settings",
             "theme": theme,
+            "theme_settings": theme,  # Add for backwards compatibility
             "font_families": font_families,
             "logo_positions": logo_positions,
             "status_message": status_message,

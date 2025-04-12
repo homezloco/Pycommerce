@@ -53,11 +53,11 @@
                                 <h4>General Settings</h4>
                                 <div class="mb-3">
                                     <label for="siteTitle" class="form-label">Site Title</label>
-                                    <input type="text" class="form-control" id="siteTitle" name="site_title" value="{{ theme_settings.site_title }}">
+                                    <input type="text" class="form-control" id="siteTitle" name="site_title" value="{{ theme.site_title if theme and theme.site_title else '' }}">
                                 </div>
                                 <div class="mb-3">
                                     <label for="siteDescription" class="form-label">Site Description</label>
-                                    <textarea class="form-control" id="siteDescription" name="site_description" rows="3">{{ theme_settings.site_description }}</textarea>
+                                    <textarea class="form-control" id="siteDescription" name="site_description" rows="3">{{ theme.site_description if theme and theme.site_description else '' }}</textarea>
                                 </div>
                             </div>
                         </div>
@@ -68,15 +68,15 @@
                                 <h4>Color Settings</h4>
                                 <div class="mb-3">
                                     <label for="primaryColor" class="form-label">Primary Color</label>
-                                    <input type="color" class="form-control form-control-color" id="primaryColor" name="primary_color" value="{{ theme_settings.primary_color }}">
+                                    <input type="color" class="form-control form-control-color" id="primaryColor" name="primary_color" value="{{ theme.primary_color if theme and theme.primary_color else '#3498db' }}">
                                 </div>
                                 <div class="mb-3">
                                     <label for="secondaryColor" class="form-label">Secondary Color</label>
-                                    <input type="color" class="form-control form-control-color" id="secondaryColor" name="secondary_color" value="{{ theme_settings.secondary_color }}">
+                                    <input type="color" class="form-control form-control-color" id="secondaryColor" name="secondary_color" value="{{ theme.secondary_color if theme and theme.secondary_color else '#6c757d' }}">
                                 </div>
                                 <div class="mb-3">
                                     <label for="accentColor" class="form-label">Accent Color</label>
-                                    <input type="color" class="form-control form-control-color" id="accentColor" name="accent_color" value="{{ theme_settings.accent_color }}">
+                                    <input type="color" class="form-control form-control-color" id="accentColor" name="accent_color" value="{{ theme.accent_color if theme and theme.accent_color else '#ffc107' }}">
                                 </div>
                             </div>
                         </div>
@@ -86,11 +86,11 @@
                                 <h4>Typography Settings</h4>
                                 <div class="mb-3">
                                     <label for="fontFamily" class="form-label">Font Family</label>
-                                    <input type="text" class="form-control" id="fontFamily" name="font_family" value="{{ theme_settings.font_family }}">
+                                    <input type="text" class="form-control" id="fontFamily" name="font_family" value="{{ theme.font_family if theme and theme.font_family else 'Arial, sans-serif' }}">
                                 </div>
                                 <div class="mb-3">
                                     <label for="fontSize" class="form-label">Font Size</label>
-                                    <input type="number" class="form-control" id="fontSize" name="font_size" value="{{ theme_settings.font_size }}">
+                                    <input type="number" class="form-control" id="fontSize" name="font_size" value="{{ theme.font_size if theme and theme.font_size else 16 }}">
                                 </div>
                             </div>
                         </div>
@@ -100,11 +100,11 @@
                                 <h4>Header Settings</h4>
                                 <div class="mb-3">
                                     <label for="headerHeight" class="form-label">Header Height</label>
-                                    <input type="number" class="form-control" id="headerHeight" name="header_height" value="{{ theme_settings.header_height }}">
+                                    <input type="number" class="form-control" id="headerHeight" name="header_height" value="{{ theme.header_height if theme and theme.header_height else 60 }}">
                                 </div>
                                 <div class="mb-3">
                                     <label for="headerBackgroundColor" class="form-label">Header Background Color</label>
-                                    <input type="color" class="form-control form-control-color" id="headerBackgroundColor" name="header_background_color" value="{{ theme_settings.header_background_color }}">
+                                    <input type="color" class="form-control form-control-color" id="headerBackgroundColor" name="header_background_color" value="{{ theme.header_background_color if theme and theme.header_background_color else '#343a40' }}">
                                 </div>
                             </div>
                         </div>
@@ -114,11 +114,11 @@
                                 <h4>Footer Settings</h4>
                                 <div class="mb-3">
                                     <label for="footerHeight" class="form-label">Footer Height</label>
-                                    <input type="number" class="form-control" id="footerHeight" name="footer_height" value="{{ theme_settings.footer_height }}">
+                                    <input type="number" class="form-control" id="footerHeight" name="footer_height" value="{{ theme.footer_height if theme and theme.footer_height else 100 }}">
                                 </div>
                                 <div class="mb-3">
                                     <label for="footerBackgroundColor" class="form-label">Footer Background Color</label>
-                                    <input type="color" class="form-control form-control-color" id="footerBackgroundColor" name="footer_background_color" value="{{ theme_settings.footer_background_color }}">
+                                    <input type="color" class="form-control form-control-color" id="footerBackgroundColor" name="footer_background_color" value="{{ theme.footer_background_color if theme and theme.footer_background_color else '#212529' }}">
                                 </div>
                             </div>
                         </div>
@@ -151,19 +151,19 @@
                                         <div class="mb-3">
                                             <label for="defaultSectionPadding" class="form-label">Default Section Padding</label>
                                             <select class="form-select" id="defaultSectionPadding" name="default_section_padding">
-                                                <option value="small" {% if theme_settings.default_section_padding == 'small' %}selected{% endif %}>Small (10px)</option>
-                                                <option value="medium" {% if not theme_settings.default_section_padding or theme_settings.default_section_padding == 'medium' %}selected{% endif %}>Medium (30px)</option>
-                                                <option value="large" {% if theme_settings.default_section_padding == 'large' %}selected{% endif %}>Large (60px)</option>
+                                                <option value="small" {% if theme and theme.default_section_padding == 'small' %}selected{% endif %}>Small (10px)</option>
+                                                <option value="medium" {% if not theme or not theme.default_section_padding or theme.default_section_padding == 'medium' %}selected{% endif %}>Medium (30px)</option>
+                                                <option value="large" {% if theme and theme.default_section_padding == 'large' %}selected{% endif %}>Large (60px)</option>
                                             </select>
                                         </div>
 
                                         <div class="mb-3">
                                             <label for="defaultSectionWidth" class="form-label">Default Content Width</label>
                                             <select class="form-select" id="defaultSectionWidth" name="default_section_width">
-                                                <option value="narrow" {% if theme_settings.default_section_width == 'narrow' %}selected{% endif %}>Narrow (768px)</option>
-                                                <option value="normal" {% if not theme_settings.default_section_width or theme_settings.default_section_width == 'normal' %}selected{% endif %}>Normal (1140px)</option>
-                                                <option value="wide" {% if theme_settings.default_section_width == 'wide' %}selected{% endif %}>Wide (1400px)</option>
-                                                <option value="full" {% if theme_settings.default_section_width == 'full' %}selected{% endif %}>Full Width</option>
+                                                <option value="narrow" {% if theme and theme.default_section_width == 'narrow' %}selected{% endif %}>Narrow (768px)</option>
+                                                <option value="normal" {% if not theme or not theme.default_section_width or theme.default_section_width == 'normal' %}selected{% endif %}>Normal (1140px)</option>
+                                                <option value="wide" {% if theme and theme.default_section_width == 'wide' %}selected{% endif %}>Wide (1400px)</option>
+                                                <option value="full" {% if theme and theme.default_section_width == 'full' %}selected{% endif %}>Full Width</option>
                                             </select>
                                         </div>
                                     </div>
@@ -176,17 +176,17 @@
                                 <h4>Advanced Settings</h4>
                                 <div class="mb-3">
                                     <label for="customCSS" class="form-label">Custom CSS</label>
-                                    <textarea class="form-control" id="customCSS" name="custom_css" rows="6" placeholder="Add your custom CSS here">{{ theme_settings.custom_css }}</textarea>
+                                    <textarea class="form-control" id="customCSS" name="custom_css" rows="6" placeholder="Add your custom CSS here">{{ theme.custom_css if theme and theme.custom_css else '' }}</textarea>
                                     <div class="form-text">Custom CSS will be applied to all pages of your store.</div>
                                 </div>
                                 <div class="mb-3">
                                     <label for="headerScripts" class="form-label">Header Scripts</label>
-                                    <textarea class="form-control" id="headerScripts" name="header_scripts" rows="4" placeholder="Add scripts to be included in the <head> section">{{ theme_settings.header_scripts }}</textarea>
+                                    <textarea class="form-control" id="headerScripts" name="header_scripts" rows="4" placeholder="Add scripts to be included in the <head> section">{{ theme.header_scripts if theme and theme.header_scripts else '' }}</textarea>
                                     <div class="form-text">Scripts will be added to the &lt;head&gt; section of your pages.</div>
                                 </div>
                                 <div class="mb-3">
                                     <label for="footerScripts" class="form-label">Footer Scripts</label>
-                                    <textarea class="form-control" id="footerScripts" name="footer_scripts" rows="4" placeholder="Add scripts to be included before </body>">{{ theme_settings.footer_scripts }}</textarea>
+                                    <textarea class="form-control" id="footerScripts" name="footer_scripts" rows="4" placeholder="Add scripts to be included before </body>">{{ theme.footer_scripts if theme and theme.footer_scripts else '' }}</textarea>
                                     <div class="form-text">Scripts will be added just before the closing &lt;/body&gt; tag.</div>
                                 </div>
                             </div>
@@ -265,49 +265,73 @@
 <script>
     // Preview updates in real-time
     document.addEventListener('DOMContentLoaded', function() {
-        const primaryColorInput = document.getElementById('primary_color');
-        const secondaryColorInput = document.getElementById('secondary_color');
-        const backgroundColorInput = document.getElementById('background_color');
-        const textColorInput = document.getElementById('text_color');
-        const fontFamilyInput = document.getElementById('font_family');
-        const logoPositionInput = document.getElementById('logo_position');
+        const primaryColorInput = document.getElementById('primaryColor');
+        const secondaryColorInput = document.getElementById('secondaryColor');
+        const backgroundColorInput = document.getElementById('backgroundColor');
+        const textColorInput = document.getElementById('textColor');
+        const fontFamilyInput = document.getElementById('fontFamily');
+        const logoPositionInput = document.getElementById('logoPosition');
 
         const previewArea = document.querySelector('.theme-preview');
-        const primaryButton = previewArea.querySelectorAll('.btn')[0];
-        const secondaryButton = previewArea.querySelectorAll('.btn')[1];
-        const logoPreview = previewArea.querySelector('div:first-child');
+        
+        // Only add event listeners if elements exist
+        if (primaryColorInput && previewArea) {
+            const primaryButton = previewArea.querySelectorAll('.btn')[0];
+            const secondaryButton = previewArea.querySelectorAll('.btn')[1];
+            const logoPreview = previewArea.querySelector('div:first-child');
 
-        // Update preview elements when inputs change
-        primaryColorInput.addEventListener('input', function() {
-            primaryButton.style.backgroundColor = this.value;
-            document.querySelector('.list-group-item:nth-child(1) .badge').style.backgroundColor = this.value;
-        });
+            // Update preview elements when inputs change
+            primaryColorInput.addEventListener('input', function() {
+                if (primaryButton) {
+                    primaryButton.style.backgroundColor = this.value;
+                    const badge = document.querySelector('.list-group-item:nth-child(1) .badge');
+                    if (badge) badge.style.backgroundColor = this.value;
+                }
+            });
 
-        secondaryColorInput.addEventListener('input', function() {
-            secondaryButton.style.backgroundColor = this.value;
-            document.querySelector('.list-group-item:nth-child(2) .badge').style.backgroundColor = this.value;
-        });
+            if (secondaryColorInput && secondaryButton) {
+                secondaryColorInput.addEventListener('input', function() {
+                    secondaryButton.style.backgroundColor = this.value;
+                    const badge = document.querySelector('.list-group-item:nth-child(2) .badge');
+                    if (badge) badge.style.backgroundColor = this.value;
+                });
+            }
 
-        backgroundColorInput.addEventListener('input', function() {
-            previewArea.style.backgroundColor = this.value;
-            document.querySelector('.list-group-item:nth-child(3) .badge').style.backgroundColor = this.value;
-        });
+            if (backgroundColorInput) {
+                backgroundColorInput.addEventListener('input', function() {
+                    previewArea.style.backgroundColor = this.value;
+                    const badge = document.querySelector('.list-group-item:nth-child(3) .badge');
+                    if (badge) badge.style.backgroundColor = this.value;
+                });
+            }
 
-        textColorInput.addEventListener('input', function() {
-            previewArea.style.color = this.value;
-            document.querySelector('.list-group-item:nth-child(4) .badge').style.backgroundColor = this.value;
-        });
+            if (textColorInput) {
+                textColorInput.addEventListener('input', function() {
+                    previewArea.style.color = this.value;
+                    const badge = document.querySelector('.list-group-item:nth-child(4) .badge');
+                    if (badge) badge.style.backgroundColor = this.value;
+                });
+            }
 
-        fontFamilyInput.addEventListener('change', function() {
-            previewArea.style.fontFamily = this.value;
-            document.querySelector('.list-group-item:nth-child(5) span').textContent = this.value;
-        });
+            if (fontFamilyInput) {
+                fontFamilyInput.addEventListener('change', function() {
+                    previewArea.style.fontFamily = this.value;
+                    const span = document.querySelector('.list-group-item:nth-child(5) span');
+                    if (span) span.textContent = this.value;
+                });
+            }
 
-        logoPositionInput.addEventListener('change', function() {
-            logoPreview.className = '';
-            logoPreview.classList.add('text-' + this.value);
-            document.querySelector('.list-group-item:nth-child(6) span').textContent = this.options[this.selectedIndex].text;
-        });
+            if (logoPositionInput && logoPreview) {
+                logoPositionInput.addEventListener('change', function() {
+                    logoPreview.className = '';
+                    logoPreview.classList.add('text-' + this.value);
+                    const span = document.querySelector('.list-group-item:nth-child(6) span');
+                    if (span && this.options && this.selectedIndex >= 0) {
+                        span.textContent = this.options[this.selectedIndex].text;
+                    }
+                });
+            }
+        }
     });
 </script>
 {% endblock %}
