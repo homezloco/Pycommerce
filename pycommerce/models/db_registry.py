@@ -94,8 +94,7 @@ class InventoryRecord(Base):
     product = relationship("Product", back_populates="inventory_records")
     transactions = relationship("InventoryTransaction", 
                                back_populates="inventory_record", 
-                               cascade="all, delete-orphan",
-                               foreign_keys="InventoryTransaction.inventory_record_id")
+                               cascade="all, delete-orphan")
 
     def __repr__(self):
         return f"<InventoryRecord {self.id} for product {self.product_id}>"
