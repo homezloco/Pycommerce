@@ -33,6 +33,7 @@ class InventoryTransactionType(str, Enum):
 
 # Import InventoryRecord from the registry instead of redefining it
 from pycommerce.models.db_registry import InventoryRecord
+# Ensure we're using the same InventoryRecord model everywhere
 
 
 class InventoryTransaction(Base):

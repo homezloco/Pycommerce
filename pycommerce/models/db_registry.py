@@ -64,18 +64,17 @@ class Product(Base):
     def __repr__(self):
         return f"<Product {self.name}>"
 
-# Import Base and necessary SQLAlchemy components
-from pycommerce.core.db import Base
-from sqlalchemy import Column, String, Float, DateTime, ForeignKey, JSON, Boolean, Integer, Text
-from sqlalchemy.orm import relationship
+# Import necessary SQLAlchemy components for model definitions
 import uuid
 from datetime import datetime
+from sqlalchemy import Column, String, Float, DateTime, ForeignKey, JSON, Boolean, Integer, Text
+from sqlalchemy.orm import relationship
 
 # Define the InventoryRecord model in the registry to avoid multiple definitions
 class InventoryRecord(Base):
     """SQLAlchemy InventoryRecord model."""
     __tablename__ = "inventory_records"
-    __table_args__ = {'extend_existing': True}
+    __table_args__ = {'extend_existing': True}  # This is crucial to allow table redefinition
 
     id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     product_id = Column(String(36), ForeignKey("products.id"), nullable=False)
@@ -97,33 +96,7 @@ class InventoryRecord(Base):
 
     def __repr__(self):
         return f"<InventoryRecord {self.id} for product {self.product_id}>"
-class InventoryRecord(Base):
-    """
-    Represents an inventory record for a product.
-    """
-    __tablename__ = "inventory_records"
 
-    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
-    tenant_id = Column(String(36), ForeignKey("tenants.id"), nullable=False)
-    product_id = Column(String(36), ForeignKey("products.id"), nullable=False)
-    location = Column(String(100), nullable=True)  # Optional inventory location
-    sku = Column(String(100), nullable=True)
-    quantity = Column(Integer, default=0)
-    available_quantity = Column(Integer, default=0)  # Available for sale (quantity - reserved)
-    reserved_quantity = Column(Integer, default=0)   # Reserved for orders
-    reorder_point = Column(Integer, default=0)       # When to reorder
-    reorder_quantity = Column(Integer, default=0)    # How much to reorder
-    last_counted = Column(DateTime, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    inventory_metadata = Column(JSON, nullable=True)  # Renamed from metadata to avoid reserved name conflict
-
-    # Relationships
-    product = relationship("Product", back_populates="inventory_records")
-    transactions = relationship("InventoryTransaction", back_populates="inventory_record", cascade="all, delete-orphan")
-
-    def __repr__(self):
-        return f"<InventoryRecord {self.id} for product {self.product_id}>"
 
 class PluginConfig(Base):
     """SQLAlchemy PluginConfig model for storing plugin configuration data."""

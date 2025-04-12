@@ -63,10 +63,11 @@ def init_db() -> None:
         )
         
         # Also import important models that might define tables
+        # But don't redefine models that are already in the registry
         from pycommerce.models.inventory import InventoryTransaction
         
-        # Create tables
-        Base.metadata.create_all(bind=engine)
+        # Create tables with checkfirst=True to avoid errors for existing tables
+        Base.metadata.create_all(bind=engine, checkfirst=True)
         logger.info("Database initialized successfully.")
     except Exception as e:
         logger.error(f"Error initializing database: {e}")
