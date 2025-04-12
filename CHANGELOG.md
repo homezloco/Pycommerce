@@ -40,6 +40,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Improved database query efficiency
 
 ### Fixed
+- [2025-04-12] Fixed media selector in theme settings page by properly structuring HTML modal outside JavaScript function
+- [2025-04-12] Fixed "No media found" issue in media browser by improving fallback image loading functionality
 - [2025-04-11] Fixed revenue calculation inconsistency between dashboard and market analysis pages, ensuring only completed orders (SHIPPED, DELIVERED, COMPLETED) are counted for revenue metrics
 - [2025-04-11] Created test orders with various statuses to validate proper revenue calculation across product categories
 - [2025-04-10] Fixed store selector dropdown on admin categories page by adding proper tenant context variables
