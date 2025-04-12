@@ -1,71 +1,73 @@
 
 """
-Storefront routes for page rendering.
+Page routes for the PyCommerce storefront.
 
-This module provides routes for rendering custom website pages created with the page builder.
+This module defines the routes for dynamic pages created via the page builder.
 """
-
 import logging
-from fastapi import APIRouter, Request, HTTPException
-from fastapi.responses import HTMLResponse
+from typing import Optional, Dict, List, Any
+from fastapi import APIRouter, Request, Depends
+from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
-import os
 
 from pycommerce.models.tenant import TenantManager
-from pycommerce.models.page_builder import PageManager, PageSectionManager, ContentBlockManager
+from pycommerce.models.page_builder import PageManager
 
 # Configure logging
 logger = logging.getLogger(__name__)
 
 # Create router
-router = APIRouter()
+router = APIRouter(tags=["pages"])
 
-# Initialize templates
-templates_dir = os.path.join(os.getcwd(), "templates")
-templates = Jinja2Templates(directory=templates_dir)
-
-# Initialize managers
+# Global variables initialized in setup_routes
+templates = None
 tenant_manager = TenantManager()
 page_manager = PageManager()
-section_manager = PageSectionManager()
-block_manager = ContentBlockManager()
 
-@router.get("/{tenant_slug}/pages/{page_slug}", response_class=HTMLResponse)
-async def view_page(request: Request, tenant_slug: str, page_slug: str):
-    """Render a custom page."""
-    # Get the tenant
-    tenant = tenant_manager.get_by_slug(tenant_slug)
+def setup_routes(jinja_templates: Jinja2Templates = None):
+    """
+    Setup the page routes with the given templates.
+    
+    Args:
+        jinja_templates: The Jinja2Templates instance to use
+    """
+    global templates
+    templates = jinja_templates or templates
+    
+    # Return the router for FastAPI to use
+    return router
+
+@router.get("/page/{slug}", response_class=HTMLResponse)
+async def page(request: Request, slug: str):
+    """
+    Render a dynamically created page.
+    
+    Args:
+        request: The FastAPI request object
+        slug: The page slug
+        
+    Returns:
+        The rendered page or a redirect if the page is not found
+    """
+    tenant = tenant_manager.get_tenant_for_request(request)
+    
     if not tenant:
-        raise HTTPException(status_code=404, detail="Store not found")
+        return RedirectResponse(url="/stores")
     
-    # Get the page
-    page = page_manager.get_by_slug(str(tenant.id), page_slug)
-    if not page or not page.is_published:
-        raise HTTPException(status_code=404, detail="Page not found")
+    # Get the page by slug
+    page_data = page_manager.get_page_by_slug(tenant.id, slug)
     
-    # Get page sections
-    sections = section_manager.list_by_page(str(page.id))
+    if not page_data:
+        return RedirectResponse(url="/")
     
-    # Get blocks for each section
-    sections_with_blocks = []
-    for section in sections:
-        blocks = block_manager.list_by_section(str(section.id))
-        sections_with_blocks.append({
-            "section": section,
-            "blocks": blocks
-        })
-    
+    # Render the page
     return templates.TemplateResponse(
         "store/page.html",
         {
             "request": request,
             "tenant": tenant,
-            "page": page,
-            "sections": sections_with_blocks,
-            "preview_mode": False
+            "page": page_data,
+            "content": page_data.get("content", ""),
+            "title": page_data.get("title", "Page")
         }
     )
-
-def setup_routes(app):
-    """Set up routes for the application."""
-    app.include_router(router)
