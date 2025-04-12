@@ -67,13 +67,10 @@ def run_migrations_online() -> None:
     and associate a connection with the context.
 
     """
-    # Get database URL from environment or use SQLite as fallback
-    db_url = os.getenv("DATABASE_URL")
-    if not db_url or "localhost" in db_url:
-        # Use SQLite as fallback
-        db_url = "sqlite:///pycommerce.db"
-        config.set_main_option("sqlalchemy.url", db_url)
-        print(f"Using SQLite database at {db_url} as fallback")
+    # Get database URL from environment
+    db_url = os.getenv("DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/pycommerce")
+    config.set_main_option("sqlalchemy.url", db_url)
+    print(f"Using PostgreSQL database at {db_url}")
 
     connectable = engine_from_config(
         config.get_section(config.config_ini_section),

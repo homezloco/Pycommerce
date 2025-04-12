@@ -8,7 +8,7 @@ deploymentTarget = "autoscale"
 run = ["gunicorn", "--bind", "0.0.0.0:5000", "main:app"]
 
 [workflows]
-runButton = "Run Page Builder Migration"
+runButton = "Start Application with PostgreSQL"
 
 [[workflows.workflow]]
 name = "Project"
@@ -41,7 +41,7 @@ mode = "sequential"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "export DATABASE_URL=sqlite:///pycommerce.db"
+args = "export DATABASE_URL=$(printenv REPLIT_DB_URL 2>/dev/null || echo \"postgresql://postgres:postgres@localhost:5432/pycommerce\")"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
@@ -54,7 +54,7 @@ mode = "sequential"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "export DATABASE_URL=sqlite:///pycommerce.db"
+args = "export DATABASE_URL=$(printenv REPLIT_DB_URL 2>/dev/null || echo \"postgresql://postgres:postgres@localhost:5432/pycommerce\")"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
@@ -71,11 +71,24 @@ mode = "sequential"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "export DATABASE_URL=$(printenv REPLIT_DB_URL 2>/dev/null || echo \"sqlite:///pycommerce.db\")"
+args = "export DATABASE_URL=$(printenv REPLIT_DB_URL 2>/dev/null || echo \"postgresql://postgres:postgres@localhost:5432/pycommerce\")"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "python run_page_builder_migration.py"
+
+[[workflows.workflow]]
+name = "Start Application with PostgreSQL"
+author = 34384132
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "export DATABASE_URL=$(printenv REPLIT_DB_URL 2>/dev/null || echo \"postgresql://postgres:postgres@localhost:5432/pycommerce\")"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "gunicorn --bind 0.0.0.0:5000 --reuse-port --reload main:app"
 
 [[ports]]
 localPort = 5000
