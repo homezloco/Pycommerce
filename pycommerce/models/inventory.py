@@ -51,7 +51,7 @@ class InventoryTransaction(Base):
     notes = Column(Text, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     created_by = Column(String(100), nullable=True)  # User who created the transaction
-    metadata = Column(JSON, nullable=True)
+    transaction_metadata = Column(JSON, nullable=True)  # Renamed from metadata to avoid SQLAlchemy conflict
 
     def __repr__(self):
         return f"<InventoryTransaction {self.id} of type {self.transaction_type}>"
@@ -428,7 +428,8 @@ class InventoryManager:
                 quantity=quantity,  # Positive because it's an addition
                 reference_id=reference_id,
                 reference_type=reference_type,
-                notes=notes or f"Returned {quantity} units via {reference_type} {reference_id}"
+                notes=notes or f"Returned {quantity} units via {reference_type} {reference_id}",
+                transaction_metadata={}  # Using the renamed field
             )
             session.add(transaction)
 
