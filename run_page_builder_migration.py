@@ -4,6 +4,7 @@ Script to run the page builder migration and create necessary tables.
 """
 
 import logging
+import os
 from sqlalchemy import create_engine
 from migrations.add_page_builder_tables import run_migration
 from pycommerce.models.page_builder import (
@@ -11,7 +12,6 @@ from pycommerce.models.page_builder import (
     PageManager, PageSectionManager, ContentBlockManager, PageTemplateManager
 )
 from pycommerce.core.db import SessionLocal
-from pycommerce.core.config import settings
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -21,8 +21,12 @@ def main():
     """Run page builder migration and verify tables."""
     logger.info("Running page builder migration...")
     
+    # Get database URL from environment variable or use a default
+    db_uri = os.environ.get('DATABASE_URL', 'sqlite:///pycommerce.db')
+    logger.info(f"Using database URI: {db_uri}")
+    
     # Run the migration to create tables
-    run_migration()
+    run_migration(db_uri)
     
     # Verify tables were created by creating a test session
     session = SessionLocal()

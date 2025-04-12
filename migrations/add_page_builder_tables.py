@@ -1,4 +1,3 @@
-
 """
 Add page builder tables to the database.
 
@@ -13,8 +12,6 @@ from sqlalchemy import (
     Table, MetaData, create_engine
 )
 from sqlalchemy.dialects.postgresql import UUID
-
-from pycommerce.core.config import settings
 
 # Define metadata
 metadata = MetaData()
@@ -32,7 +29,8 @@ pages = Table(
     Column('is_published', Boolean, default=False),
     Column('layout_data', JSON, nullable=True),
     Column('created_at', DateTime, default=datetime.utcnow),
-    Column('updated_at', DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    Column('updated_at', DateTime, default=datetime.utcnow, onupdate=datetime.utcnow),
+    extend_existing=True
 )
 
 page_sections = Table(
@@ -44,7 +42,8 @@ page_sections = Table(
     Column('position', Integer, nullable=False, default=0),
     Column('settings', JSON, nullable=True),
     Column('created_at', DateTime, default=datetime.utcnow),
-    Column('updated_at', DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    Column('updated_at', DateTime, default=datetime.utcnow, onupdate=datetime.utcnow),
+    extend_existing=True
 )
 
 content_blocks = Table(
@@ -57,7 +56,8 @@ content_blocks = Table(
     Column('content', JSON, nullable=True),
     Column('settings', JSON, nullable=True),
     Column('created_at', DateTime, default=datetime.utcnow),
-    Column('updated_at', DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    Column('updated_at', DateTime, default=datetime.utcnow, onupdate=datetime.utcnow),
+    extend_existing=True
 )
 
 page_templates = Table(
@@ -70,59 +70,23 @@ page_templates = Table(
     Column('is_system', Boolean, default=False),
     Column('template_data', JSON, nullable=False),
     Column('created_at', DateTime, default=datetime.utcnow),
-    Column('updated_at', DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    Column('updated_at', DateTime, default=datetime.utcnow, onupdate=datetime.utcnow),
+    extend_existing=True
 )
 
-
-from sqlalchemy import (
-    Column, String, Text, Boolean, DateTime, ForeignKey, JSON, Integer,
-    Table, MetaData, create_engine
-)
-from sqlalchemy.dialects.postgresql import UUID
-from pycommerce.core.config import settings
-
-# Define tables for page_sections and content_blocks
-page_sections = Table(
-    'page_sections',
-    metadata,
-    Column('id', UUID(as_uuid=True), primary_key=True, default=uuid.uuid4),
-    Column('page_id', UUID(as_uuid=True), ForeignKey("pages.id", ondelete="CASCADE"), nullable=False),
-    Column('section_type', String(50), nullable=False),
-    Column('position', Integer, nullable=False, default=0),
-    Column('settings', JSON, nullable=True),
-    Column('created_at', DateTime, default=datetime.utcnow),
-    Column('updated_at', DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-)
-
-content_blocks = Table(
-    'content_blocks',
-    metadata,
-    Column('id', UUID(as_uuid=True), primary_key=True, default=uuid.uuid4),
-    Column('section_id', UUID(as_uuid=True), ForeignKey("page_sections.id", ondelete="CASCADE"), nullable=False),
-    Column('block_type', String(50), nullable=False),
-    Column('position', Integer, nullable=False, default=0),
-    Column('content', JSON, nullable=True),
-    Column('settings', JSON, nullable=True),
-    Column('created_at', DateTime, default=datetime.utcnow),
-    Column('updated_at', DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-)
-
-def run_migration():
+def run_migration(db_uri=None):
     """Run the migration."""
-    # Create engine - get URI from settings or use environment variable
-    db_uri = getattr(settings, 'SQLALCHEMY_DATABASE_URI', None)
-    
-    # Fallback to environment variable if attribute not found
+    # Create engine - get URI from parameter or use environment variable
     if not db_uri:
         import os
         db_uri = os.environ.get('DATABASE_URL', 'sqlite:///pycommerce.db')
-        print(f"Using database URI from environment: {db_uri}")
-    
+
+    print(f"Using database URI: {db_uri}")
     engine = create_engine(db_uri)
-    
+
     # Create tables
     metadata.create_all(engine)
-    
+
     print("Created page builder tables")
 
 
