@@ -434,3 +434,268 @@ async def crop_image(
     except Exception as e:
         logger.error(f"Error cropping image: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error cropping image: {str(e)}")
+"""
+API routes for media management.
+
+This module provides routes for accessing and managing media files via the API.
+"""
+
+import logging
+from typing import List, Optional, Dict, Any
+
+from fastapi import APIRouter, UploadFile, File, Form, Depends, Query, HTTPException
+from fastapi.responses import JSONResponse
+
+from pycommerce.services.media_service import MediaService
+from pycommerce.models.tenant import TenantManager
+
+# Create router
+router = APIRouter(prefix="/api/media", tags=["media"])
+
+# Initialize services
+media_service = MediaService()
+tenant_manager = TenantManager()
+
+# Configure logging
+logger = logging.getLogger(__name__)
+
+
+@router.get("/")
+async def list_media(
+    tenant_id: Optional[str] = None,
+    file_type: Optional[str] = Query(None, description="Filter by file type (e.g., 'image', 'video')"),
+    is_ai_generated: Optional[bool] = Query(None, description="Filter by AI generation status"),
+    search: Optional[str] = Query(None, description="Search in name and description"),
+    limit: int = Query(20, description="Maximum number of items to return"),
+    offset: int = Query(0, description="Offset for pagination")
+):
+    """
+    List media with optional filtering.
+    
+    Args:
+        tenant_id: Filter by tenant ID
+        file_type: Filter by file type (image, video, etc.)
+        is_ai_generated: Filter by AI generation status
+        search: Search in name and description
+        limit: Maximum number of items to return
+        offset: Offset for pagination
+        
+    Returns:
+        List of media objects matching the criteria
+    """
+    try:
+        # Apply file_type filter for MIME type prefix if needed
+        mime_type_prefix = None
+        if file_type:
+            if file_type in ["image", "video", "audio", "application"]:
+                mime_type_prefix = f"{file_type}/"
+                
+        # Get items from media manager
+        items = media_service.list_media(
+            tenant_id=tenant_id,
+            file_type=mime_type_prefix,
+            is_ai_generated=is_ai_generated,
+            search_term=search,
+            limit=limit,
+            offset=offset
+        )
+        
+        # Convert items to dictionary representation
+        items_dict = []
+        for item in items:
+            item_dict = {
+                "id": str(item.id),
+                "tenant_id": str(item.tenant_id) if item.tenant_id else None,
+                "filename": item.filename,
+                "original_filename": item.original_filename,
+                "file_type": item.file_type,
+                "file_size": item.file_size,
+                "description": item.description,
+                "alt_text": item.alt_text,
+                "is_public": item.is_public,
+                "is_ai_generated": item.is_ai_generated,
+                "url": item.url,
+                "thumbnail_url": item.thumbnail_url,
+                "created_at": item.created_at.isoformat() if item.created_at else None,
+                "updated_at": item.updated_at.isoformat() if item.updated_at else None
+            }
+            items_dict.append(item_dict)
+        
+        # Return the items
+        return {
+            "items": items_dict,
+            "count": len(items_dict),
+            "total": len(items),  # This should actually be the total count from the database
+            "limit": limit,
+            "offset": offset
+        }
+    except Exception as e:
+        logger.error(f"Error listing media: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error listing media: {str(e)}")
+        
+        
+@router.post("/upload")
+async def upload_media(
+    file: UploadFile = File(...),
+    tenant_id: Optional[str] = Form(None),
+    alt_text: Optional[str] = Form(None),
+    description: Optional[str] = Form(None),
+    is_public: bool = Form(False)
+):
+    """
+    Upload a new media file.
+    
+    Args:
+        file: The file to upload
+        tenant_id: Optional tenant ID
+        alt_text: Optional alt text for the file
+        description: Optional description for the file
+        is_public: Whether the file should be public
+        
+    Returns:
+        The created media object
+    """
+    try:
+        # Check if tenant exists if tenant_id is provided
+        if tenant_id:
+            tenant = tenant_manager.get(tenant_id)
+            if not tenant:
+                raise HTTPException(status_code=404, detail=f"Tenant with ID {tenant_id} not found")
+                
+        # Upload the file
+        media = await media_service.upload_file(
+            file=file.file,
+            filename=file.filename,
+            tenant_id=tenant_id,
+            alt_text=alt_text,
+            description=description,
+            is_public=is_public
+        )
+        
+        # Return the media object
+        return {
+            "id": str(media.id),
+            "tenant_id": str(media.tenant_id) if media.tenant_id else None,
+            "filename": media.filename,
+            "original_filename": media.original_filename,
+            "file_type": media.file_type,
+            "file_size": media.file_size,
+            "description": media.description,
+            "alt_text": media.alt_text,
+            "is_public": media.is_public,
+            "is_ai_generated": media.is_ai_generated,
+            "url": media.url,
+            "thumbnail_url": media.thumbnail_url,
+            "created_at": media.created_at.isoformat() if media.created_at else None,
+            "updated_at": media.updated_at.isoformat() if media.updated_at else None
+        }
+    except Exception as e:
+        logger.error(f"Error uploading media: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error uploading media: {str(e)}")
+        
+        
+@router.post("/generate")
+async def generate_image(
+    prompt: str = Form(...),
+    tenant_id: Optional[str] = Form(None),
+    size: str = Form("1024x1024"),
+    quality: str = Form("standard"),
+    alt_text: Optional[str] = Form(None),
+    description: Optional[str] = Form(None),
+    is_public: bool = Form(False)
+):
+    """
+    Generate an image using AI.
+    
+    Args:
+        prompt: The text prompt for image generation
+        tenant_id: Optional tenant ID
+        size: Image size (1024x1024, 1024x1792, 1792x1024)
+        quality: Image quality (standard, hd)
+        alt_text: Optional alt text for the image
+        description: Optional description for the image
+        is_public: Whether the image should be public
+        
+    Returns:
+        The created media object
+    """
+    try:
+        # Check if tenant exists if tenant_id is provided
+        if tenant_id:
+            tenant = tenant_manager.get(tenant_id)
+            if not tenant:
+                raise HTTPException(status_code=404, detail=f"Tenant with ID {tenant_id} not found")
+                
+        # Generate the image
+        media = await media_service.generate_image(
+            prompt=prompt,
+            tenant_id=tenant_id,
+            size=size,
+            quality=quality,
+            alt_text=alt_text,
+            description=description,
+            is_public=is_public
+        )
+        
+        if not media:
+            raise HTTPException(status_code=500, detail="Failed to generate image")
+        
+        # Return the media object
+        return {
+            "id": str(media.id),
+            "tenant_id": str(media.tenant_id) if media.tenant_id else None,
+            "filename": media.filename,
+            "original_filename": media.original_filename,
+            "file_type": media.file_type,
+            "file_size": media.file_size,
+            "description": media.description,
+            "alt_text": media.alt_text,
+            "is_public": media.is_public,
+            "is_ai_generated": media.is_ai_generated,
+            "url": media.url,
+            "thumbnail_url": media.thumbnail_url,
+            "created_at": media.created_at.isoformat() if media.created_at else None,
+            "updated_at": media.updated_at.isoformat() if media.updated_at else None
+        }
+    except Exception as e:
+        logger.error(f"Error generating image: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error generating image: {str(e)}")
+
+
+@router.get("/{media_id}")
+async def get_media(media_id: str):
+    """
+    Get a media by ID.
+    
+    Args:
+        media_id: The ID of the media to retrieve
+        
+    Returns:
+        The media object
+    """
+    try:
+        # Get the media
+        media = media_service.get_media(media_id)
+        if not media:
+            raise HTTPException(status_code=404, detail=f"Media with ID {media_id} not found")
+            
+        # Return the media object
+        return {
+            "id": str(media.id),
+            "tenant_id": str(media.tenant_id) if media.tenant_id else None,
+            "filename": media.filename,
+            "original_filename": media.original_filename,
+            "file_type": media.file_type,
+            "file_size": media.file_size,
+            "description": media.description,
+            "alt_text": media.alt_text,
+            "is_public": media.is_public,
+            "is_ai_generated": media.is_ai_generated,
+            "url": media.url,
+            "thumbnail_url": media.thumbnail_url,
+            "created_at": media.created_at.isoformat() if media.created_at else None,
+            "updated_at": media.updated_at.isoformat() if media.updated_at else None
+        }
+    except Exception as e:
+        logger.error(f"Error getting media: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error getting media: {str(e)}")

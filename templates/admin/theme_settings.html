@@ -377,7 +377,71 @@ function selectMedia(id, url, name) {
     }
 }
 
-// Function to load fallback images from the static directory
+// Function to load media items from the API
+function loadMediaItems(mediaGrid) {
+    // Show loading indicator
+    mediaGrid.innerHTML = `
+        <div class="col-12 text-center py-5">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-2">Loading media...</p>
+        </div>`;
+
+    // Get filter values
+    const searchTerm = document.getElementById('searchMedia')?.value || '';
+    const mediaType = document.getElementById('filterMediaType')?.value || 'image';
+    
+    // Fetch media items from the API
+    fetch(`/admin/api/media?search=${encodeURIComponent(searchTerm)}&type=${encodeURIComponent(mediaType)}`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data && data.items && data.items.length > 0) {
+                let html = '';
+                data.items.forEach(item => {
+                    // Determine preview image
+                    let previewSrc = item.url;
+                    if (item.file_type.startsWith('image/svg')) {
+                        previewSrc = item.url;
+                    } else if (item.thumbnail_url) {
+                        previewSrc = item.thumbnail_url;
+                    }
+                    
+                    html += `
+                        <div class="col">
+                            <div class="card h-100">
+                                <div class="card-img-wrapper" style="height: 160px; display: flex; align-items: center; justify-content: center; background-color: #f8f9fa;">
+                                    <img src="${previewSrc}" class="card-img-top" alt="${item.filename}" 
+                                         style="max-height: 100%; max-width: 100%; object-fit: contain;">
+                                </div>
+                                <div class="card-body">
+                                    <h6 class="card-title text-truncate">${item.filename || 'Unnamed file'}</h6>
+                                    <button class="btn btn-sm btn-primary w-100" 
+                                            onclick="selectMedia('${item.id}', '${item.url}', '${item.filename}')">
+                                        Select
+                                    </button>
+                                </div>
+                            </div>
+                        </div>`;
+                });
+
+                mediaGrid.innerHTML = html;
+            } else {
+                loadFallbackImages(mediaGrid);
+            }
+        })
+        .catch(error => {
+            console.error('Error loading media:', error);
+            loadFallbackImages(mediaGrid);
+        });
+}
+
+// Function to load fallback images if API fails
 function loadFallbackImages(mediaGrid) {
     // We know these images exist from your static/media/generated folder
     const staticMediaItems = [
