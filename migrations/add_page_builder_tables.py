@@ -83,7 +83,16 @@ def run_migration(db_uri=None):
 
     print(f"Using database URI: {db_uri}")
     engine = create_engine(db_uri)
-
+    
+    from sqlalchemy import inspect
+    inspector = inspect(engine)
+    existing_tables = inspector.get_table_names()
+    
+    # Check if tables already exist
+    if 'page_sections' in existing_tables:
+        print("Page builder tables already exist, skipping creation")
+        return
+        
     # Create tables
     metadata.create_all(engine)
 
