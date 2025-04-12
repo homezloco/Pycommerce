@@ -1,3 +1,4 @@
+
 """
 Database configuration for PyCommerce.
 
@@ -25,8 +26,20 @@ db = SQLAlchemy(model_class=Base)
 # Database URL from environment variable or default
 DATABASE_URL = os.environ.get("DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/pycommerce")
 
-# Create async engine
-async_engine = create_async_engine(DATABASE_URL)
+# Convert standard PostgreSQL URL to async format if needed
+def get_async_database_url(url):
+    """Convert standard PostgreSQL URL to async format."""
+    if url.startswith('postgresql://'):
+        return url.replace('postgresql://', 'postgresql+asyncpg://')
+    return url
+
+# Regular engine for Flask
+from sqlalchemy import create_engine
+engine = create_engine(DATABASE_URL)
+
+# Async engine for FastAPI
+ASYNC_DATABASE_URL = get_async_database_url(DATABASE_URL)
+async_engine = create_async_engine(ASYNC_DATABASE_URL)
 async_session_maker = sessionmaker(async_engine, class_=AsyncSession, expire_on_commit=False)
 
 # Function to get database session for FastAPI

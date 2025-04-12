@@ -43,14 +43,14 @@ templates.env.cache_size = 0  # Disable caching completely
 def create_app():
     """
     Create and configure a FastAPI application.
-    
+
     Returns:
         FastAPI: A configured FastAPI application
     """
     # Initialize database
     init_db()
     init_migrations()
-    
+
     # Create FastAPI app
     app = FastAPI(
         title="PyCommerce",
@@ -58,18 +58,18 @@ def create_app():
         version="0.1.0",
         debug=True,  # Enable debug mode
     )
-    
+
     # Mount static files
     app.mount("/static", StaticFiles(directory="static"), name="static")
-    
+
     # Add session middleware
     app.add_middleware(
         SessionMiddleware,
         secret_key=os.environ.get("SESSION_SECRET", "dev_secret_key"),
         max_age=7 * 24 * 60 * 60  # 1 week
     )
-    
+
     # Register all modular routes
     register_routes(app, templates)
-    
+
     return app, templates

@@ -349,7 +349,7 @@ from fastapi.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import sessionmaker
-from database import get_db, db
+from database import get_db, db, db
 from routes.admin import dashboard, store_settings, products, orders, stores
 from routes.admin import categories, users, media, marketing, shipping, plugins
 from routes.admin import inventory, settings, analytics, market_analysis, returns
