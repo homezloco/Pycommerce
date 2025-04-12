@@ -1,4 +1,3 @@
-
 """
 Database configuration for PyCommerce.
 
@@ -58,7 +57,7 @@ def init_db() -> None:
         from pycommerce.models.db_tenant import Tenant
         from pycommerce.models.db_product import Product
         from pycommerce.models.db_registry import InventoryRecord 
-        
+
         # Import plugin config separately since we had to add it
         try:
             # Try to import from dedicated file first
@@ -66,7 +65,7 @@ def init_db() -> None:
         except ImportError:
             # If not available, use the one from registry
             from pycommerce.models.db_registry import PluginConfig
-            
+
         # Import MediaFile only from registry for now
         from pycommerce.models.db_registry import MediaFile
 
@@ -86,10 +85,10 @@ def close_db() -> None:
 def get_session():
     """
     Get a session context manager.
-    
+
     This function returns a context manager for database sessions,
     ensuring they are properly closed after use.
-    
+
     Example:
         with get_session() as session:
             result = session.query(Model).all()
