@@ -93,7 +93,7 @@ class InventoryRecord(Base):
     # Relationships
     product = relationship("Product", back_populates="inventory_records")
     transactions = relationship("InventoryTransaction", 
-                               backref="inventory_record", 
+                               back_populates="inventory_record", 
                                cascade="all, delete-orphan",
                                foreign_keys="InventoryTransaction.inventory_record_id")
 
