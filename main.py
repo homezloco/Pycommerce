@@ -27,11 +27,13 @@ if __name__ == "__main__":
 
     templates = Jinja2Templates(directory="templates")
 
+    from web_app import app as fastapi_app
+    
     # Set up storefront routes
-    home.setup_routes(app)
-    products.setup_routes(app)
-    cart.setup_routes(app)
-    checkout.setup_routes(app)
+    home.setup_routes(fastapi_app)
+    products.setup_routes(fastapi_app)
+    cart.setup_routes(fastapi_app)
+    checkout.setup_routes(fastapi_app)
     pages.setup_routes(templates)
 
     # Set up admin routes with the templates
@@ -45,7 +47,10 @@ if __name__ == "__main__":
     media.setup_routes(templates)
     inventory.setup_routes(templates)
     analytics.setup_routes(templates)
-    page_builder.setup_routes(templates)
+    
+    # Register page_builder routes with FastAPI app
+    page_builder_router = page_builder.setup_routes(templates)
+    fastapi_app.include_router(page_builder_router)
 
 
     # Run with uvicorn directly when file is executed
