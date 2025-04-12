@@ -7,8 +7,8 @@ import logging
 import json
 from typing import Dict, Optional, List, Any
 
-from fastapi import APIRouter, Form, HTTPException, Request, status
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi import APIRouter, Form, HTTPException, Request, status, Body
+from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 
 from pycommerce.models.page_builder import PageManager, PageSectionManager, ContentBlockManager, PageTemplateManager
