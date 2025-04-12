@@ -22,7 +22,7 @@ class Tenant(Base):
     """SQLAlchemy Tenant model."""
     __tablename__ = "tenants"
     __table_args__ = {'extend_existing': True}
-    
+
     id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     name = Column(String(100), nullable=False)
     slug = Column(String(100), unique=True, nullable=False)
@@ -31,20 +31,20 @@ class Tenant(Base):
     settings = Column(JSON, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    
+
     # Relationships - forward declarations
     products = relationship("Product", back_populates="tenant", cascade="all, delete-orphan")
     plugin_configs = relationship("PluginConfig", back_populates="tenant", cascade="all, delete-orphan")
     media_files = relationship("MediaFile", back_populates="tenant", cascade="all, delete-orphan")
-    
+
     def __repr__(self):
         return f"<Tenant {self.name}>"
-        
+
 class Product(Base):
     """SQLAlchemy Product model."""
     __tablename__ = "products"
     __table_args__ = {'extend_existing': True}
-    
+
     id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     tenant_id = Column(String(36), ForeignKey("tenants.id"), nullable=False)
     name = Column(String(255), nullable=False)
@@ -56,36 +56,55 @@ class Product(Base):
     active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    
+
     # Relationships
     tenant = relationship("Tenant", back_populates="products")
     inventory_records = relationship("InventoryRecord", back_populates="product", cascade="all, delete-orphan")
-    
+
     def __repr__(self):
         return f"<Product {self.name}>"
-        
+
+# Import Base and necessary SQLAlchemy components
+from pycommerce.core.db import Base
+from sqlalchemy import Column, String, Float, DateTime, ForeignKey, JSON, Boolean, Integer, Text
+from sqlalchemy.orm import relationship
+import uuid
+from datetime import datetime
+
+# Define the InventoryRecord model in the registry to avoid multiple definitions
 class InventoryRecord(Base):
-    """SQLAlchemy InventoryRecord model for tracking inventory changes."""
+    """
+    Represents an inventory record for a product.
+    """
     __tablename__ = "inventory_records"
-    __table_args__ = {'extend_existing': True}
-    
+
     id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    tenant_id = Column(String(36), ForeignKey("tenants.id"), nullable=False)
     product_id = Column(String(36), ForeignKey("products.id"), nullable=False)
-    quantity_change = Column(Integer, nullable=False)
-    reason = Column(Text, nullable=True)
+    location = Column(String(100), nullable=True)  # Optional inventory location
+    sku = Column(String(100), nullable=True)
+    quantity = Column(Integer, default=0)
+    available_quantity = Column(Integer, default=0)  # Available for sale (quantity - reserved)
+    reserved_quantity = Column(Integer, default=0)   # Reserved for orders
+    reorder_point = Column(Integer, default=0)       # When to reorder
+    reorder_quantity = Column(Integer, default=0)    # How much to reorder
+    last_counted = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
-    
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    inventory_metadata = Column(JSON, nullable=True)  # Renamed from metadata to avoid reserved name conflict
+
     # Relationships
     product = relationship("Product", back_populates="inventory_records")
-    
+    transactions = relationship("InventoryTransaction", back_populates="inventory_record", cascade="all, delete-orphan")
+
     def __repr__(self):
-        return f"<InventoryRecord {self.id}: {self.quantity_change}>"
-        
+        return f"<InventoryRecord {self.id} for product {self.product_id}>"
+
 class PluginConfig(Base):
     """SQLAlchemy PluginConfig model for storing plugin configuration data."""
     __tablename__ = "plugin_configs"
     __table_args__ = {'extend_existing': True}
-    
+
     id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     tenant_id = Column(String(36), ForeignKey("tenants.id"), nullable=False)
     plugin_type = Column(String(50), nullable=False)  # 'payment', 'shipping', etc.
@@ -93,10 +112,10 @@ class PluginConfig(Base):
     config = Column(JSON, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    
+
     # Relationship with Tenant
     tenant = relationship("Tenant", back_populates="plugin_configs")
-    
+
     def __repr__(self):
         return f"<PluginConfig {self.plugin_type}:{self.plugin_id} for tenant {self.tenant_id}>"
 
@@ -104,7 +123,7 @@ class MediaFile(Base):
     """SQLAlchemy MediaFile model for storing file information."""
     __tablename__ = "media_files"
     __table_args__ = {'extend_existing': True}
-    
+
     id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     tenant_id = Column(String(36), ForeignKey("tenants.id"), nullable=False)
     filename = Column(String(255), nullable=False)
@@ -115,7 +134,7 @@ class MediaFile(Base):
     description = Column(Text, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    
+
     # Media sharing and additional fields (added for the sharing feature)
     meta_data = Column(JSON, nullable=True)  # For storing sharing_level and other metadata
     is_public = Column(Boolean, default=False)  # True for community-shared media
@@ -123,18 +142,18 @@ class MediaFile(Base):
     url = Column(String(500), nullable=True)  # URL for accessing the media
     thumbnail_url = Column(String(500), nullable=True)  # URL for thumbnail
     alt_text = Column(Text, nullable=True)  # Alternative text for accessibility
-    
+
     # Relationship with Tenant
     tenant = relationship("Tenant", back_populates="media_files")
-    
+
     def __repr__(self):
         return f"<MediaFile {self.filename}>"
-        
+
     @property
     def name(self):
         """Alias for filename for compatibility with existing code."""
         return self.filename
-    
+
     @property
     def file_name(self):
         """Alias for filename for compatibility with existing code."""

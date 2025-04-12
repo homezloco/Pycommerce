@@ -31,33 +31,16 @@ class InventoryTransactionType(str, Enum):
     TRANSFER = "transfer"        # Inventory transferred between locations
 
 
-class InventoryRecord(Base):
-    """
-    Represents an inventory record for a product.
-    """
-    __tablename__ = "inventory_records"
+from pycommerce.models.db_registry import InventoryRecord
 
-    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
-    tenant_id = Column(String(36), ForeignKey("tenants.id"), nullable=False)
-    product_id = Column(String(36), ForeignKey("products.id"), nullable=False)
-    location = Column(String(100), nullable=True)  # Optional inventory location
-    sku = Column(String(100), nullable=True)
-    quantity = Column(Integer, default=0)
-    available_quantity = Column(Integer, default=0)  # Available for sale (quantity - reserved)
-    reserved_quantity = Column(Integer, default=0)   # Reserved for orders
-    reorder_point = Column(Integer, default=0)       # When to reorder
-    reorder_quantity = Column(Integer, default=0)    # How much to reorder
-    last_counted = Column(DateTime, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    inventory_metadata = Column(JSON, nullable=True) #Renamed to avoid conflict
+# Use the model from the registry instead of redefining it
+# This is to avoid the "Table 'inventory_records' is already defined" error
 
-    # Relationships
-    product = relationship("Product", back_populates="inventory_records")
-    transactions = relationship("InventoryTransaction", back_populates="inventory_record", cascade="all, delete-orphan")
-
-    def __repr__(self):
-        return f"<InventoryRecord {self.id} for product {self.product_id}>"
+# Add extra methods to the model if needed, but don't redefine the table
+# For example:
+# def get_display_name(self):
+#     return f"{self.sku} - {self.quantity} units"
+# InventoryRecord.get_display_name = get_display_name
 
 
 class InventoryTransaction(Base):

@@ -12,7 +12,11 @@ from sqlalchemy import Column, String, Integer, DateTime, ForeignKey, Text
 from sqlalchemy.orm import relationship
 
 from pycommerce.core.db import Base
-# Import from central registry to avoid circular imports
-from pycommerce.models.db_registry import InventoryRecord
+# Use the registry pattern here - don't redefine the model
+# just import it from the central registry
+from pycommerce.models.db_registry import InventoryRecord as InventoryRecordBase
 
 logger = logging.getLogger(__name__)
+
+# Extend the base inventory record if needed, but don't redefine the table
+# InventoryRecord = InventoryRecordBase
