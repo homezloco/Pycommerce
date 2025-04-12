@@ -41,521 +41,6 @@ def setup_routes(jinja_templates: Jinja2Templates = None):
 async def pages_list(
     request: Request,
     tenant: Optional[str] = None,
-    status_message: Optional[str] = None,
-    status_type: str = "info"
-):
-    """Admin page for listing custom pages."""
-    # Get all tenants for the sidebar
-    tenants = tenant_manager.get_all()
-
-    # Get tenant from query parameters or session
-    selected_tenant_slug = tenant or request.session.get("selected_tenant")
-
-    # If no tenant is selected and we have tenants, select the first one
-    if not selected_tenant_slug and tenants:
-        selected_tenant_slug = tenants[0].slug
-
-    # Store the selected tenant in session for future requests
-    if selected_tenant_slug:
-        request.session["selected_tenant"] = selected_tenant_slug
-
-    # Get tenant object and pages
-    tenant_obj = None
-    pages = []
-    if selected_tenant_slug:
-        tenant_obj = tenant_manager.get_by_slug(selected_tenant_slug)
-        if tenant_obj:
-            pages = page_manager.list_by_tenant(str(tenant_obj.id), include_unpublished=True)
-
-    return templates.TemplateResponse(
-        "admin/pages/list.html",
-        {
-            "request": request,
-            "selected_tenant": selected_tenant_slug,
-            "tenant": tenant_obj,
-            "tenants": tenants,
-            "active_page": "pages",
-            "pages": pages,
-            "status_message": status_message,
-            "status_type": status_type
-        }
-    )
-
-@router.get("/pages/create", response_class=HTMLResponse)
-async def create_page_form(
-    request: Request,
-    tenant: Optional[str] = None
-):
-    """Admin page for creating a new custom page."""
-    # Get all tenants for the sidebar
-    tenants = tenant_manager.get_all()
-
-    # Get tenant from query parameters or session
-    selected_tenant_slug = tenant or request.session.get("selected_tenant")
-
-    # If no tenant is selected and we have tenants, select the first one
-    if not selected_tenant_slug and tenants:
-        selected_tenant_slug = tenants[0].slug
-
-    # Store the selected tenant in session for future requests
-    if selected_tenant_slug:
-        request.session["selected_tenant"] = selected_tenant_slug
-
-    # Get tenant object
-    tenant_obj = None
-    if selected_tenant_slug:
-        tenant_obj = tenant_manager.get_by_slug(selected_tenant_slug)
-
-    return templates.TemplateResponse(
-        "admin/pages/create.html",
-        {
-            "request": request,
-            "selected_tenant": selected_tenant_slug,
-            "tenant": tenant_obj,
-            "tenants": tenants,
-            "active_page": "pages"
-        }
-    )
-
-@router.post("/pages/create", response_class=RedirectResponse)
-async def create_page(
-    request: Request,
-    tenant_id: str = Form(...),
-    title: str = Form(...),
-    slug: str = Form(...),
-    meta_description: Optional[str] = Form(None),
-    is_published: bool = Form(False)
-):
-    """Create a new custom page."""
-    try:
-        # Create page
-        page_data = {
-            "tenant_id": tenant_id,
-            "title": title,
-            "slug": slug,
-            "meta_description": meta_description,
-            "is_published": is_published
-        }
-
-        page = page_manager.create(page_data)
-
-        # Get tenant slug for redirect
-        tenant = tenant_manager.get(tenant_id)
-        tenant_slug = tenant.slug if tenant else None
-
-        return RedirectResponse(
-            url=f"/admin/pages/edit/{page.id}?tenant={tenant_slug}&status_message=Page+created+successfully&status_type=success",
-            status_code=status.HTTP_303_SEE_OTHER
-        )
-    except Exception as e:
-        logger.error(f"Error creating page: {str(e)}")
-        return RedirectResponse(
-            url=f"/admin/pages?tenant={tenant_slug if tenant_slug else ''}&status_message=Error+creating+page:+{str(e)}&status_type=danger",
-            status_code=status.HTTP_303_SEE_OTHER
-        )
-
-@router.get("/pages/edit/{page_id}", response_class=HTMLResponse)
-async def edit_page(
-    request: Request,
-    page_id: str,
-    tenant: Optional[str] = None,
-    status_message: Optional[str] = None,
-    status_type: str = "info"
-):
-    """Admin page for editing a custom page."""
-    # Get all tenants for the sidebar
-    tenants = tenant_manager.get_all()
-
-    # Get tenant from query parameters or session
-    selected_tenant_slug = tenant or request.session.get("selected_tenant")
-
-    # If no tenant is selected and we have tenants, select the first one
-    if not selected_tenant_slug and tenants:
-        selected_tenant_slug = tenants[0].slug
-
-    # Store the selected tenant in session for future requests
-    if selected_tenant_slug:
-        request.session["selected_tenant"] = selected_tenant_slug
-
-    # Get page
-    page = page_manager.get(page_id)
-    if not page:
-        raise HTTPException(status_code=404, detail="Page not found")
-
-    # Get page sections and blocks
-    sections = section_manager.list_by_page(page_id)
-    sections_with_blocks = []
-    for section in sections:
-        blocks = block_manager.list_by_section(str(section.id))
-        sections_with_blocks.append({
-            "section": section,
-            "blocks": blocks
-        })
-
-    # Get tenant object
-    tenant_obj = tenant_manager.get(page.tenant_id)
-
-    return templates.TemplateResponse(
-        "admin/pages/editor.html",
-        {
-            "request": request,
-            "selected_tenant": selected_tenant_slug,
-            "tenant": tenant_obj,
-            "tenants": tenants,
-            "active_page": "pages",
-            "page": page,
-            "sections": sections_with_blocks,
-            "status_message": status_message,
-            "status_type": status_type
-        }
-    )
-
-def setup_routes(app_templates):
-    """
-    Set up routes with the given templates.
-
-    Args:
-        app_templates: Jinja2Templates instance from the main app
-    """
-    global templates
-    templates = app_templates
-    return router
-
-
-class ContentBlockManager:
-    """Manager for content block operations."""
-import logging
-import json
-import os
-from typing import Dict, List, Optional, Any
-
-from fastapi import APIRouter, HTTPException, Request, Form, Body, Depends, Query
-from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
-from fastapi.templating import Jinja2Templates
-from starlette import status
-
-from pycommerce.models.tenant import TenantManager
-from pycommerce.models.page_builder import (
-    PageManager, PageSectionManager, ContentBlockManager, PageTemplateManager
-)
-from pycommerce.services.wysiwyg_service import WysiwygService
-from pycommerce.services.media_service import MediaService
-
-# Configure logging
-logger = logging.getLogger(__name__)
-
-# Create router
-router = APIRouter(prefix="/admin", tags=["admin"])
-
-# Initialize templates
-templates_dir = os.path.join(os.getcwd(), "templates")
-templates = Jinja2Templates(directory=templates_dir)
-
-# Initialize managers
-tenant_manager = TenantManager()
-page_manager = PageManager()
-section_manager = PageSectionManager()
-block_manager = ContentBlockManager()
-template_manager = PageTemplateManager()
-
-# Initialize services
-wysiwyg_service = WysiwygService()
-media_service = MediaService()
-
-@router.get("/pages", response_class=HTMLResponse)
-async def list_pages(request: Request):
-    """List all pages."""
-    tenant_id = request.session.get("tenant_id")
-    if not tenant_id:
-        return RedirectResponse("/admin/stores", status_code=status.HTTP_302_FOUND)
-
-    pages = page_manager.list_by_tenant(tenant_id, include_unpublished=True)
-
-    return templates.TemplateResponse(
-        "admin/pages/list.html",
-        {
-            "request": request,
-            "pages": pages,
-            "active_page": "pages"
-        }
-    )
-
-@router.get("/pages/create", response_class=HTMLResponse)
-async def create_page_form(request: Request):
-    """Show page creation form."""
-    tenant_id = request.session.get("tenant_id")
-    if not tenant_id:
-        return RedirectResponse("/admin/stores", status_code=status.HTTP_302_FOUND)
-
-    page_templates = template_manager.list_templates()
-
-    return templates.TemplateResponse(
-        "admin/pages/create.html",
-        {
-            "request": request,
-            "templates": page_templates,
-            "active_page": "pages"
-        }
-    )
-
-@router.post("/pages/create")
-async def create_page(
-    request: Request,
-    title: str = Form(...),
-    slug: str = Form(...),
-    meta_title: str = Form(None),
-    meta_description: str = Form(None),
-    template_id: str = Form(None)
-):
-    """Create a new page."""
-    tenant_id = request.session.get("tenant_id")
-    if not tenant_id:
-        return RedirectResponse("/admin/stores", status_code=status.HTTP_302_FOUND)
-
-    # Create page
-    page_data = {
-        "tenant_id": tenant_id,
-        "title": title,
-        "slug": slug,
-        "meta_title": meta_title or title,
-        "meta_description": meta_description or "",
-        "is_published": False,
-        "layout_data": {}
-    }
-
-    try:
-        page = page_manager.create(page_data)
-
-        # If template selected, apply template data
-        if template_id:
-            template = template_manager.get(template_id)
-            if template and template.template_data:
-                # Create sections from template
-                template_sections = template.template_data.get("sections", [])
-                for section_data in template_sections:
-                    section = section_manager.create({
-                        "page_id": page.id,
-                        "section_type": section_data.get("section_type", "content"),
-                        "position": section_data.get("position", 0),
-                        "settings": section_data.get("settings", {})
-                    })
-
-                    # Create blocks if specified in template
-                    template_blocks = section_data.get("blocks", [])
-                    for block_data in template_blocks:
-                        block_manager.create({
-                            "section_id": section.id,
-                            "block_type": block_data.get("block_type", "text"),
-                            "position": block_data.get("position", 0),
-                            "content": block_data.get("content", {}),
-                            "settings": block_data.get("settings", {})
-                        })
-
-        # Redirect to editor
-        return RedirectResponse(f"/admin/pages/edit/{page.id}", status_code=status.HTTP_302_FOUND)
-    except Exception as e:
-        logger.error(f"Error creating page: {str(e)}")
-        return JSONResponse(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            content={"detail": f"Failed to create page: {str(e)}"}
-        )
-
-@router.get("/pages/edit/{page_id}", response_class=HTMLResponse)
-async def edit_page(request: Request, page_id: str):
-    """Edit page using visual page builder."""
-    tenant_id = request.session.get("tenant_id")
-    if not tenant_id:
-        return RedirectResponse("/admin/stores", status_code=status.HTTP_302_FOUND)
-
-    page = page_manager.get(page_id)
-    if not page or page.tenant_id != tenant_id:
-        return RedirectResponse("/admin/pages", status_code=status.HTTP_302_FOUND)
-
-    sections = section_manager.list_by_page(page_id)
-
-    # Get blocks for each section
-    section_blocks = {}
-    for section in sections:
-        section_blocks[str(section.id)] = block_manager.list_by_section(section.id)
-
-    media_items = media_service.list_media(tenant_id)
-
-    return templates.TemplateResponse(
-        "admin/pages/editor.html",
-        {
-            "request": request,
-            "page": page,
-            "sections": sections,
-            "section_blocks": section_blocks,
-            "media_items": media_items,
-            "active_page": "pages"
-        }
-    )
-
-@router.post("/pages/update/{page_id}")
-async def update_page(
-    request: Request,
-    page_id: str,
-    page_data: Dict[str, Any] = Body(...)
-):
-    """Update page settings."""
-    tenant_id = request.session.get("tenant_id")
-    if not tenant_id:
-        return JSONResponse(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            content={"detail": "Unauthorized"}
-        )
-
-    try:
-        page = page_manager.get(page_id)
-        if not page or page.tenant_id != tenant_id:
-            return JSONResponse(
-                status_code=status.HTTP_404_NOT_FOUND,
-                content={"detail": "Page not found"}
-            )
-
-        updated_page = page_manager.update(page_id, page_data)
-        return JSONResponse(content={"success": True, "page": {
-            "id": str(updated_page.id),
-            "title": updated_page.title,
-            "slug": updated_page.slug,
-            "is_published": updated_page.is_published
-        }})
-    except Exception as e:
-        logger.error(f"Error updating page: {str(e)}")
-        return JSONResponse(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            content={"detail": f"Failed to update page: {str(e)}"}
-        )
-
-@router.post("/pages/delete/{page_id}")
-async def delete_page(request: Request, page_id: str):
-    """Delete a page."""
-    tenant_id = request.session.get("tenant_id")
-    if not tenant_id:
-        return JSONResponse(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            content={"detail": "Unauthorized"}
-        )
-
-    try:
-        page = page_manager.get(page_id)
-        if not page or page.tenant_id != tenant_id:
-            return JSONResponse(
-                status_code=status.HTTP_404_NOT_FOUND,
-                content={"detail": "Page not found"}
-            )
-
-        success = page_manager.delete(page_id)
-        if success:
-            return JSONResponse(content={"success": True})
-        else:
-            return JSONResponse(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                content={"detail": "Failed to delete page"}
-            )
-    except Exception as e:
-        logger.error(f"Error deleting page: {str(e)}")
-        return JSONResponse(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            content={"detail": f"Failed to delete page: {str(e)}"}
-        )
-
-@router.post("/pages/sections/create/{page_id}")
-async def create_section(
-    request: Request,
-    page_id: str,
-    section_data: Dict[str, Any] = Body(...)
-):
-    """Create a new section in a page."""
-    tenant_id = request.session.get("tenant_id")
-    if not tenant_id:
-        return JSONResponse(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            content={"detail": "Unauthorized"}
-        )
-
-    try:
-        page = page_manager.get(page_id)
-        if not page or page.tenant_id != tenant_id:
-            return JSONResponse(
-                status_code=status.HTTP_404_NOT_FOUND,
-                content={"detail": "Page not found"}
-            )
-
-        section_data["page_id"] = page_id
-        section = section_manager.create(section_data)
-
-        return JSONResponse(content={
-            "success": True,
-            "section": {
-                "id": str(section.id),
-                "section_type": section.section_type,
-                "position": section.position,
-                "settings": section.settings
-            }
-        })
-    except Exception as e:
-        logger.error(f"Error creating section: {str(e)}")
-        return JSONResponse(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            content={"detail": f"Failed to create section: {str(e)}"}
-        )
-
-@router.post("/pages/blocks/create/{section_id}")
-async def create_block(
-    request: Request,
-    section_id: str,
-    block_data: Dict[str, Any] = Body(...)
-):
-    """Create a new content block in a section."""
-    tenant_id = request.session.get("tenant_id")
-    if not tenant_id:
-        return JSONResponse(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            content={"detail": "Unauthorized"}
-        )
-
-    try:
-        section = section_manager.get(section_id)
-        if not section:
-            return JSONResponse(
-                status_code=status.HTTP_404_NOT_FOUND,
-                content={"detail": "Section not found"}
-            )
-
-        page = page_manager.get(section.page_id)
-        if not page or page.tenant_id != tenant_id:
-            return JSONResponse(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                content={"detail": "Unauthorized"}
-            )
-
-        block_data["section_id"] = section_id
-        block = block_manager.create(block_data)
-
-        return JSONResponse(content={
-            "success": True,
-            "block": {
-                "id": str(block.id),
-                "block_type": block.block_type,
-                "position": block.position,
-                "content": block.content,
-                "settings": block.settings
-            }
-        })
-    except Exception as e:
-        logger.error(f"Error creating block: {str(e)}")
-        return JSONResponse(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            content={"detail": f"Failed to create block: {str(e)}"}
-        )
-
-
-@router.get("/pages", response_class=HTMLResponse)
-async def pages_list(
-    request: Request,
-    tenant: Optional[str] = None,
     search: Optional[str] = None,
     page: int = 1,
     limit: int = 20,
@@ -602,7 +87,6 @@ async def pages_list(
             "status_type": status_type
         }
     )
-
 
 @router.get("/pages/create", response_class=HTMLResponse)
 async def page_create_form(
@@ -661,7 +145,6 @@ async def page_create_form(
             "status_type": status_type
         }
     )
-
 
 @router.post("/pages/create", response_class=RedirectResponse)
 async def page_create(
@@ -761,10 +244,9 @@ async def page_create(
     except Exception as e:
         logger.error(f"Error creating page: {str(e)}")
         return RedirectResponse(
-            url=f"/admin/pages/create?tenant={tenant.slug if tenant else ''}&status_message=Error+creating+page:+{str(e)}&status_type=danger",
+            url=f"/admin/pages/create?tenant={tenant.slug if 'tenant' in locals() and tenant else ''}&status_message=Error+creating+page:+{str(e)}&status_type=danger",
             status_code=status.HTTP_303_SEE_OTHER
         )
-
 
 @router.get("/pages/edit/{page_id}", response_class=HTMLResponse)
 async def page_edit_form(
@@ -831,7 +313,6 @@ async def page_edit_form(
             "status_type": status_type
         }
     )
-
 
 @router.post("/pages/edit/{page_id}", response_class=RedirectResponse)
 async def page_update(
@@ -917,7 +398,6 @@ async def page_update(
             status_code=status.HTTP_303_SEE_OTHER
         )
 
-
 @router.post("/pages/delete/{page_id}", response_class=RedirectResponse)
 async def page_delete(
     request: Request,
@@ -961,7 +441,6 @@ async def page_delete(
             url=f"/admin/pages?tenant={tenant_slug}&status_message=Error+deleting+page:+{str(e)}&status_type=danger",
             status_code=status.HTTP_303_SEE_OTHER
         )
-
 
 @router.get("/pages/preview/{page_id}", response_class=HTMLResponse)
 async def page_preview(
@@ -1008,7 +487,6 @@ async def page_preview(
         }
     )
 
-
 @router.get("/page-templates", response_class=HTMLResponse)
 async def page_templates_list(
     request: Request,
@@ -1038,7 +516,6 @@ async def page_templates_list(
         }
     )
 
-
 # API routes for page builder components
 @router.post("/api/pages/sections", response_class=JSONResponse)
 async def create_section(
@@ -1059,7 +536,6 @@ async def create_section(
     except Exception as e:
         logger.error(f"Error creating section: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error creating section: {str(e)}")
-
 
 @router.put("/api/pages/sections/{section_id}", response_class=JSONResponse)
 async def update_section(
@@ -1087,7 +563,6 @@ async def update_section(
         logger.error(f"Error updating section: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error updating section: {str(e)}")
 
-
 @router.delete("/api/pages/sections/{section_id}", response_class=JSONResponse)
 async def delete_section(section_id: str):
     """Delete a section."""
@@ -1102,7 +577,6 @@ async def delete_section(section_id: str):
     except Exception as e:
         logger.error(f"Error deleting section: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error deleting section: {str(e)}")
-
 
 @router.post("/api/pages/blocks", response_class=JSONResponse)
 async def create_block(
@@ -1141,7 +615,6 @@ async def create_block(
     except Exception as e:
         logger.error(f"Error creating block: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error creating block: {str(e)}")
-
 
 @router.put("/api/pages/blocks/{block_id}", response_class=JSONResponse)
 async def update_block(
@@ -1189,7 +662,6 @@ async def update_block(
         logger.error(f"Error updating block: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error updating block: {str(e)}")
 
-
 @router.delete("/api/pages/blocks/{block_id}", response_class=JSONResponse)
 async def delete_block(block_id: str):
     """Delete a content block."""
@@ -1204,15 +676,3 @@ async def delete_block(block_id: str):
     except Exception as e:
         logger.error(f"Error deleting block: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error deleting block: {str(e)}")
-
-
-def setup_routes(app_templates):
-    """
-    Set up routes with the given templates.
-
-    Args:
-        app_templates: Jinja2Templates instance from the main app
-    """
-    global templates
-    templates = app_templates
-    return router

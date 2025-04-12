@@ -34,7 +34,7 @@ def setup_routes(jinja_templates: Jinja2Templates = None):
         jinja_templates: The Jinja2Templates instance to use
     """
     global templates
-    templates = jinja_templates or templates
+    templates = jinja_templates
     
     # Return the router for FastAPI to use
     return router

@@ -32,7 +32,7 @@ if __name__ == "__main__":
     products.setup_routes(app)
     cart.setup_routes(app)
     checkout.setup_routes(app)
-    pages.setup_routes(app)
+    pages.setup_routes(templates)
 
     # Set up admin routes with the templates
     dashboard.setup_routes(templates)
