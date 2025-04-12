@@ -1,3 +1,4 @@
+
 """
 Inventory-related models and management.
 
@@ -31,16 +32,8 @@ class InventoryTransactionType(str, Enum):
     TRANSFER = "transfer"        # Inventory transferred between locations
 
 
+# Import InventoryRecord from the registry instead of redefining it
 from pycommerce.models.db_registry import InventoryRecord
-
-# Use the model from the registry instead of redefining it
-# This is to avoid the "Table 'inventory_records' is already defined" error
-
-# Add extra methods to the model if needed, but don't redefine the table
-# For example:
-# def get_display_name(self):
-#     return f"{self.sku} - {self.quantity} units"
-# InventoryRecord.get_display_name = get_display_name
 
 
 class InventoryTransaction(Base):
