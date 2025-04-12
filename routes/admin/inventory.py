@@ -1,5 +1,10 @@
+# Get selected tenant from request or use the first tenant
+selected_tenant_slug = request.query_params.get('tenant', None)
+if not selected_tenant_slug and tenants:
+    selected_tenant_slug = tenants[0].slug
+
 # Handle "All Stores" selection
-if selected_tenant_slug.lower() == "all":
+if selected_tenant_slug and selected_tenant_slug.lower() == "all":
     # Show inventory for all tenants
     from routes.admin.tenant_utils import get_items_for_all_tenants
     logger.info("Showing inventory for all tenants")
