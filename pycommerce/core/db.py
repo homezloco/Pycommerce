@@ -57,7 +57,7 @@ def init_db() -> None:
         # Avoiding the circular imports through db_registry
         from pycommerce.models.db_tenant import Tenant
         from pycommerce.models.db_product import Product
-        from pycommerce.models.db_inventory import InventoryRecord 
+        from pycommerce.models.db_registry import InventoryRecord 
         
         # Import plugin config separately since we had to add it
         try:
