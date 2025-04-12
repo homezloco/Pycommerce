@@ -1,4 +1,3 @@
-
 """
 Admin interface for inventory management.
 
@@ -30,16 +29,16 @@ product_manager = ProductManager()
 def setup_routes(jinja_templates: Jinja2Templates):
     """
     Set up routes with the given templates.
-    
+
     Args:
         jinja_templates: The Jinja2Templates instance to use
-    
+
     Returns:
         The router to be included in the main app
     """
     global templates
     templates = jinja_templates
-    
+
     return router
 
 @router.get("", response_class=HTMLResponse)
@@ -53,7 +52,7 @@ async def inventory_list(
 ):
     """
     List all inventory items with optional filtering.
-    
+
     Args:
         request: The request object
         tenant: Optional tenant filter
@@ -61,13 +60,13 @@ async def inventory_list(
         category: Optional category filter
         min_stock: Optional minimum stock filter
         max_stock: Optional maximum stock filter
-        
+
     Returns:
         HTML response with inventory list
     """
     # Get all tenants for dropdown
     tenants = tenant_manager.list()
-    
+
     # Build filters
     filters = {}
     if search:
@@ -78,49 +77,49 @@ async def inventory_list(
         filters["min_stock"] = min_stock
     if max_stock is not None:
         filters["max_stock"] = max_stock
-    
+
     # Get selected tenant
     selected_tenant_slug = tenant or "all"
     tenant_obj = None
-    
+
     if selected_tenant_slug.lower() != "all":
         tenant_obj = tenant_manager.get_by_slug(selected_tenant_slug)
         if not tenant_obj:
             return RedirectResponse(url="/admin/inventory")
-    
+
     # Handle "All Stores" selection
-if selected_tenant_slug.lower() == "all":
-    # Show inventory for all tenants
-    from routes.admin.tenant_utils import get_items_for_all_tenants
-    logger.info("Showing inventory for all tenants")
+    if selected_tenant_slug.lower() == "all":
+        # Show inventory for all tenants
+        from routes.admin.tenant_utils import get_items_for_all_tenants
+        logger.info("Showing inventory for all tenants")
 
-    inventory_items = get_items_for_all_tenants(
-        tenant_manager=tenant_manager,
-        item_manager=inventory_manager,
-        get_method_name='get_by_tenant',
-        logger=logger,
-        filters=filters
-    )
-else:
-    # Show inventory for specific tenant
-    logger.info(f"Showing inventory for tenant: {tenant_obj.name}")
-    
-    inventory_items = inventory_manager.get_by_tenant(str(tenant_obj.id), filters)
-    
-    # Enhance inventory items with product info
-    for item in inventory_items:
-        product = product_manager.get(item.product_id, tenant_obj.id)
-        if product:
-            item.product_name = product.name
-            item.product_sku = product.sku
-        else:
-            item.product_name = "Unknown Product"
-            item.product_sku = "N/A"
-    
-    # Sort by stock level (low to high)
-    inventory_items.sort(key=lambda x: x.stock)
+        inventory_items = get_items_for_all_tenants(
+            tenant_manager=tenant_manager,
+            item_manager=inventory_manager,
+            get_method_name='get_by_tenant',
+            logger=logger,
+            filters=filters
+        )
+    else:
+        # Show inventory for specific tenant
+        logger.info(f"Showing inventory for tenant: {tenant_obj.name}")
 
-    # Return the template response properly indented inside the function
+        inventory_items = inventory_manager.get_by_tenant(str(tenant_obj.id), filters)
+
+        # Enhance inventory items with product info
+        for item in inventory_items:
+            product = product_manager.get(item.product_id, tenant_obj.id)
+            if product:
+                item.product_name = product.name
+                item.product_sku = product.sku
+            else:
+                item.product_name = "Unknown Product"
+                item.product_sku = "N/A"
+
+        # Sort by stock level (low to high)
+        inventory_items.sort(key=lambda x: x.stock)
+
+    # Return the template response properly indented at function level
     return templates.TemplateResponse(
         "admin/inventory.html",
         {
@@ -142,12 +141,12 @@ async def inventory_detail(
 ):
     """
     Show inventory detail.
-    
+
     Args:
         request: The request object
         inventory_id: The inventory item ID
         tenant: Optional tenant filter
-        
+
     Returns:
         HTML response with inventory detail
     """
@@ -155,22 +154,22 @@ async def inventory_detail(
     tenant_obj = None
     if tenant:
         tenant_obj = tenant_manager.get_by_slug(tenant)
-    
+
     if not tenant_obj:
         return RedirectResponse(url="/admin/inventory")
-    
+
     # Get inventory item
     inventory_item = inventory_manager.get(str(inventory_id))
-    
+
     if not inventory_item:
         return RedirectResponse(url="/admin/inventory")
-    
+
     # Get product
     product = product_manager.get(inventory_item.product_id, tenant_obj.id)
-    
+
     # Get transaction history
     transactions = inventory_manager.get_transactions(str(inventory_id))
-    
+
     return templates.TemplateResponse(
         "admin/inventory_detail.html",
         {
@@ -193,30 +192,30 @@ async def inventory_adjust(
 ):
     """
     Adjust inventory level.
-    
+
     Args:
         request: The request object
         inventory_id: The inventory item ID
         adjustment: The amount to adjust
         reason: The reason for adjustment
         tenant: The tenant slug
-        
+
     Returns:
         Redirect to inventory detail
     """
     # Get selected tenant
     tenant_obj = tenant_manager.get_by_slug(tenant)
-    
+
     if not tenant_obj:
         return RedirectResponse(url="/admin/inventory")
-    
+
     # Adjust inventory
     success = inventory_manager.adjust(
         inventory_id=str(inventory_id),
         adjustment=adjustment,
         reason=reason
     )
-    
+
     if success:
         return RedirectResponse(
             url=f"/admin/inventory/{inventory_id}?tenant={tenant}",
@@ -227,7 +226,7 @@ async def inventory_adjust(
         inventory_item = inventory_manager.get(str(inventory_id))
         product = product_manager.get(inventory_item.product_id, tenant_obj.id)
         transactions = inventory_manager.get_transactions(str(inventory_id))
-        
+
         return templates.TemplateResponse(
             "admin/inventory_detail.html",
             {
