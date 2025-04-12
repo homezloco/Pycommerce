@@ -53,8 +53,8 @@ class InventoryTransaction(Base):
     created_by = Column(String(100), nullable=True)  # User who created the transaction
     transaction_metadata = Column(JSON, nullable=True)  # Renamed from metadata to avoid SQLAlchemy conflict
 
-    # Define a simpler relationship to InventoryRecord without specifying foreign_keys
-    inventory_record = relationship("InventoryRecord", back_populates="transactions")
+    # Define relationship with single-parent configuration
+    inventory_record = relationship("InventoryRecord", back_populates="transactions", single_parent=True)
 
     def __repr__(self):
         return f"<InventoryTransaction {self.id} of type {self.transaction_type}>"
