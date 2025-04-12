@@ -1,0 +1,207 @@
+
+{% extends "admin/base_admin.html" %}
+
+{% block title %}Theme Settings{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4">
+    <h1 class="mt-4">Theme Settings</h1>
+    <ol class="breadcrumb mb-4">
+        <li class="breadcrumb-item"><a href="/admin/dashboard">Dashboard</a></li>
+        <li class="breadcrumb-item active">Theme Settings</li>
+    </ol>
+    
+    {% if status_message %}
+    <div class="alert alert-{{ status_type }}" role="alert">
+        {{ status_message }}
+    </div>
+    {% endif %}
+    
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-palette me-1"></i>
+                    Theme Configuration
+                </div>
+                <div class="card-body">
+                    <form action="/admin/theme-settings/update" method="post">
+                        <input type="hidden" name="tenant_id" value="{{ tenant.id if tenant else '' }}">
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="primary_color" class="form-label">Primary Color</label>
+                                <input type="color" class="form-control form-control-color" id="primary_color" name="primary_color" value="{{ theme.primary_color if theme and theme.primary_color else '#3498db' }}">
+                                <div class="form-text">Main color for buttons and important elements.</div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label for="secondary_color" class="form-label">Secondary Color</label>
+                                <input type="color" class="form-control form-control-color" id="secondary_color" name="secondary_color" value="{{ theme.secondary_color if theme and theme.secondary_color else '#6c757d' }}">
+                                <div class="form-text">Secondary color for additional elements.</div>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="background_color" class="form-label">Background Color</label>
+                                <input type="color" class="form-control form-control-color" id="background_color" name="background_color" value="{{ theme.background_color if theme and theme.background_color else '#ffffff' }}">
+                                <div class="form-text">Main background color for your store.</div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label for="text_color" class="form-label">Text Color</label>
+                                <input type="color" class="form-control form-control-color" id="text_color" name="text_color" value="{{ theme.text_color if theme and theme.text_color else '#212529' }}">
+                                <div class="form-text">Main text color for your store.</div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="font_family" class="form-label">Font Family</label>
+                            <select class="form-select" id="font_family" name="font_family">
+                                {% for font in font_families %}
+                                <option value="{{ font }}" {% if theme.font_family == font %}selected{% endif %}>{{ font }}</option>
+                                {% endfor %}
+                            </select>
+                            <div class="form-text">The main font family for your store.</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="logo_position" class="form-label">Logo Position</label>
+                            <select class="form-select" id="logo_position" name="logo_position">
+                                {% for position in logo_positions %}
+                                <option value="{{ position }}" {% if theme.logo_position == position %}selected{% endif %}>{{ position|title }}</option>
+                                {% endfor %}
+                            </select>
+                            <div class="form-text">Position of your store logo in the header.</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="custom_css" class="form-label">Custom CSS (Advanced)</label>
+                            <textarea class="form-control" id="custom_css" name="custom_css" rows="6">{{ theme.custom_css if theme and theme.custom_css else '' }}</textarea>
+                            <div class="form-text">Add custom CSS to further customize your store's appearance.</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <button type="submit" class="btn btn-primary">Save Changes</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-info-circle me-1"></i>
+                    Theme Preview
+                </div>
+                <div class="card-body">
+                    <div class="mt-3">
+                        <h6>Current Theme Settings:</h6>
+                        <ul class="list-group">
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Primary Color
+                                <span class="badge" style="background-color: {{ theme.primary_color if theme and theme.primary_color else '#3498db' }}; width: 30px; height: 30px; border-radius: 50%;"></span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Secondary Color
+                                <span class="badge" style="background-color: {{ theme.secondary_color if theme and theme.secondary_color else '#6c757d' }}; width: 30px; height: 30px; border-radius: 50%;"></span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Background Color
+                                <span class="badge" style="background-color: {{ theme.background_color if theme and theme.background_color else '#ffffff' }}; width: 30px; height: 30px; border-radius: 50%; border: 1px solid #dee2e6;"></span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Text Color
+                                <span class="badge" style="background-color: {{ theme.text_color if theme and theme.text_color else '#212529' }}; width: 30px; height: 30px; border-radius: 50%;"></span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Font Family
+                                <span>{{ theme.font_family if theme and theme.font_family else 'Arial, sans-serif' }}</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Logo Position
+                                <span>{{ theme.logo_position|title if theme and theme.logo_position else 'Left' }}</span>
+                            </li>
+                        </ul>
+                    </div>
+                    
+                    <div class="theme-preview mt-4 p-3" style="background-color: {{ theme.background_color if theme and theme.background_color else '#ffffff' }}; color: {{ theme.text_color if theme and theme.text_color else '#212529' }}; font-family: {{ theme.font_family if theme and theme.font_family else 'Arial, sans-serif' }}; border: 1px solid #dee2e6; border-radius: 0.25rem;">
+                        <div class="text-{{ theme.logo_position if theme and theme.logo_position else 'left' }}">
+                            <strong>LOGO</strong>
+                        </div>
+                        <hr>
+                        <h4>Sample Heading</h4>
+                        <p>This is an example of how your text will look with the selected font family and colors.</p>
+                        <button class="btn btn-sm" style="background-color: {{ theme.primary_color if theme and theme.primary_color else '#3498db' }}; color: #fff;">Primary Button</button>
+                        <button class="btn btn-sm" style="background-color: {{ theme.secondary_color if theme and theme.secondary_color else '#6c757d' }}; color: #fff;">Secondary Button</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-question-circle me-1"></i>
+                    Help
+                </div>
+                <div class="card-body">
+                    <p>Theme settings control the visual appearance of your store. Changes will apply to all storefront pages.</p>
+                    <p>For more advanced customization, use the Custom CSS field to add specific styling rules.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Preview updates in real-time
+    document.addEventListener('DOMContentLoaded', function() {
+        const primaryColorInput = document.getElementById('primary_color');
+        const secondaryColorInput = document.getElementById('secondary_color');
+        const backgroundColorInput = document.getElementById('background_color');
+        const textColorInput = document.getElementById('text_color');
+        const fontFamilyInput = document.getElementById('font_family');
+        const logoPositionInput = document.getElementById('logo_position');
+        
+        const previewArea = document.querySelector('.theme-preview');
+        const primaryButton = previewArea.querySelectorAll('.btn')[0];
+        const secondaryButton = previewArea.querySelectorAll('.btn')[1];
+        const logoPreview = previewArea.querySelector('div:first-child');
+        
+        // Update preview elements when inputs change
+        primaryColorInput.addEventListener('input', function() {
+            primaryButton.style.backgroundColor = this.value;
+            document.querySelector('.list-group-item:nth-child(1) .badge').style.backgroundColor = this.value;
+        });
+        
+        secondaryColorInput.addEventListener('input', function() {
+            secondaryButton.style.backgroundColor = this.value;
+            document.querySelector('.list-group-item:nth-child(2) .badge').style.backgroundColor = this.value;
+        });
+        
+        backgroundColorInput.addEventListener('input', function() {
+            previewArea.style.backgroundColor = this.value;
+            document.querySelector('.list-group-item:nth-child(3) .badge').style.backgroundColor = this.value;
+        });
+        
+        textColorInput.addEventListener('input', function() {
+            previewArea.style.color = this.value;
+            document.querySelector('.list-group-item:nth-child(4) .badge').style.backgroundColor = this.value;
+        });
+        
+        fontFamilyInput.addEventListener('change', function() {
+            previewArea.style.fontFamily = this.value;
+            document.querySelector('.list-group-item:nth-child(5) span').textContent = this.value;
+        });
+        
+        logoPositionInput.addEventListener('change', function() {
+            logoPreview.className = '';
+            logoPreview.classList.add('text-' + this.value);
+            document.querySelector('.list-group-item:nth-child(6) span').textContent = this.options[this.selectedIndex].text;
+        });
+    });
+</script>
+{% endblock %}
