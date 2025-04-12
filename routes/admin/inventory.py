@@ -3,7 +3,7 @@
         # Show inventory for all tenants
         from routes.admin.tenant_utils import get_items_for_all_tenants
         logger.info("Showing inventory for all tenants")
-        
+
         inventory_items = get_items_for_all_tenants(
             tenant_manager=tenant_manager,
             item_manager=inventory_manager,
