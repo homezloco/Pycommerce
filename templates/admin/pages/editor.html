@@ -1,0 +1,1341 @@
+
+{% extends "admin/base_admin.html" %}
+
+{% block title %}Page Editor - PyCommerce Admin{% endblock %}
+
+{% block head_extra %}
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.14.0/Sortable.min.js"></script>
+<style>
+  .section-container {
+    border: 1px dashed #ccc;
+    padding: 15px;
+    margin-bottom: 20px;
+    position: relative;
+  }
+  
+  .section-container:hover {
+    border-color: #aaa;
+  }
+  
+  .section-controls {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    display: flex;
+    gap: 5px;
+  }
+  
+  .block-container {
+    border: 1px solid #e9e9e9;
+    padding: 15px;
+    margin-bottom: 10px;
+    background-color: #f8f9fa;
+    position: relative;
+  }
+  
+  .block-container:hover {
+    box-shadow: 0 0 5px rgba(0,0,0,0.1);
+  }
+  
+  .block-controls {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    display: flex;
+    gap: 5px;
+  }
+  
+  .component-library {
+    background-color: #f8f9fa;
+    border: 1px solid #ddd;
+    padding: 15px;
+    margin-bottom: 15px;
+  }
+  
+  .component-item {
+    padding: 10px;
+    margin-bottom: 5px;
+    background-color: #fff;
+    border: 1px solid #ddd;
+    cursor: grab;
+  }
+  
+  .preview-container {
+    border: 1px solid #ddd;
+    padding: 20px;
+    margin-top: 20px;
+    min-height: 200px;
+  }
+  
+  .placeholder {
+    border: 2px dashed #ccc;
+    padding: 20px;
+    margin: 10px 0;
+    text-align: center;
+    background-color: #f9f9f9;
+  }
+</style>
+{% endblock %}
+
+{% block admin_content %}
+<div class="container-fluid px-4">
+  <h1 class="mt-4">Page Editor</h1>
+  <ol class="breadcrumb mb-4">
+    <li class="breadcrumb-item"><a href="/admin">Dashboard</a></li>
+    <li class="breadcrumb-item"><a href="/admin/pages">Pages</a></li>
+    <li class="breadcrumb-item active">Editor</li>
+  </ol>
+
+  {% if status_message %}
+  <div class="alert alert-{{ status_type }}" role="alert">
+    {{ status_message }}
+  </div>
+  {% endif %}
+
+  <div class="row">
+    <div class="col-md-3">
+      <div class="card mb-4">
+        <div class="card-header">
+          <i class="fas fa-tools me-1"></i> Page Components
+        </div>
+        <div class="card-body">
+          <div class="component-library">
+            <h6>Sections</h6>
+            <div class="component-item section-item" data-type="hero">
+              <i class="fas fa-image me-2"></i> Hero Section
+            </div>
+            <div class="component-item section-item" data-type="content">
+              <i class="fas fa-paragraph me-2"></i> Content Section
+            </div>
+            <div class="component-item section-item" data-type="products">
+              <i class="fas fa-boxes me-2"></i> Products Grid
+            </div>
+            <div class="component-item section-item" data-type="cta">
+              <i class="fas fa-bullhorn me-2"></i> Call to Action
+            </div>
+            <div class="component-item section-item" data-type="features">
+              <i class="fas fa-star me-2"></i> Features List
+            </div>
+            <div class="component-item section-item" data-type="testimonials">
+              <i class="fas fa-quote-right me-2"></i> Testimonials
+            </div>
+          </div>
+          
+          <div class="component-library">
+            <h6>Content Blocks</h6>
+            <div class="component-item block-item" data-type="text">
+              <i class="fas fa-font me-2"></i> Text Block
+            </div>
+            <div class="component-item block-item" data-type="image">
+              <i class="fas fa-image me-2"></i> Image
+            </div>
+            <div class="component-item block-item" data-type="button">
+              <i class="fas fa-square me-2"></i> Button
+            </div>
+            <div class="component-item block-item" data-type="product">
+              <i class="fas fa-box me-2"></i> Product
+            </div>
+            <div class="component-item block-item" data-type="video">
+              <i class="fas fa-video me-2"></i> Video
+            </div>
+            <div class="component-item block-item" data-type="form">
+              <i class="fas fa-wpforms me-2"></i> Form
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="card mb-4">
+        <div class="card-header">
+          <i class="fas fa-sliders-h me-1"></i> Page Settings
+        </div>
+        <div class="card-body">
+          <form id="pageSettingsForm">
+            <div class="mb-3">
+              <label for="pageTitle" class="form-label">Page Title</label>
+              <input type="text" class="form-control" id="pageTitle" name="title" value="{{ page.title }}" required>
+            </div>
+            <div class="mb-3">
+              <label for="pageSlug" class="form-label">URL Slug</label>
+              <input type="text" class="form-control" id="pageSlug" name="slug" value="{{ page.slug }}" required>
+            </div>
+            <div class="mb-3">
+              <label for="metaTitle" class="form-label">Meta Title</label>
+              <input type="text" class="form-control" id="metaTitle" name="meta_title" value="{{ page.meta_title }}">
+            </div>
+            <div class="mb-3">
+              <label for="metaDescription" class="form-label">Meta Description</label>
+              <textarea class="form-control" id="metaDescription" name="meta_description" rows="3">{{ page.meta_description }}</textarea>
+            </div>
+            <div class="form-check mb-3">
+              <input class="form-check-input" type="checkbox" id="isPublished" name="is_published" {% if page.is_published %}checked{% endif %}>
+              <label class="form-check-label" for="isPublished">
+                Publish page
+              </label>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-md-9">
+      <div class="card mb-4">
+        <div class="card-header">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <i class="fas fa-edit me-1"></i> Layout Editor
+            </div>
+            <div>
+              <button class="btn btn-sm btn-outline-secondary me-2" id="previewPageBtn">
+                <i class="fas fa-eye me-1"></i> Preview
+              </button>
+              <button class="btn btn-sm btn-primary" id="savePageBtn">
+                <i class="fas fa-save me-1"></i> Save Page
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="card-body">
+          <div id="pageContainer">
+            {% if sections|length > 0 %}
+              {% for section_data in sections %}
+                <div class="section-container" data-section-id="{{ section_data.section.id }}" data-section-type="{{ section_data.section.section_type }}">
+                  <div class="section-header">
+                    <h5>{{ section_data.section.section_type|title }} Section</h5>
+                    <div class="section-controls">
+                      <button class="btn btn-sm btn-outline-secondary edit-section-btn">
+                        <i class="fas fa-cog"></i>
+                      </button>
+                      <button class="btn btn-sm btn-outline-danger delete-section-btn">
+                        <i class="fas fa-trash"></i>
+                      </button>
+                    </div>
+                  </div>
+                  <div class="blocks-container">
+                    {% for block in section_data.blocks %}
+                      <div class="block-container" data-block-id="{{ block.id }}" data-block-type="{{ block.block_type }}">
+                        <div class="block-content">
+                          {% if block.block_type == 'text' %}
+                            <div class="text-content">{{ block.content.html|safe }}</div>
+                          {% elif block.block_type == 'image' %}
+                            <div class="image-content">
+                              <img src="{{ block.content.src }}" alt="{{ block.content.alt }}" style="max-width: 100%;">
+                            </div>
+                          {% elif block.block_type == 'button' %}
+                            <div class="button-content">
+                              <a href="{{ block.content.url }}" class="btn {{ block.settings.style }}">{{ block.content.text }}</a>
+                            </div>
+                          {% elif block.block_type == 'product' %}
+                            <div class="product-content">
+                              <div>Product: {{ block.content.product_name }}</div>
+                            </div>
+                          {% else %}
+                            <div class="generic-block">{{ block.block_type|title }} Block</div>
+                          {% endif %}
+                        </div>
+                        <div class="block-controls">
+                          <button class="btn btn-sm btn-outline-secondary edit-block-btn">
+                            <i class="fas fa-pen"></i>
+                          </button>
+                          <button class="btn btn-sm btn-outline-danger delete-block-btn">
+                            <i class="fas fa-trash"></i>
+                          </button>
+                        </div>
+                      </div>
+                    {% endfor %}
+                  </div>
+                  <div class="text-center mt-3">
+                    <button class="btn btn-sm btn-outline-primary add-block-btn" data-section-id="{{ section_data.section.id }}">
+                      <i class="fas fa-plus me-1"></i> Add Block
+                    </button>
+                  </div>
+                </div>
+              {% endfor %}
+            {% else %}
+              <div class="placeholder">
+                <p>Drag sections from the component library to build your page.</p>
+              </div>
+            {% endif %}
+          </div>
+          
+          <div class="text-center mt-4">
+            <button class="btn btn-outline-primary" id="addSectionBtn">
+              <i class="fas fa-plus me-1"></i> Add Section
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Section Settings Modal -->
+<div class="modal fade" id="sectionSettingsModal" tabindex="-1" aria-labelledby="sectionSettingsModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="sectionSettingsModalLabel">Section Settings</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form id="sectionSettingsForm">
+          <input type="hidden" id="sectionId" name="section_id">
+          <div class="mb-3">
+            <label for="sectionType" class="form-label">Section Type</label>
+            <select class="form-select" id="sectionType" name="section_type" disabled>
+              <option value="hero">Hero</option>
+              <option value="content">Content</option>
+              <option value="products">Products Grid</option>
+              <option value="cta">Call to Action</option>
+              <option value="features">Features</option>
+              <option value="testimonials">Testimonials</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label for="sectionBackground" class="form-label">Background Color</label>
+            <input type="color" class="form-control form-control-color" id="sectionBackground" name="background" value="#ffffff">
+          </div>
+          <div class="mb-3">
+            <label for="sectionPadding" class="form-label">Padding</label>
+            <select class="form-select" id="sectionPadding" name="padding">
+              <option value="small">Small</option>
+              <option value="medium" selected>Medium</option>
+              <option value="large">Large</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label for="sectionWidth" class="form-label">Content Width</label>
+            <select class="form-select" id="sectionWidth" name="width">
+              <option value="narrow">Narrow</option>
+              <option value="normal" selected>Normal</option>
+              <option value="wide">Wide</option>
+              <option value="full">Full Width</option>
+            </select>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-primary" id="saveSectionSettingsBtn">Save Changes</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Block Settings Modal -->
+<div class="modal fade" id="blockSettingsModal" tabindex="-1" aria-labelledby="blockSettingsModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="blockSettingsModalLabel">Edit Block</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form id="blockSettingsForm">
+          <input type="hidden" id="blockId" name="block_id">
+          <input type="hidden" id="blockSectionId" name="section_id">
+          
+          <div id="blockTypeFields">
+            <!-- Dynamic fields based on block type will be inserted here -->
+          </div>
+          
+          <div class="mb-3">
+            <label class="form-label">Block Settings</label>
+            <div class="card">
+              <div class="card-body">
+                <div class="mb-3">
+                  <label for="blockWidth" class="form-label">Width</label>
+                  <select class="form-select" id="blockWidth" name="settings.width">
+                    <option value="narrow">Narrow</option>
+                    <option value="normal" selected>Normal</option>
+                    <option value="wide">Wide</option>
+                    <option value="full">Full Width</option>
+                  </select>
+                </div>
+                <div class="mb-3">
+                  <label for="blockAlignment" class="form-label">Alignment</label>
+                  <select class="form-select" id="blockAlignment" name="settings.alignment">
+                    <option value="left">Left</option>
+                    <option value="center">Center</option>
+                    <option value="right">Right</option>
+                  </select>
+                </div>
+                <div class="mb-3">
+                  <label for="blockMargin" class="form-label">Margin</label>
+                  <select class="form-select" id="blockMargin" name="settings.margin">
+                    <option value="none">None</option>
+                    <option value="small" selected>Small</option>
+                    <option value="medium">Medium</option>
+                    <option value="large">Large</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-primary" id="saveBlockSettingsBtn">Save Changes</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Preview Modal -->
+<div class="modal fade" id="previewModal" tabindex="-1" aria-labelledby="previewModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="previewModalLabel">Page Preview</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body p-0">
+        <iframe id="previewFrame" style="width: 100%; height: 600px; border: none;"></iframe>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <a href="#" target="_blank" id="openPreviewBtn" class="btn btn-primary">Open in New Tab</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Add Section Modal -->
+<div class="modal fade" id="addSectionModal" tabindex="-1" aria-labelledby="addSectionModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="addSectionModalLabel">Add New Section</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="list-group">
+          <button type="button" class="list-group-item list-group-item-action section-type-option" data-type="hero">
+            <i class="fas fa-image me-2"></i> Hero Section
+            <small class="d-block text-muted">Full-width banner with text and call-to-action</small>
+          </button>
+          <button type="button" class="list-group-item list-group-item-action section-type-option" data-type="content">
+            <i class="fas fa-paragraph me-2"></i> Content Section
+            <small class="d-block text-muted">Rich text content with optional images</small>
+          </button>
+          <button type="button" class="list-group-item list-group-item-action section-type-option" data-type="products">
+            <i class="fas fa-boxes me-2"></i> Products Grid
+            <small class="d-block text-muted">Display products in a grid layout</small>
+          </button>
+          <button type="button" class="list-group-item list-group-item-action section-type-option" data-type="cta">
+            <i class="fas fa-bullhorn me-2"></i> Call to Action
+            <small class="d-block text-muted">Prominent call-to-action with background</small>
+          </button>
+          <button type="button" class="list-group-item list-group-item-action section-type-option" data-type="features">
+            <i class="fas fa-star me-2"></i> Features List
+            <small class="d-block text-muted">Highlight product or service features</small>
+          </button>
+          <button type="button" class="list-group-item list-group-item-action section-type-option" data-type="testimonials">
+            <i class="fas fa-quote-right me-2"></i> Testimonials
+            <small class="d-block text-muted">Customer testimonials or reviews</small>
+          </button>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Add Block Modal -->
+<div class="modal fade" id="addBlockModal" tabindex="-1" aria-labelledby="addBlockModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="addBlockModalLabel">Add Content Block</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="targetSectionId">
+        <div class="list-group">
+          <button type="button" class="list-group-item list-group-item-action block-type-option" data-type="text">
+            <i class="fas fa-font me-2"></i> Text Block
+            <small class="d-block text-muted">Rich text content with formatting</small>
+          </button>
+          <button type="button" class="list-group-item list-group-item-action block-type-option" data-type="image">
+            <i class="fas fa-image me-2"></i> Image
+            <small class="d-block text-muted">Single image with optional caption</small>
+          </button>
+          <button type="button" class="list-group-item list-group-item-action block-type-option" data-type="button">
+            <i class="fas fa-square me-2"></i> Button
+            <small class="d-block text-muted">Call-to-action button</small>
+          </button>
+          <button type="button" class="list-group-item list-group-item-action block-type-option" data-type="product">
+            <i class="fas fa-box me-2"></i> Product
+            <small class="d-block text-muted">Featured product with image and details</small>
+          </button>
+          <button type="button" class="list-group-item list-group-item-action block-type-option" data-type="video">
+            <i class="fas fa-video me-2"></i> Video
+            <small class="d-block text-muted">Embedded video player</small>
+          </button>
+          <button type="button" class="list-group-item list-group-item-action block-type-option" data-type="form">
+            <i class="fas fa-wpforms me-2"></i> Form
+            <small class="d-block text-muted">Contact or subscription form</small>
+          </button>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const pageId = '{{ page.id }}';
+    let pageData = {
+      id: pageId,
+      title: '{{ page.title }}',
+      slug: '{{ page.slug }}',
+      meta_title: '{{ page.meta_title }}',
+      meta_description: '{{ page.meta_description }}',
+      is_published: {{ 'true' if page.is_published else 'false' }},
+      layout_data: {{ page.layout_data|tojson if page.layout_data else '{}' }}
+    };
+    
+    // Initialize sortable for the page container
+    new Sortable(document.getElementById('pageContainer'), {
+      animation: 150,
+      handle: '.section-header',
+      ghostClass: 'section-ghost'
+    });
+    
+    // Initialize sortable for each blocks container
+    document.querySelectorAll('.blocks-container').forEach(container => {
+      new Sortable(container, {
+        animation: 150,
+        group: 'blocks',
+        ghostClass: 'block-ghost'
+      });
+    });
+    
+    // Add Section button
+    document.getElementById('addSectionBtn').addEventListener('click', function() {
+      const addSectionModal = new bootstrap.Modal(document.getElementById('addSectionModal'));
+      addSectionModal.show();
+    });
+    
+    // Section type selection in the Add Section modal
+    document.querySelectorAll('.section-type-option').forEach(option => {
+      option.addEventListener('click', function() {
+        const sectionType = this.getAttribute('data-type');
+        createNewSection(sectionType);
+        
+        // Hide the modal
+        const modal = bootstrap.Modal.getInstance(document.getElementById('addSectionModal'));
+        modal.hide();
+      });
+    });
+    
+    // Add Block button
+    document.querySelectorAll('.add-block-btn').forEach(btn => {
+      btn.addEventListener('click', function() {
+        const sectionId = this.getAttribute('data-section-id');
+        document.getElementById('targetSectionId').value = sectionId;
+        
+        const addBlockModal = new bootstrap.Modal(document.getElementById('addBlockModal'));
+        addBlockModal.show();
+      });
+    });
+    
+    // Block type selection in the Add Block modal
+    document.querySelectorAll('.block-type-option').forEach(option => {
+      option.addEventListener('click', function() {
+        const blockType = this.getAttribute('data-type');
+        const sectionId = document.getElementById('targetSectionId').value;
+        createNewBlock(sectionId, blockType);
+        
+        // Hide the modal
+        const modal = bootstrap.Modal.getInstance(document.getElementById('addBlockModal'));
+        modal.hide();
+      });
+    });
+    
+    // Edit section buttons
+    document.addEventListener('click', function(e) {
+      if (e.target.closest('.edit-section-btn')) {
+        const btn = e.target.closest('.edit-section-btn');
+        const sectionContainer = btn.closest('.section-container');
+        const sectionId = sectionContainer.getAttribute('data-section-id');
+        const sectionType = sectionContainer.getAttribute('data-section-type');
+        
+        editSection(sectionId, sectionType);
+      }
+    });
+    
+    // Delete section buttons
+    document.addEventListener('click', function(e) {
+      if (e.target.closest('.delete-section-btn')) {
+        if (confirm('Are you sure you want to delete this section?')) {
+          const btn = e.target.closest('.delete-section-btn');
+          const sectionContainer = btn.closest('.section-container');
+          const sectionId = sectionContainer.getAttribute('data-section-id');
+          
+          deleteSection(sectionId);
+        }
+      }
+    });
+    
+    // Edit block buttons
+    document.addEventListener('click', function(e) {
+      if (e.target.closest('.edit-block-btn')) {
+        const btn = e.target.closest('.edit-block-btn');
+        const blockContainer = btn.closest('.block-container');
+        const blockId = blockContainer.getAttribute('data-block-id');
+        const blockType = blockContainer.getAttribute('data-block-type');
+        const sectionId = blockContainer.closest('.section-container').getAttribute('data-section-id');
+        
+        editBlock(blockId, blockType, sectionId);
+      }
+    });
+    
+    // Delete block buttons
+    document.addEventListener('click', function(e) {
+      if (e.target.closest('.delete-block-btn')) {
+        if (confirm('Are you sure you want to delete this block?')) {
+          const btn = e.target.closest('.delete-block-btn');
+          const blockContainer = btn.closest('.block-container');
+          const blockId = blockContainer.getAttribute('data-block-id');
+          
+          deleteBlock(blockId);
+        }
+      }
+    });
+    
+    // Preview Page button
+    document.getElementById('previewPageBtn').addEventListener('click', function() {
+      previewPage();
+    });
+    
+    // Save Page button
+    document.getElementById('savePageBtn').addEventListener('click', function() {
+      savePage();
+    });
+    
+    // Save Section Settings button
+    document.getElementById('saveSectionSettingsBtn').addEventListener('click', function() {
+      const formData = new FormData(document.getElementById('sectionSettingsForm'));
+      const sectionId = formData.get('section_id');
+      
+      // Convert form data to a settings object
+      const settings = {
+        background: formData.get('background'),
+        padding: formData.get('padding'),
+        width: formData.get('width')
+      };
+      
+      updateSectionSettings(sectionId, settings);
+      
+      // Close the modal
+      const modal = bootstrap.Modal.getInstance(document.getElementById('sectionSettingsModal'));
+      modal.hide();
+    });
+    
+    // Save Block Settings button
+    document.getElementById('saveBlockSettingsBtn').addEventListener('click', function() {
+      const formData = new FormData(document.getElementById('blockSettingsForm'));
+      const blockId = formData.get('block_id');
+      const blockType = document.getElementById('blockTypeFields').getAttribute('data-block-type');
+      
+      // Build content and settings objects based on block type
+      const content = {};
+      const settings = {
+        width: formData.get('settings.width'),
+        alignment: formData.get('settings.alignment'),
+        margin: formData.get('settings.margin')
+      };
+      
+      // Collect content data based on block type
+      if (blockType === 'text') {
+        content.html = tinymce.get('blockContent').getContent();
+      } else if (blockType === 'image') {
+        content.src = formData.get('content.src');
+        content.alt = formData.get('content.alt');
+      } else if (blockType === 'button') {
+        content.text = formData.get('content.text');
+        content.url = formData.get('content.url');
+        settings.style = formData.get('settings.style');
+      } else if (blockType === 'product') {
+        content.product_id = formData.get('content.product_id');
+        content.product_name = document.querySelector(`option[value="${content.product_id}"]`)?.textContent || '';
+      } else if (blockType === 'video') {
+        content.url = formData.get('content.url');
+        content.autoplay = formData.get('content.autoplay') === 'on';
+      } else if (blockType === 'form') {
+        content.form_type = formData.get('content.form_type');
+        content.button_text = formData.get('content.button_text');
+      }
+      
+      updateBlockContent(blockId, content, settings);
+      
+      // Close the modal
+      const modal = bootstrap.Modal.getInstance(document.getElementById('blockSettingsModal'));
+      modal.hide();
+    });
+    
+    // Functions to interact with the API
+    function createNewSection(sectionType) {
+      // API request data
+      const data = {
+        page_id: pageId,
+        section_type: sectionType,
+        position: document.querySelectorAll('.section-container').length,
+        settings: {
+          padding: 'medium',
+          background: '#ffffff',
+          width: 'normal'
+        }
+      };
+      
+      // Make API request
+      fetch('/admin/api/pages/sections', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+      })
+      .then(response => response.json())
+      .then(section => {
+        // Create new section in the UI
+        const sectionHTML = `
+          <div class="section-container" data-section-id="${section.id}" data-section-type="${section.section_type}">
+            <div class="section-header">
+              <h5>${section.section_type.charAt(0).toUpperCase() + section.section_type.slice(1)} Section</h5>
+              <div class="section-controls">
+                <button class="btn btn-sm btn-outline-secondary edit-section-btn">
+                  <i class="fas fa-cog"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-danger delete-section-btn">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </div>
+            </div>
+            <div class="blocks-container"></div>
+            <div class="text-center mt-3">
+              <button class="btn btn-sm btn-outline-primary add-block-btn" data-section-id="${section.id}">
+                <i class="fas fa-plus me-1"></i> Add Block
+              </button>
+            </div>
+          </div>
+        `;
+        
+        // Remove placeholder if it exists
+        const placeholder = document.querySelector('.placeholder');
+        if (placeholder) {
+          placeholder.remove();
+        }
+        
+        // Append the new section
+        document.getElementById('pageContainer').insertAdjacentHTML('beforeend', sectionHTML);
+        
+        // Initialize sortable for the new blocks container
+        const blocksContainer = document.querySelector(`.section-container[data-section-id="${section.id}"] .blocks-container`);
+        new Sortable(blocksContainer, {
+          animation: 150,
+          group: 'blocks',
+          ghostClass: 'block-ghost'
+        });
+        
+        // Add event listener to the new Add Block button
+        const addBlockBtn = document.querySelector(`.section-container[data-section-id="${section.id}"] .add-block-btn`);
+        addBlockBtn.addEventListener('click', function() {
+          document.getElementById('targetSectionId').value = section.id;
+          const addBlockModal = new bootstrap.Modal(document.getElementById('addBlockModal'));
+          addBlockModal.show();
+        });
+      })
+      .catch(error => {
+        console.error('Error creating section:', error);
+        alert('Failed to create section. Please try again.');
+      });
+    }
+    
+    function createNewBlock(sectionId, blockType) {
+      // Get default content based on block type
+      let content = {};
+      let settings = {
+        width: 'normal',
+        alignment: 'left',
+        margin: 'small'
+      };
+      
+      switch (blockType) {
+        case 'text':
+          content = {
+            html: '<p>Enter your text here...</p>'
+          };
+          break;
+        case 'image':
+          content = {
+            src: '',
+            alt: 'Image description'
+          };
+          break;
+        case 'button':
+          content = {
+            text: 'Click Here',
+            url: '#'
+          };
+          settings.style = 'btn-primary';
+          break;
+        case 'product':
+          content = {
+            product_id: '',
+            product_name: 'Select a product'
+          };
+          break;
+        case 'video':
+          content = {
+            url: '',
+            autoplay: false
+          };
+          break;
+        case 'form':
+          content = {
+            form_type: 'contact',
+            button_text: 'Submit'
+          };
+          break;
+      }
+      
+      // API request data
+      const data = {
+        section_id: sectionId,
+        block_type: blockType,
+        position: document.querySelectorAll(`.section-container[data-section-id="${sectionId}"] .block-container`).length,
+        content: content,
+        settings: settings
+      };
+      
+      // Make API request
+      fetch('/admin/api/pages/blocks', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+      })
+      .then(response => response.json())
+      .then(block => {
+        // Create block HTML based on type
+        let blockContentHTML = '';
+        
+        switch (block.block_type) {
+          case 'text':
+            blockContentHTML = `<div class="text-content">${block.content.html}</div>`;
+            break;
+          case 'image':
+            blockContentHTML = `
+              <div class="image-content">
+                <div class="text-center text-muted">Image placeholder</div>
+              </div>
+            `;
+            break;
+          case 'button':
+            blockContentHTML = `
+              <div class="button-content">
+                <a href="${block.content.url}" class="btn ${block.settings.style || 'btn-primary'}">${block.content.text}</a>
+              </div>
+            `;
+            break;
+          case 'product':
+            blockContentHTML = `
+              <div class="product-content">
+                <div class="text-center text-muted">Product placeholder</div>
+              </div>
+            `;
+            break;
+          case 'video':
+            blockContentHTML = `
+              <div class="video-content">
+                <div class="text-center text-muted">Video placeholder</div>
+              </div>
+            `;
+            break;
+          case 'form':
+            blockContentHTML = `
+              <div class="form-content">
+                <div class="text-center text-muted">${block.content.form_type} form placeholder</div>
+              </div>
+            `;
+            break;
+          default:
+            blockContentHTML = `<div class="generic-block">${block.block_type} Block</div>`;
+        }
+        
+        // Create the block HTML
+        const blockHTML = `
+          <div class="block-container" data-block-id="${block.id}" data-block-type="${block.block_type}">
+            <div class="block-content">
+              ${blockContentHTML}
+            </div>
+            <div class="block-controls">
+              <button class="btn btn-sm btn-outline-secondary edit-block-btn">
+                <i class="fas fa-pen"></i>
+              </button>
+              <button class="btn btn-sm btn-outline-danger delete-block-btn">
+                <i class="fas fa-trash"></i>
+              </button>
+            </div>
+          </div>
+        `;
+        
+        // Append the block to the section
+        const blocksContainer = document.querySelector(`.section-container[data-section-id="${sectionId}"] .blocks-container`);
+        blocksContainer.insertAdjacentHTML('beforeend', blockHTML);
+        
+        // Open the edit block modal immediately after creating
+        editBlock(block.id, block.block_type, sectionId);
+      })
+      .catch(error => {
+        console.error('Error creating block:', error);
+        alert('Failed to create block. Please try again.');
+      });
+    }
+    
+    function editSection(sectionId, sectionType) {
+      // Fetch current section data
+      fetch(`/admin/api/pages/sections/${sectionId}`)
+        .then(response => response.json())
+        .then(section => {
+          // Populate the form
+          document.getElementById('sectionId').value = section.id;
+          document.getElementById('sectionType').value = section.section_type;
+          
+          // Set settings
+          if (section.settings) {
+            document.getElementById('sectionBackground').value = section.settings.background || '#ffffff';
+            document.getElementById('sectionPadding').value = section.settings.padding || 'medium';
+            document.getElementById('sectionWidth').value = section.settings.width || 'normal';
+          }
+          
+          // Show the modal
+          const sectionSettingsModal = new bootstrap.Modal(document.getElementById('sectionSettingsModal'));
+          sectionSettingsModal.show();
+        })
+        .catch(error => {
+          console.error('Error fetching section:', error);
+          alert('Failed to load section settings. Please try again.');
+        });
+    }
+    
+    function updateSectionSettings(sectionId, settings) {
+      // API request data
+      const data = { settings: settings };
+      
+      // Make API request
+      fetch(`/admin/api/pages/sections/${sectionId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+      })
+      .then(response => response.json())
+      .then(section => {
+        // Update UI if needed
+        console.log('Section updated:', section);
+      })
+      .catch(error => {
+        console.error('Error updating section:', error);
+        alert('Failed to update section settings. Please try again.');
+      });
+    }
+    
+    function deleteSection(sectionId) {
+      // Make API request
+      fetch(`/admin/api/pages/sections/${sectionId}`, {
+        method: 'DELETE'
+      })
+      .then(response => response.json())
+      .then(result => {
+        if (result.success) {
+          // Remove the section from the UI
+          document.querySelector(`.section-container[data-section-id="${sectionId}"]`).remove();
+          
+          // Show placeholder if no sections remain
+          if (document.querySelectorAll('.section-container').length === 0) {
+            document.getElementById('pageContainer').innerHTML = `
+              <div class="placeholder">
+                <p>Drag sections from the component library to build your page.</p>
+              </div>
+            `;
+          }
+        } else {
+          alert('Failed to delete section.');
+        }
+      })
+      .catch(error => {
+        console.error('Error deleting section:', error);
+        alert('Failed to delete section. Please try again.');
+      });
+    }
+    
+    function editBlock(blockId, blockType, sectionId) {
+      // Fetch current block data
+      fetch(`/admin/api/pages/blocks/${blockId}`)
+        .then(response => response.json())
+        .then(block => {
+          // Set the form fields
+          document.getElementById('blockId').value = block.id;
+          document.getElementById('blockSectionId').value = sectionId;
+          
+          // Set settings
+          if (block.settings) {
+            document.getElementById('blockWidth').value = block.settings.width || 'normal';
+            document.getElementById('blockAlignment').value = block.settings.alignment || 'left';
+            document.getElementById('blockMargin').value = block.settings.margin || 'small';
+          }
+          
+          // Create type-specific fields
+          const typeFieldsContainer = document.getElementById('blockTypeFields');
+          typeFieldsContainer.setAttribute('data-block-type', blockType);
+          
+          let typeFieldsHTML = '';
+          
+          switch (blockType) {
+            case 'text':
+              typeFieldsHTML = `
+                <div class="mb-3">
+                  <label for="blockContent" class="form-label">Content</label>
+                  <textarea id="blockContent" name="content.html" class="form-control tinymce-editor" rows="10">${block.content?.html || ''}</textarea>
+                </div>
+              `;
+              break;
+              
+            case 'image':
+              typeFieldsHTML = `
+                <div class="mb-3">
+                  <label for="imageSource" class="form-label">Image Source</label>
+                  <div class="input-group">
+                    <input type="text" class="form-control" id="imageSource" name="content.src" value="${block.content?.src || ''}">
+                    <button class="btn btn-outline-secondary" type="button" id="browseMediaBtn">Browse Media</button>
+                  </div>
+                </div>
+                <div class="mb-3">
+                  <label for="imageAlt" class="form-label">Alt Text</label>
+                  <input type="text" class="form-control" id="imageAlt" name="content.alt" value="${block.content?.alt || ''}">
+                </div>
+              `;
+              break;
+              
+            case 'button':
+              typeFieldsHTML = `
+                <div class="mb-3">
+                  <label for="buttonText" class="form-label">Button Text</label>
+                  <input type="text" class="form-control" id="buttonText" name="content.text" value="${block.content?.text || 'Click Here'}">
+                </div>
+                <div class="mb-3">
+                  <label for="buttonUrl" class="form-label">Button URL</label>
+                  <input type="text" class="form-control" id="buttonUrl" name="content.url" value="${block.content?.url || '#'}">
+                </div>
+                <div class="mb-3">
+                  <label for="buttonStyle" class="form-label">Button Style</label>
+                  <select class="form-select" id="buttonStyle" name="settings.style">
+                    <option value="btn-primary" ${(block.settings?.style === 'btn-primary') ? 'selected' : ''}>Primary</option>
+                    <option value="btn-secondary" ${(block.settings?.style === 'btn-secondary') ? 'selected' : ''}>Secondary</option>
+                    <option value="btn-success" ${(block.settings?.style === 'btn-success') ? 'selected' : ''}>Success</option>
+                    <option value="btn-danger" ${(block.settings?.style === 'btn-danger') ? 'selected' : ''}>Danger</option>
+                    <option value="btn-warning" ${(block.settings?.style === 'btn-warning') ? 'selected' : ''}>Warning</option>
+                    <option value="btn-info" ${(block.settings?.style === 'btn-info') ? 'selected' : ''}>Info</option>
+                    <option value="btn-light" ${(block.settings?.style === 'btn-light') ? 'selected' : ''}>Light</option>
+                    <option value="btn-dark" ${(block.settings?.style === 'btn-dark') ? 'selected' : ''}>Dark</option>
+                    <option value="btn-outline-primary" ${(block.settings?.style === 'btn-outline-primary') ? 'selected' : ''}>Outline Primary</option>
+                    <option value="btn-outline-secondary" ${(block.settings?.style === 'btn-outline-secondary') ? 'selected' : ''}>Outline Secondary</option>
+                  </select>
+                </div>
+              `;
+              break;
+              
+            case 'product':
+              // We need to fetch products for the dropdown
+              typeFieldsHTML = `
+                <div class="mb-3">
+                  <label for="productId" class="form-label">Select Product</label>
+                  <select class="form-select" id="productId" name="content.product_id">
+                    <option value="">Loading products...</option>
+                  </select>
+                </div>
+              `;
+              break;
+              
+            case 'video':
+              typeFieldsHTML = `
+                <div class="mb-3">
+                  <label for="videoUrl" class="form-label">Video URL</label>
+                  <input type="text" class="form-control" id="videoUrl" name="content.url" 
+                         value="${block.content?.url || ''}" placeholder="YouTube, Vimeo, or direct MP4 URL">
+                </div>
+                <div class="form-check mb-3">
+                  <input class="form-check-input" type="checkbox" id="videoAutoplay" name="content.autoplay" 
+                         ${block.content?.autoplay ? 'checked' : ''}>
+                  <label class="form-check-label" for="videoAutoplay">
+                    Autoplay (may be blocked by browsers)
+                  </label>
+                </div>
+              `;
+              break;
+              
+            case 'form':
+              typeFieldsHTML = `
+                <div class="mb-3">
+                  <label for="formType" class="form-label">Form Type</label>
+                  <select class="form-select" id="formType" name="content.form_type">
+                    <option value="contact" ${(block.content?.form_type === 'contact') ? 'selected' : ''}>Contact Form</option>
+                    <option value="newsletter" ${(block.content?.form_type === 'newsletter') ? 'selected' : ''}>Newsletter Signup</option>
+                    <option value="feedback" ${(block.content?.form_type === 'feedback') ? 'selected' : ''}>Feedback Form</option>
+                  </select>
+                </div>
+                <div class="mb-3">
+                  <label for="buttonText" class="form-label">Submit Button Text</label>
+                  <input type="text" class="form-control" id="buttonText" name="content.button_text" 
+                         value="${block.content?.button_text || 'Submit'}">
+                </div>
+              `;
+              break;
+              
+            default:
+              typeFieldsHTML = `
+                <div class="alert alert-info">
+                  Edit options for ${blockType} blocks are not available.
+                </div>
+              `;
+          }
+          
+          // Set the HTML
+          typeFieldsContainer.innerHTML = typeFieldsHTML;
+          
+          // Initialize TinyMCE if there's a text editor
+          if (blockType === 'text') {
+            tinymce.init({
+              selector: '#blockContent',
+              height: 300,
+              menubar: false,
+              plugins: [
+                'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
+                'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
+                'insertdatetime', 'media', 'table', 'help', 'wordcount'
+              ],
+              toolbar: 'undo redo | formatselect | bold italic | ' +
+                'alignleft aligncenter alignright | bullist numlist | ' +
+                'link image | removeformat | help',
+              content_style: 'body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-size: 14px; }'
+            });
+          }
+          
+          // Initialize product dropdown if it's a product block
+          if (blockType === 'product') {
+            // Fetch products from API
+            fetch('/admin/api/products')
+              .then(response => response.json())
+              .then(products => {
+                const productIdSelect = document.getElementById('productId');
+                let options = '<option value="">Select a product...</option>';
+                
+                products.forEach(product => {
+                  const selected = block.content?.product_id === product.id ? 'selected' : '';
+                  options += `<option value="${product.id}" ${selected}>${product.name}</option>`;
+                });
+                
+                productIdSelect.innerHTML = options;
+              })
+              .catch(error => {
+                console.error('Error fetching products:', error);
+                document.getElementById('productId').innerHTML = '<option value="">Error loading products</option>';
+              });
+          }
+          
+          // Add media browser handler for image blocks
+          if (blockType === 'image' && document.getElementById('browseMediaBtn')) {
+            document.getElementById('browseMediaBtn').addEventListener('click', function() {
+              // Implement media browser modal functionality
+              // This will depend on your media manager implementation
+              alert('Media browser will be implemented here');
+            });
+          }
+          
+          // Show the modal
+          const blockSettingsModal = new bootstrap.Modal(document.getElementById('blockSettingsModal'));
+          blockSettingsModal.show();
+        })
+        .catch(error => {
+          console.error('Error fetching block:', error);
+          alert('Failed to load block settings. Please try again.');
+        });
+    }
+    
+    function updateBlockContent(blockId, content, settings) {
+      // API request data
+      const data = {
+        content: content,
+        settings: settings
+      };
+      
+      // Make API request
+      fetch(`/admin/api/pages/blocks/${blockId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+      })
+      .then(response => response.json())
+      .then(block => {
+        // Update UI based on block type
+        const blockContainer = document.querySelector(`.block-container[data-block-id="${blockId}"]`);
+        const blockContentContainer = blockContainer.querySelector('.block-content');
+        
+        switch (block.block_type) {
+          case 'text':
+            blockContentContainer.innerHTML = `<div class="text-content">${block.content.html}</div>`;
+            break;
+          case 'image':
+            if (block.content.src) {
+              blockContentContainer.innerHTML = `
+                <div class="image-content">
+                  <img src="${block.content.src}" alt="${block.content.alt}" style="max-width: 100%;">
+                </div>
+              `;
+            } else {
+              blockContentContainer.innerHTML = `
+                <div class="image-content">
+                  <div class="text-center text-muted">Image placeholder</div>
+                </div>
+              `;
+            }
+            break;
+          case 'button':
+            blockContentContainer.innerHTML = `
+              <div class="button-content">
+                <a href="${block.content.url}" class="btn ${block.settings.style || 'btn-primary'}">${block.content.text}</a>
+              </div>
+            `;
+            break;
+          case 'product':
+            if (block.content.product_id) {
+              blockContentContainer.innerHTML = `
+                <div class="product-content">
+                  <div>Product: ${block.content.product_name}</div>
+                </div>
+              `;
+            } else {
+              blockContentContainer.innerHTML = `
+                <div class="product-content">
+                  <div class="text-center text-muted">Product placeholder</div>
+                </div>
+              `;
+            }
+            break;
+          case 'video':
+            if (block.content.url) {
+              // Simplified display - in real implementation would handle YouTube/Vimeo embeds
+              blockContentContainer.innerHTML = `
+                <div class="video-content">
+                  <div>Video: ${block.content.url}</div>
+                </div>
+              `;
+            } else {
+              blockContentContainer.innerHTML = `
+                <div class="video-content">
+                  <div class="text-center text-muted">Video placeholder</div>
+                </div>
+              `;
+            }
+            break;
+          case 'form':
+            blockContentContainer.innerHTML = `
+              <div class="form-content">
+                <div class="text-center text-muted">${block.content.form_type} form with "${block.content.button_text}" button</div>
+              </div>
+            `;
+            break;
+        }
+      })
+      .catch(error => {
+        console.error('Error updating block:', error);
+        alert('Failed to update block. Please try again.');
+      });
+    }
+    
+    function deleteBlock(blockId) {
+      // Make API request
+      fetch(`/admin/api/pages/blocks/${blockId}`, {
+        method: 'DELETE'
+      })
+      .then(response => response.json())
+      .then(result => {
+        if (result.success) {
+          // Remove the block from the UI
+          document.querySelector(`.block-container[data-block-id="${blockId}"]`).remove();
+        } else {
+          alert('Failed to delete block.');
+        }
+      })
+      .catch(error => {
+        console.error('Error deleting block:', error);
+        alert('Failed to delete block. Please try again.');
+      });
+    }
+    
+    function previewPage() {
+      // Open the preview modal
+      const previewModal = new bootstrap.Modal(document.getElementById('previewModal'));
+      previewModal.show();
+      
+      // Set the iframe source to the preview URL
+      const previewFrame = document.getElementById('previewFrame');
+      previewFrame.src = `/admin/pages/preview/${pageId}`;
+      
+      // Update the "Open in New Tab" button
+      document.getElementById('openPreviewBtn').href = `/admin/pages/preview/${pageId}`;
+    }
+    
+    function savePage() {
+      // Get form data
+      const formData = new FormData(document.getElementById('pageSettingsForm'));
+      
+      // Build page data object
+      const pageData = {
+        title: formData.get('title'),
+        slug: formData.get('slug'),
+        meta_title: formData.get('meta_title'),
+        meta_description: formData.get('meta_description'),
+        is_published: formData.get('is_published') === 'on'
+      };
+      
+      // Make API request
+      fetch(`/admin/pages/edit/${pageId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: new URLSearchParams(pageData)
+      })
+      .then(response => {
+        if (response.ok) {
+          // Show success message
+          alert('Page saved successfully!');
+          
+          // Redirect to the page edit form
+          window.location.href = `/admin/pages/edit/${pageId}?status_message=Page+saved+successfully&status_type=success`;
+        } else {
+          alert('Failed to save page. Please try again.');
+        }
+      })
+      .catch(error => {
+        console.error('Error saving page:', error);
+        alert('Failed to save page. Please try again.');
+      });
+    }
+  });
+</script>
+{% endblock admin_content %}
