@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en" data-bs-theme="dark">
 <head>
@@ -318,6 +317,33 @@
                             <a class="nav-link {% if active_page == 'customers' %}active{% endif %}" href="/admin/customers">
                                 <i class="bi bi-people"></i> Customers
                             </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseWebsite" aria-expanded="false" aria-controls="collapseWebsite">
+                                <i class="bi bi-globe me-2"></i>
+                                Website
+                            </a>
+                            <div id="collapseWebsite" class="collapse" aria-labelledby="headingWebsite" data-bs-parent="#sidenavAccordion">
+                                <nav class="sb-sidenav-menu-nested nav">
+                                    <a class="nav-link" href="/admin/pages"><i class="bi bi-file-earmark-text me-1"></i> Pages</a>
+                                    <a class="nav-link" href="/admin/theme-settings"><i class="bi bi-palette me-1"></i> Theme Settings</a>
+                                    <a class="nav-link" href="/admin/media"><i class="bi bi-images me-1"></i> Media Library</a>
+                                </nav>
+                            </div>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseSettings" aria-expanded="false" aria-controls="collapseSettings">
+                                <i class="bi bi-gear me-2"></i>
+                                Settings
+                            </a>
+                            <div id="collapseSettings" class="collapse" aria-labelledby="headingSettings" data-bs-parent="#sidenavAccordion">
+                                <nav class="sb-sidenav-menu-nested nav">
+                                    <a class="nav-link" href="/admin/settings"><i class="bi bi-sliders me-1"></i> General</a>
+                                    <a class="nav-link" href="/admin/shipping"><i class="bi bi-truck me-1"></i> Shipping</a>
+                                    <a class="nav-link" href="/admin/plugins"><i class="bi bi-puzzle me-1"></i> Plugins</a>
+                                    <a class="nav-link" href="/admin/ai-config"><i class="bi bi-robot me-1"></i> AI Settings</a>
+                                </nav>
+                            </div>
                         </li>
                     </ul>
 

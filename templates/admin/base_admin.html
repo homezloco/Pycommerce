@@ -11,9 +11,17 @@
 
         <div>
             {% if selected_tenant and selected_tenant != "all" %}
-            <a href="/store/{{ selected_tenant }}" class="btn btn-primary btn-sm" target="_blank">
-                <i class="bi bi-box-arrow-up-right"></i> Visit Store
-            </a>
+            <div class="btn-group">
+                <a href="/store/{{ selected_tenant }}" class="btn btn-primary btn-sm" target="_blank">
+                    <i class="bi bi-box-arrow-up-right"></i> Visit Store
+                </a>
+                <a href="/admin/pages?tenant={{ selected_tenant }}" class="btn btn-outline-primary btn-sm">
+                    <i class="bi bi-file-earmark-text"></i> Pages
+                </a>
+                <a href="/admin/theme-settings?tenant={{ selected_tenant }}" class="btn btn-outline-primary btn-sm">
+                    <i class="bi bi-palette"></i> Theme
+                </a>
+            </div>
             {% endif %}
         </div>
     </div>
@@ -45,7 +53,7 @@
                                 {{ tenant.name }}
                             </option>
                             {% endfor %}
-                    </select>
+                        </select>
                     </form>
                     {% if request.path not in ['/admin/settings', '/admin/media', '/admin/stores'] %}
                     <a href="/admin/stores/add" class="btn btn-sm btn-outline-light">
