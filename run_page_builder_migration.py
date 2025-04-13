@@ -97,5 +97,104 @@ def main():
             # Continue with verification even if tables already exist
             main()
 
+def create_test_pages():
+    """Create test pages for each tenant with proper session handling."""
+    logger.info("Checking if page builder tables exist...")
+    
+    # Create a new session for this operation
+    session = SessionLocal()
+    
+    try:
+        # Check if we have all the required tables
+        from sqlalchemy import inspect
+        inspector = inspect(session.bind)
+        tables = inspector.get_table_names()
+        logger.info(f"Found tables: {tables}")
+        
+        required_tables = ['pages', 'page_sections', 'content_blocks', 'page_templates']
+        missing_tables = [table for table in required_tables if table not in tables]
+        
+        if missing_tables:
+            logger.error(f"Missing tables: {missing_tables}")
+            return
+        
+        logger.info("All required tables exist.")
+        
+        # Get a page manager instance
+        page_manager = PageManager(session)
+        
+        # Get all tenants
+        from pycommerce.models.db_registry import Tenant
+        tenants = session.query(Tenant).all()
+        logger.info(f"Found {len(tenants)} tenants")
+        
+        # Create a test page for each tenant
+        for tenant in tenants:
+            logger.info(f"Creating test page for tenant {tenant.name}")
+            try:
+                # Prepare page data
+                page_data = {
+                    "title": f"Welcome to {tenant.name}",
+                    "slug": "welcome",
+                    "meta_title": f"Welcome to {tenant.name} - Home Page",
+                    "meta_description": f"This is the welcome page for {tenant.name}",
+                    "is_published": True,
+                    "layout_data": {
+                        "template_id": session.query(PageTemplate.id).first()[0],
+                        "sections": [
+                            {
+                                "type": "header",
+                                "settings": {
+                                    "heading": f"Welcome to {tenant.name}",
+                                    "subheading": "Your one-stop shop for quality products"
+                                },
+                                "blocks": []
+                            },
+                            {
+                                "type": "content",
+                                "settings": {},
+                                "blocks": [
+                                    {
+                                        "type": "text",
+                                        "settings": {
+                                            "content": f"<h2>About {tenant.name}</h2><p>We offer a wide range of products designed to meet your needs.</p>"
+                                        }
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                }
+                
+                # Important: We need to use the session directly for CRUD operations
+                new_page = Page(
+                    tenant_id=tenant.id,
+                    title=page_data["title"],
+                    slug=page_data["slug"],
+                    meta_title=page_data["meta_title"],
+                    meta_description=page_data["meta_description"],
+                    is_published=page_data["is_published"],
+                    layout_data=page_data["layout_data"]
+                )
+                
+                session.add(new_page)
+                session.commit()
+                
+                logger.info(f"Successfully created test page for {tenant.name}")
+                
+            except Exception as e:
+                session.rollback()
+                logger.error(f"Error creating test page: {str(e)}")
+        
+        # Commit all changes
+        logger.info("Page builder test completed successfully.")
+    except Exception as e:
+        session.rollback()
+        logger.error(f"Error in create_test_pages: {str(e)}")
+    finally:
+        session.close()
+
 if __name__ == "__main__":
     main()
+    # After the migration is complete, create test pages
+    create_test_pages()

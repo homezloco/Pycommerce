@@ -11,9 +11,10 @@ from fastapi import APIRouter, Form, HTTPException, Request, status, Body
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 
-from pycommerce.models.page_builder import PageManager, PageSectionManager, ContentBlockManager, PageTemplateManager
+from pycommerce.models.page_builder import PageManager, PageSectionManager, ContentBlockManager, PageTemplateManager, Page
 from pycommerce.models.tenant import TenantManager
 from pycommerce.services.wysiwyg_service import WysiwygService
+from pycommerce.core.db import SessionLocal
 
 logger = logging.getLogger(__name__)
 
@@ -41,14 +42,14 @@ async def debug_pages(request: Request, tenant: Optional[str] = None):
         tenants = tenant_manager.get_all()
         logger.info(f"Found {len(tenants)} tenants")
         tenant_list = [{"id": str(t.id), "name": t.name, "slug": t.slug} for t in tenants]
-        
+
         # Get selected tenant
         selected_tenant_slug = tenant or request.session.get("selected_tenant")
         logger.info(f"Selected tenant slug: {selected_tenant_slug}")
         if not selected_tenant_slug and tenants:
             selected_tenant_slug = tenants[0].slug
             logger.info(f"Auto-selected tenant slug: {selected_tenant_slug}")
-        
+
         # Get tenant object
         tenant_obj = None
         tenant_pages = []
@@ -66,45 +67,45 @@ async def debug_pages(request: Request, tenant: Optional[str] = None):
                 except Exception as e:
                     logger.error(f"Error listing pages: {str(e)}")
                     tenant_pages = []
-        
+
         # Check database tables
         try:
             from sqlalchemy import inspect
             from pycommerce.core.db import engine
-            
+
             inspector = inspect(engine)
             tables = inspector.get_table_names()
-            
+
             # Check if page builder tables exist
             has_pages_table = 'pages' in tables
             has_sections_table = 'page_sections' in tables
             has_blocks_table = 'content_blocks' in tables
             has_templates_table = 'page_templates' in tables
-            
+
             # Get table counts
             page_count = 0
             section_count = 0
             block_count = 0
             template_count = 0
-            
+
             from sqlalchemy import text
             with engine.connect() as conn:
                 if has_pages_table:
                     result = conn.execute(text("SELECT COUNT(*) FROM pages"))
                     page_count = result.scalar()
-                
+
                 if has_sections_table:
                     result = conn.execute(text("SELECT COUNT(*) FROM page_sections"))
                     section_count = result.scalar()
-                
+
                 if has_blocks_table:
                     result = conn.execute(text("SELECT COUNT(*) FROM content_blocks"))
                     block_count = result.scalar()
-                
+
                 if has_templates_table:
                     result = conn.execute(text("SELECT COUNT(*) FROM page_templates"))
                     template_count = result.scalar()
-            
+
             db_info = {
                 "tables_exist": {
                     "pages": has_pages_table,
@@ -122,7 +123,7 @@ async def debug_pages(request: Request, tenant: Optional[str] = None):
         except Exception as e:
             logger.error(f"Error checking database tables: {str(e)}")
             db_info = {"error": str(e)}
-        
+
         return {
             "success": True,
             "tenants_count": len(tenant_list),
@@ -165,12 +166,12 @@ async def pages_list(
 ):
     """Admin page listing all pages."""
     logger.info("Accessing pages listing route")
-    
+
     # Check if templates are properly set up
     if templates is None:
         logger.error("Templates object is None. Check setup_routes function.")
         return JSONResponse({"error": "Templates not properly initialized"}, status_code=500)
-    
+
     # Get all tenants for the sidebar
     logger.info("Fetching all tenants")
     try:
@@ -202,7 +203,7 @@ async def pages_list(
             logger.info(f"Getting tenant by slug: {selected_tenant_slug}")
             tenant_obj = tenant_manager.get_by_slug(selected_tenant_slug)
             logger.info(f"Found tenant: {tenant_obj.name if tenant_obj else 'None'}")
-            
+
             if tenant_obj:
                 # Get pages for the tenant
                 try:
@@ -323,6 +324,7 @@ async def page_create(
     content: Optional[str] = Form(None)
 ):
     """Create a new page."""
+    session = SessionLocal()
     try:
         # Get tenant
         tenant = tenant_manager.get(tenant_id)
@@ -406,11 +408,14 @@ async def page_create(
             status_code=status.HTTP_303_SEE_OTHER
         )
     except Exception as e:
+        session.rollback()
         logger.error(f"Error creating page: {str(e)}")
         return RedirectResponse(
             url=f"/admin/pages/create?tenant={tenant.slug if 'tenant' in locals() and tenant else ''}&status_message=Error+creating+page:+{str(e)}&status_type=danger",
             status_code=status.HTTP_303_SEE_OTHER
         )
+    finally:
+        session.close()
 
 @router.get("/pages/edit/{page_id}", response_class=HTMLResponse)
 async def page_edit_form(
@@ -840,3 +845,142 @@ async def delete_block(block_id: str):
     except Exception as e:
         logger.error(f"Error deleting block: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error deleting block: {str(e)}")
+
+@router.post("/api/pages", response_class=JSONResponse)
+async def api_create_page(page_data: Dict[str, Any] = Body(...)):
+    """Create a new page via API."""
+    session = SessionLocal()
+    try:
+        page_manager = PageManager(session)
+        page = page_manager.create(page_data)
+        return {"id": str(page.id)}
+    except Exception as e:
+        session.rollback()
+        logger.error(f"Error creating page via API: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error creating page: {str(e)}")
+    finally:
+        session.close()
+
+@router.put("/api/pages/{page_id}", response_class=JSONResponse)
+async def api_update_page(page_id: str, page_data: Dict[str, Any] = Body(...)):
+    """Update a page via API."""
+    session = SessionLocal()
+    try:
+        page_manager = PageManager(session)
+        page = page_manager.update(page_id, page_data)
+        if not page:
+            raise HTTPException(status_code=404, detail=f"Page with ID {page_id} not found")
+        return {"id": str(page.id)}
+    except HTTPException:
+        raise
+    except Exception as e:
+        session.rollback()
+        logger.error(f"Error updating page via API: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error updating page: {str(e)}")
+    finally:
+        session.close()
+
+@router.delete("/api/pages/{page_id}", response_class=JSONResponse)
+async def api_delete_page(page_id: str):
+    """Delete a page via API."""
+    session = SessionLocal()
+    try:
+        page_manager = PageManager(session)
+        success = page_manager.delete(page_id)
+        if not success:
+            raise HTTPException(status_code=404, detail=f"Page with ID {page_id} not found")
+        return {"success": True, "message": "Page deleted successfully"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        session.rollback()
+        logger.error(f"Error deleting page via API: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error deleting page: {str(e)}")
+    finally:
+        session.close()
+
+
+@router.post("/pages/create", response_class=RedirectResponse)
+async def admin_create_page(
+    request: Request,
+    tenant_id: str = Form(...),
+    title: str = Form(...),
+    slug: str = Form(...),
+    meta_title: str = Form(None),
+    meta_description: str = Form(None),
+    is_published: bool = Form(False),
+    template_id: str = Form(None)
+):
+    """Create a new page."""
+    session = SessionLocal()
+    try:
+        page_manager = PageManager(session)
+        template_manager = PageTemplateManager(session)
+
+        # Get the selected template or the first available
+        if template_id:
+            template = template_manager.get(template_id)
+        else:
+            templates = template_manager.list()
+            template = templates[0] if templates else None
+
+        if not template:
+            error = "No page template available. Please create a template first."
+            return RedirectResponse(
+                url=f"/admin/pages?tenant={tenant_id}&error={error}",
+                status_code=303
+            )
+
+        # Create basic page structure from template
+        page_data = {
+            "tenant_id": tenant_id,
+            "title": title,
+            "slug": slug,
+            "meta_title": meta_title,
+            "meta_description": meta_description,
+            "is_published": is_published == 'on' or is_published is True,
+            "layout_data": {
+                "template_id": str(template.id),
+                "sections": []
+            }
+        }
+
+        # Add sections from template
+        if template.template_data and "sections" in template.template_data:
+            for section_template in template.template_data["sections"]:
+                page_data["layout_data"]["sections"].append({
+                    "type": section_template["section_type"],
+                    "settings": section_template["settings"],
+                    "blocks": []
+                })
+
+        # Create the page directly with SQLAlchemy instead of using the manager
+        new_page = Page(
+            tenant_id=tenant_id,
+            title=title,
+            slug=slug,
+            meta_title=meta_title,
+            meta_description=meta_description,
+            is_published=page_data["is_published"],
+            layout_data=page_data["layout_data"]
+        )
+
+        session.add(new_page)
+        session.commit()
+
+        # Get the ID after commit
+        page_id = new_page.id
+
+        return RedirectResponse(
+            url=f"/admin/pages/editor?id={page_id}&tenant={tenant_id}",
+            status_code=303
+        )
+    except Exception as e:
+        session.rollback()
+        logger.error(f"Error creating page: {str(e)}")
+        return RedirectResponse(
+            url=f"/admin/pages?tenant={tenant_id}&error=Error creating page: {str(e)}",
+            status_code=303
+        )
+    finally:
+        session.close()

@@ -113,41 +113,34 @@ if not hasattr(Tenant, 'pages') or not isinstance(getattr(Tenant, 'pages', None)
 # ----- Manager Classes -----
 
 class PageManager:
-    """Manager for page operations."""
+    """Manager for Page objects."""
 
     def __init__(self, session=None):
-        """Initialize with optional session."""
-        self.session = session
+        self.session = session #or db_session()  Removed db_session() call as it's undefined in this context.  Assumed to be handled elsewhere.
+        self._owns_session = session is None
 
-    def _get_session(self):
-        """Get the current session or create a new one."""
-        if self.session:
-            return self.session
-        return SessionLocal()
-
-    def create(self, page_data: Dict[str, Any]) -> Page:
-        """
-        Create a new page.
-
-        Args:
-            page_data: Dictionary containing page data
-
-        Returns:
-            The created page
-        """
-        session = self._get_session()
+    def create(self, data):
+        """Create a new page."""
         try:
-            page = Page(**page_data)
-            session.add(page)
-            session.commit()
+            page = Page(
+                tenant_id=data["tenant_id"],
+                title=data["title"],
+                slug=data["slug"],
+                meta_title=data.get("meta_title"),
+                meta_description=data.get("meta_description"),
+                is_published=data.get("is_published", False),
+                layout_data=data.get("layout_data", {})
+            )
+            self.session.add(page)
+            self.session.commit()
             return page
         except Exception as e:
-            session.rollback()
-            logger.error(f"Error creating page: {str(e)}")
-            raise
+            self.session.rollback()
+            raise e
         finally:
-            if not self.session:
-                session.close()
+            # Only close the session if we created it
+            if self._owns_session:
+                self.session.close()
 
     def get(self, page_id: str) -> Optional[Page]:
         """
