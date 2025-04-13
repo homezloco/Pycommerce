@@ -201,10 +201,20 @@ if __name__ == "__main__":
         # Ensure page builder tables exist
         ensure_page_builder_tables()
 
-        uvicorn.run(
-            "web_app:app",
-            host="0.0.0.0",
-            port=5000,
-            reload=True,
-            log_level="info"
-        )
+        import socket
+
+        def find_free_port(start_port=8000, max_attempts=10):
+            """Find a free port starting from start_port"""
+            for port in range(start_port, start_port + max_attempts):
+                with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                    try:
+                        s.bind(('0.0.0.0', port))
+                        return port
+                    except OSError:
+                        continue
+            # If no ports are available, return a different port range
+            return 8080
+
+        port = find_free_port()
+        logger.info(f"Starting server on port {port}")
+        uvicorn.run("web_app:app", host="0.0.0.0", port=port, reload=True, log_level="info")
