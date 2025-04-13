@@ -28,19 +28,7 @@ except ImportError as e:
 
 # Register API routes
 
-@app.get("/api/health")
-async def health_check():
-    """Health check endpoint for the background server."""
-    return {"status": "ok"}
-
-try:
-    from pycommerce.api.routes import register_api_routes
-    register_api_routes(app)
-    logger.info("API routes registered successfully")
-except ImportError as e:
-    logger.warning(f"Failed to register API routes: {str(e)}")
-
-# Add health endpoint required by the ASGI-WSGI adapter
+# Health check endpoint required by the ASGI-WSGI adapter
 @app.get("/api/health")
 async def health_check():
     """Health check endpoint that the proxy uses to determine if the app is running."""
@@ -49,6 +37,13 @@ async def health_check():
         "version": "0.1.0",
         "message": "PyCommerce API is running"
     })
+
+try:
+    from pycommerce.api.routes import register_api_routes
+    register_api_routes(app)
+    logger.info("API routes registered successfully")
+except ImportError as e:
+    logger.warning(f"Failed to register API routes: {str(e)}")
 
 # Add root endpoint
 @app.get("/", response_class=HTMLResponse)
