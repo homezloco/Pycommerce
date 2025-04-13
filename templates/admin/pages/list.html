@@ -103,7 +103,7 @@
                             {% endfor %}
                         {% else %}
                             <tr>
-                                <td colspan="5" class="text-center">No pages found. <a href="/admin/pages/create{% if selected_tenant %}?tenant={{ selected_tenant }}{% endif %}">Create your first page</a>.</td>
+                                <td colspan="5" class="text-center">No pages found. <a href="/admin/pages/create{% if selected_tenant %}?tenant={{ selected_tenant }}{% endif %}" class="btn btn-sm btn-primary">Create your first page</a>.</td>
                             </tr>
                         {% endif %}
                     </tbody>

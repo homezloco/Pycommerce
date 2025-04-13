@@ -41,9 +41,6 @@ def get_managers():
     block_manager = ContentBlockManager(session)
     template_manager = PageTemplateManager(session)
     
-    # Make sure the session is attached to all managers
-    tenant_manager.session = session
-    
     return {
         "tenant_manager": tenant_manager,
         "page_manager": page_manager,
@@ -310,7 +307,11 @@ async def pages_list(
             logger.info(f"Template file exists: {template_path}")
 
         # Return template response
-        logger.info("Rendering template: admin/pages/list.html")
+        logger.info(f"Rendering template: admin/pages/list.html with {len(pages)} pages")
+        # Log each page for debugging
+        for p in pages:
+            logger.info(f"Page in context: {p.title} ({p.id})")
+            
         return templates.TemplateResponse(
             "admin/pages/list.html",
             {
