@@ -237,4 +237,4 @@ def find_free_port(start_port=8000, max_attempts=10):
 
 port = find_free_port()
 logger.info(f"Starting server on port {port}")
-        uvicorn.run("web_app:app", host="0.0.0.0", port=port, reload=True, log_level="info")
+uvicorn.run("web_app:app", host="0.0.0.0", port=port, reload=True, log_level="info")
