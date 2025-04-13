@@ -45,7 +45,6 @@ def get_managers():
         "template_manager": PageTemplateManager(session),
         "session": session
     }
-</old_str>
 
 # Debug endpoint
 @router.get("/debug-pages", response_class=JSONResponse)
@@ -56,7 +55,7 @@ async def debug_pages(request: Request, tenant: Optional[str] = None):
         # Get local manager instances with a session
         tenant_manager = managers["tenant_manager"]
         page_manager = managers["page_manager"]
-        
+
         # Get all tenants
         logger.info("Fetching all tenants")
         tenants = tenant_manager.get_all()
@@ -191,12 +190,12 @@ async def pages_list(
     logger.info("Accessing pages listing route")
     managers = get_managers()
     session = managers["session"]
-    
+
     try:
         # Get local manager instances with a session
         tenant_manager = managers["tenant_manager"]
         page_manager = managers["page_manager"]
-        
+
         # Check if templates are properly set up
         if templates is None:
             logger.error("Templates object is None. Check setup_routes function.")
@@ -297,12 +296,12 @@ async def page_create_form(
     """Admin form to create a new page."""
     managers = get_managers()
     session = managers["session"]
-    
+
     try:
         # Get local manager instances with a session
         tenant_manager = managers["tenant_manager"]
         template_manager = managers["template_manager"]
-        
+
         # Get all tenants for the sidebar
         tenants = tenant_manager.get_all()
 
