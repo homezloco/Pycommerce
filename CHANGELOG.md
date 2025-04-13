@@ -1,3 +1,4 @@
+
 # PyCommerce Changelog
 
 All notable changes to this project will be documented in this file.
@@ -27,6 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Rich text editor with AI-powered content generation and enhancement
 - Market analysis dashboard with sales trends and category performance metrics
 - Product category caching system for improved database query performance
+- Page builder system with customizable sections and blocks for creating dynamic storefront pages
 
 ### Changed
 - Updated order status to use string values instead of integers for improved readability and better display in the admin interface
@@ -40,6 +42,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Improved database query efficiency
 
 ### Fixed
+- [2025-04-13] Fixed page builder router registration to properly include routes in both main and FastAPI applications
 - [2025-04-12] Fixed media selector in theme settings page by properly structuring HTML modal outside JavaScript function
 - [2025-04-12] Fixed "No media found" issue in media browser by improving fallback image loading functionality
 - [2025-04-11] Fixed revenue calculation inconsistency between dashboard and market analysis pages, ensuring only completed orders (SHIPPED, DELIVERED, COMPLETED) are counted for revenue metrics
