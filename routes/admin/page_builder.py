@@ -31,12 +31,22 @@ wysiwyg_service = WysiwygService()
 def get_managers():
     """Get managers with a fresh session."""
     session = SessionLocal()
+    
+    # Initialize managers with session
+    tenant_manager = TenantManager()
+    tenant_manager.session = session
+    
+    page_manager = PageManager(session)
+    section_manager = PageSectionManager(session)
+    block_manager = ContentBlockManager(session)
+    template_manager = PageTemplateManager(session)
+    
     return {
-        "tenant_manager": TenantManager(session),
-        "page_manager": PageManager(session),
-        "section_manager": PageSectionManager(session),
-        "block_manager": ContentBlockManager(session),
-        "template_manager": PageTemplateManager(session),
+        "tenant_manager": tenant_manager,
+        "page_manager": page_manager,
+        "section_manager": section_manager,
+        "block_manager": block_manager,
+        "template_manager": template_manager,
         "session": session
     }
 
