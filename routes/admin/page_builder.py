@@ -11,7 +11,7 @@ from fastapi import APIRouter, Form, HTTPException, Request, status, Body
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 
-from pycommerce.models.page_builder import PageManager, PageSectionManager, ContentBlockManager, PageTemplateManager, Page
+from pycommerce.models.page_builder import PageManager, PageSectionManager, ContentBlockManager, PageTemplateManager, Page, PageTemplate
 from pycommerce.models.tenant import TenantManager
 from pycommerce.services.wysiwyg_service import WysiwygService
 from pycommerce.core.db import SessionLocal
@@ -182,22 +182,22 @@ def setup_routes(jinja_templates: Jinja2Templates = None):
         logger.error("Templates object is None in setup_routes. Check app initialization.")
     else:
         logger.info("Templates setup complete")
-        
+
     # Get absolute path to template directory
     import os
     base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     template_dir = os.path.join(base_dir, "templates")
-    
+
     # Verify template paths exist
     template_paths = [
         os.path.join(template_dir, "admin", "pages", "list.html"),
         os.path.join(template_dir, "admin", "pages", "create.html"),
         os.path.join(template_dir, "admin", "pages", "editor.html")
     ]
-    
+
     logger.info(f"Base directory: {base_dir}")
     logger.info(f"Template directory: {template_dir}")
-    
+
     for path in template_paths:
         if os.path.exists(path):
             logger.info(f"Template found: {path}")
@@ -357,28 +357,28 @@ async def pages_list(
             "status_message": status_message,
             "status_type": status_type
         }
-        
+
         logger.info(f"Template context prepared with {len(pages)} pages")
-        
+
         # Try to render the template
         try:
             return templates.TemplateResponse("admin/pages/list.html", context)
         except Exception as e:
             logger.error(f"Error rendering template: {str(e)}")
-            
+
             # Try to detect common template issues
             import os
             base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
             template_dir = os.path.join(base_dir, "templates")
             template_path = os.path.join(template_dir, "admin", "pages", "list.html")
-            
+
             if not os.path.exists(template_path):
                 logger.error(f"Template file not found: {template_path}")
                 return HTMLResponse(
                     content=f"<h1>Template Error</h1><p>Template file not found: {template_path}</p>",
                     status_code=500
                 )
-            
+
             # Return error with more debug information
             error_html = f"""
             <html>
@@ -851,7 +851,7 @@ async def page_delete(
         # Delete the page
         page_manager.delete(page_id)
 
-        return RedirectResponse(
+        returnreturn RedirectResponse(
             url=f"/admin/pages?tenant={tenant_slug}&status_message=Page+deleted+successfully&status_type=success",
             status_code=status.HTTP_303_SEE_OTHER
         )

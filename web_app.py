@@ -85,11 +85,21 @@ try:
 
     # Ensure templates is properly passed to page builder routes
     try:
+        # Make sure the templates object is correctly initialized
+        if templates is None:
+            logger.error("Templates object is None, cannot initialize page builder routes properly")
+            from fastapi.templating import Jinja2Templates
+            import os
+            templates = Jinja2Templates(directory=os.path.join(os.getcwd(), "templates"))
+            logger.info("Created new templates object for page builder")
+            
         page_builder_router = setup_page_builder_routes(templates)
         app.include_router(page_builder_router)
         logger.info("Page Builder routes initialized successfully with templates")
     except Exception as e:
         logger.error(f"Error setting up page builder routes: {str(e)}")
+        import traceback
+        logger.error(traceback.format_exc())
 
     # Add the additional routers
     store_settings_router = setup_store_settings_routes(templates)
