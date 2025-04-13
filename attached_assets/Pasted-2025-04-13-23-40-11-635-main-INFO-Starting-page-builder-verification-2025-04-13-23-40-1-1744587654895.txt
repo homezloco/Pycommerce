@@ -1,0 +1,40 @@
+2025-04-13 23:40:11,635 - __main__ - INFO - Starting page builder verification...
+2025-04-13 23:40:11,635 - __main__ - INFO - Verifying page builder templates...
+2025-04-13 23:40:11,635 - __main__ - INFO - ✅ Template found: /home/runner/workspace/templates/admin/pages/list.html
+2025-04-13 23:40:11,635 - __main__ - INFO - ✅ Template found: /home/runner/workspace/templates/admin/pages/create.html
+2025-04-13 23:40:11,635 - __main__ - INFO - ✅ Template found: /home/runner/workspace/templates/admin/pages/editor.html
+2025-04-13 23:40:11,636 - __main__ - INFO - Verifying page builder database tables...
+2025-04-13 23:40:16,357 - pycommerce.services.mail - INFO - Email template directory: /home/runner/workspace/templates/emails
+2025-04-13 23:40:16,542 - pycommerce.plugins.payment.config - INFO - Successfully loaded payment settings from database
+2025-04-13 23:40:16,575 - pycommerce.plugins.payment.config - INFO - Using development Stripe credentials
+2025-04-13 23:40:16,575 - pycommerce.plugins.payment.config - INFO - Using development PayPal credentials
+2025-04-13 23:40:16,578 - pycommerce.plugins.payment.stripe - INFO - Initializing Stripe payment plugin
+2025-04-13 23:40:16,578 - pycommerce.plugins - INFO - Registering plugin: stripe_payment v0.1.0
+2025-04-13 23:40:16,578 - pycommerce.plugins.payment.stripe - INFO - Initializing Stripe payment plugin
+2025-04-13 23:40:16,578 - pycommerce - INFO - Registered payment plugin: stripe
+2025-04-13 23:40:16,578 - pycommerce.plugins.payment.paypal - INFO - Initializing PayPal payment plugin
+2025-04-13 23:40:16,578 - pycommerce.plugins - INFO - Registering plugin: paypal_payment v0.1.0
+2025-04-13 23:40:16,578 - pycommerce.plugins.payment.paypal - INFO - Initializing PayPal payment plugin
+2025-04-13 23:40:16,578 - pycommerce - INFO - Registered payment plugin: paypal
+2025-04-13 23:40:16,578 - pycommerce.plugins - INFO - Registering plugin: standard_shipping v0.1.0
+2025-04-13 23:40:16,578 - pycommerce.plugins.shipping.standard - INFO - Initializing Standard shipping plugin
+2025-04-13 23:40:16,578 - pycommerce - INFO - Registered shipping plugin: standard
+2025-04-13 23:40:16,756 - __main__ - INFO - ✅ Table found: pages
+2025-04-13 23:40:16,756 - __main__ - INFO - ✅ Table found: page_sections
+2025-04-13 23:40:16,757 - __main__ - INFO - ✅ Table found: content_blocks
+2025-04-13 23:40:16,757 - __main__ - INFO - ✅ Table found: page_templates
+2025-04-13 23:40:16,875 - __main__ - INFO - Table pages has 5 records
+2025-04-13 23:40:16,912 - __main__ - INFO - Table page_sections has 0 records
+2025-04-13 23:40:16,947 - __main__ - INFO - Table content_blocks has 0 records
+2025-04-13 23:40:16,983 - __main__ - INFO - Table page_templates has 1 records
+2025-04-13 23:40:17,020 - __main__ - INFO - Testing UUID JSON serialization...
+2025-04-13 23:40:17,020 - __main__ - INFO - Test UUID: ea3eb9f5-4973-4e8d-bba5-a2f26d2519b9
+2025-04-13 23:40:17,020 - __main__ - INFO - Direct serialization failed as expected - UUID is not JSON serializable
+2025-04-13 23:40:17,020 - __main__ - INFO - Custom encoder serialization: {"id": "ea3eb9f5-4973-4e8d-bba5-a2f26d2519b9"}
+2025-04-13 23:40:17,020 - __main__ - INFO - ✅ UUID serialization with custom encoder works correctly
+2025-04-13 23:40:17,020 - __main__ - INFO - 
+=== Page Builder Verification Results ===
+2025-04-13 23:40:17,020 - __main__ - INFO - Templates verification: ✅ PASS
+2025-04-13 23:40:17,020 - __main__ - INFO - Database tables verification: ✅ PASS
+2025-04-13 23:40:17,020 - __main__ - INFO - JSON serialization verification: ✅ PASS
+2025-04-13 23:40:17,020 - __main__ - INFO - ✅ All page builder components are correctly set up

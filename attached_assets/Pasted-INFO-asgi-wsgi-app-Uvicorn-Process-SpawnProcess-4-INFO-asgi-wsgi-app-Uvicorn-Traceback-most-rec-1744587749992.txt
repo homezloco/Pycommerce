@@ -1,0 +1,43 @@
+INFO:asgi_wsgi_app:Uvicorn: Process SpawnProcess-4:
+INFO:asgi_wsgi_app:Uvicorn: Traceback (most recent call last):
+INFO:asgi_wsgi_app:Uvicorn: File "/nix/store/clx0mcir7qw8zk36zbr4jra789g3knf6-python3-3.11.10/lib/python3.11/multiprocessing/process.py", line 314, in _bootstrap
+INFO:asgi_wsgi_app:Uvicorn: self.run()
+INFO:asgi_wsgi_app:Uvicorn: File "/nix/store/clx0mcir7qw8zk36zbr4jra789g3knf6-python3-3.11.10/lib/python3.11/multiprocessing/process.py", line 108, in run
+INFO:asgi_wsgi_app:Uvicorn: self._target(*self._args, **self._kwargs)
+INFO:asgi_wsgi_app:Uvicorn: File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/uvicorn/_subprocess.py", line 80, in subprocess_started
+INFO:asgi_wsgi_app:Uvicorn: target(sockets=sockets)
+INFO:asgi_wsgi_app:Uvicorn: File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/uvicorn/server.py", line 66, in run
+INFO:asgi_wsgi_app:Uvicorn: return asyncio.run(self.serve(sockets=sockets))
+INFO:asgi_wsgi_app:Uvicorn: ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+INFO:asgi_wsgi_app:Uvicorn: File "/nix/store/clx0mcir7qw8zk36zbr4jra789g3knf6-python3-3.11.10/lib/python3.11/asyncio/runners.py", line 190, in run
+INFO:asgi_wsgi_app:Uvicorn: return runner.run(main)
+INFO:asgi_wsgi_app:Uvicorn: ^^^^^^^^^^^^^^^^
+INFO:asgi_wsgi_app:Uvicorn: File "/nix/store/clx0mcir7qw8zk36zbr4jra789g3knf6-python3-3.11.10/lib/python3.11/asyncio/runners.py", line 118, in run
+INFO:asgi_wsgi_app:Uvicorn: return self._loop.run_until_complete(task)
+INFO:asgi_wsgi_app:Uvicorn: ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+INFO:asgi_wsgi_app:Uvicorn: File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
+INFO:asgi_wsgi_app:Uvicorn: File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/uvicorn/server.py", line 70, in serve
+INFO:asgi_wsgi_app:Uvicorn: await self._serve(sockets)
+INFO:asgi_wsgi_app:Uvicorn: File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/uvicorn/server.py", line 77, in _serve
+INFO:asgi_wsgi_app:Uvicorn: config.load()
+INFO:asgi_wsgi_app:Uvicorn: File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/uvicorn/config.py", line 435, in load
+INFO:asgi_wsgi_app:Uvicorn: self.loaded_app = import_from_string(self.app)
+INFO:asgi_wsgi_app:Uvicorn: ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+INFO:asgi_wsgi_app:Uvicorn: File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/uvicorn/importer.py", line 19, in import_from_string
+INFO:asgi_wsgi_app:Uvicorn: module = importlib.import_module(module_str)
+INFO:asgi_wsgi_app:Uvicorn: ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+INFO:asgi_wsgi_app:Uvicorn: File "/nix/store/clx0mcir7qw8zk36zbr4jra789g3knf6-python3-3.11.10/lib/python3.11/importlib/__init__.py", line 126, in import_module
+INFO:asgi_wsgi_app:Uvicorn: return _bootstrap._gcd_import(name[level:], package, level)
+INFO:asgi_wsgi_app:Uvicorn: ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+INFO:asgi_wsgi_app:Uvicorn: File "<frozen importlib._bootstrap>", line 1204, in _gcd_import
+INFO:asgi_wsgi_app:Uvicorn: File "<frozen importlib._bootstrap>", line 1176, in _find_and_load
+INFO:asgi_wsgi_app:Uvicorn: File "<frozen importlib._bootstrap>", line 1147, in _find_and_load_unlocked
+INFO:asgi_wsgi_app:Uvicorn: File "<frozen importlib._bootstrap>", line 690, in _load_unlocked
+INFO:asgi_wsgi_app:Uvicorn: File "<frozen importlib._bootstrap_external>", line 940, in exec_module
+INFO:asgi_wsgi_app:Uvicorn: File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+INFO:asgi_wsgi_app:Uvicorn: File "/home/runner/workspace/web_app.py", line 46, in <module>
+INFO:asgi_wsgi_app:Uvicorn: from routes.admin.page_builder import setup_routes as setup_page_builder_routes
+INFO:asgi_wsgi_app:Uvicorn: File "/home/runner/workspace/routes/admin/page_builder.py", line 854
+INFO:asgi_wsgi_app:Uvicorn: returnreturn RedirectResponse(
+INFO:asgi_wsgi_app:Uvicorn: ^^^^^^^^^^^^^^^^
+INFO:asgi_wsgi_app:Uvicorn: SyntaxError: invalid syntax
