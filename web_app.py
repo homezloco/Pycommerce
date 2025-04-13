@@ -556,7 +556,7 @@ async def debug_products_inline(request: Request):
     """
 
     return HTMLResponse(content=html)
-    
+
     # Add a debug route to check page builder tables
     @app.get("/debug/page-builder-tables", response_class=JSONResponse)
     async def debug_page_builder_tables():

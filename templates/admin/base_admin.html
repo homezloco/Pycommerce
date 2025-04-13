@@ -82,3 +82,25 @@
                 </form>
                 {% endif %}
 {% endblock %}
+
+{% block nav %}
+    <ul class="nav flex-column">
+        <!-- Existing nav items -->
+        <!-- Website -->
+                <li class="nav-item">
+                    <a class="nav-link {% if active_page == 'website' %}active{% endif %}" href="/admin/website">
+                        <i class="fas fa-globe-americas me-2"></i>
+                        Website
+                    </a>
+                </li>
+
+                <!-- Pages -->
+                <li class="nav-item">
+                    <a class="nav-link {% if active_page == 'pages' %}active{% endif %}" href="/admin/pages">
+                        <i class="fas fa-file-alt me-2"></i>
+                        Pages
+                    </a>
+                </li>
+        <!-- More nav items... -->
+    </ul>
+{% endblock %}

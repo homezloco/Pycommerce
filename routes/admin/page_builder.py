@@ -182,6 +182,22 @@ def setup_routes(jinja_templates: Jinja2Templates = None):
         logger.error("Templates object is None in setup_routes. Check app initialization.")
     else:
         logger.info("Templates setup complete")
+        
+    # Verify template paths exist
+    import os
+    template_paths = [
+        os.path.join("templates", "admin", "pages", "list.html"),
+        os.path.join("templates", "admin", "pages", "create.html"),
+        os.path.join("templates", "admin", "pages", "editor.html")
+    ]
+    for path in template_paths:
+        if os.path.exists(path):
+            logger.info(f"Template found: {path}")
+        else:
+            logger.error(f"Template NOT found: {path}")
+            
+    # Force templates to be accessible
+    global templates
 
     # Ensure the router is properly configured and returned
     return router
