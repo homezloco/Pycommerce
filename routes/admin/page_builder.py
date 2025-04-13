@@ -71,7 +71,15 @@ async def pages_list(
         tenant_obj = tenant_manager.get_by_slug(selected_tenant_slug)
         if tenant_obj:
             # Get pages for the tenant
-            pages = page_manager.list_by_tenant(str(tenant_obj.id), include_unpublished=True)
+            try:
+                pages = page_manager.list_by_tenant(str(tenant_obj.id), include_unpublished=True)
+                logger.info(f"Found {len(pages)} pages for tenant {tenant_obj.id}")
+            except Exception as e:
+                logger.error(f"Error listing pages for tenant {tenant_obj.id}: {str(e)}")
+                status_message = f"Error loading pages: {str(e)}"
+                status_type = "error"
+    else:
+        logger.warning("No tenant selected for page listing")
 
     return templates.TemplateResponse(
         "admin/pages/list.html",
