@@ -43,14 +43,27 @@ except ImportError as e:
 
 # Add root endpoint
 @app.get("/", response_class=HTMLResponse)
-async def index(request: Request):
+async def root(request: Request):
     """Home page for PyCommerce."""
+    # Try to load data for the home page
+    cart_item_count = 0
+    try:
+        cart_id = request.session.get("cart_id")
+        if cart_id:
+            from pycommerce.models.cart import CartManager
+            cart_manager = CartManager()
+            cart = cart_manager.get(cart_id)
+            if cart and hasattr(cart, 'items'):
+                cart_item_count = sum(item.quantity for item in cart.items)
+    except Exception as e:
+        logger.warning(f"Error getting cart data: {str(e)}")
+    
     return templates.TemplateResponse(
         "index.html",
         {
             "request": request,
             "title": "PyCommerce - A Python Ecommerce Platform",
-            "cart_item_count": request.session.get("cart_item_count", 0)
+            "cart_item_count": cart_item_count
         }
     )
 

@@ -27,10 +27,11 @@ if __name__ == "__main__":
 
     templates = Jinja2Templates(directory="templates")
 
-    from web_app import app as fastapi_app
+    from web_app import app as fastapi_app, templates
     
     # Set up storefront routes
-    home.setup_routes(fastapi_app)
+    home_router = home.setup_routes(templates)
+    fastapi_app.include_router(home_router)
     products.setup_routes(fastapi_app)
     cart.setup_routes(fastapi_app)
     checkout.setup_routes(fastapi_app)

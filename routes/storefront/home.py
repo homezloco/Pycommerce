@@ -219,4 +219,5 @@ def setup_routes(app_templates):
     """
     global templates
     templates = app_templates
+    logger.info("Home routes registered successfully")
     return router
