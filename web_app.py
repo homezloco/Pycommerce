@@ -7,6 +7,7 @@ It represents the entry point for uvicorn when running directly.
 import logging
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse, HTMLResponse, RedirectResponse
+from fastapi.templating import Jinja2Templates
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -16,6 +17,58 @@ logger = logging.getLogger(__name__)
 from app_factory import create_app
 
 app, templates = create_app()
+
+# Register admin routes
+try:
+    from routes.admin.dashboard import setup_routes as setup_dashboard_routes
+    from routes.admin.products import setup_routes as setup_products_routes
+    from routes.admin.orders import setup_routes as setup_orders_routes
+    from routes.admin.customers import setup_routes as setup_customers_routes
+    from routes.admin.settings import setup_routes as setup_settings_routes
+    from routes.admin.plugins import setup_routes as setup_plugins_routes
+    from routes.admin.tenants import setup_routes as setup_tenants_routes
+    from routes.admin.media import setup_routes as setup_media_routes
+    from routes.admin.inventory import setup_routes as setup_inventory_routes
+    from routes.admin.analytics import setup_routes as setup_analytics_routes
+    from routes.admin.page_builder import setup_routes as setup_page_builder_routes
+    
+    # Include admin routers
+    dashboard_router = setup_dashboard_routes(templates)
+    app.include_router(dashboard_router)
+    
+    products_router = setup_products_routes(templates)
+    app.include_router(products_router)
+    
+    orders_router = setup_orders_routes(templates)
+    app.include_router(orders_router)
+    
+    customers_router = setup_customers_routes(templates)
+    app.include_router(customers_router)
+    
+    settings_router = setup_settings_routes(templates)
+    app.include_router(settings_router)
+    
+    plugins_router = setup_plugins_routes(templates)
+    app.include_router(plugins_router)
+    
+    tenants_router = setup_tenants_routes(templates)
+    app.include_router(tenants_router)
+    
+    media_router = setup_media_routes(templates)
+    app.include_router(media_router)
+    
+    inventory_router = setup_inventory_routes(templates)
+    app.include_router(inventory_router)
+    
+    analytics_router = setup_analytics_routes(templates)
+    app.include_router(analytics_router)
+    
+    page_builder_router = setup_page_builder_routes(templates)
+    app.include_router(page_builder_router)
+    
+    logger.info("Admin routes registered successfully")
+except ImportError as e:
+    logger.warning(f"Failed to register admin routes: {str(e)}")
 
 # Register store settings test routes
 try:
@@ -77,7 +130,14 @@ async def root(request: Request):
 @app.get("/admin/")
 async def admin_redirect():
     """Redirect /admin to /admin/dashboard."""
+    logger.info("Redirecting from /admin to /admin/dashboard")
     return RedirectResponse(url="/admin/dashboard")
+
+# Add a health check route specifically for admin dashboard
+@app.get("/admin/health")
+async def admin_health():
+    """Health check specifically for admin routes."""
+    return {"status": "ok", "service": "admin", "message": "Admin routes are working"}
 
 # Debug route for products
 @app.get("/debug/products", response_class=HTMLResponse)
