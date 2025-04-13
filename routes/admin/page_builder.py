@@ -1,3 +1,4 @@
+
 """
 Admin routes for page builder.
 
@@ -26,13 +27,6 @@ templates = None
 
 # Initialize services
 wysiwyg_service = WysiwygService()
-
-# Managers will be initialized with a session when needed
-tenant_manager = None
-page_manager = None
-section_manager = None
-block_manager = None
-template_manager = None
 
 def get_managers():
     """Get managers with a fresh session."""
@@ -372,6 +366,13 @@ async def page_create(
     """Create a new page."""
     session = SessionLocal()
     try:
+        # Initialize managers
+        tenant_manager = TenantManager(session)
+        page_manager = PageManager(session)
+        section_manager = PageSectionManager(session)
+        block_manager = ContentBlockManager(session)
+        template_manager = PageTemplateManager(session)
+        
         # Get tenant
         tenant = tenant_manager.get(tenant_id)
         if not tenant:
@@ -472,62 +473,72 @@ async def page_edit_form(
     status_type: str = "info"
 ):
     """Admin form to edit a page."""
-    # Get the page
-    page = page_manager.get(page_id)
-    if not page:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Page with ID {page_id} not found"
-        )
+    session = SessionLocal()
+    try:
+        # Initialize managers
+        page_manager = PageManager(session)
+        tenant_manager = TenantManager(session)
+        section_manager = PageSectionManager(session)
+        block_manager = ContentBlockManager(session)
+        
+        # Get the page
+        page = page_manager.get(page_id)
+        if not page:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Page with ID {page_id} not found"
+            )
 
-    # Get the tenant
-    tenant_obj = tenant_manager.get(str(page.tenant_id))
-    if not tenant_obj:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Tenant with ID {page.tenant_id} not found"
-        )
+        # Get the tenant
+        tenant_obj = tenant_manager.get(str(page.tenant_id))
+        if not tenant_obj:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Tenant with ID {page.tenant_id} not found"
+            )
 
-    # Get all tenants for the sidebar
-    tenants = tenant_manager.get_all()
+        # Get all tenants for the sidebar
+        tenants = tenant_manager.get_all()
 
-    # Set the selected tenant
-    selected_tenant_slug = tenant_obj.slug
-    request.session["selected_tenant"] = selected_tenant_slug
+        # Set the selected tenant
+        selected_tenant_slug = tenant_obj.slug
+        request.session["selected_tenant"] = selected_tenant_slug
 
-    # Get page sections
-    sections = section_manager.list_by_page(page_id)
+        # Get page sections
+        sections = section_manager.list_by_page(page_id)
 
-    # Get blocks for each section
-    sections_with_blocks = []
-    for section in sections:
-        blocks = block_manager.list_by_section(str(section.id))
-        sections_with_blocks.append({
-            "section": section,
-            "blocks": blocks
+        # Get blocks for each section
+        sections_with_blocks = []
+        for section in sections:
+            blocks = block_manager.list_by_section(str(section.id))
+            sections_with_blocks.append({
+                "section": section,
+                "blocks": blocks
+            })
+
+        # Get editor configuration
+        editor_config = wysiwyg_service.get_editor_config('tinymce', {
+            'tenant_id': str(tenant_obj.id),
+            'media_browse_url': '/admin/api/media'
         })
 
-    # Get editor configuration
-    editor_config = wysiwyg_service.get_editor_config('tinymce', {
-        'tenant_id': str(tenant_obj.id),
-        'media_browse_url': '/admin/api/media'
-    })
-
-    return templates.TemplateResponse(
-        "admin/pages/edit.html",
-        {
-            "request": request,
-            "selected_tenant": selected_tenant_slug,
-            "tenant": tenant_obj,
-            "tenants": tenants,
-            "active_page": "pages",
-            "page": page,
-            "sections": sections_with_blocks,
-            "editor_config": json.dumps(editor_config),
-            "status_message": status_message,
-            "status_type": status_type
-        }
-    )
+        return templates.TemplateResponse(
+            "admin/pages/edit.html",
+            {
+                "request": request,
+                "selected_tenant": selected_tenant_slug,
+                "tenant": tenant_obj,
+                "tenants": tenants,
+                "active_page": "pages",
+                "page": page,
+                "sections": sections_with_blocks,
+                "editor_config": json.dumps(editor_config),
+                "status_message": status_message,
+                "status_type": status_type
+            }
+        )
+    finally:
+        session.close()
 
 @router.post("/pages/edit/{page_id}", response_class=RedirectResponse)
 async def page_update(
@@ -541,7 +552,12 @@ async def page_update(
     layout_data: Optional[str] = Form(None)
 ):
     """Update a page."""
+    session = SessionLocal()
     try:
+        # Initialize managers
+        page_manager = PageManager(session)
+        tenant_manager = TenantManager(session)
+        
         # Get the page
         page = page_manager.get(page_id)
         if not page:
@@ -612,6 +628,8 @@ async def page_update(
             url=f"/admin/pages/edit/{page_id}?tenant={tenant_slug}&status_message=Error+updating+page:+{str(e)}&status_type=danger",
             status_code=status.HTTP_303_SEE_OTHER
         )
+    finally:
+        session.close()
 
 @router.post("/pages/delete/{page_id}", response_class=RedirectResponse)
 async def page_delete(
@@ -619,7 +637,12 @@ async def page_delete(
     page_id: str
 ):
     """Delete a page."""
+    session = SessionLocal()
     try:
+        # Initialize managers
+        page_manager = PageManager(session)
+        tenant_manager = TenantManager(session)
+        
         # Get the page
         page = page_manager.get(page_id)
         if not page:
@@ -656,6 +679,8 @@ async def page_delete(
             url=f"/admin/pages?tenant={tenant_slug}&status_message=Error+deleting+page:+{str(e)}&status_type=danger",
             status_code=status.HTTP_303_SEE_OTHER
         )
+    finally:
+        session.close()
 
 @router.get("/pages/preview/{page_id}", response_class=HTMLResponse)
 async def page_preview(
@@ -663,44 +688,54 @@ async def page_preview(
     page_id: str
 ):
     """Preview a page."""
-    # Get the page
-    page = page_manager.get(page_id)
-    if not page:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Page with ID {page_id} not found"
+    session = SessionLocal()
+    try:
+        # Initialize managers
+        page_manager = PageManager(session)
+        tenant_manager = TenantManager(session)
+        section_manager = PageSectionManager(session)
+        block_manager = ContentBlockManager(session)
+        
+        # Get the page
+        page = page_manager.get(page_id)
+        if not page:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Page with ID {page_id} not found"
+            )
+
+        # Get the tenant
+        tenant = tenant_manager.get(str(page.tenant_id))
+        if not tenant:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Tenant with ID {page.tenant_id} not found"
+            )
+
+        # Get page sections
+        sections = section_manager.list_by_page(page_id)
+
+        # Get blocks for each section
+        sections_with_blocks = []
+        for section in sections:
+            blocks = block_manager.list_by_section(str(section.id))
+            sections_with_blocks.append({
+                "section": section,
+                "blocks": blocks
+            })
+
+        return templates.TemplateResponse(
+            "store/page.html",
+            {
+                "request": request,
+                "tenant": tenant,
+                "page": page,
+                "sections": sections_with_blocks,
+                "preview_mode": True
+            }
         )
-
-    # Get the tenant
-    tenant = tenant_manager.get(str(page.tenant_id))
-    if not tenant:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Tenant with ID {page.tenant_id} not found"
-        )
-
-    # Get page sections
-    sections = section_manager.list_by_page(page_id)
-
-    # Get blocks for each section
-    sections_with_blocks = []
-    for section in sections:
-        blocks = block_manager.list_by_section(str(section.id))
-        sections_with_blocks.append({
-            "section": section,
-            "blocks": blocks
-        })
-
-    return templates.TemplateResponse(
-        "store/page.html",
-        {
-            "request": request,
-            "tenant": tenant,
-            "page": page,
-            "sections": sections_with_blocks,
-            "preview_mode": True
-        }
-    )
+    finally:
+        session.close()
 
 @router.get("/page-templates", response_class=HTMLResponse)
 async def page_templates_list(
@@ -709,27 +744,35 @@ async def page_templates_list(
     status_type: str = "info"
 ):
     """Admin page listing all page templates."""
-    # Get all tenants for the sidebar
-    tenants = tenant_manager.get_all()
+    session = SessionLocal()
+    try:
+        # Initialize managers
+        tenant_manager = TenantManager(session)
+        template_manager = PageTemplateManager(session)
+        
+        # Get all tenants for the sidebar
+        tenants = tenant_manager.get_all()
 
-    # Get selected tenant from session
-    selected_tenant_slug = request.session.get("selected_tenant")
+        # Get selected tenant from session
+        selected_tenant_slug = request.session.get("selected_tenant")
 
-    # Get templates
-    templates_list = template_manager.list_templates()
+        # Get templates
+        templates_list = template_manager.list_templates()
 
-    return templates.TemplateResponse(
-        "admin/pages/templates.html",
-        {
-            "request": request,
-            "selected_tenant": selected_tenant_slug,
-            "tenants": tenants,
-            "templates": templates_list,
-            "active_page": "page-templates",
-            "status_message": status_message,
-            "status_type": status_type
-        }
-    )
+        return templates.TemplateResponse(
+            "admin/pages/templates.html",
+            {
+                "request": request,
+                "selected_tenant": selected_tenant_slug,
+                "tenants": tenants,
+                "templates": templates_list,
+                "active_page": "page-templates",
+                "status_message": status_message,
+                "status_type": status_type
+            }
+        )
+    finally:
+        session.close()
 
 # API routes for page builder components
 @router.post("/api/pages/sections", response_class=JSONResponse)
@@ -737,7 +780,9 @@ async def create_section(
     section_data: Dict[str, Any] = Body(...)
 ):
     """Create a new section."""
+    session = SessionLocal()
     try:
+        section_manager = PageSectionManager(session)
         section = section_manager.create(section_data)
         return {
             "id": str(section.id),
@@ -749,8 +794,11 @@ async def create_section(
             "updated_at": section.updated_at.isoformat()
         }
     except Exception as e:
+        session.rollback()
         logger.error(f"Error creating section: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error creating section: {str(e)}")
+    finally:
+        session.close()
 
 @router.put("/api/pages/sections/{section_id}", response_class=JSONResponse)
 async def update_section(
@@ -758,7 +806,9 @@ async def update_section(
     section_data: Dict[str, Any] = Body(...)
 ):
     """Update a section."""
+    session = SessionLocal()
     try:
+        section_manager = PageSectionManager(session)
         section = section_manager.update(section_id, section_data)
         if not section:
             raise HTTPException(status_code=404, detail=f"Section with ID {section_id} not found")
@@ -775,13 +825,18 @@ async def update_section(
     except HTTPException:
         raise
     except Exception as e:
+        session.rollback()
         logger.error(f"Error updating section: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error updating section: {str(e)}")
+    finally:
+        session.close()
 
 @router.delete("/api/pages/sections/{section_id}", response_class=JSONResponse)
 async def delete_section(section_id: str):
     """Delete a section."""
+    session = SessionLocal()
     try:
+        section_manager = PageSectionManager(session)
         success = section_manager.delete(section_id)
         if not success:
             raise HTTPException(status_code=404, detail=f"Section with ID {section_id} not found")
@@ -790,15 +845,24 @@ async def delete_section(section_id: str):
     except HTTPException:
         raise
     except Exception as e:
+        session.rollback()
         logger.error(f"Error deleting section: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error deleting section: {str(e)}")
+    finally:
+        session.close()
 
 @router.post("/api/pages/blocks", response_class=JSONResponse)
 async def create_block(
     block_data: Dict[str, Any] = Body(...)
 ):
     """Create a new content block."""
+    session = SessionLocal()
     try:
+        # Initialize managers
+        block_manager = ContentBlockManager(session)
+        section_manager = PageSectionManager(session)
+        page_manager = PageManager(session)
+        
         # If there's HTML content, process it
         if "content" in block_data and "html" in block_data["content"]:
             tenant_id = None
@@ -828,8 +892,11 @@ async def create_block(
             "updated_at": block.updated_at.isoformat()
         }
     except Exception as e:
+        session.rollback()
         logger.error(f"Error creating block: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error creating block: {str(e)}")
+    finally:
+        session.close()
 
 @router.put("/api/pages/blocks/{block_id}", response_class=JSONResponse)
 async def update_block(
@@ -837,7 +904,13 @@ async def update_block(
     block_data: Dict[str, Any] = Body(...)
 ):
     """Update a content block."""
+    session = SessionLocal()
     try:
+        # Initialize managers
+        block_manager = ContentBlockManager(session)
+        section_manager = PageSectionManager(session)
+        page_manager = PageManager(session)
+        
         # If there's HTML content, process it
         if "content" in block_data and "html" in block_data["content"]:
             tenant_id = None
@@ -874,13 +947,18 @@ async def update_block(
     except HTTPException:
         raise
     except Exception as e:
+        session.rollback()
         logger.error(f"Error updating block: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error updating block: {str(e)}")
+    finally:
+        session.close()
 
 @router.delete("/api/pages/blocks/{block_id}", response_class=JSONResponse)
 async def delete_block(block_id: str):
     """Delete a content block."""
+    session = SessionLocal()
     try:
+        block_manager = ContentBlockManager(session)
         success = block_manager.delete(block_id)
         if not success:
             raise HTTPException(status_code=404, detail=f"Block with ID {block_id} not found")
@@ -889,8 +967,11 @@ async def delete_block(block_id: str):
     except HTTPException:
         raise
     except Exception as e:
+        session.rollback()
         logger.error(f"Error deleting block: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error deleting block: {str(e)}")
+    finally:
+        session.close()
 
 @router.post("/api/pages", response_class=JSONResponse)
 async def api_create_page(page_data: Dict[str, Any] = Body(...)):
