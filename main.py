@@ -110,6 +110,9 @@ if __name__ == "__main__":
     pages_router = pages.setup_routes(templates)
     fastapi_app.include_router(pages_router)
 
+    # Import admin modules
+    from routes.admin import dashboard, products as admin_products, orders, customers, settings, plugins, tenants, media, inventory, analytics, page_builder
+    
     # Set up admin routes with the templates
     dashboard_router = dashboard.setup_routes(templates)
     fastapi_app.include_router(dashboard_router)
