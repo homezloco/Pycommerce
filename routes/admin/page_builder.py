@@ -1,4 +1,3 @@
-
 """
 Admin routes for page builder.
 
@@ -31,16 +30,16 @@ wysiwyg_service = WysiwygService()
 def get_managers():
     """Get managers with a fresh session."""
     session = SessionLocal()
-    
+
     # Initialize all managers with the session
     tenant_manager = TenantManager()
     tenant_manager.session = session
-    
+
     page_manager = PageManager(session)
     section_manager = PageSectionManager(session)
     block_manager = ContentBlockManager(session)
     template_manager = PageTemplateManager(session)
-    
+
     return {
         "tenant_manager": tenant_manager,
         "page_manager": page_manager,
@@ -177,13 +176,13 @@ def setup_routes(jinja_templates: Jinja2Templates = None):
     global templates
     templates = jinja_templates
     logger.info("Setting up page builder routes with templates")
-    
+
     # Check template setup
     if templates is None:
         logger.error("Templates object is None in setup_routes. Check app initialization.")
     else:
         logger.info("Templates setup complete")
-        
+
     # Ensure the router is properly configured and returned
     return router
 
@@ -228,7 +227,7 @@ async def pages_list(
         # Handle special case for 'all' slug
         if selected_tenant_slug == 'all':
             selected_tenant_slug = None
-            
+
         # If no tenant is selected and we have tenants, select the first one
         if not selected_tenant_slug and tenants:
             selected_tenant_slug = tenants[0].slug
@@ -318,7 +317,7 @@ async def pages_list(
         # Log each page for debugging
         for p in pages:
             logger.info(f"Page in context: {p.title} ({p.id})")
-            
+
         return templates.TemplateResponse(
             "admin/pages/list.html",
             {
@@ -427,7 +426,7 @@ async def page_create(
         section_manager = PageSectionManager(session)
         block_manager = ContentBlockManager(session)
         template_manager = PageTemplateManager(session)
-        
+
         # Get tenant
         tenant = tenant_manager.get(tenant_id)
         if not tenant:
@@ -535,7 +534,7 @@ async def page_edit_form(
         tenant_manager = TenantManager(session)
         section_manager = PageSectionManager(session)
         block_manager = ContentBlockManager(session)
-        
+
         # Get the page
         page = page_manager.get(page_id)
         if not page:
@@ -597,83 +596,6 @@ async def page_edit_form(
 
 @router.post("/pages/edit/{page_id}", response_class=RedirectResponse)
 async def page_update(
-
-@router.get("/pages/editor", response_class=HTMLResponse)
-async def page_editor(
-    request: Request,
-    id: str,
-    tenant: Optional[str] = None,
-    status_message: Optional[str] = None,
-    status_type: str = "info"
-):
-    """Admin page editor."""
-    session = SessionLocal()
-    try:
-        # Initialize managers
-        page_manager = PageManager(session)
-        tenant_manager = TenantManager(session)
-        section_manager = PageSectionManager(session)
-        block_manager = ContentBlockManager(session)
-        
-        # Get the page
-        page = page_manager.get(id)
-        if not page:
-            raise HTTPException(
-                status_code=404,
-                detail=f"Page with ID {id} not found"
-            )
-
-        # Get the tenant
-        tenant_obj = tenant_manager.get(str(page.tenant_id))
-        if not tenant_obj:
-            raise HTTPException(
-                status_code=404,
-                detail=f"Tenant with ID {page.tenant_id} not found"
-            )
-
-        # Get all tenants for the sidebar
-        tenants = tenant_manager.get_all()
-
-        # Set the selected tenant
-        selected_tenant_slug = tenant_obj.slug
-        request.session["selected_tenant"] = selected_tenant_slug
-
-        # Get page sections
-        sections = section_manager.list_by_page(id)
-
-        # Get blocks for each section
-        sections_with_blocks = []
-        for section in sections:
-            blocks = block_manager.list_by_section(str(section.id))
-            sections_with_blocks.append({
-                "section": section,
-                "blocks": blocks
-            })
-
-        # Get editor configuration
-        editor_config = wysiwyg_service.get_editor_config('tinymce', {
-            'tenant_id': str(tenant_obj.id),
-            'media_browse_url': '/admin/api/media'
-        })
-
-        return templates.TemplateResponse(
-            "admin/pages/editor.html",
-            {
-                "request": request,
-                "selected_tenant": selected_tenant_slug,
-                "tenant": tenant_obj,
-                "tenants": tenants,
-                "active_page": "pages",
-                "page": page,
-                "sections": sections_with_blocks,
-                "editor_config": json.dumps(editor_config),
-                "status_message": status_message,
-                "status_type": status_type
-            }
-        )
-    finally:
-        session.close()
-
     request: Request,
     page_id: str,
     title: str = Form(...),
@@ -689,7 +611,7 @@ async def page_editor(
         # Initialize managers
         page_manager = PageManager(session)
         tenant_manager = TenantManager(session)
-        
+
         # Get the page
         page = page_manager.get(page_id)
         if not page:
@@ -763,6 +685,82 @@ async def page_editor(
     finally:
         session.close()
 
+@router.get("/pages/editor", response_class=HTMLResponse)
+async def page_editor(
+    request: Request,
+    id: str,
+    tenant: Optional[str] = None,
+    status_message: Optional[str] = None,
+    status_type: str = "info"
+):
+    """Admin page editor."""
+    session = SessionLocal()
+    try:
+        # Initialize managers
+        page_manager = PageManager(session)
+        tenant_manager = TenantManager(session)
+        section_manager = PageSectionManager(session)
+        block_manager = ContentBlockManager(session)
+
+        # Get the page
+        page = page_manager.get(id)
+        if not page:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Page with ID {id} not found"
+            )
+
+        # Get the tenant
+        tenant_obj = tenant_manager.get(str(page.tenant_id))
+        if not tenant_obj:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Tenant with ID {page.tenant_id} not found"
+            )
+
+        # Get all tenants for the sidebar
+        tenants = tenant_manager.get_all()
+
+        # Set the selected tenant
+        selected_tenant_slug = tenant_obj.slug
+        request.session["selected_tenant"] = selected_tenant_slug
+
+        # Get page sections
+        sections = section_manager.list_by_page(id)
+
+        # Get blocks for each section
+        sections_with_blocks = []
+        for section in sections:
+            blocks = block_manager.list_by_section(str(section.id))
+            sections_with_blocks.append({
+                "section": section,
+                "blocks": blocks
+            })
+
+        # Get editor configuration
+        editor_config = wysiwyg_service.get_editor_config('tinymce', {
+            'tenant_id': str(tenant_obj.id),
+            'media_browse_url': '/admin/api/media'
+        })
+
+        return templates.TemplateResponse(
+            "admin/pages/editor.html",
+            {
+                "request": request,
+                "selected_tenant": selected_tenant_slug,
+                "tenant": tenant_obj,
+                "tenants": tenants,
+                "active_page": "pages",
+                "page": page,
+                "sections": sections_with_blocks,
+                "editor_config": json.dumps(editor_config),
+                "status_message": status_message,
+                "status_type": status_type
+            }
+        )
+    finally:
+        session.close()
+
 @router.post("/pages/delete/{page_id}", response_class=RedirectResponse)
 async def page_delete(
     request: Request,
@@ -774,7 +772,7 @@ async def page_delete(
         # Initialize managers
         page_manager = PageManager(session)
         tenant_manager = TenantManager(session)
-        
+
         # Get the page
         page = page_manager.get(page_id)
         if not page:
@@ -827,7 +825,7 @@ async def page_preview(
         tenant_manager = TenantManager(session)
         section_manager = PageSectionManager(session)
         block_manager = ContentBlockManager(session)
-        
+
         # Get the page
         page = page_manager.get(page_id)
         if not page:
@@ -873,15 +871,14 @@ async def page_preview(
 async def page_templates_list(
     request: Request,
     status_message: Optional[str] = None,
-    status_type: str = "info"
-):
+    status_type: str = "info"):
     """Admin page listing all page templates."""
     session = SessionLocal()
     try:
         # Initialize managers
         tenant_manager = TenantManager(session)
         template_manager = PageTemplateManager(session)
-        
+
         # Get all tenants for the sidebar
         tenants = tenant_manager.get_all()
 
@@ -994,7 +991,7 @@ async def create_block(
         block_manager = ContentBlockManager(session)
         section_manager = PageSectionManager(session)
         page_manager = PageManager(session)
-        
+
         # If there's HTML content, process it
         if "content" in block_data and "html" in block_data["content"]:
             tenant_id = None
@@ -1042,7 +1039,7 @@ async def update_block(
         block_manager = ContentBlockManager(session)
         section_manager = PageSectionManager(session)
         page_manager = PageManager(session)
-        
+
         # If there's HTML content, process it
         if "content" in block_data and "html" in block_data["content"]:
             tenant_id = None
