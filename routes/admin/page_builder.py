@@ -171,12 +171,6 @@ async def debug_pages(request: Request, tenant: Optional[str] = None):
 
 def setup_routes(jinja_templates: Jinja2Templates = None):
     """Setup page builder routes with the given templates."""
-    finally:
-        # Make sure to close the session
-        managers["session"].close()
-
-def setup_routes(jinja_templates: Jinja2Templates = None):
-    """Setup page builder routes with the given templates."""
     global templates
     templates = jinja_templates
     logger.info("Setting up page builder routes with templates")
