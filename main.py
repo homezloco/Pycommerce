@@ -52,8 +52,7 @@ if __name__ == "__main__":
     page_builder_router = page_builder.setup_routes(templates)
     fastapi_app.include_router(page_builder_router)
     
-    # Also include the router in the main app for direct access
-    app.include_router(page_builder_router)
+    # Note: No need to include the router in the WSGI app, it's already included in the FastAPI app
 
 
     # Run with uvicorn directly when file is executed
