@@ -206,6 +206,9 @@ if __name__ == "__main__":
         inspector = inspect(engine)
         existing_tables = inspector.get_table_names()
         page_builder_tables = ['pages', 'page_sections', 'content_blocks', 'page_templates']
+        
+        # Import uvicorn for running the server
+        import uvicorn
         missing_tables = [table for table in page_builder_tables if table not in existing_tables]
         if missing_tables:
             logger.warning(f"Some page builder tables are still missing: {missing_tables}")
