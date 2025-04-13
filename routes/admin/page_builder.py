@@ -597,6 +597,83 @@ async def page_edit_form(
 
 @router.post("/pages/edit/{page_id}", response_class=RedirectResponse)
 async def page_update(
+
+@router.get("/pages/editor", response_class=HTMLResponse)
+async def page_editor(
+    request: Request,
+    id: str,
+    tenant: Optional[str] = None,
+    status_message: Optional[str] = None,
+    status_type: str = "info"
+):
+    """Admin page editor."""
+    session = SessionLocal()
+    try:
+        # Initialize managers
+        page_manager = PageManager(session)
+        tenant_manager = TenantManager(session)
+        section_manager = PageSectionManager(session)
+        block_manager = ContentBlockManager(session)
+        
+        # Get the page
+        page = page_manager.get(id)
+        if not page:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Page with ID {id} not found"
+            )
+
+        # Get the tenant
+        tenant_obj = tenant_manager.get(str(page.tenant_id))
+        if not tenant_obj:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Tenant with ID {page.tenant_id} not found"
+            )
+
+        # Get all tenants for the sidebar
+        tenants = tenant_manager.get_all()
+
+        # Set the selected tenant
+        selected_tenant_slug = tenant_obj.slug
+        request.session["selected_tenant"] = selected_tenant_slug
+
+        # Get page sections
+        sections = section_manager.list_by_page(id)
+
+        # Get blocks for each section
+        sections_with_blocks = []
+        for section in sections:
+            blocks = block_manager.list_by_section(str(section.id))
+            sections_with_blocks.append({
+                "section": section,
+                "blocks": blocks
+            })
+
+        # Get editor configuration
+        editor_config = wysiwyg_service.get_editor_config('tinymce', {
+            'tenant_id': str(tenant_obj.id),
+            'media_browse_url': '/admin/api/media'
+        })
+
+        return templates.TemplateResponse(
+            "admin/pages/editor.html",
+            {
+                "request": request,
+                "selected_tenant": selected_tenant_slug,
+                "tenant": tenant_obj,
+                "tenants": tenants,
+                "active_page": "pages",
+                "page": page,
+                "sections": sections_with_blocks,
+                "editor_config": json.dumps(editor_config),
+                "status_message": status_message,
+                "status_type": status_type
+            }
+        )
+    finally:
+        session.close()
+
     request: Request,
     page_id: str,
     title: str = Form(...),
