@@ -195,9 +195,6 @@ def setup_routes(jinja_templates: Jinja2Templates = None):
             logger.info(f"Template found: {path}")
         else:
             logger.error(f"Template NOT found: {path}")
-            
-    # Force templates to be accessible
-    global templates
 
     # Ensure the router is properly configured and returned
     return router
