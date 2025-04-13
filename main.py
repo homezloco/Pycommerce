@@ -226,6 +226,7 @@ except Exception as e:
 
 def find_free_port(start_port=8000, max_attempts=10):
     """Find a free port starting from start_port"""
+    import socket
     for port in range(start_port, start_port + max_attempts):
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             try:
