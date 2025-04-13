@@ -7,7 +7,9 @@ It represents the entry point for uvicorn when running directly.
 import logging
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse, HTMLResponse, RedirectResponse
+from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from fastapi.middleware.cors import CORSMiddleware
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -23,6 +25,7 @@ try:
     # Check if static files are already mounted
     if not any(getattr(route, "path", "") == "/static" for route in app.routes):
         logger.info("Mounting static files directory")
+        from fastapi.staticfiles import StaticFiles
         app.mount("/static", StaticFiles(directory="static"), name="static")
         logger.info("Static files mounted successfully")
 except Exception as e:
@@ -41,44 +44,101 @@ try:
     from routes.admin.inventory import setup_routes as setup_inventory_routes
     from routes.admin.analytics import setup_routes as setup_analytics_routes
     from routes.admin.page_builder import setup_routes as setup_page_builder_routes
-    
+    from routes.admin.store_settings import setup_routes as setup_store_settings_routes
+    from routes.admin.marketing import setup_routes as setup_marketing_routes
+    from routes.admin.users import setup_routes as setup_users_routes
+    from routes.admin.categories import setup_routes as setup_categories_routes
+    from routes.admin.ai_config import setup_routes as setup_ai_config_routes
+    from routes.admin.theme_settings import setup_routes as setup_theme_settings_routes
+    from routes.admin.returns import setup_routes as setup_returns_routes
+
     # Include admin routers
     dashboard_router = setup_dashboard_routes(templates)
     app.include_router(dashboard_router)
-    
+
     products_router = setup_products_routes(templates)
     app.include_router(products_router)
-    
+
     orders_router = setup_orders_routes(templates)
     app.include_router(orders_router)
-    
+
     customers_router = setup_customers_routes(templates)
     app.include_router(customers_router)
-    
+
     settings_router = setup_settings_routes(templates)
     app.include_router(settings_router)
-    
+
     plugins_router = setup_plugins_routes(templates)
     app.include_router(plugins_router)
-    
+
     tenants_router = setup_tenants_routes(templates)
     app.include_router(tenants_router)
-    
+
     media_router = setup_media_routes(templates)
     app.include_router(media_router)
-    
+
     inventory_router = setup_inventory_routes(templates)
     app.include_router(inventory_router)
-    
+
     analytics_router = setup_analytics_routes(templates)
     app.include_router(analytics_router)
-    
+
     page_builder_router = setup_page_builder_routes(templates)
     app.include_router(page_builder_router)
-    
+
+    # Add the additional routers
+    store_settings_router = setup_store_settings_routes(templates)
+    app.include_router(store_settings_router)
+
+    marketing_router = setup_marketing_routes(templates)
+    app.include_router(marketing_router)
+
+    users_router = setup_users_routes(templates)
+    app.include_router(users_router)
+
+    categories_router = setup_categories_routes(templates)
+    app.include_router(categories_router)
+
+    ai_config_router = setup_ai_config_routes(templates)
+    app.include_router(ai_config_router)
+
+    theme_settings_router = setup_theme_settings_routes(templates)
+    app.include_router(theme_settings_router)
+
+    returns_router = setup_returns_routes(templates)
+    app.include_router(returns_router)
+
     logger.info("Admin routes registered successfully")
 except ImportError as e:
     logger.warning(f"Failed to register admin routes: {str(e)}")
+
+# Register storefront routes
+try:
+    from routes.storefront.home import setup_routes as setup_home_routes
+    from routes.storefront.products import setup_routes as setup_storefront_products_routes
+    from routes.storefront.cart import setup_routes as setup_cart_routes
+    from routes.storefront.checkout import setup_routes as setup_checkout_routes
+    from routes.storefront.pages import setup_routes as setup_pages_routes
+
+    # Include storefront routers
+    home_router = setup_home_routes(templates)
+    app.include_router(home_router)
+
+    products_router = setup_storefront_products_routes(templates)
+    app.include_router(products_router)
+
+    cart_router = setup_cart_routes(templates)
+    app.include_router(cart_router)
+
+    checkout_router = setup_checkout_routes(templates)
+    app.include_router(checkout_router)
+
+    pages_router = setup_pages_routes(templates)
+    app.include_router(pages_router)
+
+    logger.info("Storefront routes registered successfully")
+except ImportError as e:
+    logger.warning(f"Failed to register storefront routes: {str(e)}")
 
 # Register store settings test routes
 try:
@@ -90,6 +150,12 @@ except ImportError as e:
     logger.warning(f"Failed to register store settings test routes: {str(e)}")
 
 # Register API routes
+try:
+    from pycommerce.api.routes import register_api_routes
+    register_api_routes(app)
+    logger.info("API routes registered successfully")
+except ImportError as e:
+    logger.warning(f"Failed to register API routes: {str(e)}")
 
 # Health check endpoint required by the ASGI-WSGI adapter
 @app.get("/api/health")
@@ -101,13 +167,6 @@ async def health_check():
 async def root_health_check():
     """Alternative health check endpoint."""
     return {"status": "ok", "version": "0.1.0", "message": "PyCommerce API is running"}
-
-try:
-    from pycommerce.api.routes import register_api_routes
-    register_api_routes(app)
-    logger.info("API routes registered successfully")
-except ImportError as e:
-    logger.warning(f"Failed to register API routes: {str(e)}")
 
 # Add root endpoint
 @app.get("/", response_class=HTMLResponse)
@@ -155,16 +214,16 @@ async def frontend_debug(request: Request):
     """Frontend debug endpoint."""
     import os
     import sys
-    
+
     # Check if templates directory exists
     templates_exist = os.path.exists("templates")
     admin_templates_exist = os.path.exists("templates/admin")
-    
+
     # Check if static files directory exists
     static_exist = os.path.exists("static")
     css_exist = os.path.exists("static/css")
     js_exist = os.path.exists("static/js")
-    
+
     # List all template files
     template_files = []
     if templates_exist:
@@ -172,7 +231,7 @@ async def frontend_debug(request: Request):
             for file in files:
                 if file.endswith(".html"):
                     template_files.append(os.path.join(root, file))
-    
+
     # List all routes in a safe way
     routes_info = []
     for route in app.routes:
@@ -185,10 +244,10 @@ async def frontend_debug(request: Request):
             routes_info.append(route_info)
         except Exception as e:
             routes_info.append({"error": f"Error parsing route: {str(e)}"})
-    
+
     # Check for important middleware
     middleware_types = [str(type(m)) for m in getattr(app, "middleware", [])]
-    
+
     # Build response
     debug_info = {
         "status": "ok",
@@ -213,11 +272,10 @@ async def frontend_debug(request: Request):
         "routes_sample": routes_info[:15],  # Limit to 15 routes
         "middleware": middleware_types,
     }
-    
+
     # Return as JSON response with pretty formatting
     return JSONResponse(content=debug_info, status_code=200)
 
-# Debug route for products
 @app.get("/debug/products", response_class=HTMLResponse)
 async def debug_products(request: Request):
     """Debug page for products."""
@@ -494,79 +552,3 @@ async def debug_products_inline(request: Request):
     """
 
     return HTMLResponse(content=html)
-
-#app_factory.py
-from fastapi import FastAPI, Request, Depends
-from fastapi.templating import Jinja2Templates
-from fastapi.staticfiles import StaticFiles
-from starlette.middleware.sessions import SessionMiddleware
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import sessionmaker
-from database import get_db, db, db
-from routes.admin import dashboard, store_settings, products, orders, stores
-from routes.admin import categories, users, media, marketing, shipping, plugins
-from routes.admin import inventory, settings, analytics, market_analysis, returns
-from routes.admin import ai_config, theme_settings, page_builder
-
-def create_app():
-    app = FastAPI()
-    templates = Jinja2Templates(directory="templates")
-    app.mount("/static", StaticFiles(directory="static"), name="static")
-    app.add_middleware(SessionMiddleware, secret_key="mysecretkey")
-
-    # Register admin routes
-    app.include_router(dashboard.setup_routes(templates))
-    app.include_router(store_settings.setup_routes(templates))
-    app.include_router(products.setup_routes(templates))
-    app.include_router(orders.setup_routes(templates))
-    app.include_router(stores.setup_routes(templates))
-    app.include_router(media.setup_routes(templates))
-    app.include_router(categories.setup_routes(templates))
-    app.include_router(users.setup_routes(templates))
-    app.include_router(marketing.setup_routes(templates))
-    app.include_router(shipping.setup_routes(templates))
-    app.include_router(plugins.setup_routes(templates))
-    app.include_router(inventory.setup_routes(templates))
-    app.include_router(settings.setup_routes(templates))
-    app.include_router(analytics.setup_routes(templates))
-    app.include_router(market_analysis.setup_routes(templates))
-    app.include_router(returns.setup_routes(templates))
-    app.include_router(ai_config.setup_routes(templates))
-    app.include_router(theme_settings.setup_routes(templates))
-    # Get the page builder router and include it
-    pb_router = page_builder.setup_routes(templates)
-    app.include_router(pb_router)
-    logger.info("Page builder routes registered successfully")
-
-    return app, templates
-"""
-Main FastAPI application for PyCommerce.
-"""
-import logging
-from fastapi import FastAPI, Request, Form
-from fastapi.responses import RedirectResponse
-from fastapi.staticfiles import StaticFiles
-from fastapi.templating import Jinja2Templates
-from fastapi.middleware.cors import CORSMiddleware
-
-# Configure logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-
-# Create FastAPI app
-app = FastAPI(title="PyCommerce API", description="PyCommerce Multi-Tenant E-commerce Platform API")
-
-# Add CORS middleware
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-# Mount static files
-app.mount("/static", StaticFiles(directory="static"), name="static")
-
-# Setup templates
-templates = Jinja2Templates(directory="templates")
