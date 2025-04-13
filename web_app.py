@@ -32,11 +32,7 @@ except ImportError as e:
 @app.get("/api/health")
 async def health_check():
     """Health check endpoint that the proxy uses to determine if the app is running."""
-    return JSONResponse({
-        "status": "ok",
-        "version": "0.1.0",
-        "message": "PyCommerce API is running"
-    })
+    return {"status": "ok", "version": "0.1.0", "message": "PyCommerce API is running"}
 
 try:
     from pycommerce.api.routes import register_api_routes
