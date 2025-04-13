@@ -380,7 +380,10 @@ def create_app():
     app.include_router(returns.setup_routes(templates))
     app.include_router(ai_config.setup_routes(templates))
     app.include_router(theme_settings.setup_routes(templates))
-    app.include_router(page_builder.setup_routes(templates))
+    # Get the page builder router and include it
+    pb_router = page_builder.setup_routes(templates)
+    app.include_router(pb_router)
+    logger.info("Page builder routes registered successfully")
 
     return app, templates
 """

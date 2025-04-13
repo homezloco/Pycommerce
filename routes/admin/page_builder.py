@@ -35,6 +35,7 @@ def setup_routes(jinja_templates: Jinja2Templates = None):
     """Setup page builder routes with the given templates."""
     global templates
     templates = jinja_templates
+    logger.info("Setting up page builder routes with templates")
     # Ensure the router is properly configured and returned
     return router
 
