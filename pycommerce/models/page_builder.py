@@ -119,6 +119,12 @@ class PageManager:
         self.session = session #or db_session()  Removed db_session() call as it's undefined in this context.  Assumed to be handled elsewhere.
         self._owns_session = session is None
 
+    def _get_session(self):
+        """Get the current session or create a new one."""
+        if self.session:
+            return self.session
+        return SessionLocal()
+
     def create(self, data):
         """Create a new page."""
         try:
