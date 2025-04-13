@@ -35,6 +35,19 @@ if __name__ == "__main__":
     products.setup_routes(fastapi_app)
     cart.setup_routes(fastapi_app)
     checkout.setup_routes(fastapi_app)
+    
+    # Add explicit root path check
+    @fastapi_app.get("/")
+    async def root_redirect(request: Request):
+        """Root endpoint to ensure application is running."""
+        return templates.TemplateResponse(
+            "index.html",
+            {
+                "request": request,
+                "title": "PyCommerce - A Python Ecommerce Platform",
+                "cart_item_count": request.session.get("cart_item_count", 0)
+            }
+        )
     pages.setup_routes(templates)
 
     # Set up admin routes with the templates

@@ -16,7 +16,7 @@ from pycommerce.models.cart import CartManager
 # Configure logging
 logger = logging.getLogger(__name__)
 
-# Create router
+# Create router with root path
 router = APIRouter(tags=["home"])
 
 # Global variables initialized in setup_routes

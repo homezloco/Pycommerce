@@ -34,6 +34,11 @@ async def health_check():
     """Health check endpoint that the proxy uses to determine if the app is running."""
     return {"status": "ok", "version": "0.1.0", "message": "PyCommerce API is running"}
 
+@app.get("/health")
+async def root_health_check():
+    """Alternative health check endpoint."""
+    return {"status": "ok", "version": "0.1.0", "message": "PyCommerce API is running"}
+
 try:
     from pycommerce.api.routes import register_api_routes
     register_api_routes(app)
