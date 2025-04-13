@@ -21,6 +21,7 @@ app = proxy_to_uvicorn
 
 if __name__ == "__main__":
     import uvicorn
+    from fastapi import Request
     from fastapi.templating import Jinja2Templates
     from routes.storefront import home, products, cart, checkout, pages
     from routes.admin import dashboard, products as admin_products, orders, customers, settings, plugins, tenants, media, inventory, analytics, page_builder
