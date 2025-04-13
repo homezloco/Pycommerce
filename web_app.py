@@ -83,8 +83,13 @@ try:
     analytics_router = setup_analytics_routes(templates)
     app.include_router(analytics_router)
 
-    page_builder_router = setup_page_builder_routes(templates)
-    app.include_router(page_builder_router)
+    # Ensure templates is properly passed to page builder routes
+    try:
+        page_builder_router = setup_page_builder_routes(templates)
+        app.include_router(page_builder_router)
+        logger.info("Page Builder routes initialized successfully with templates")
+    except Exception as e:
+        logger.error(f"Error setting up page builder routes: {str(e)}")
 
     # Add the additional routers
     store_settings_router = setup_store_settings_routes(templates)

@@ -183,18 +183,35 @@ def setup_routes(jinja_templates: Jinja2Templates = None):
     else:
         logger.info("Templates setup complete")
         
-    # Verify template paths exist
+    # Get absolute path to template directory
     import os
+    base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    template_dir = os.path.join(base_dir, "templates")
+    
+    # Verify template paths exist
     template_paths = [
-        os.path.join("templates", "admin", "pages", "list.html"),
-        os.path.join("templates", "admin", "pages", "create.html"),
-        os.path.join("templates", "admin", "pages", "editor.html")
+        os.path.join(template_dir, "admin", "pages", "list.html"),
+        os.path.join(template_dir, "admin", "pages", "create.html"),
+        os.path.join(template_dir, "admin", "pages", "editor.html")
     ]
+    
+    logger.info(f"Base directory: {base_dir}")
+    logger.info(f"Template directory: {template_dir}")
+    
     for path in template_paths:
         if os.path.exists(path):
             logger.info(f"Template found: {path}")
         else:
             logger.error(f"Template NOT found: {path}")
+            # Try to find where the templates actually are
+            if os.path.exists(template_dir):
+                logger.info(f"Contents of template directory: {os.listdir(template_dir)}")
+                admin_dir = os.path.join(template_dir, "admin")
+                if os.path.exists(admin_dir):
+                    logger.info(f"Contents of admin directory: {os.listdir(admin_dir)}")
+                    pages_dir = os.path.join(admin_dir, "pages")
+                    if os.path.exists(pages_dir):
+                        logger.info(f"Contents of pages directory: {os.listdir(pages_dir)}")
 
     # Ensure the router is properly configured and returned
     return router
@@ -222,7 +239,17 @@ async def pages_list(
         # Check if templates are properly set up
         if templates is None:
             logger.error("Templates object is None. Check setup_routes function.")
-            return JSONResponse({"error": "Templates not properly initialized"}, status_code=500)
+            # Return a simple HTML response as fallback
+            html_fallback = """
+            <html>
+                <head><title>Error: Templates Not Initialized</title></head>
+                <body>
+                    <h1>Error: Templates Not Initialized</h1>
+                    <p>The template system is not properly initialized. Please check the application logs.</p>
+                </body>
+            </html>
+            """
+            return HTMLResponse(content=html_fallback, status_code=500)
 
         # Get all tenants for the sidebar
         logger.info("Fetching all tenants")
@@ -316,37 +343,60 @@ async def pages_list(
         return JSONResponse({"error": f"Error: {str(e)}"}, status_code=500)
 
     try:
-        # Check if the template file exists
-        import os
-        template_path = os.path.join("templates", "admin", "pages", "list.html")
-        if not os.path.exists(template_path):
-            logger.error(f"Template file not found: {template_path}")
-            return JSONResponse({"error": f"Template file not found: {template_path}"}, status_code=500)
-        else:
-            logger.info(f"Template file exists: {template_path}")
-
-        # Return template response
-        logger.info(f"Rendering template: admin/pages/list.html with {len(pages)} pages")
-        # Log each page for debugging
-        for p in pages:
-            logger.info(f"Page in context: {p.title} ({p.id})")
-
-        return templates.TemplateResponse(
-            "admin/pages/list.html",
-            {
-                "request": request,
-                "selected_tenant": selected_tenant_slug,
-                "tenant": tenant_obj,
-                "tenants": tenants,
-                "pages": pages,
-                "active_page": "pages",
-                "search": search,
-                "current_page": page,
-                "limit": limit,
-                "status_message": status_message,
-                "status_type": status_type
-            }
-        )
+        # Prepare context for template
+        context = {
+            "request": request,
+            "selected_tenant": selected_tenant_slug,
+            "tenant": tenant_obj,
+            "tenants": tenants,
+            "pages": pages,
+            "active_page": "pages",
+            "search": search,
+            "current_page": page,
+            "limit": limit,
+            "status_message": status_message,
+            "status_type": status_type
+        }
+        
+        logger.info(f"Template context prepared with {len(pages)} pages")
+        
+        # Try to render the template
+        try:
+            return templates.TemplateResponse("admin/pages/list.html", context)
+        except Exception as e:
+            logger.error(f"Error rendering template: {str(e)}")
+            
+            # Try to detect common template issues
+            import os
+            base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+            template_dir = os.path.join(base_dir, "templates")
+            template_path = os.path.join(template_dir, "admin", "pages", "list.html")
+            
+            if not os.path.exists(template_path):
+                logger.error(f"Template file not found: {template_path}")
+                return HTMLResponse(
+                    content=f"<h1>Template Error</h1><p>Template file not found: {template_path}</p>",
+                    status_code=500
+                )
+            
+            # Return error with more debug information
+            error_html = f"""
+            <html>
+                <head><title>Template Rendering Error</title></head>
+                <body>
+                    <h1>Template Rendering Error</h1>
+                    <p>Error: {str(e)}</p>
+                    <h2>Debug Information:</h2>
+                    <ul>
+                        <li>Template Path: {template_path}</li>
+                        <li>Template Exists: {os.path.exists(template_path)}</li>
+                        <li>Number of Pages: {len(pages)}</li>
+                        <li>Selected Tenant: {selected_tenant_slug}</li>
+                    </ul>
+                </body>
+            </html>
+            """
+            return HTMLResponse(content=error_html, status_code=500)
     finally:
         session.close()
 
