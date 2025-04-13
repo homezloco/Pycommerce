@@ -106,7 +106,9 @@ class PageTemplate(Base):
 
 
 # Add to Tenant model
-Tenant.pages = relationship("Page", back_populates="tenant", cascade="all, delete-orphan")
+# Only set the relationship if it doesn't already exist
+  if not hasattr(Tenant, 'pages'):
+      Tenant.pages = relationship("Page", back_populates="tenant", cascade="all, delete-orphan")
 
 
 # ----- Manager Classes -----

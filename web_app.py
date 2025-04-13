@@ -27,6 +27,12 @@ except ImportError as e:
     logger.warning(f"Failed to register store settings test routes: {str(e)}")
 
 # Register API routes
+
+@app.get("/api/health")
+async def health_check():
+    """Health check endpoint for the background server."""
+    return {"status": "ok"}
+
 try:
     from pycommerce.api.routes import register_api_routes
     register_api_routes(app)
