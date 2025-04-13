@@ -1,0 +1,31 @@
+INFO:web_app:API routes registered successfully
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+  File "/nix/store/clx0mcir7qw8zk36zbr4jra789g3knf6-python3-3.11.10/lib/python3.11/multiprocessing/spawn.py", line 122, in spawn_main
+    exitcode = _main(fd, parent_sentinel)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/nix/store/clx0mcir7qw8zk36zbr4jra789g3knf6-python3-3.11.10/lib/python3.11/multiprocessing/spawn.py", line 131, in _main
+    prepare(preparation_data)
+  File "/nix/store/clx0mcir7qw8zk36zbr4jra789g3knf6-python3-3.11.10/lib/python3.11/multiprocessing/spawn.py", line 246, in prepare
+    _fixup_main_from_path(data['init_main_from_path'])
+  File "/nix/store/clx0mcir7qw8zk36zbr4jra789g3knf6-python3-3.11.10/lib/python3.11/multiprocessing/spawn.py", line 297, in _fixup_main_from_path
+    main_content = runpy.run_path(main_path,
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen runpy>", line 291, in run_path
+  File "<frozen runpy>", line 98, in _run_module_code
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/runner/workspace/main.py", line 9, in <module>
+    from asgi_wsgi_app import proxy_to_uvicorn, start_uvicorn_server
+  File "/home/runner/workspace/asgi_wsgi_app.py", line 8, in <module>
+    from web_app import app as asgi_app
+  File "/home/runner/workspace/web_app.py", line 362, in <module>
+    from routes.admin import ai_config, theme_settings, page_builder
+  File "/home/runner/workspace/routes/admin/page_builder.py", line 14, in <module>
+    from pycommerce.models.page_builder import PageManager, PageSectionManager, ContentBlockManager, PageTemplateManager
+  File "/home/runner/workspace/pycommerce/models/page_builder.py", line 110
+    if not hasattr(Tenant, 'pages'):
+                                    ^
+IndentationError: unindent does not match any outer indentation level
+INFO:watchfiles.main:2 changes detected
+INFO:watchfiles.main:2 changes detected
+INFO:watchfiles.main:2 changes detected
