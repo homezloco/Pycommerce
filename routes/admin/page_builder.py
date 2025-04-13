@@ -24,19 +24,39 @@ router = APIRouter(prefix="/admin", tags=["admin"])
 # Template setup will be passed from main app
 templates = None
 
-# Initialize managers
-tenant_manager = TenantManager()
-page_manager = PageManager()
-section_manager = PageSectionManager()
-block_manager = ContentBlockManager()
-template_manager = PageTemplateManager()
+# Initialize services
 wysiwyg_service = WysiwygService()
+
+# Managers will be initialized with a session when needed
+tenant_manager = None
+page_manager = None
+section_manager = None
+block_manager = None
+template_manager = None
+
+def get_managers():
+    """Get managers with a fresh session."""
+    session = SessionLocal()
+    return {
+        "tenant_manager": TenantManager(session),
+        "page_manager": PageManager(session),
+        "section_manager": PageSectionManager(session),
+        "block_manager": ContentBlockManager(session),
+        "template_manager": PageTemplateManager(session),
+        "session": session
+    }
+</old_str>
 
 # Debug endpoint
 @router.get("/debug-pages", response_class=JSONResponse)
 async def debug_pages(request: Request, tenant: Optional[str] = None):
     """Debug endpoint to check tenant and page data."""
+    managers = get_managers()
     try:
+        # Get local manager instances with a session
+        tenant_manager = managers["tenant_manager"]
+        page_manager = managers["page_manager"]
+        
         # Get all tenants
         logger.info("Fetching all tenants")
         tenants = tenant_manager.get_all()
@@ -166,64 +186,71 @@ async def pages_list(
 ):
     """Admin page listing all pages."""
     logger.info("Accessing pages listing route")
-
-    # Check if templates are properly set up
-    if templates is None:
-        logger.error("Templates object is None. Check setup_routes function.")
-        return JSONResponse({"error": "Templates not properly initialized"}, status_code=500)
-
-    # Get all tenants for the sidebar
-    logger.info("Fetching all tenants")
+    managers = get_managers()
+    session = managers["session"]
+    
     try:
-        tenants = tenant_manager.get_all()
-        logger.info(f"Found {len(tenants)} tenants: {[t.name for t in tenants]}")
-    except Exception as e:
-        logger.error(f"Error getting all tenants: {str(e)}")
-        return JSONResponse({"error": f"Error getting tenants: {str(e)}"}, status_code=500)
+        # Get local manager instances with a session
+        tenant_manager = managers["tenant_manager"]
+        page_manager = managers["page_manager"]
+        
+        # Check if templates are properly set up
+        if templates is None:
+            logger.error("Templates object is None. Check setup_routes function.")
+            return JSONResponse({"error": "Templates not properly initialized"}, status_code=500)
 
-    # Get tenant from query parameters or session
-    selected_tenant_slug = tenant or request.session.get("selected_tenant")
-    logger.info(f"Initial selected tenant slug: {selected_tenant_slug}")
-
-    # If no tenant is selected and we have tenants, select the first one
-    if not selected_tenant_slug and tenants:
-        selected_tenant_slug = tenants[0].slug
-        logger.info(f"Auto-selected tenant slug: {selected_tenant_slug}")
-
-    # Store the selected tenant in session for future requests
-    if selected_tenant_slug:
-        request.session["selected_tenant"] = selected_tenant_slug
-        logger.info(f"Stored tenant slug in session: {selected_tenant_slug}")
-
-    # Get tenant object and pages
-    tenant_obj = None
-    pages = []
-    if selected_tenant_slug:
+        # Get all tenants for the sidebar
+        logger.info("Fetching all tenants")
         try:
-            logger.info(f"Getting tenant by slug: {selected_tenant_slug}")
-            tenant_obj = tenant_manager.get_by_slug(selected_tenant_slug)
-            logger.info(f"Found tenant: {tenant_obj.name if tenant_obj else 'None'}")
-
-            if tenant_obj:
-                # Get pages for the tenant
-                try:
-                    logger.info(f"Listing pages for tenant {tenant_obj.id}")
-                    pages = page_manager.list_by_tenant(str(tenant_obj.id), include_unpublished=True)
-                    logger.info(f"Found {len(pages)} pages for tenant {tenant_obj.id}")
-                    for p in pages:
-                        logger.info(f"  Page: {p.title} (ID: {p.id}, slug: {p.slug})")
-                except Exception as e:
-                    logger.error(f"Error listing pages for tenant {tenant_obj.id}: {str(e)}")
-                    status_message = f"Error loading pages: {str(e)}"
-                    status_type = "error"
-            else:
-                logger.warning(f"No tenant found with slug: {selected_tenant_slug}")
+            tenants = tenant_manager.get_all()
+            logger.info(f"Found {len(tenants)} tenants: {[t.name for t in tenants]}")
         except Exception as e:
-            logger.error(f"Error getting tenant by slug '{selected_tenant_slug}': {str(e)}")
-            status_message = f"Error loading tenant: {str(e)}"
-            status_type = "error"
-    else:
-        logger.warning("No tenant selected for page listing")
+            logger.error(f"Error getting all tenants: {str(e)}")
+            return JSONResponse({"error": f"Error getting tenants: {str(e)}"}, status_code=500)
+
+        # Get tenant from query parameters or session
+        selected_tenant_slug = tenant or request.session.get("selected_tenant")
+        logger.info(f"Initial selected tenant slug: {selected_tenant_slug}")
+
+        # If no tenant is selected and we have tenants, select the first one
+        if not selected_tenant_slug and tenants:
+            selected_tenant_slug = tenants[0].slug
+            logger.info(f"Auto-selected tenant slug: {selected_tenant_slug}")
+
+        # Store the selected tenant in session for future requests
+        if selected_tenant_slug:
+            request.session["selected_tenant"] = selected_tenant_slug
+            logger.info(f"Stored tenant slug in session: {selected_tenant_slug}")
+
+        # Get tenant object and pages
+        tenant_obj = None
+        pages = []
+        if selected_tenant_slug:
+            try:
+                logger.info(f"Getting tenant by slug: {selected_tenant_slug}")
+                tenant_obj = tenant_manager.get_by_slug(selected_tenant_slug)
+                logger.info(f"Found tenant: {tenant_obj.name if tenant_obj else 'None'}")
+
+                if tenant_obj:
+                    # Get pages for the tenant
+                    try:
+                        logger.info(f"Listing pages for tenant {tenant_obj.id}")
+                        pages = page_manager.list_by_tenant(str(tenant_obj.id), include_unpublished=True)
+                        logger.info(f"Found {len(pages)} pages for tenant {tenant_obj.id}")
+                        for p in pages:
+                            logger.info(f"  Page: {p.title} (ID: {p.id}, slug: {p.slug})")
+                    except Exception as e:
+                        logger.error(f"Error listing pages for tenant {tenant_obj.id}: {str(e)}")
+                        status_message = f"Error loading pages: {str(e)}"
+                        status_type = "error"
+                else:
+                    logger.warning(f"No tenant found with slug: {selected_tenant_slug}")
+            except Exception as e:
+                logger.error(f"Error getting tenant by slug '{selected_tenant_slug}': {str(e)}")
+                status_message = f"Error loading tenant: {str(e)}"
+                status_type = "error"
+        else:
+            logger.warning("No tenant selected for page listing")
 
     # Check if the template file exists
     import os
@@ -236,22 +263,25 @@ async def pages_list(
 
     # Return template response
     logger.info("Rendering template: admin/pages/list.html")
-    return templates.TemplateResponse(
-        "admin/pages/list.html",
-        {
-            "request": request,
-            "selected_tenant": selected_tenant_slug,
-            "tenant": tenant_obj,
-            "tenants": tenants,
-            "pages": pages,
-            "active_page": "pages",
-            "search": search,
-            "current_page": page,
-            "limit": limit,
-            "status_message": status_message,
-            "status_type": status_type
-        }
-    )
+    try:
+        return templates.TemplateResponse(
+            "admin/pages/list.html",
+            {
+                "request": request,
+                "selected_tenant": selected_tenant_slug,
+                "tenant": tenant_obj,
+                "tenants": tenants,
+                "pages": pages,
+                "active_page": "pages",
+                "search": search,
+                "current_page": page,
+                "limit": limit,
+                "status_message": status_message,
+                "status_type": status_type
+            }
+        )
+    finally:
+        session.close()
 
 @router.get("/pages/create", response_class=HTMLResponse)
 async def page_create_form(
@@ -262,54 +292,64 @@ async def page_create_form(
     status_type: str = "info"
 ):
     """Admin form to create a new page."""
-    # Get all tenants for the sidebar
-    tenants = tenant_manager.get_all()
+    managers = get_managers()
+    session = managers["session"]
+    
+    try:
+        # Get local manager instances with a session
+        tenant_manager = managers["tenant_manager"]
+        template_manager = managers["template_manager"]
+        
+        # Get all tenants for the sidebar
+        tenants = tenant_manager.get_all()
 
-    # Get tenant from query parameters or session
-    selected_tenant_slug = tenant or request.session.get("selected_tenant")
+        # Get tenant from query parameters or session
+        selected_tenant_slug = tenant or request.session.get("selected_tenant")
 
-    # If no tenant is selected and we have tenants, select the first one
-    if not selected_tenant_slug and tenants:
-        selected_tenant_slug = tenants[0].slug
+        # If no tenant is selected and we have tenants, select the first one
+        if not selected_tenant_slug and tenants:
+            selected_tenant_slug = tenants[0].slug
 
-    # Store the selected tenant in session for future requests
-    if selected_tenant_slug:
-        request.session["selected_tenant"] = selected_tenant_slug
+        # Store the selected tenant in session for future requests
+        if selected_tenant_slug:
+            request.session["selected_tenant"] = selected_tenant_slug
 
-    # Get tenant object
-    tenant_obj = None
-    if selected_tenant_slug:
-        tenant_obj = tenant_manager.get_by_slug(selected_tenant_slug)
+        # Get tenant object
+        tenant_obj = None
+        if selected_tenant_slug:
+            tenant_obj = tenant_manager.get_by_slug(selected_tenant_slug)
 
-    # Get page template if specified
-    template = None
-    if template_id:
-        template = template_manager.get(template_id)
+        # Get page template if specified
+        template = None
+        if template_id:
+            template = template_manager.get(template_id)
 
-    # Get available page templates
-    templates_list = template_manager.list_templates()
+        # Get available page templates
+        templates_list = template_manager.list_templates()
 
     # Get editor configuration
-    editor_config = wysiwyg_service.get_editor_config('tinymce', {
-        'tenant_id': str(tenant_obj.id) if tenant_obj else None,
-        'media_browse_url': '/admin/api/media'
-    })
+        editor_config = wysiwyg_service.get_editor_config('tinymce', {
+            'tenant_id': str(tenant_obj.id) if tenant_obj else None,
+            'media_browse_url': '/admin/api/media'
+        })
 
-    return templates.TemplateResponse(
-        "admin/pages/create.html",
-        {
-            "request": request,
-            "selected_tenant": selected_tenant_slug,
-            "tenant": tenant_obj,
-            "tenants": tenants,
-            "active_page": "pages",
-            "template": template,
-            "templates": templates_list,
-            "editor_config": json.dumps(editor_config),
-            "status_message": status_message,
-            "status_type": status_type
-        }
-    )
+        return templates.TemplateResponse(
+            "admin/pages/create.html",
+            {
+                "request": request,
+                "selected_tenant": selected_tenant_slug,
+                "tenant": tenant_obj,
+                "tenants": tenants,
+                "active_page": "pages",
+                "template": template,
+                "templates": templates_list,
+                "editor_config": json.dumps(editor_config),
+                "status_message": status_message,
+                "status_type": status_type
+            }
+        )
+    finally:
+        session.close()
 
 @router.post("/pages/create", response_class=RedirectResponse)
 async def page_create(
