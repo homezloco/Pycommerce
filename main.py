@@ -200,8 +200,28 @@ if __name__ == "__main__":
 
         # Ensure page builder tables exist
         ensure_page_builder_tables()
+        
+        # Verify page builder tables were created properly
+        inspector = inspect(engine)
+        existing_tables = inspector.get_table_names()
+        page_builder_tables = ['pages', 'page_sections', 'content_blocks', 'page_templates']
+        missing_tables = [table for table in page_builder_tables if table not in existing_tables]
+        if missing_tables:
+            logger.warning(f"Some page builder tables are still missing: {missing_tables}")
+        else:
+            logger.info("All page builder tables exist and are ready to use")
 
         import socket
+
+# Import the template creation function
+from create_default_templates import create_default_templates
+
+# Create default page templates
+try:
+    logger.info("Creating default page templates...")
+    create_default_templates()
+except Exception as e:
+    logger.error(f"Error creating default page templates: {str(e)}")
 
         def find_free_port(start_port=8000, max_attempts=10):
             """Find a free port starting from start_port"""

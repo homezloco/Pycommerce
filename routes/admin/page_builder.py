@@ -177,6 +177,13 @@ def setup_routes(jinja_templates: Jinja2Templates = None):
     global templates
     templates = jinja_templates
     logger.info("Setting up page builder routes with templates")
+    
+    # Check template setup
+    if templates is None:
+        logger.error("Templates object is None in setup_routes. Check app initialization.")
+    else:
+        logger.info("Templates setup complete")
+        
     # Ensure the router is properly configured and returned
     return router
 

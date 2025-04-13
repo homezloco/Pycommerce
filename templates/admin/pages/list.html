@@ -17,99 +17,122 @@
     </div>
     {% endif %}
 
-    <div class="card mb-4">
-        <div class="card-header">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <i class="fas fa-file-alt me-1"></i>
-                    {% if tenant %}Pages for {{ tenant.name }}{% else %}Pages{% endif %}
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-bars me-1"></i>
+                    Page Management
                 </div>
-                <div>
-                    <a href="/admin/pages/create{% if selected_tenant %}?tenant={{ selected_tenant }}{% endif %}" class="btn btn-primary btn-sm">
-                        <i class="fas fa-plus me-1"></i> Create Page
+                <div class="list-group list-group-flush">
+                    <a href="/admin/pages{% if selected_tenant %}?tenant={{ selected_tenant }}{% endif %}" class="list-group-item list-group-item-action active">
+                        <i class="fas fa-file-alt me-2"></i> Page List
+                    </a>
+                    <a href="/admin/pages/create{% if selected_tenant %}?tenant={{ selected_tenant }}{% endif %}" class="list-group-item list-group-item-action">
+                        <i class="fas fa-plus me-2"></i> Create New Page
+                    </a>
+                    <a href="/admin/page-templates{% if selected_tenant %}?tenant={{ selected_tenant }}{% endif %}" class="list-group-item list-group-item-action">
+                        <i class="fas fa-copy me-2"></i> Page Templates
                     </a>
                 </div>
             </div>
         </div>
-        <div class="card-body">
-            {% if not tenant %}
-            <div class="alert alert-info">
-                <i class="fas fa-info-circle me-2"></i>
-                Please select a store from the dropdown to manage pages.
-            </div>
-            {% else %}
-            <div class="table-responsive">
-                <table class="table table-bordered table-hover">
-                    <thead>
-                        <tr>
-                            <th>Title</th>
-                            <th>Slug</th>
-                            <th>Status</th>
-                            <th>Last Updated</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% if pages %}
-                            {% for page in pages %}
-                            <tr>
-                                <td>{{ page.title }}</td>
-                                <td><code>{{ page.slug }}</code></td>
-                                <td>
-                                    {% if page.is_published %}
-                                    <span class="badge bg-success">Published</span>
-                                    {% else %}
-                                    <span class="badge bg-warning text-dark">Draft</span>
-                                    {% endif %}
-                                </td>
-                                <td>{{ page.updated_at.strftime('%Y-%m-%d %H:%M') }}</td>
-                                <td>
-                                    <div class="btn-group" role="group">
-                                        <a href="/admin/pages/edit/{{ page.id }}" class="btn btn-sm btn-outline-primary">
-                                            <i class="fas fa-edit"></i> Edit
-                                        </a>
-                                        <a href="/admin/pages/preview/{{ page.id }}" target="_blank" class="btn btn-sm btn-outline-info">
-                                            <i class="fas fa-eye"></i> Preview
-                                        </a>
-                                        <button type="button" class="btn btn-sm btn-outline-danger" 
-                                                data-bs-toggle="modal" data-bs-target="#deletePageModal{{ page.id }}">
-                                            <i class="fas fa-trash"></i> Delete
-                                        </button>
-                                    </div>
+        <div class="col-md-9">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <i class="fas fa-file-alt me-1"></i>
+                            {% if tenant %}Pages for {{ tenant.name }}{% else %}Pages{% endif %}
+                        </div>
+                        <div>
+                            <a href="/admin/pages/create{% if selected_tenant %}?tenant={{ selected_tenant }}{% endif %}" class="btn btn-primary btn-sm">
+                                <i class="fas fa-plus me-1"></i> Create Page
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if not tenant %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Please select a store from the dropdown to manage pages.
+                    </div>
+                    {% else %}
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Title</th>
+                                    <th>Slug</th>
+                                    <th>Status</th>
+                                    <th>Last Updated</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% if pages %}
+                                    {% for page in pages %}
+                                    <tr>
+                                        <td>{{ page.title }}</td>
+                                        <td><code>{{ page.slug }}</code></td>
+                                        <td>
+                                            {% if page.is_published %}
+                                            <span class="badge bg-success">Published</span>
+                                            {% else %}
+                                            <span class="badge bg-warning text-dark">Draft</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ page.updated_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                                        <td>
+                                            <div class="btn-group" role="group">
+                                                <a href="/admin/pages/edit/{{ page.id }}" class="btn btn-sm btn-outline-primary">
+                                                    <i class="fas fa-edit"></i> Edit
+                                                </a>
+                                                <a href="/admin/pages/preview/{{ page.id }}" target="_blank" class="btn btn-sm btn-outline-info">
+                                                    <i class="fas fa-eye"></i> Preview
+                                                </a>
+                                                <button type="button" class="btn btn-sm btn-outline-danger" 
+                                                        data-bs-toggle="modal" data-bs-target="#deletePageModal{{ page.id }}">
+                                                    <i class="fas fa-trash"></i> Delete
+                                                </button>
+                                            </div>
 
-                                    <!-- Delete Modal -->
-                                    <div class="modal fade" id="deletePageModal{{ page.id }}" tabindex="-1" aria-labelledby="deletePageModalLabel{{ page.id }}" aria-hidden="true">
-                                        <div class="modal-dialog">
-                                            <div class="modal-content">
-                                                <div class="modal-header">
-                                                    <h5 class="modal-title" id="deletePageModalLabel{{ page.id }}">Confirm Deletion</h5>
-                                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                                </div>
-                                                <div class="modal-body">
-                                                    Are you sure you want to delete the page <strong>{{ page.title }}</strong>?
-                                                    <p class="text-danger mt-3">This action cannot be undone.</p>
-                                                </div>
-                                                <div class="modal-footer">
-                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                                    <form action="/admin/pages/delete/{{ page.id }}" method="POST">
-                                                        <button type="submit" class="btn btn-danger">Delete</button>
-                                                    </form>
+                                            <!-- Delete Modal -->
+                                            <div class="modal fade" id="deletePageModal{{ page.id }}" tabindex="-1" aria-labelledby="deletePageModalLabel{{ page.id }}" aria-hidden="true">
+                                                <div class="modal-dialog">
+                                                    <div class="modal-content">
+                                                        <div class="modal-header">
+                                                            <h5 class="modal-title" id="deletePageModalLabel{{ page.id }}">Confirm Deletion</h5>
+                                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                        </div>
+                                                        <div class="modal-body">
+                                                            Are you sure you want to delete the page <strong>{{ page.title }}</strong>?
+                                                            <p class="text-danger mt-3">This action cannot be undone.</p>
+                                                        </div>
+                                                        <div class="modal-footer">
+                                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                                            <form action="/admin/pages/delete/{{ page.id }}" method="POST">
+                                                                <button type="submit" class="btn btn-danger">Delete</button>
+                                                            </form>
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             </div>
-                                        </div>
-                                    </div>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        {% else %}
-                            <tr>
-                                <td colspan="5" class="text-center">No pages found. <a href="/admin/pages/create{% if selected_tenant %}?tenant={{ selected_tenant }}{% endif %}" class="btn btn-sm btn-primary">Create your first page</a>.</td>
-                            </tr>
-                        {% endif %}
-                    </tbody>
-                </table>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                {% else %}
+                                    <tr>
+                                        <td colspan="5" class="text-center">No pages found. <a href="/admin/pages/create{% if selected_tenant %}?tenant={{ selected_tenant }}{% endif %}" class="btn btn-sm btn-primary">Create your first page</a>.</td>
+                                    </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% endif %}
+                </div>
             </div>
-            {% endif %}
         </div>
     </div>
 </div>
