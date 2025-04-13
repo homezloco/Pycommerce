@@ -165,6 +165,9 @@ async def debug_pages(request: Request, tenant: Optional[str] = None):
             "error": str(e),
             "error_type": type(e).__name__
         }
+    finally:
+        # Make sure to close the session
+        managers["session"].close()
 
 def setup_routes(jinja_templates: Jinja2Templates = None):
     """Setup page builder routes with the given templates."""
