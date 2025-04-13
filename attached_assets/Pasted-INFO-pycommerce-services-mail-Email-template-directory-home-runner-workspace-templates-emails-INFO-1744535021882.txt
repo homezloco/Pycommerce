@@ -1,0 +1,56 @@
+INFO:pycommerce.services.mail:Email template directory: /home/runner/workspace/templates/emails
+INFO:pycommerce.plugins.payment.config:Successfully loaded payment settings from database
+INFO:pycommerce.plugins.payment.config:Using development Stripe credentials
+INFO:pycommerce.plugins.payment.config:Using development PayPal credentials
+INFO:pycommerce.plugins.payment.stripe:Initializing Stripe payment plugin
+INFO:pycommerce.plugins:Registering plugin: stripe_payment v0.1.0
+INFO:pycommerce.plugins.payment.stripe:Initializing Stripe payment plugin
+INFO:pycommerce:Registered payment plugin: stripe
+INFO:pycommerce.plugins.payment.paypal:Initializing PayPal payment plugin
+INFO:pycommerce.plugins:Registering plugin: paypal_payment v0.1.0
+INFO:pycommerce.plugins.payment.paypal:Initializing PayPal payment plugin
+INFO:pycommerce:Registered payment plugin: paypal
+INFO:pycommerce.plugins:Registering plugin: standard_shipping v0.1.0
+INFO:pycommerce.plugins.shipping.standard:Initializing Standard shipping plugin
+INFO:pycommerce:Registered shipping plugin: standard
+INFO:__main__:Running page builder migration...
+INFO:__main__:Using database URI: postgresql://neondb_owner:npg_BreoUG7ukwD2@ep-red-hall-a51hczs5.us-east-2.aws.neon.tech/neondb?sslmode=require
+Using database URI: postgresql://neondb_owner:npg_BreoUG7ukwD2@ep-red-hall-a51hczs5.us-east-2.aws.neon.tech/neondb?sslmode=require
+Page builder tables already exist, skipping creation
+INFO:__main__:Page builder tables verified successfully:
+INFO:__main__:- Pages: 0
+INFO:__main__:- Page Sections: 0
+INFO:__main__:- Content Blocks: 0
+INFO:__main__:- Page Templates: 1
+INFO:__main__:Page builder migration completed successfully.
+INFO:pycommerce.services.mail:Email template directory: /home/runner/workspace/templates/emails
+INFO:pycommerce.plugins.payment.config:Successfully loaded payment settings from database
+INFO:pycommerce.plugins.payment.config:Using development Stripe credentials
+INFO:pycommerce.plugins.payment.config:Using development PayPal credentials
+INFO:pycommerce.plugins.payment.stripe:Initializing Stripe payment plugin
+INFO:pycommerce.plugins:Registering plugin: stripe_payment v0.1.0
+INFO:pycommerce.plugins.payment.stripe:Initializing Stripe payment plugin
+INFO:pycommerce:Registered payment plugin: stripe
+INFO:pycommerce.plugins.payment.paypal:Initializing PayPal payment plugin
+INFO:pycommerce.plugins:Registering plugin: paypal_payment v0.1.0
+INFO:pycommerce.plugins.payment.paypal:Initializing PayPal payment plugin
+INFO:pycommerce:Registered payment plugin: paypal
+INFO:pycommerce.plugins:Registering plugin: standard_shipping v0.1.0
+INFO:pycommerce.plugins.shipping.standard:Initializing Standard shipping plugin
+INFO:pycommerce:Registered shipping plugin: standard
+INFO:__main__:Checking if page builder tables exist...
+INFO:__main__:Found tables: ['alembic_version', 'tenants', 'plugin_configs', 'media', 'order_notes', 'orders', 'products', 'shipments', 'carts', 'users', 'order_items', 'inventory_records', 'cart_items', 'shipment_items', 'inventory_transactions', 'system_settings', 'product_categories', 'media_files', 'return_requests', 'return_items', 'page_templates', 'categories', 'pages', 'page_sections', 'content_blocks']
+INFO:__main__:All required tables exist.
+INFO:__main__:Creating test pages...
+INFO:__main__:Found 5 tenants
+INFO:__main__:Creating test page for tenant Demo Store 1
+ERROR:__main__:Error creating test page: Instance <Page at 0x7f6ffd15b050> is not bound to a Session; attribute refresh operation cannot proceed (Background on this error at: https://sqlalche.me/e/20/bhk3)
+INFO:__main__:Creating test page for tenant Tech Gadgets
+ERROR:__main__:Error creating test page: Instance <Page at 0x7f6ffd14cf90> is not bound to a Session; attribute refresh operation cannot proceed (Background on this error at: https://sqlalche.me/e/20/bhk3)
+INFO:__main__:Creating test page for tenant Outdoor Adventure
+ERROR:__main__:Error creating test page: Instance <Page at 0x7f6ffd14f150> is not bound to a Session; attribute refresh operation cannot proceed (Background on this error at: https://sqlalche.me/e/20/bhk3)
+INFO:__main__:Creating test page for tenant Fashion Boutique
+ERROR:__main__:Error creating test page: Instance <Page at 0x7f6ffd14e9d0> is not bound to a Session; attribute refresh operation cannot proceed (Background on this error at: https://sqlalche.me/e/20/bhk3)
+INFO:__main__:Creating test page for tenant Demo Store 2
+ERROR:__main__:Error creating test page: Instance <Page at 0x7f6ffd15bd10> is not bound to a Session; attribute refresh operation cannot proceed (Background on this error at: https://sqlalche.me/e/20/bhk3)
+INFO:__main__:Page builder test completed successfully.
