@@ -851,7 +851,7 @@ async def page_delete(
         # Delete the page
         page_manager.delete(page_id)
 
-        returnreturn RedirectResponse(
+        return RedirectResponse(
             url=f"/admin/pages?tenant={tenant_slug}&status_message=Page+deleted+successfully&status_type=success",
             status_code=status.HTTP_303_SEE_OTHER
         )
