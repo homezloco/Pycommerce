@@ -121,7 +121,6 @@ try:
     from routes.storefront.pages import setup_routes as setup_pages_routes
     from routes.storefront.stores import setup_routes as setup_storefront_stores_routes
 
-
     # Include storefront routers
     home_router = setup_home_routes(templates)
     app.include_router(home_router)

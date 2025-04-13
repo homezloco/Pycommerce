@@ -98,13 +98,17 @@ if __name__ == "__main__":
             # Redirect to dashboard if template not found
             return RedirectResponse(url="/admin/dashboard")
 
+    # Import storefront modules
+    from routes.storefront import home, products, cart, checkout, pages, stores
+    
     # Set up storefront routes
     home_router = home.setup_routes(templates)
     fastapi_app.include_router(home_router)
     products.setup_routes(fastapi_app)
     cart.setup_routes(fastapi_app)
     checkout.setup_routes(fastapi_app)
-    pages.setup_routes(templates)
+    pages_router = pages.setup_routes(templates)
+    fastapi_app.include_router(pages_router)
 
     # Set up admin routes with the templates
     dashboard_router = dashboard.setup_routes(templates)
