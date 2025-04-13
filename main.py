@@ -5,8 +5,14 @@ This script is designed to be run by a WSGI server like gunicorn.
 It imports the FastAPI application and adapts it to work with WSGI.
 """
 import logging
+import os
+from pathlib import Path
 
 from asgi_wsgi_app import proxy_to_uvicorn, start_uvicorn_server
+from fastapi import FastAPI, Request
+from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)

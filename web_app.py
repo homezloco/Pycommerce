@@ -18,6 +18,15 @@ from app_factory import create_app
 
 app, templates = create_app()
 
+# Explicitly mount static files
+try:
+    # Check if static files are already mounted
+    if not any(mount.path == "/static" for mount in app.routes):
+        logger.info("Mounting static files directory")
+        app.mount("/static", StaticFiles(directory="static"), name="static")
+except Exception as e:
+    logger.error(f"Error mounting static files: {e}")
+
 # Register admin routes
 try:
     from routes.admin.dashboard import setup_routes as setup_dashboard_routes
@@ -138,6 +147,46 @@ async def admin_redirect():
 async def admin_health():
     """Health check specifically for admin routes."""
     return {"status": "ok", "service": "admin", "message": "Admin routes are working"}
+
+# Add a frontend debug route
+@app.get("/frontend-debug")
+async def frontend_debug(request: Request):
+    """Frontend debug endpoint."""
+    import os
+    
+    # Check if templates directory exists
+    templates_exist = os.path.exists("templates")
+    admin_templates_exist = os.path.exists("templates/admin")
+    
+    # Check if static files directory exists
+    static_exist = os.path.exists("static")
+    css_exist = os.path.exists("static/css")
+    js_exist = os.path.exists("static/js")
+    
+    # List all template files
+    template_files = []
+    if templates_exist:
+        for root, dirs, files in os.walk("templates"):
+            for file in files:
+                if file.endswith(".html"):
+                    template_files.append(os.path.join(root, file))
+    
+    # Build response
+    debug_info = {
+        "templates_directory_exists": templates_exist,
+        "admin_templates_exist": admin_templates_exist,
+        "static_directory_exists": static_exist,
+        "css_directory_exists": css_exist,
+        "js_directory_exists": js_exist,
+        "template_files": template_files[:20],  # Limit to 20 files
+        "routes": [
+            {"path": route.path, "name": route.name if hasattr(route, "name") else None}
+            for route in app.routes
+        ],
+        "current_directory": os.getcwd(),
+    }
+    
+    return debug_info
 
 # Debug route for products
 @app.get("/debug/products", response_class=HTMLResponse)
