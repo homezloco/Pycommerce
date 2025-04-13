@@ -37,23 +37,91 @@ async def debug_pages(request: Request, tenant: Optional[str] = None):
     """Debug endpoint to check tenant and page data."""
     try:
         # Get all tenants
+        logger.info("Fetching all tenants")
         tenants = tenant_manager.get_all()
+        logger.info(f"Found {len(tenants)} tenants")
         tenant_list = [{"id": str(t.id), "name": t.name, "slug": t.slug} for t in tenants]
         
         # Get selected tenant
         selected_tenant_slug = tenant or request.session.get("selected_tenant")
+        logger.info(f"Selected tenant slug: {selected_tenant_slug}")
         if not selected_tenant_slug and tenants:
             selected_tenant_slug = tenants[0].slug
+            logger.info(f"Auto-selected tenant slug: {selected_tenant_slug}")
         
         # Get tenant object
         tenant_obj = None
         tenant_pages = []
         if selected_tenant_slug:
+            logger.info(f"Getting tenant by slug: {selected_tenant_slug}")
             tenant_obj = tenant_manager.get_by_slug(selected_tenant_slug)
+            logger.info(f"Got tenant: {tenant_obj}")
             if tenant_obj:
                 # Try to get pages
-                pages = page_manager.list_by_tenant(str(tenant_obj.id), include_unpublished=True)
-                tenant_pages = [{"id": str(p.id), "title": p.title, "slug": p.slug} for p in pages]
+                logger.info(f"Listing pages for tenant {tenant_obj.id}")
+                try:
+                    pages = page_manager.list_by_tenant(str(tenant_obj.id), include_unpublished=True)
+                    logger.info(f"Found {len(pages)} pages")
+                    tenant_pages = [{"id": str(p.id), "title": p.title, "slug": p.slug} for p in pages]
+                except Exception as e:
+                    logger.error(f"Error listing pages: {str(e)}")
+                    tenant_pages = []
+        
+        # Check database tables
+        try:
+            from sqlalchemy import inspect
+            from pycommerce.core.db import engine
+            
+            inspector = inspect(engine)
+            tables = inspector.get_table_names()
+            
+            # Check if page builder tables exist
+            has_pages_table = 'pages' in tables
+            has_sections_table = 'page_sections' in tables
+            has_blocks_table = 'content_blocks' in tables
+            has_templates_table = 'page_templates' in tables
+            
+            # Get table counts
+            page_count = 0
+            section_count = 0
+            block_count = 0
+            template_count = 0
+            
+            from sqlalchemy import text
+            with engine.connect() as conn:
+                if has_pages_table:
+                    result = conn.execute(text("SELECT COUNT(*) FROM pages"))
+                    page_count = result.scalar()
+                
+                if has_sections_table:
+                    result = conn.execute(text("SELECT COUNT(*) FROM page_sections"))
+                    section_count = result.scalar()
+                
+                if has_blocks_table:
+                    result = conn.execute(text("SELECT COUNT(*) FROM content_blocks"))
+                    block_count = result.scalar()
+                
+                if has_templates_table:
+                    result = conn.execute(text("SELECT COUNT(*) FROM page_templates"))
+                    template_count = result.scalar()
+            
+            db_info = {
+                "tables_exist": {
+                    "pages": has_pages_table,
+                    "page_sections": has_sections_table,
+                    "content_blocks": has_blocks_table,
+                    "page_templates": has_templates_table
+                },
+                "record_counts": {
+                    "pages": page_count,
+                    "page_sections": section_count,
+                    "content_blocks": block_count,
+                    "page_templates": template_count
+                }
+            }
+        except Exception as e:
+            logger.error(f"Error checking database tables: {str(e)}")
+            db_info = {"error": str(e)}
         
         return {
             "success": True,
@@ -66,7 +134,8 @@ async def debug_pages(request: Request, tenant: Optional[str] = None):
                 "slug": tenant_obj.slug if tenant_obj else None
             } if tenant_obj else None,
             "pages_count": len(tenant_pages),
-            "pages": tenant_pages
+            "pages": tenant_pages,
+            "database_info": db_info
         }
     except Exception as e:
         logger.error(f"Error in debug endpoint: {str(e)}")
@@ -97,9 +166,19 @@ async def pages_list(
     """Admin page listing all pages."""
     logger.info("Accessing pages listing route")
     
+    # Check if templates are properly set up
+    if templates is None:
+        logger.error("Templates object is None. Check setup_routes function.")
+        return JSONResponse({"error": "Templates not properly initialized"}, status_code=500)
+    
     # Get all tenants for the sidebar
-    tenants = tenant_manager.get_all()
-    logger.info(f"Found {len(tenants)} tenants")
+    logger.info("Fetching all tenants")
+    try:
+        tenants = tenant_manager.get_all()
+        logger.info(f"Found {len(tenants)} tenants: {[t.name for t in tenants]}")
+    except Exception as e:
+        logger.error(f"Error getting all tenants: {str(e)}")
+        return JSONResponse({"error": f"Error getting tenants: {str(e)}"}, status_code=500)
 
     # Get tenant from query parameters or session
     selected_tenant_slug = tenant or request.session.get("selected_tenant")
@@ -113,24 +192,31 @@ async def pages_list(
     # Store the selected tenant in session for future requests
     if selected_tenant_slug:
         request.session["selected_tenant"] = selected_tenant_slug
+        logger.info(f"Stored tenant slug in session: {selected_tenant_slug}")
 
     # Get tenant object and pages
     tenant_obj = None
     pages = []
     if selected_tenant_slug:
         try:
+            logger.info(f"Getting tenant by slug: {selected_tenant_slug}")
             tenant_obj = tenant_manager.get_by_slug(selected_tenant_slug)
             logger.info(f"Found tenant: {tenant_obj.name if tenant_obj else 'None'}")
             
             if tenant_obj:
                 # Get pages for the tenant
                 try:
+                    logger.info(f"Listing pages for tenant {tenant_obj.id}")
                     pages = page_manager.list_by_tenant(str(tenant_obj.id), include_unpublished=True)
                     logger.info(f"Found {len(pages)} pages for tenant {tenant_obj.id}")
+                    for p in pages:
+                        logger.info(f"  Page: {p.title} (ID: {p.id}, slug: {p.slug})")
                 except Exception as e:
                     logger.error(f"Error listing pages for tenant {tenant_obj.id}: {str(e)}")
                     status_message = f"Error loading pages: {str(e)}"
                     status_type = "error"
+            else:
+                logger.warning(f"No tenant found with slug: {selected_tenant_slug}")
         except Exception as e:
             logger.error(f"Error getting tenant by slug '{selected_tenant_slug}': {str(e)}")
             status_message = f"Error loading tenant: {str(e)}"
@@ -138,6 +224,17 @@ async def pages_list(
     else:
         logger.warning("No tenant selected for page listing")
 
+    # Check if the template file exists
+    import os
+    template_path = os.path.join("templates", "admin", "pages", "list.html")
+    if not os.path.exists(template_path):
+        logger.error(f"Template file not found: {template_path}")
+        return JSONResponse({"error": f"Template file not found: {template_path}"}, status_code=500)
+    else:
+        logger.info(f"Template file exists: {template_path}")
+
+    # Return template response
+    logger.info("Rendering template: admin/pages/list.html")
     return templates.TemplateResponse(
         "admin/pages/list.html",
         {

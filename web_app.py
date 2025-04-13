@@ -556,3 +556,33 @@ async def debug_products_inline(request: Request):
     """
 
     return HTMLResponse(content=html)
+    
+    # Add a debug route to check page builder tables
+    @app.get("/debug/page-builder-tables", response_class=JSONResponse)
+    async def debug_page_builder_tables():
+        """Debug endpoint to check if page builder tables exist."""
+        from sqlalchemy import inspect
+        from pycommerce.core.db import engine
+
+        inspector = inspect(engine)
+        all_tables = inspector.get_table_names()
+
+        required_tables = ['pages', 'page_sections', 'content_blocks', 'page_templates']
+        tables_status = {table: table in all_tables for table in required_tables}
+
+        # Check counts
+        from sqlalchemy import text
+        table_counts = {}
+        with engine.connect() as conn:
+            for table in required_tables:
+                if table in all_tables:
+                    result = conn.execute(text(f"SELECT COUNT(*) FROM {table}"))
+                    table_counts[table] = result.scalar()
+                else:
+                    table_counts[table] = 0
+
+        return {
+            "tables_exist": tables_status,
+            "all_tables": all_tables,
+            "record_counts": table_counts
+        }
