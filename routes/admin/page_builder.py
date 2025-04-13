@@ -32,7 +32,7 @@ def get_managers():
     """Get managers with a fresh session."""
     session = SessionLocal()
     
-    # Initialize managers with session
+    # Initialize all managers with the session
     tenant_manager = TenantManager()
     tenant_manager.session = session
     
@@ -40,6 +40,9 @@ def get_managers():
     section_manager = PageSectionManager(session)
     block_manager = ContentBlockManager(session)
     template_manager = PageTemplateManager(session)
+    
+    # Make sure the session is attached to all managers
+    tenant_manager.session = session
     
     return {
         "tenant_manager": tenant_manager,
@@ -218,6 +221,10 @@ async def pages_list(
         selected_tenant_slug = tenant or request.session.get("selected_tenant")
         logger.info(f"Initial selected tenant slug: {selected_tenant_slug}")
 
+        # Handle special case for 'all' slug
+        if selected_tenant_slug == 'all':
+            selected_tenant_slug = None
+            
         # If no tenant is selected and we have tenants, select the first one
         if not selected_tenant_slug and tenants:
             selected_tenant_slug = tenants[0].slug
@@ -251,12 +258,42 @@ async def pages_list(
                         status_type = "error"
                 else:
                     logger.warning(f"No tenant found with slug: {selected_tenant_slug}")
+                    # If the selected tenant is not found, use the first tenant
+                    if tenants:
+                        selected_tenant_slug = tenants[0].slug
+                        tenant_obj = tenants[0]
+                        request.session["selected_tenant"] = selected_tenant_slug
+                        logger.info(f"Falling back to first tenant: {selected_tenant_slug}")
+                        # Try to get pages for the fallback tenant
+                        try:
+                            pages = page_manager.list_by_tenant(str(tenant_obj.id), include_unpublished=True)
+                            logger.info(f"Found {len(pages)} pages for fallback tenant {tenant_obj.id}")
+                        except Exception as e:
+                            logger.error(f"Error listing pages for fallback tenant: {str(e)}")
             except Exception as e:
                 logger.error(f"Error getting tenant by slug '{selected_tenant_slug}': {str(e)}")
                 status_message = f"Error loading tenant: {str(e)}"
                 status_type = "error"
+                # Fallback to first tenant if there was an error
+                if tenants:
+                    selected_tenant_slug = tenants[0].slug
+                    tenant_obj = tenants[0]
+                    request.session["selected_tenant"] = selected_tenant_slug
+                    logger.info(f"Error fallback to first tenant: {selected_tenant_slug}")
         else:
             logger.warning("No tenant selected for page listing")
+            # Fallback to first tenant if none selected
+            if tenants:
+                selected_tenant_slug = tenants[0].slug
+                tenant_obj = tenants[0]
+                request.session["selected_tenant"] = selected_tenant_slug
+                logger.info(f"Defaulting to first tenant: {selected_tenant_slug}")
+                # Try to get pages for the default tenant
+                try:
+                    pages = page_manager.list_by_tenant(str(tenant_obj.id), include_unpublished=True)
+                    logger.info(f"Found {len(pages)} pages for default tenant {tenant_obj.id}")
+                except Exception as e:
+                    logger.error(f"Error listing pages for default tenant: {str(e)}")
 
     except Exception as e:
         logger.error(f"Error in pages_list: {str(e)}")
