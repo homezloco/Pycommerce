@@ -1,0 +1,35 @@
+INFO:     172.31.128.64:33838 - "GET /admin/pages?tenant=tech HTTP/1.1" 200 OK
+INFO:routes.admin.page_builder:Accessing pages listing route
+INFO:routes.admin.page_builder:Fetching all tenants
+INFO:routes.admin.page_builder:Found 5 tenants: ['Demo Store 1', 'Tech Gadgets', 'Outdoor Adventure', 'Fashion Boutique', 'Demo Store 2']
+INFO:routes.admin.page_builder:Initial selected tenant slug: tech
+INFO:routes.admin.page_builder:Stored tenant slug in session: tech
+INFO:routes.admin.page_builder:Getting tenant by slug: tech
+INFO:pycommerce.models.tenant:Retrieved tenant by slug tech with theme settings: {}
+INFO:routes.admin.page_builder:Found tenant: Tech Gadgets
+INFO:routes.admin.page_builder:Listing pages for tenant ea6c4bc0-d5aa-4d4f-862c-5d47e7c3f410
+INFO:routes.admin.page_builder:Found 1 pages for tenant ea6c4bc0-d5aa-4d4f-862c-5d47e7c3f410
+INFO:routes.admin.page_builder:  Page: Welcome to Tech Gadgets (ID: ea01d889-2813-45dd-8ecf-8790250dd898, slug: welcome)
+INFO:routes.admin.page_builder:Template file exists: templates/admin/pages/list.html
+INFO:routes.admin.page_builder:Rendering template: admin/pages/list.html with 1 pages
+INFO:routes.admin.page_builder:Page in context: Welcome to Tech Gadgets (ea01d889-2813-45dd-8ecf-8790250dd898)
+INFO:     172.31.128.64:33838 - "GET /admin/pages?tenant=tech HTTP/1.1" 200 OK
+INFO:routes.admin.dashboard:User selected 'All Stores' for view
+INFO:routes.admin.dashboard:User selected 'All Stores' for view - setting session variables
+INFO:     172.31.128.64:33838 - "GET /admin/change-store?redirect_url=%2Fadmin%2Fpages&tenant=all HTTP/1.1" 303 See Other
+INFO:routes.admin.page_builder:Accessing pages listing route
+INFO:routes.admin.page_builder:Fetching all tenants
+INFO:routes.admin.page_builder:Found 5 tenants: ['Demo Store 1', 'Tech Gadgets', 'Outdoor Adventure', 'Fashion Boutique', 'Demo Store 2']
+INFO:routes.admin.page_builder:Initial selected tenant slug: all
+INFO:routes.admin.page_builder:Auto-selected tenant slug: demo1
+INFO:routes.admin.page_builder:Stored tenant slug in session: demo1
+INFO:routes.admin.page_builder:Getting tenant by slug: demo1
+INFO:pycommerce.models.tenant:Retrieved tenant by slug demo1 with theme settings: {'primary_color': '#ff0000', 'secondary_color': '#6c757d', 'background_color': '#ffffff', 'text_color': '#212529', 'font_family': 'Arial, sans-serif', 'heading_font_family': 'inherit', 'base_font_size': 16, 'heading_scale': 'moderate', 'container_width': 'standard', 'border_radius': 4, 'spacing_scale': 'moderate', 'header_style': 'standard', 'product_card_style': 'standard', 'button_style': 'standard', 'custom_css': '', 'updated_at': '2025-04-05T14:12:30.907742'}
+INFO:routes.admin.page_builder:Found tenant: Demo Store 1
+INFO:routes.admin.page_builder:Listing pages for tenant 0a38d2a1-00fe-47ea-a6d2-f1595048aab0
+INFO:routes.admin.page_builder:Found 1 pages for tenant 0a38d2a1-00fe-47ea-a6d2-f1595048aab0
+INFO:routes.admin.page_builder:  Page: Welcome to Demo Store 1 (ID: 709b90b0-41e0-497b-8a41-3b357a94a117, slug: welcome)
+INFO:routes.admin.page_builder:Template file exists: templates/admin/pages/list.html
+INFO:routes.admin.page_builder:Rendering template: admin/pages/list.html with 1 pages
+INFO:routes.admin.page_builder:Page in context: Welcome to Demo Store 1 (709b90b0-41e0-497b-8a41-3b357a94a117)
+INFO:     172.31.128.64:33838 - "GET /admin/pages?tenant=all&status_message=Showing+data+from+all+stores&status_type=success HTTP/1.1" 200 OK
