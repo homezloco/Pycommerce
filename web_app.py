@@ -119,6 +119,8 @@ try:
     from routes.storefront.cart import setup_routes as setup_cart_routes
     from routes.storefront.checkout import setup_routes as setup_checkout_routes
     from routes.storefront.pages import setup_routes as setup_pages_routes
+    from routes.storefront.stores import setup_routes as setup_storefront_stores_routes
+
 
     # Include storefront routers
     home_router = setup_home_routes(templates)
@@ -135,6 +137,9 @@ try:
 
     pages_router = setup_pages_routes(templates)
     app.include_router(pages_router)
+
+    storefront_stores_router = setup_storefront_stores_routes(templates)
+    app.include_router(storefront_stores_router)
 
     logger.info("Storefront routes registered successfully")
 except ImportError as e:
