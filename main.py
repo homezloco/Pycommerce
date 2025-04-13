@@ -202,6 +202,7 @@ if __name__ == "__main__":
         ensure_page_builder_tables()
         
         # Verify page builder tables were created properly
+        from sqlalchemy import inspect
         inspector = inspect(engine)
         existing_tables = inspector.get_table_names()
         page_builder_tables = ['pages', 'page_sections', 'content_blocks', 'page_templates']
