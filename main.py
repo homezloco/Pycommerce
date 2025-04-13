@@ -52,16 +52,35 @@ if __name__ == "__main__":
     pages.setup_routes(templates)
 
     # Set up admin routes with the templates
-    dashboard.setup_routes(templates)
-    admin_products.setup_routes(templates)
-    orders.setup_routes(templates)
-    customers.setup_routes(templates)
-    settings.setup_routes(templates)
-    plugins.setup_routes(templates)
-    tenants.setup_routes(templates)
-    media.setup_routes(templates)
-    inventory.setup_routes(templates)
-    analytics.setup_routes(templates)
+    dashboard_router = dashboard.setup_routes(templates)
+    fastapi_app.include_router(dashboard_router)
+    
+    products_router = admin_products.setup_routes(templates)
+    fastapi_app.include_router(products_router)
+    
+    orders_router = orders.setup_routes(templates)
+    fastapi_app.include_router(orders_router)
+    
+    customers_router = customers.setup_routes(templates)
+    fastapi_app.include_router(customers_router)
+    
+    settings_router = settings.setup_routes(templates)
+    fastapi_app.include_router(settings_router)
+    
+    plugins_router = plugins.setup_routes(templates)
+    fastapi_app.include_router(plugins_router)
+    
+    tenants_router = tenants.setup_routes(templates)
+    fastapi_app.include_router(tenants_router)
+    
+    media_router = media.setup_routes(templates)
+    fastapi_app.include_router(media_router)
+    
+    inventory_router = inventory.setup_routes(templates)
+    fastapi_app.include_router(inventory_router)
+    
+    analytics_router = analytics.setup_routes(templates)
+    fastapi_app.include_router(analytics_router)
     
     # Register page_builder routes with FastAPI app
     page_builder_router = page_builder.setup_routes(templates)

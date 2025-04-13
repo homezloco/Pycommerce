@@ -62,7 +62,7 @@ async def root(request: Request):
                 cart_item_count = sum(item.quantity for item in cart.items)
     except Exception as e:
         logger.warning(f"Error getting cart data: {str(e)}")
-    
+
     return templates.TemplateResponse(
         "index.html",
         {
@@ -405,10 +405,11 @@ def create_app():
 Main FastAPI application for PyCommerce.
 """
 import logging
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
+from fastapi import FastAPI, Request, Form
+from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from fastapi.middleware.cors import CORSMiddleware
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
