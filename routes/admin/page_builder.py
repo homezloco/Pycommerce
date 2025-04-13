@@ -254,18 +254,22 @@ async def pages_list(
         else:
             logger.warning("No tenant selected for page listing")
 
-    # Check if the template file exists
-    import os
-    template_path = os.path.join("templates", "admin", "pages", "list.html")
-    if not os.path.exists(template_path):
-        logger.error(f"Template file not found: {template_path}")
-        return JSONResponse({"error": f"Template file not found: {template_path}"}, status_code=500)
-    else:
-        logger.info(f"Template file exists: {template_path}")
+    except Exception as e:
+        logger.error(f"Error in pages_list: {str(e)}")
+        return JSONResponse({"error": f"Error: {str(e)}"}, status_code=500)
 
-    # Return template response
-    logger.info("Rendering template: admin/pages/list.html")
     try:
+        # Check if the template file exists
+        import os
+        template_path = os.path.join("templates", "admin", "pages", "list.html")
+        if not os.path.exists(template_path):
+            logger.error(f"Template file not found: {template_path}")
+            return JSONResponse({"error": f"Template file not found: {template_path}"}, status_code=500)
+        else:
+            logger.info(f"Template file exists: {template_path}")
+
+        # Return template response
+        logger.info("Rendering template: admin/pages/list.html")
         return templates.TemplateResponse(
             "admin/pages/list.html",
             {
