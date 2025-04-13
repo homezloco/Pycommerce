@@ -21,9 +21,10 @@ app, templates = create_app()
 # Explicitly mount static files
 try:
     # Check if static files are already mounted
-    if not any(mount.path == "/static" for mount in app.routes):
+    if not any(getattr(route, "path", "") == "/static" for route in app.routes):
         logger.info("Mounting static files directory")
         app.mount("/static", StaticFiles(directory="static"), name="static")
+        logger.info("Static files mounted successfully")
 except Exception as e:
     logger.error(f"Error mounting static files: {e}")
 
@@ -153,6 +154,7 @@ async def admin_health():
 async def frontend_debug(request: Request):
     """Frontend debug endpoint."""
     import os
+    import sys
     
     # Check if templates directory exists
     templates_exist = os.path.exists("templates")
@@ -171,22 +173,49 @@ async def frontend_debug(request: Request):
                 if file.endswith(".html"):
                     template_files.append(os.path.join(root, file))
     
+    # List all routes in a safe way
+    routes_info = []
+    for route in app.routes:
+        try:
+            route_info = {
+                "path": getattr(route, "path", "Unknown"),
+                "name": getattr(route, "name", None),
+                "methods": getattr(route, "methods", []),
+            }
+            routes_info.append(route_info)
+        except Exception as e:
+            routes_info.append({"error": f"Error parsing route: {str(e)}"})
+    
+    # Check for important middleware
+    middleware_types = [str(type(m)) for m in getattr(app, "middleware", [])]
+    
     # Build response
     debug_info = {
-        "templates_directory_exists": templates_exist,
-        "admin_templates_exist": admin_templates_exist,
-        "static_directory_exists": static_exist,
-        "css_directory_exists": css_exist,
-        "js_directory_exists": js_exist,
-        "template_files": template_files[:20],  # Limit to 20 files
-        "routes": [
-            {"path": route.path, "name": route.name if hasattr(route, "name") else None}
-            for route in app.routes
-        ],
-        "current_directory": os.getcwd(),
+        "status": "ok",
+        "server_info": {
+            "python_version": sys.version,
+            "current_directory": os.getcwd(),
+            "sys_path": sys.path[:5],  # First 5 elements of sys.path
+        },
+        "templates_info": {
+            "templates_directory_exists": templates_exist,
+            "admin_templates_exist": admin_templates_exist,
+            "template_files_count": len(template_files),
+            "template_files_sample": template_files[:10],  # Limit to 10 files
+        },
+        "static_files_info": {
+            "static_directory_exists": static_exist,
+            "css_directory_exists": css_exist,
+            "js_directory_exists": js_exist,
+            "static_files_list": os.listdir("static") if static_exist else [],
+        },
+        "routes_count": len(routes_info),
+        "routes_sample": routes_info[:15],  # Limit to 15 routes
+        "middleware": middleware_types,
     }
     
-    return debug_info
+    # Return as JSON response with pretty formatting
+    return JSONResponse(content=debug_info, status_code=200)
 
 # Debug route for products
 @app.get("/debug/products", response_class=HTMLResponse)

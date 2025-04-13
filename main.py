@@ -6,17 +6,22 @@ It imports the FastAPI application and adapts it to work with WSGI.
 """
 import logging
 import os
+import sys
 from pathlib import Path
 
 from asgi_wsgi_app import proxy_to_uvicorn, start_uvicorn_server
 from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from fastapi.middleware.cors import CORSMiddleware
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+# Add the current directory to the Python path
+sys.path.insert(0, os.path.abspath("."))
 
 # Start the uvicorn server in a separate process
 start_uvicorn_server()
@@ -29,12 +34,44 @@ if __name__ == "__main__":
     import uvicorn
     from fastapi import Request
     from fastapi.templating import Jinja2Templates
+    from fastapi.responses import HTMLResponse, RedirectResponse
     from routes.storefront import home, products, cart, checkout, pages
     from routes.admin import dashboard, products as admin_products, orders, customers, settings, plugins, tenants, media, inventory, analytics, page_builder
 
     templates = Jinja2Templates(directory="templates")
 
     from web_app import app as fastapi_app, templates
+    
+    # Make sure we have an explicit root path handler
+    @fastapi_app.get("/", response_class=HTMLResponse)
+    async def explicit_root(request: Request):
+        """Root endpoint to ensure application is running."""
+        try:
+            return templates.TemplateResponse(
+                "index.html",
+                {
+                    "request": request,
+                    "title": "PyCommerce - A Python Ecommerce Platform",
+                    "cart_item_count": request.session.get("cart_item_count", 0)
+                }
+            )
+        except Exception as e:
+            logger.error(f"Error rendering home page: {e}")
+            return HTMLResponse(
+                content=f"""
+                <html>
+                <head><title>PyCommerce</title></head>
+                <body>
+                    <h1>PyCommerce Platform</h1>
+                    <p>The application is running, but there was an error rendering the home page.</p>
+                    <p>Error: {str(e)}</p>
+                    <p><a href="/admin/dashboard">Go to Admin Dashboard</a></p>
+                    <p><a href="/frontend-debug">View Debug Information</a></p>
+                </body>
+                </html>
+                """,
+                status_code=200
+            )
     
     # Set up storefront routes
     home_router = home.setup_routes(templates)
