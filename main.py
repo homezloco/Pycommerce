@@ -144,4 +144,6 @@ if __name__ == "__main__":
 
     # Run with uvicorn directly when file is executed
     # Pass application as an import string to enable 'reload' or 'workers'
-    uvicorn.run(fastapi_app, host="0.0.0.0", port=5000, reload=True)
+    if __name__ == "__main__":
+        import uvicorn
+        uvicorn.run("web_app:app", host="0.0.0.0", port=5000, reload=True)
