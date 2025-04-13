@@ -31,6 +31,51 @@ block_manager = ContentBlockManager()
 template_manager = PageTemplateManager()
 wysiwyg_service = WysiwygService()
 
+# Debug endpoint
+@router.get("/debug-pages", response_class=JSONResponse)
+async def debug_pages(request: Request, tenant: Optional[str] = None):
+    """Debug endpoint to check tenant and page data."""
+    try:
+        # Get all tenants
+        tenants = tenant_manager.get_all()
+        tenant_list = [{"id": str(t.id), "name": t.name, "slug": t.slug} for t in tenants]
+        
+        # Get selected tenant
+        selected_tenant_slug = tenant or request.session.get("selected_tenant")
+        if not selected_tenant_slug and tenants:
+            selected_tenant_slug = tenants[0].slug
+        
+        # Get tenant object
+        tenant_obj = None
+        tenant_pages = []
+        if selected_tenant_slug:
+            tenant_obj = tenant_manager.get_by_slug(selected_tenant_slug)
+            if tenant_obj:
+                # Try to get pages
+                pages = page_manager.list_by_tenant(str(tenant_obj.id), include_unpublished=True)
+                tenant_pages = [{"id": str(p.id), "title": p.title, "slug": p.slug} for p in pages]
+        
+        return {
+            "success": True,
+            "tenants_count": len(tenant_list),
+            "tenants": tenant_list,
+            "selected_tenant_slug": selected_tenant_slug,
+            "tenant": {
+                "id": str(tenant_obj.id) if tenant_obj else None,
+                "name": tenant_obj.name if tenant_obj else None,
+                "slug": tenant_obj.slug if tenant_obj else None
+            } if tenant_obj else None,
+            "pages_count": len(tenant_pages),
+            "pages": tenant_pages
+        }
+    except Exception as e:
+        logger.error(f"Error in debug endpoint: {str(e)}")
+        return {
+            "success": False,
+            "error": str(e),
+            "error_type": type(e).__name__
+        }
+
 def setup_routes(jinja_templates: Jinja2Templates = None):
     """Setup page builder routes with the given templates."""
     global templates
@@ -50,15 +95,20 @@ async def pages_list(
     status_type: str = "info"
 ):
     """Admin page listing all pages."""
+    logger.info("Accessing pages listing route")
+    
     # Get all tenants for the sidebar
     tenants = tenant_manager.get_all()
+    logger.info(f"Found {len(tenants)} tenants")
 
     # Get tenant from query parameters or session
     selected_tenant_slug = tenant or request.session.get("selected_tenant")
+    logger.info(f"Initial selected tenant slug: {selected_tenant_slug}")
 
     # If no tenant is selected and we have tenants, select the first one
     if not selected_tenant_slug and tenants:
         selected_tenant_slug = tenants[0].slug
+        logger.info(f"Auto-selected tenant slug: {selected_tenant_slug}")
 
     # Store the selected tenant in session for future requests
     if selected_tenant_slug:
@@ -68,16 +118,23 @@ async def pages_list(
     tenant_obj = None
     pages = []
     if selected_tenant_slug:
-        tenant_obj = tenant_manager.get_by_slug(selected_tenant_slug)
-        if tenant_obj:
-            # Get pages for the tenant
-            try:
-                pages = page_manager.list_by_tenant(str(tenant_obj.id), include_unpublished=True)
-                logger.info(f"Found {len(pages)} pages for tenant {tenant_obj.id}")
-            except Exception as e:
-                logger.error(f"Error listing pages for tenant {tenant_obj.id}: {str(e)}")
-                status_message = f"Error loading pages: {str(e)}"
-                status_type = "error"
+        try:
+            tenant_obj = tenant_manager.get_by_slug(selected_tenant_slug)
+            logger.info(f"Found tenant: {tenant_obj.name if tenant_obj else 'None'}")
+            
+            if tenant_obj:
+                # Get pages for the tenant
+                try:
+                    pages = page_manager.list_by_tenant(str(tenant_obj.id), include_unpublished=True)
+                    logger.info(f"Found {len(pages)} pages for tenant {tenant_obj.id}")
+                except Exception as e:
+                    logger.error(f"Error listing pages for tenant {tenant_obj.id}: {str(e)}")
+                    status_message = f"Error loading pages: {str(e)}"
+                    status_type = "error"
+        except Exception as e:
+            logger.error(f"Error getting tenant by slug '{selected_tenant_slug}': {str(e)}")
+            status_message = f"Error loading tenant: {str(e)}"
+            status_type = "error"
     else:
         logger.warning("No tenant selected for page listing")
 

@@ -150,4 +150,61 @@ if __name__ == "__main__":
         logging.info("Starting application with all routes registered")
 
         import uvicorn
-        uvicorn.run("web_app:app", host="0.0.0.0", port=5000, reload=True)
+        import asyncio
+        import logging
+        import os
+        from web_app import app
+        from pycommerce.core.db import Base, engine
+
+        # Configure logging
+        logging.basicConfig(
+            level=logging.INFO,
+            format="%(asctime)s.%(msecs)03d %(levelname)s %(module)s - %(funcName)s: %(message)s",
+            datefmt="%Y-%m-%d %H:%M:%S",
+        )
+
+        logger = logging.getLogger(__name__)
+
+        # Create any missing tables
+        def ensure_page_builder_tables():
+            try:
+                from pycommerce.models.page_builder import Page, PageSection, ContentBlock, PageTemplate
+
+                # First check if tables exist
+                from sqlalchemy import inspect
+                inspector = inspect(engine)
+                existing_tables = inspector.get_table_names()
+
+                tables_to_create = []
+                if 'pages' not in existing_tables:
+                    tables_to_create.append(Page.__table__)
+                    logger.info("Will create 'pages' table")
+                if 'page_sections' not in existing_tables:
+                    tables_to_create.append(PageSection.__table__)
+                    logger.info("Will create 'page_sections' table")
+                if 'content_blocks' not in existing_tables:
+                    tables_to_create.append(ContentBlock.__table__)
+                    logger.info("Will create 'content_blocks' table")
+                if 'page_templates' not in existing_tables:
+                    tables_to_create.append(PageTemplate.__table__)
+                    logger.info("Will create 'page_templates' table")
+
+                if tables_to_create:
+                    logger.info(f"Creating {len(tables_to_create)} missing tables")
+                    Base.metadata.create_all(engine, tables=tables_to_create)
+                    logger.info("Page builder tables created successfully")
+                else:
+                    logger.info("All page builder tables already exist")
+            except Exception as e:
+                logger.error(f"Error ensuring page builder tables: {str(e)}")
+
+        # Ensure page builder tables exist
+        ensure_page_builder_tables()
+
+        uvicorn.run(
+            "web_app:app",
+            host="0.0.0.0",
+            port=5000,
+            reload=True,
+            log_level="info"
+        )
