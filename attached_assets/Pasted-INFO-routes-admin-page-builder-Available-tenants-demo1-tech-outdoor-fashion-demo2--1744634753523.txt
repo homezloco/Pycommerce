@@ -1,0 +1,42 @@
+INFO:routes.admin.page_builder:Available tenants: ['demo1', 'tech', 'outdoor', 'fashion', 'demo2']
+INFO:routes.admin.page_builder:Stored tenant slug in session: demo1
+INFO:routes.admin.page_builder:Getting tenant by slug: demo1
+INFO:pycommerce.models.tenant:Retrieved tenant by slug demo1 with theme settings: {'primary_color': '#ff0000', 'secondary_color': '#6c757d', 'background_color': '#ffffff', 'text_color': '#212529', 'font_family': 'Arial, sans-serif', 'heading_font_family': 'inherit', 'base_font_size': 16, 'heading_scale': 'moderate', 'container_width': 'standard', 'border_radius': 4, 'spacing_scale': 'moderate', 'header_style': 'standard', 'product_card_style': 'standard', 'button_style': 'standard', 'custom_css': '', 'updated_at': '2025-04-05T14:12:30.907742'}
+INFO:routes.admin.page_builder:Found tenant: Demo Store 1
+INFO:routes.admin.page_builder:Listing pages for tenant 0a38d2a1-00fe-47ea-a6d2-f1595048aab0
+INFO:routes.admin.page_builder:Found 1 pages for tenant 0a38d2a1-00fe-47ea-a6d2-f1595048aab0
+INFO:routes.admin.page_builder:  Page: Welcome to Demo Store 1 (ID: 709b90b0-41e0-497b-8a41-3b357a94a117, slug: welcome)
+INFO:routes.admin.page_builder:Template context prepared with 1 pages
+INFO:     172.31.128.52:55212 - "GET /admin/pages?status_message=Store+changed+successfully&status_type=success HTTP/1.1" 200 OK
+INFO:pycommerce.models.tenant:Retrieved tenant by slug outdoor with theme settings: {}
+INFO:     172.31.128.52:55212 - "GET /admin/change-store?redirect_url=%2Fadmin%2Fpages&tenant=outdoor HTTP/1.1" 303 See Other
+INFO:routes.admin.page_builder:Accessing pages listing route
+INFO:routes.admin.page_builder:Fetching all tenants
+INFO:routes.admin.page_builder:Found 5 tenants: ['Demo Store 1', 'Tech Gadgets', 'Outdoor Adventure', 'Fashion Boutique', 'Demo Store 2']
+INFO:routes.admin.page_builder:Initial selected tenant slug: outdoor
+INFO:routes.admin.page_builder:Available tenants: ['demo1', 'tech', 'outdoor', 'fashion', 'demo2']
+INFO:routes.admin.page_builder:Stored tenant slug in session: outdoor
+INFO:routes.admin.page_builder:Getting tenant by slug: outdoor
+INFO:pycommerce.models.tenant:Retrieved tenant by slug outdoor with theme settings: {}
+INFO:routes.admin.page_builder:Found tenant: Outdoor Adventure
+INFO:routes.admin.page_builder:Listing pages for tenant fcb7133c-0ecc-4384-9b6d-695b52ae1496
+INFO:routes.admin.page_builder:Found 1 pages for tenant fcb7133c-0ecc-4384-9b6d-695b52ae1496
+INFO:routes.admin.page_builder:  Page: Welcome to Outdoor Adventure (ID: ec92b7cf-a5ce-4bce-b87e-9f9093b3f83a, slug: welcome)
+INFO:routes.admin.page_builder:Template context prepared with 1 pages
+INFO:     172.31.128.52:55212 - "GET /admin/pages?status_message=Store+changed+successfully&status_type=success HTTP/1.1" 200 OK
+INFO:pycommerce.models.tenant:Retrieved tenant by slug demo2 with theme settings: {'primary_color': '#007bff', 'secondary_color': '#6c757d', 'background_color': '#ffffff', 'text_color': '#212529', 'font_family': "'Open Sans', sans-serif", 'heading_font_family': 'inherit', 'base_font_size': 16, 'heading_scale': 'moderate', 'container_width': 'standard', 'border_radius': 4, 'spacing_scale': 'moderate', 'header_style': 'standard', 'product_card_style': 'standard', 'button_style': 'standard', 'custom_css': '', 'updated_at': '2025-04-06T07:44:41.517624'}
+INFO:     172.31.128.52:49280 - "GET /admin/change-store?redirect_url=%2Fadmin%2Fpages&tenant=demo2 HTTP/1.1" 303 See Other
+INFO:routes.admin.page_builder:Accessing pages listing route
+INFO:routes.admin.page_builder:Fetching all tenants
+INFO:routes.admin.page_builder:Found 5 tenants: ['Demo Store 1', 'Tech Gadgets', 'Outdoor Adventure', 'Fashion Boutique', 'Demo Store 2']
+INFO:routes.admin.page_builder:Initial selected tenant slug: demo2
+INFO:routes.admin.page_builder:Available tenants: ['demo1', 'tech', 'outdoor', 'fashion', 'demo2']
+INFO:routes.admin.page_builder:Stored tenant slug in session: demo2
+INFO:routes.admin.page_builder:Getting tenant by slug: demo2
+INFO:pycommerce.models.tenant:Retrieved tenant by slug demo2 with theme settings: {'primary_color': '#007bff', 'secondary_color': '#6c757d', 'background_color': '#ffffff', 'text_color': '#212529', 'font_family': "'Open Sans', sans-serif", 'heading_font_family': 'inherit', 'base_font_size': 16, 'heading_scale': 'moderate', 'container_width': 'standard', 'border_radius': 4, 'spacing_scale': 'moderate', 'header_style': 'standard', 'product_card_style': 'standard', 'button_style': 'standard', 'custom_css': '', 'updated_at': '2025-04-06T07:44:41.517624'}
+INFO:routes.admin.page_builder:Found tenant: Demo Store 2
+INFO:routes.admin.page_builder:Listing pages for tenant b8925121-9713-487c-93e8-76303514121a
+INFO:routes.admin.page_builder:Found 1 pages for tenant b8925121-9713-487c-93e8-76303514121a
+INFO:routes.admin.page_builder:  Page: Welcome to Demo Store 2 (ID: f26b4be5-b5c5-4530-8606-44b27f2e3c5d, slug: welcome)
+INFO:routes.admin.page_builder:Template context prepared with 1 pages
+INFO:     172.31.128.52:49280 - "GET /admin/pages?status_message=Store+changed+successfully&status_type=success HTTP/1.1" 200 OK
