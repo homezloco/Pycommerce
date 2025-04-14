@@ -180,6 +180,14 @@ def setup_routes(jinja_templates: Jinja2Templates = None):
     # Check template setup
     if templates is None:
         logger.error("Templates object is None in setup_routes. Check app initialization.")
+        # Create new templates object as a fallback
+        import os
+        from fastapi.templating import Jinja2Templates
+        base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        template_dir = os.path.join(base_dir, "templates")
+        if os.path.exists(template_dir):
+            templates = Jinja2Templates(directory=template_dir)
+            logger.info(f"Created fallback templates object with directory: {template_dir}")
     else:
         logger.info("Templates setup complete")
 
@@ -224,10 +232,15 @@ async def pages_list(
     page: int = 1,
     limit: int = 20,
     status_message: Optional[str] = None,
-    status_type: str = "info"
+    status_type: str = "info",
+    debug: bool = False
 ):
     """Admin page listing all pages."""
     logger.info("Accessing pages listing route")
+    if debug:
+        # Return a simple response to check if the route is reachable
+        return HTMLResponse(content="<h1>Pages Route Debugging</h1><p>If you can see this, the route is reachable but template rendering may have issues.</p>")
+    
     managers = get_managers()
     session = managers["session"]
 
@@ -1073,6 +1086,45 @@ async def create_block(
             block_data["content"]["html"] = processed_html
 
         block = block_manager.create(block_data)
+
+@router.get("/pages-debug", response_class=HTMLResponse)
+async def pages_debug(request: Request):
+    """Debug page to check template rendering."""
+    try:
+        # Create a simple HTML response
+        html_content = """
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Page Builder Debug</title>
+            <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+        </head>
+        <body>
+            <div class="container py-4">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h1>Page Builder Debug</h1>
+                    </div>
+                    <div class="card-body">
+                        <p>This page is rendering correctly from the page_builder.py route.</p>
+                        <p>If you can see this, the basic routing is working but there might be issues with:</p>
+                        <ul>
+                            <li>The Jinja2Templates configuration</li>
+                            <li>The actual template files</li>
+                            <li>Database queries for pages</li>
+                        </ul>
+                        <a href="/admin/pages?debug=true" class="btn btn-primary">Try Pages Route with Debug</a>
+                    </div>
+                </div>
+            </div>
+        </body>
+        </html>
+        """
+        return HTMLResponse(content=html_content)
+    except Exception as e:
+        logger.error(f"Error in pages_debug: {str(e)}")
+        return HTMLResponse(content=f"<h1>Error</h1><p>{str(e)}</p>", status_code=500)
+
         return {
             "id": str(block.id),
             "section_id": str(block.section_id),

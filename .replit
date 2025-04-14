@@ -8,7 +8,7 @@ deploymentTarget = "autoscale"
 run = ["gunicorn", "--bind", "0.0.0.0:5000", "main:app"]
 
 [workflows]
-runButton = "Run with Fixed Indentation"
+runButton = "Restart Page Builder"
 
 [[workflows.workflow]]
 name = "Project"
@@ -124,6 +124,23 @@ mode = "sequential"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "export DATABASE_URL=$(printenv REPLIT_DB_URL 2>/dev/null || echo \"postgresql://postgres:postgres@localhost:5432/pycommerce\")"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python main.py"
+
+[[workflows.workflow]]
+name = "Restart Page Builder"
+author = 34384132
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "export DATABASE_URL=$(printenv REPLIT_DB_URL 2>/dev/null || echo \"postgresql://postgres:postgres@localhost:5432/pycommerce\")"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python verify_page_builder.py"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
