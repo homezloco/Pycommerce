@@ -1,4 +1,3 @@
-
 {% extends "admin/base_admin.html" %}
 
 {% block title %}Page Editor - PyCommerce Admin{% endblock %}
@@ -12,11 +11,11 @@
     margin-bottom: 20px;
     position: relative;
   }
-  
+
   .section-container:hover {
     border-color: #aaa;
   }
-  
+
   .section-controls {
     position: absolute;
     top: 5px;
@@ -24,7 +23,7 @@
     display: flex;
     gap: 5px;
   }
-  
+
   .block-container {
     border: 1px solid #e9e9e9;
     padding: 15px;
@@ -32,11 +31,11 @@
     background-color: #f8f9fa;
     position: relative;
   }
-  
+
   .block-container:hover {
     box-shadow: 0 0 5px rgba(0,0,0,0.1);
   }
-  
+
   .block-controls {
     position: absolute;
     top: 5px;
@@ -44,14 +43,14 @@
     display: flex;
     gap: 5px;
   }
-  
+
   .component-library {
     background-color: #f8f9fa;
     border: 1px solid #ddd;
     padding: 15px;
     margin-bottom: 15px;
   }
-  
+
   .component-item {
     padding: 10px;
     margin-bottom: 5px;
@@ -59,14 +58,14 @@
     border: 1px solid #ddd;
     cursor: grab;
   }
-  
+
   .preview-container {
     border: 1px solid #ddd;
     padding: 20px;
     margin-top: 20px;
     min-height: 200px;
   }
-  
+
   .placeholder {
     border: 2px dashed #ccc;
     padding: 20px;
@@ -141,7 +140,7 @@
           </div>
         </div>
       </div>
-      
+
       <div class="card mt-4">
         <div class="card-header d-flex justify-content-between align-items-center">
           <span><i class="fas fa-sliders-h me-1"></i> Page Actions</span>
@@ -154,31 +153,38 @@
     const editorConfig = {{ editor_config|safe }};
 
     // Initialize TinyMCE editor for the modal
-    tinymce.init({
-      selector: '#textEditor',
-      height: 500,
-      menubar: true,
-      plugins: [
-        'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
-        'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
-        'insertdatetime', 'media', 'table', 'help', 'wordcount'
-      ],
-      toolbar: 'undo redo | formatselect | ' +
-        'bold italic backcolor | alignleft aligncenter ' +
-        'alignright alignjustify | bullist numlist outdent indent | ' +
-        'removeformat | image media link | help',
-      content_style: 'body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-size: 14px; }',
-      file_picker_callback: function(callback, value, meta) {
-        // Open media selector modal
-        openMediaSelector(function(id, url, name) {
-          if (meta.filetype === 'image') {
-            callback(url, { title: name });
-          } else if (meta.filetype === 'media') {
-            callback(url, { title: name });
-          } else {
-            callback(url, { title: name });
+    document.addEventListener('DOMContentLoaded', function() {
+      if (typeof tinymce !== 'undefined') {
+        console.log("TinyMCE is available, initializing editor");
+        tinymce.init({
+          selector: '#textEditor',
+          height: 500,
+          menubar: true,
+          plugins: [
+            'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
+            'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
+            'insertdatetime', 'media', 'table', 'help', 'wordcount'
+          ],
+          toolbar: 'undo redo | formatselect | ' +
+            'bold italic backcolor | alignleft aligncenter ' +
+            'alignright alignjustify | bullist numlist outdent indent | ' +
+            'removeformat | image media link | help',
+          content_style: 'body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-size: 14px; }',
+          file_picker_callback: function(callback, value, meta) {
+            // Open media selector modal
+            openMediaSelector(function(id, url, name) {
+              if (meta.filetype === 'image') {
+                callback(url, { title: name });
+              } else if (meta.filetype === 'media') {
+                callback(url, { title: name });
+              } else {
+                callback(url, { title: name });
+              }
+            });
           }
         });
+      } else {
+        console.error("TinyMCE is not loaded properly");
       }
     });
 
@@ -273,10 +279,10 @@
     window.openTextEditor = function(blockId, content) {
       const modal = document.getElementById('textEditorModal');
       const modalInstance = new bootstrap.Modal(modal);
-      
+
       // Set content in TinyMCE
       tinymce.get('textEditor').setContent(content || '');
-      
+
       // Update save button to save to the specific block
       const saveTextBtn = document.getElementById('saveTextBtn');
       saveTextBtn.onclick = function() {
@@ -284,7 +290,7 @@
         saveBlockContent(blockId, updatedContent);
         modalInstance.hide();
       };
-      
+
       modalInstance.show();
     };
 
@@ -333,7 +339,7 @@
               <i class="fas fa-quote-right me-2"></i> Testimonials
             </div>
           </div>
-          
+
           <div class="component-library">
             <h6>Content Blocks</h6>
             <div class="component-item block-item" data-type="text">
@@ -357,7 +363,7 @@
           </div>
         </div>
       </div>
-      
+
       <div class="card mb-4">
         <div class="card-header">
           <i class="fas fa-sliders-h me-1"></i> Page Settings
@@ -390,7 +396,7 @@
         </div>
       </div>
     </div>
-    
+
     <div class="col-md-9">
       <div class="card mb-4">
         <div class="card-header">
@@ -470,7 +476,7 @@
               </div>
             {% endif %}
           </div>
-          
+
           <div class="text-center mt-4">
             <button class="btn btn-outline-primary" id="addSectionBtn">
               <i class="fas fa-plus me-1"></i> Add Section
@@ -547,11 +553,11 @@
         <form id="blockSettingsForm">
           <input type="hidden" id="blockId" name="block_id">
           <input type="hidden" id="blockSectionId" name="section_id">
-          
+
           <div id="blockTypeFields">
             <!-- Dynamic fields based on block type will be inserted here -->
           </div>
-          
+
           <div class="mb-3">
             <label class="form-label">Block Settings</label>
             <div class="card">
@@ -713,14 +719,14 @@
       is_published: {{ 'true' if page.is_published else 'false' }},
       layout_data: {{ page.layout_data|tojson if page.layout_data else '{}' }}
     };
-    
+
     // Initialize sortable for the page container
     new Sortable(document.getElementById('pageContainer'), {
       animation: 150,
       handle: '.section-header',
       ghostClass: 'section-ghost'
     });
-    
+
     // Initialize sortable for each blocks container
     document.querySelectorAll('.blocks-container').forEach(container => {
       new Sortable(container, {
@@ -729,49 +735,49 @@
         ghostClass: 'block-ghost'
       });
     });
-    
+
     // Add Section button
     document.getElementById('addSectionBtn').addEventListener('click', function() {
       const addSectionModal = new bootstrap.Modal(document.getElementById('addSectionModal'));
       addSectionModal.show();
     });
-    
+
     // Section type selection in the Add Section modal
     document.querySelectorAll('.section-type-option').forEach(option => {
       option.addEventListener('click', function() {
         const sectionType = this.getAttribute('data-type');
         createNewSection(sectionType);
-        
+
         // Hide the modal
         const modal = bootstrap.Modal.getInstance(document.getElementById('addSectionModal'));
         modal.hide();
       });
     });
-    
+
     // Add Block button
     document.querySelectorAll('.add-block-btn').forEach(btn => {
       btn.addEventListener('click', function() {
         const sectionId = this.getAttribute('data-section-id');
         document.getElementById('targetSectionId').value = sectionId;
-        
+
         const addBlockModal = new bootstrap.Modal(document.getElementById('addBlockModal'));
         addBlockModal.show();
       });
     });
-    
+
     // Block type selection in the Add Block modal
     document.querySelectorAll('.block-type-option').forEach(option => {
       option.addEventListener('click', function() {
         const blockType = this.getAttribute('data-type');
         const sectionId = document.getElementById('targetSectionId').value;
         createNewBlock(sectionId, blockType);
-        
+
         // Hide the modal
         const modal = bootstrap.Modal.getInstance(document.getElementById('addBlockModal'));
         modal.hide();
       });
     });
-    
+
     // Edit section buttons
     document.addEventListener('click', function(e) {
       if (e.target.closest('.edit-section-btn')) {
@@ -779,11 +785,11 @@
         const sectionContainer = btn.closest('.section-container');
         const sectionId = sectionContainer.getAttribute('data-section-id');
         const sectionType = sectionContainer.getAttribute('data-section-type');
-        
+
         editSection(sectionId, sectionType);
       }
     });
-    
+
     // Delete section buttons
     document.addEventListener('click', function(e) {
       if (e.target.closest('.delete-section-btn')) {
@@ -791,12 +797,12 @@
           const btn = e.target.closest('.delete-section-btn');
           const sectionContainer = btn.closest('.section-container');
           const sectionId = sectionContainer.getAttribute('data-section-id');
-          
+
           deleteSection(sectionId);
         }
       }
     });
-    
+
     // Edit block buttons
     document.addEventListener('click', function(e) {
       if (e.target.closest('.edit-block-btn')) {
@@ -805,11 +811,11 @@
         const blockId = blockContainer.getAttribute('data-block-id');
         const blockType = blockContainer.getAttribute('data-block-type');
         const sectionId = blockContainer.closest('.section-container').getAttribute('data-section-id');
-        
+
         editBlock(blockId, blockType, sectionId);
       }
     });
-    
+
     // Delete block buttons
     document.addEventListener('click', function(e) {
       if (e.target.closest('.delete-block-btn')) {
@@ -817,47 +823,47 @@
           const btn = e.target.closest('.delete-block-btn');
           const blockContainer = btn.closest('.block-container');
           const blockId = blockContainer.getAttribute('data-block-id');
-          
+
           deleteBlock(blockId);
         }
       }
     });
-    
+
     // Preview Page button
     document.getElementById('previewPageBtn').addEventListener('click', function() {
       previewPage();
     });
-    
+
     // Save Page button
     document.getElementById('savePageBtn').addEventListener('click', function() {
       savePage();
     });
-    
+
     // Save Section Settings button
     document.getElementById('saveSectionSettingsBtn').addEventListener('click', function() {
       const formData = new FormData(document.getElementById('sectionSettingsForm'));
       const sectionId = formData.get('section_id');
-      
+
       // Convert form data to a settings object
       const settings = {
         background: formData.get('background'),
         padding: formData.get('padding'),
         width: formData.get('width')
       };
-      
+
       updateSectionSettings(sectionId, settings);
-      
+
       // Close the modal
       const modal = bootstrap.Modal.getInstance(document.getElementById('sectionSettingsModal'));
       modal.hide();
     });
-    
+
     // Save Block Settings button
     document.getElementById('saveBlockSettingsBtn').addEventListener('click', function() {
       const formData = new FormData(document.getElementById('blockSettingsForm'));
       const blockId = formData.get('block_id');
       const blockType = document.getElementById('blockTypeFields').getAttribute('data-block-type');
-      
+
       // Build content and settings objects based on block type
       const content = {};
       const settings = {
@@ -865,7 +871,7 @@
         alignment: formData.get('settings.alignment'),
         margin: formData.get('settings.margin')
       };
-      
+
       // Collect content data based on block type
       if (blockType === 'text') {
         content.html = tinymce.get('blockContent').getContent();
@@ -886,14 +892,14 @@
         content.form_type = formData.get('content.form_type');
         content.button_text = formData.get('content.button_text');
       }
-      
+
       updateBlockContent(blockId, content, settings);
-      
+
       // Close the modal
       const modal = bootstrap.Modal.getInstance(document.getElementById('blockSettingsModal'));
       modal.hide();
     });
-    
+
     // Functions to interact with the API
     function createNewSection(sectionType) {
       // API request data
@@ -907,7 +913,7 @@
           width: 'normal'
         }
       };
-      
+
       // Make API request
       fetch('/admin/api/pages/sections', {
         method: 'POST',
@@ -940,16 +946,16 @@
             </div>
           </div>
         `;
-        
+
         // Remove placeholder if it exists
         const placeholder = document.querySelector('.placeholder');
         if (placeholder) {
           placeholder.remove();
         }
-        
+
         // Append the new section
         document.getElementById('pageContainer').insertAdjacentHTML('beforeend', sectionHTML);
-        
+
         // Initialize sortable for the new blocks container
         const blocksContainer = document.querySelector(`.section-container[data-section-id="${section.id}"] .blocks-container`);
         new Sortable(blocksContainer, {
@@ -957,7 +963,7 @@
           group: 'blocks',
           ghostClass: 'block-ghost'
         });
-        
+
         // Add event listener to the new Add Block button
         const addBlockBtn = document.querySelector(`.section-container[data-section-id="${section.id}"] .add-block-btn`);
         addBlockBtn.addEventListener('click', function() {
@@ -971,7 +977,7 @@
         alert('Failed to create section. Please try again.');
       });
     }
-    
+
     function createNewBlock(sectionId, blockType) {
       // Get default content based on block type
       let content = {};
@@ -980,7 +986,7 @@
         alignment: 'left',
         margin: 'small'
       };
-      
+
       switch (blockType) {
         case 'text':
           content = {
@@ -1019,7 +1025,7 @@
           };
           break;
       }
-      
+
       // API request data
       const data = {
         section_id: sectionId,
@@ -1028,7 +1034,7 @@
         content: content,
         settings: settings
       };
-      
+
       // Make API request
       fetch('/admin/api/pages/blocks', {
         method: 'POST',
@@ -1041,7 +1047,7 @@
       .then(block => {
         // Create block HTML based on type
         let blockContentHTML = '';
-        
+
         switch (block.block_type) {
           case 'text':
             blockContentHTML = `<div class="text-content">${block.content.html}</div>`;
@@ -1084,7 +1090,7 @@
           default:
             blockContentHTML = `<div class="generic-block">${block.block_type} Block</div>`;
         }
-        
+
         // Create the block HTML
         const blockHTML = `
           <div class="block-container" data-block-id="${block.id}" data-block-type="${block.block_type}">
@@ -1101,11 +1107,11 @@
             </div>
           </div>
         `;
-        
+
         // Append the block to the section
         const blocksContainer = document.querySelector(`.section-container[data-section-id="${sectionId}"] .blocks-container`);
         blocksContainer.insertAdjacentHTML('beforeend', blockHTML);
-        
+
         // Open the edit block modal immediately after creating
         editBlock(block.id, block.block_type, sectionId);
       })
@@ -1114,7 +1120,7 @@
         alert('Failed to create block. Please try again.');
       });
     }
-    
+
     function editSection(sectionId, sectionType) {
       // Fetch current section data
       fetch(`/admin/api/pages/sections/${sectionId}`)
@@ -1123,14 +1129,14 @@
           // Populate the form
           document.getElementById('sectionId').value = section.id;
           document.getElementById('sectionType').value = section.section_type;
-          
+
           // Set settings
           if (section.settings) {
             document.getElementById('sectionBackground').value = section.settings.background || '#ffffff';
             document.getElementById('sectionPadding').value = section.settings.padding || 'medium';
             document.getElementById('sectionWidth').value = section.settings.width || 'normal';
           }
-          
+
           // Show the modal
           const sectionSettingsModal = new bootstrap.Modal(document.getElementById('sectionSettingsModal'));
           sectionSettingsModal.show();
@@ -1140,11 +1146,11 @@
           alert('Failed to load section settings. Please try again.');
         });
     }
-    
+
     function updateSectionSettings(sectionId, settings) {
       // API request data
       const data = { settings: settings };
-      
+
       // Make API request
       fetch(`/admin/api/pages/sections/${sectionId}`, {
         method: 'PUT',
@@ -1163,7 +1169,7 @@
         alert('Failed to update section settings. Please try again.');
       });
     }
-    
+
     function deleteSection(sectionId) {
       // Make API request
       fetch(`/admin/api/pages/sections/${sectionId}`, {
@@ -1174,7 +1180,7 @@
         if (result.success) {
           // Remove the section from the UI
           document.querySelector(`.section-container[data-section-id="${sectionId}"]`).remove();
-          
+
           // Show placeholder if no sections remain
           if (document.querySelectorAll('.section-container').length === 0) {
             document.getElementById('pageContainer').innerHTML = `
@@ -1192,7 +1198,7 @@
         alert('Failed to delete section. Please try again.');
       });
     }
-    
+
     function editBlock(blockId, blockType, sectionId) {
       // Fetch current block data
       fetch(`/admin/api/pages/blocks/${blockId}`)
@@ -1201,20 +1207,20 @@
           // Set the form fields
           document.getElementById('blockId').value = block.id;
           document.getElementById('blockSectionId').value = sectionId;
-          
+
           // Set settings
           if (block.settings) {
             document.getElementById('blockWidth').value = block.settings.width || 'normal';
             document.getElementById('blockAlignment').value = block.settings.alignment || 'left';
             document.getElementById('blockMargin').value = block.settings.margin || 'small';
           }
-          
+
           // Create type-specific fields
           const typeFieldsContainer = document.getElementById('blockTypeFields');
           typeFieldsContainer.setAttribute('data-block-type', blockType);
-          
+
           let typeFieldsHTML = '';
-          
+
           switch (blockType) {
             case 'text':
               typeFieldsHTML = `
@@ -1224,7 +1230,7 @@
                 </div>
               `;
               break;
-              
+
             case 'image':
               typeFieldsHTML = `
                 <div class="mb-3">
@@ -1240,7 +1246,7 @@
                 </div>
               `;
               break;
-              
+
             case 'button':
               typeFieldsHTML = `
                 <div class="mb-3">
@@ -1268,7 +1274,7 @@
                 </div>
               `;
               break;
-              
+
             case 'product':
               // We need to fetch products for the dropdown
               typeFieldsHTML = `
@@ -1280,7 +1286,7 @@
                 </div>
               `;
               break;
-              
+
             case 'video':
               typeFieldsHTML = `
                 <div class="mb-3">
@@ -1297,7 +1303,7 @@
                 </div>
               `;
               break;
-              
+
             case 'form':
               typeFieldsHTML = `
                 <div class="mb-3">
@@ -1315,7 +1321,7 @@
                 </div>
               `;
               break;
-              
+
             default:
               typeFieldsHTML = `
                 <div class="alert alert-info">
@@ -1323,10 +1329,10 @@
                 </div>
               `;
           }
-          
+
           // Set the HTML
           typeFieldsContainer.innerHTML = typeFieldsHTML;
-          
+
           // Initialize TinyMCE if there's a text editor
           if (blockType === 'text') {
             tinymce.init({
@@ -1344,7 +1350,7 @@
               content_style: 'body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-size: 14px; }'
             });
           }
-          
+
           // Initialize product dropdown if it's a product block
           if (blockType === 'product') {
             // Fetch products from API
@@ -1353,12 +1359,12 @@
               .then(products => {
                 const productIdSelect = document.getElementById('productId');
                 let options = '<option value="">Select a product...</option>';
-                
+
                 products.forEach(product => {
                   const selected = block.content?.product_id === product.id ? 'selected' : '';
                   options += `<option value="${product.id}" ${selected}>${product.name}</option>`;
                 });
-                
+
                 productIdSelect.innerHTML = options;
               })
               .catch(error => {
@@ -1366,7 +1372,7 @@
                 document.getElementById('productId').innerHTML = '<option value="">Error loading products</option>';
               });
           }
-          
+
           // Add media browser handler for image blocks
           if (blockType === 'image' && document.getElementById('browseMediaBtn')) {
             document.getElementById('browseMediaBtn').addEventListener('click', function() {
@@ -1375,7 +1381,7 @@
               alert('Media browser will be implemented here');
             });
           }
-          
+
           // Show the modal
           const blockSettingsModal = new bootstrap.Modal(document.getElementById('blockSettingsModal'));
           blockSettingsModal.show();
@@ -1385,14 +1391,14 @@
           alert('Failed to load block settings. Please try again.');
         });
     }
-    
+
     function updateBlockContent(blockId, content, settings) {
       // API request data
       const data = {
         content: content,
         settings: settings
       };
-      
+
       // Make API request
       fetch(`/admin/api/pages/blocks/${blockId}`, {
         method: 'PUT',
@@ -1406,7 +1412,7 @@
         // Update UI based on block type
         const blockContainer = document.querySelector(`.block-container[data-block-id="${blockId}"]`);
         const blockContentContainer = blockContainer.querySelector('.block-content');
-        
+
         switch (block.block_type) {
           case 'text':
             blockContentContainer.innerHTML = `<div class="text-content">${block.content.html}</div>`;
@@ -1478,7 +1484,7 @@
         alert('Failed to update block. Please try again.');
       });
     }
-    
+
     function deleteBlock(blockId) {
       // Make API request
       fetch(`/admin/api/pages/blocks/${blockId}`, {
@@ -1498,24 +1504,24 @@
         alert('Failed to delete block. Please try again.');
       });
     }
-    
+
     function previewPage() {
       // Open the preview modal
       const previewModal = new bootstrap.Modal(document.getElementById('previewModal'));
       previewModal.show();
-      
+
       // Set the iframe source to the preview URL
       const previewFrame = document.getElementById('previewFrame');
       previewFrame.src = `/admin/pages/preview/${pageId}`;
-      
+
       // Update the "Open in New Tab" button
       document.getElementById('openPreviewBtn').href = `/admin/pages/preview/${pageId}`;
     }
-    
+
     function savePage() {
       // Get form data
       const formData = new FormData(document.getElementById('pageSettingsForm'));
-      
+
       // Build page data object
       const pageData = {
         title: formData.get('title'),
@@ -1524,7 +1530,7 @@
         meta_description: formData.get('meta_description'),
         is_published: formData.get('is_published') === 'on'
       };
-      
+
       // Make API request
       fetch(`/admin/pages/edit/${pageId}`, {
         method: 'POST',
@@ -1537,7 +1543,7 @@
         if (response.ok) {
           // Show success message
           alert('Page saved successfully!');
-          
+
           // Redirect to the page edit form
           window.location.href = `/admin/pages/edit/${pageId}?status_message=Page+saved+successfully&status_type=success`;
         } else {

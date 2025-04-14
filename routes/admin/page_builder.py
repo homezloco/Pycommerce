@@ -1245,6 +1245,65 @@ async def delete_block(block_id: str):
     finally:
         session.close()
 
+@router.get("/api/pages", response_class=JSONResponse)
+async def api_list_pages(
+    request: Request,
+    tenant: Optional[str] = None,
+    search: Optional[str] = None,
+    page: int = 1, 
+    limit: int = 20
+):
+    """List pages via API."""
+    session = SessionLocal()
+    try:
+        # Get local manager instances
+        tenant_manager = TenantManager(session)
+        page_manager = PageManager(session)
+        
+        # Get selected tenant from query or session
+        selected_tenant_slug = tenant or request.session.get("selected_tenant")
+        
+        # If no tenant selected and we have tenants, select the first one
+        if not selected_tenant_slug:
+            tenants = tenant_manager.get_all()
+            if tenants:
+                selected_tenant_slug = tenants[0].slug
+        
+        # Get tenant and pages
+        tenant_obj = None
+        pages = []
+        if selected_tenant_slug:
+            tenant_obj = tenant_manager.get_by_slug(selected_tenant_slug)
+            if tenant_obj:
+                pages = page_manager.list_by_tenant(str(tenant_obj.id), include_unpublished=True)
+        
+        # Format response
+        pages_data = []
+        for p in pages:
+            pages_data.append({
+                "id": str(p.id),
+                "title": p.title,
+                "slug": p.slug,
+                "is_published": p.is_published,
+                "created_at": p.created_at.isoformat() if p.created_at else None,
+                "updated_at": p.updated_at.isoformat() if p.updated_at else None
+            })
+        
+        return {
+            "pages": pages_data,
+            "total": len(pages_data),
+            "tenant": {
+                "id": str(tenant_obj.id) if tenant_obj else None,
+                "slug": tenant_obj.slug if tenant_obj else None,
+                "name": tenant_obj.name if tenant_obj else None
+            } if tenant_obj else None
+        }
+    except Exception as e:
+        logger.error(f"Error listing pages via API: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error listing pages: {str(e)}")
+    finally:
+        session.close()
+
 @router.post("/api/pages", response_class=JSONResponse)
 async def api_create_page(page_data: Dict[str, Any] = Body(...)):
     """Create a new page via API."""
