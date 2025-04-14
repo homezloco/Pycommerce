@@ -27,7 +27,8 @@ def add_default_sections():
         
         # Get all tenants and their pages
         from pycommerce.models.tenant import TenantManager
-        tenant_manager = TenantManager(session)
+        tenant_manager = TenantManager()
+        tenant_manager.session = session
         tenants = tenant_manager.get_all()
         
         section_count = 0
@@ -106,7 +107,7 @@ def add_default_sections():
     except Exception as e:
         session.rollback()
         logger.error(f"Error adding default sections: {str(e)}")
-        return 0, L
+        return 0, 0
     finally:
         session.close()
 
