@@ -698,7 +698,7 @@ async def pages_debug(request: Request):
     # Initialize a session for this request
     session = SessionLocal()
     try:
-        # Create a simple HTML response
+        # Create a simple HTML response with properly escaped JavaScript
         html_content = """
         <!DOCTYPE html>
         <html>
@@ -742,12 +742,12 @@ async def pages_debug(request: Request):
 
                                     // Tenant information
                                     html += '<h5>Tenant Information</h5>';
-                                    html += `<p>Selected tenant: ${data.selected_tenant_slug || 'None'}</p>`;
-                                    html += `<p>Tenants count: ${data.tenants_count}</p>`;
+                                    html += '<p>Selected tenant: ' + (data.selected_tenant_slug || 'None') + '</p>';
+                                    html += '<p>Tenants count: ' + data.tenants_count + '</p>';
 
                                     // Pages information
                                     html += '<h5>Pages Information</h5>';
-                                    html += `<p>Pages count: ${data.pages_count || 0}</p>`;
+                                    html += '<p>Pages count: ' + (data.pages_count || 0) + '</p>';
 
                                     // Database information
                                     if (data.database_info) {
@@ -756,11 +756,11 @@ async def pages_debug(request: Request):
                                         html += '<thead><tr><th>Table</th><th>Exists</th><th>Records</th></tr></thead><tbody>';
 
                                         for (const table in data.database_info.tables_exist) {
-                                            html += `<tr>
-                                                <td>${table}</td>
-                                                <td>${data.database_info.tables_exist[table] ? '✅' : '❌'}</td>
-                                                <td>${data.database_info.record_counts ? data.database_info.record_counts[table] : 'N/A'}</td>
-                                            </tr>`;
+                                            html += '<tr>' +
+                                                '<td>' + table + '</td>' +
+                                                '<td>' + (data.database_info.tables_exist[table] ? '✅' : '❌') + '</td>' +
+                                                '<td>' + (data.database_info.record_counts ? data.database_info.record_counts[table] : 'N/A') + '</td>' +
+                                            '</tr>';
                                         }
 
                                         html += '</tbody></table>';
@@ -769,11 +769,11 @@ async def pages_debug(request: Request):
                                     // Add a section for sections and blocks
                                     html += '<h5>Page Content Analysis</h5>';
                                     html += '<div class="alert alert-warning">';
-                                    if (data.database_info.record_counts.page_sections === 0) {
+                                    if (data.database_info && data.database_info.record_counts && data.database_info.record_counts.page_sections === 0) {
                                         html += '<p><strong>Warning:</strong> No page sections found. Pages need sections to display content.</p>';
                                         html += '<button class="btn btn-sm btn-primary" onclick="createDefaultSection()">Create Default Section for First Page</button>';
                                     }
-                                    if (data.database_info.record_counts.content_blocks === 0) {
+                                    if (data.database_info && data.database_info.record_counts && data.database_info.record_counts.content_blocks === 0) {
                                         html += '<p><strong>Warning:</strong> No content blocks found. Sections need blocks to display content.</p>';
                                     }
                                     html += '</div>';
@@ -785,15 +785,15 @@ async def pages_debug(request: Request):
                                         html += '<thead><tr><th>ID</th><th>Title</th><th>Slug</th><th>Actions</th></tr></thead><tbody>';
 
                                         data.pages.forEach(page => {
-                                            html += `<tr>
-                                                <td>${page.id}</td>
-                                                <td>${page.title}</td>
-                                                <td>${page.slug}</td>
-                                                <td>
-                                                    <a href="/admin/pages/edit/${page.id}" class="btn btn-sm btn-outline-primary">Edit</a>
-                                                    <button onclick="debugPage('${page.id}')" class="btn btn-sm btn-outline-info">Debug</button>
-                                                </td>
-                                            </tr>`;
+                                            html += '<tr>' +
+                                                '<td>' + page.id + '</td>' +
+                                                '<td>' + page.title + '</td>' +
+                                                '<td>' + page.slug + '</td>' +
+                                                '<td>' +
+                                                    '<a href="/admin/pages/edit/' + page.id + '" class="btn btn-sm btn-outline-primary">Edit</a> ' +
+                                                    '<button onclick="debugPage(\'' + page.id + '\')" class="btn btn-sm btn-outline-info">Debug</button>' +
+                                                '</td>' +
+                                            '</tr>';
                                         });
 
                                         html += '</tbody></table>';
@@ -804,12 +804,12 @@ async def pages_debug(request: Request):
                                 .catch(error => {
                                     console.error('Error fetching debug info:', error);
                                     document.getElementById('debugOutput').innerHTML = 
-                                        `<div class="alert alert-danger">Error fetching debug information: ${error.message}</div>`;
+                                        '<div class="alert alert-danger">Error fetching debug information: ' + error.message + '</div>';
                                 });
 
                             // Function to debug a specific page
                             window.debugPage = function(pageId) {
-                                alert('Debug page: ' + pageId + '\nThis would show section and block details for this page.');
+                                alert('Debug page: ' + pageId + '\\nThis would show section and block details for this page.');
                             };
 
                             // Function to create a default section for the first page
