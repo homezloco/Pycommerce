@@ -157,10 +157,6 @@ args = "export DATABASE_URL=$(printenv REPLIT_DB_URL 2>/dev/null || echo \"postg
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "python verify_page_builder.py"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
 args = "python debug_page_builder.py"
 
 [[ports]]
