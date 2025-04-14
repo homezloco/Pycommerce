@@ -8,7 +8,7 @@ deploymentTarget = "autoscale"
 run = ["gunicorn", "--bind", "0.0.0.0:5000", "main:app"]
 
 [workflows]
-runButton = "Restart Page Builder"
+runButton = "Run With Fixed Dropdowns"
 
 [[workflows.workflow]]
 name = "Project"
@@ -158,6 +158,23 @@ args = "export DATABASE_URL=$(printenv REPLIT_DB_URL 2>/dev/null || echo \"postg
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "python debug_page_builder.py"
+
+[[workflows.workflow]]
+name = "Run With Fixed Dropdowns"
+author = 34384132
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "export DATABASE_URL=$(printenv REPLIT_DB_URL 2>/dev/null || echo \"postgresql://postgres:postgres@localhost:5432/pycommerce\")"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python verify_page_builder.py"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python main.py"
 
 [[ports]]
 localPort = 5000

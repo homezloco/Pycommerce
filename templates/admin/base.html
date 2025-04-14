@@ -217,7 +217,7 @@
                             {% endif %}
                             <option value="all" {% if selected_tenant == 'all' or (selected_tenant and selected_tenant.slug == 'all') %}selected{% endif %}>All Stores</option>
                             {% for tenant in tenants %}
-                            <option value="{{ tenant.slug }}" {% if (selected_tenant == tenant.slug) or (selected_tenant and selected_tenant.slug == tenant.slug) %}selected{% endif %}>
+                            <option value="{{ tenant.slug }}" {% if (selected_tenant == tenant.slug) or (selected_tenant and selected_tenant.slug == tenant.slug) %}selected{% endif %}>{{ tenant.name }}</option>
                                 <span class="store-status-indicator {% if tenant.active %}status-active{% else %}status-inactive{% endif %}"></span>
                                 {{ tenant.name }}
                             </option>

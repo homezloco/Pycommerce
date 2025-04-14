@@ -150,9 +150,7 @@
                                     name="{{ field.id }}"
                                     {% if field.required %}required{% endif %}>
                                 {% for option in field.options %}
-                                <option value="{{ option.value }}" {% if field_values[field.id] is defined and option.value == field_values[field.id] or (field_values[field.id] is not defined and option.value == field.default|default('')) %}selected{% endif %}>
-                                    {{ option.label }}
-                                </option>
+                                <option value="{{ option.value }}" {% if field_values[field.id] is defined and option.value == field_values[field.id] or (field_values[field.id] is not defined and option.value == field.default|default('')) %}selected{% endif %}>{{ option.label }}</option>
                                 {% endfor %}
                             </select>
                             {% endif %}
