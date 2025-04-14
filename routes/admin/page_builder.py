@@ -672,7 +672,8 @@ async def page_edit_form(
 @router.get("/pages-debug", response_class=HTMLResponse)
 async def pages_debug(request: Request):
     """Debug page to check template rendering."""
-    # No session used in this route, so we don't need session management
+    # Initialize a session for this request
+    session = SessionLocal()
     try:
         # Create a simple HTML response
         html_content = """
@@ -742,6 +743,39 @@ async def pages_debug(request: Request):
                                         html += '</tbody></table>';
                                     }
 
+                                    // Add a section for sections and blocks
+                                    html += '<h5>Page Content Analysis</h5>';
+                                    html += '<div class="alert alert-warning">';
+                                    if (data.database_info.record_counts.page_sections === 0) {
+                                        html += '<p><strong>Warning:</strong> No page sections found. Pages need sections to display content.</p>';
+                                        html += '<button class="btn btn-sm btn-primary" onclick="createDefaultSection()">Create Default Section for First Page</button>';
+                                    }
+                                    if (data.database_info.record_counts.content_blocks === 0) {
+                                        html += '<p><strong>Warning:</strong> No content blocks found. Sections need blocks to display content.</p>';
+                                    }
+                                    html += '</div>';
+                                    
+                                    // Add a section for page details
+                                    if (data.pages && data.pages.length > 0) {
+                                        html += '<h5>Page Details</h5>';
+                                        html += '<table class="table table-sm table-bordered">';
+                                        html += '<thead><tr><th>ID</th><th>Title</th><th>Slug</th><th>Actions</th></tr></thead><tbody>';
+                                        
+                                        data.pages.forEach(page => {
+                                            html += `<tr>
+                                                <td>${page.id}</td>
+                                                <td>${page.title}</td>
+                                                <td>${page.slug}</td>
+                                                <td>
+                                                    <a href="/admin/pages/edit/${page.id}" class="btn btn-sm btn-outline-primary">Edit</a>
+                                                    <button onclick="debugPage('${page.id}')" class="btn btn-sm btn-outline-info">Debug</button>
+                                                </td>
+                                            </tr>`;
+                                        });
+                                        
+                                        html += '</tbody></table>';
+                                    }
+
                                     document.getElementById('debugOutput').innerHTML = html;
                                 })
                                 .catch(error => {
@@ -749,6 +783,75 @@ async def pages_debug(request: Request):
                                     document.getElementById('debugOutput').innerHTML = 
                                         `<div class="alert alert-danger">Error fetching debug information: ${error.message}</div>`;
                                 });
+                                
+                            // Function to debug a specific page
+                            window.debugPage = function(pageId) {
+                                alert('Debug page: ' + pageId + '\nThis would show section and block details for this page.');
+                            };
+                            
+                            // Function to create a default section for the first page
+                            window.createDefaultSection = function() {
+                                fetch('/admin/debug-pages')
+                                    .then(response => response.json())
+                                    .then(data => {
+                                        if (data.pages && data.pages.length > 0) {
+                                            const pageId = data.pages[0].id;
+                                            
+                                            // Create a basic section
+                                            const sectionData = {
+                                                page_id: pageId,
+                                                section_type: 'content',
+                                                position: 0,
+                                                settings: {
+                                                    padding: 'medium',
+                                                    background: 'white'
+                                                }
+                                            };
+                                            
+                                            fetch('/admin/api/pages/sections', {
+                                                method: 'POST',
+                                                headers: {
+                                                    'Content-Type': 'application/json'
+                                                },
+                                                body: JSON.stringify(sectionData)
+                                            })
+                                            .then(response => response.json())
+                                            .then(result => {
+                                                // After creating the section, create a block
+                                                const blockData = {
+                                                    section_id: result.id,
+                                                    block_type: 'text',
+                                                    position: 0,
+                                                    content: {
+                                                        html: '<h1>Welcome to our store!</h1><p>This is a default content block created by the debug tool.</p>'
+                                                    },
+                                                    settings: {
+                                                        width: 'normal'
+                                                    }
+                                                };
+                                                
+                                                return fetch('/admin/api/pages/blocks', {
+                                                    method: 'POST',
+                                                    headers: {
+                                                        'Content-Type': 'application/json'
+                                                    },
+                                                    body: JSON.stringify(blockData)
+                                                });
+                                            })
+                                            .then(response => response.json())
+                                            .then(result => {
+                                                alert('Default section and content block created successfully!');
+                                                location.reload(); // Reload the page to see the changes
+                                            })
+                                            .catch(error => {
+                                                console.error('Error creating content:', error);
+                                                alert('Error creating content: ' + error.message);
+                                            });
+                                        } else {
+                                            alert('No pages found. Create a page first.');
+                                        }
+                                    });
+                            };
                         </script>
                     </div>
                 </div>
@@ -760,7 +863,9 @@ async def pages_debug(request: Request):
     except Exception as e:
         logger.error(f"Error in pages_debug: {str(e)}")
         return HTMLResponse(content=f"<h1>Error</h1><p>{str(e)}</p>", status_code=500)
-    # Removed the finally clause that was trying to close a non-existent session
+    finally:
+        # Properly close the session
+        session.close()
 
         # Set the selected tenant
         selected_tenant_slug = tenant_obj.slug
