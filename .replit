@@ -161,7 +161,7 @@ args = "python verify_page_builder.py"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "python -c \"from pycommerce.core.db import SessionLocal; from pycommerce.models.tenant import TenantManager; from pycommerce.models.page_builder import PageManager; session = SessionLocal(); tenant_manager = TenantManager(session); tenants = tenant_manager.get_all(); page_manager = PageManager(session); print(f'Found {len(tenants)} tenants'); for tenant in tenants: print(f'Tenant: {tenant.name} (slug: {tenant.slug})'); pages = page_manager.list_by_tenant(str(tenant.id), include_unpublished=True); print(f'  Pages: {len(pages)}'); session.close()\""
+args = "python debug_page_builder.py"
 
 [[ports]]
 localPort = 5000
