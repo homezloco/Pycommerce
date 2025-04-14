@@ -1,0 +1,37 @@
+2025-04-14 05:38:32.691 INFO main - Starting page builder verification
+2025-04-14 05:38:32.691 INFO main - Using database URL: ep-red-hall-a51hczs5.us-east-2.aws.neon.tech/neondb?sslmode=require
+2025-04-14 05:38:32.727 INFO main - Checking page builder tables...
+2025-04-14 05:38:34.208 INFO main - Table 'pages' exists
+2025-04-14 05:38:34.245 INFO main - Table 'page_sections' exists
+2025-04-14 05:38:34.281 INFO main - Table 'content_blocks' exists
+2025-04-14 05:38:34.316 INFO main - Table 'page_templates' exists
+2025-04-14 05:38:34.316 INFO main - Checking for page templates...
+2025-04-14 05:38:34.373 INFO main - Found 1 templates
+2025-04-14 05:38:34.373 INFO main - Verifying API endpoints...
+2025-04-14 05:38:34.373 INFO main - API routes verification would happen here
+2025-04-14 05:38:34.373 INFO main - Verifying Page Builder Imports...
+2025-04-14 05:38:36.486 INFO pycommerce.services.mail - Email template directory: /home/runner/workspace/templates/emails
+2025-04-14 05:38:36.677 INFO pycommerce.plugins.payment.config - Successfully loaded payment settings from database
+2025-04-14 05:38:36.710 INFO pycommerce.plugins.payment.config - Using development Stripe credentials
+2025-04-14 05:38:36.710 INFO pycommerce.plugins.payment.config - Using development PayPal credentials
+2025-04-14 05:38:36.713 INFO pycommerce.plugins.payment.stripe - Initializing Stripe payment plugin
+2025-04-14 05:38:36.713 INFO pycommerce.plugins - Registering plugin: stripe_payment v0.1.0
+2025-04-14 05:38:36.713 INFO pycommerce.plugins.payment.stripe - Initializing Stripe payment plugin
+2025-04-14 05:38:36.713 INFO pycommerce - Registered payment plugin: stripe
+2025-04-14 05:38:36.713 INFO pycommerce.plugins.payment.paypal - Initializing PayPal payment plugin
+2025-04-14 05:38:36.713 INFO pycommerce.plugins - Registering plugin: paypal_payment v0.1.0
+2025-04-14 05:38:36.713 INFO pycommerce.plugins.payment.paypal - Initializing PayPal payment plugin
+2025-04-14 05:38:36.713 INFO pycommerce - Registered payment plugin: paypal
+2025-04-14 05:38:36.713 INFO pycommerce.plugins - Registering plugin: standard_shipping v0.1.0
+2025-04-14 05:38:36.713 INFO pycommerce.plugins.shipping.standard - Initializing Standard shipping plugin
+2025-04-14 05:38:36.713 INFO pycommerce - Registered shipping plugin: standard
+2025-04-14 05:38:38.226 INFO pycommerce.models.category - Found Flask app in module app
+2025-04-14 05:38:38.226 INFO pycommerce.models.category - CategoryManager initialized
+2025-04-14 05:38:38.290 WARNING root - AI configuration module not available
+2025-04-14 05:38:38.415 INFO main - ✅ Successfully imported routes.admin.page_builder
+2025-04-14 05:38:38.415 INFO main - ✅ Successfully imported pycommerce.models.page_builder
+2025-04-14 05:38:38.416 INFO main - ✅ Successfully imported routes.admin.ai_content
+2025-04-14 05:38:38.416 INFO main - ✅ Successfully imported pycommerce.models.tenant
+2025-04-14 05:38:38.416 INFO main - ✅ Successfully imported WysiwygService
+2025-04-14 05:38:38.416 INFO main - ✅ All page builder components verified successfully
+2025-04-14 05:38:38.416 INFO main - Page builder verification completed
