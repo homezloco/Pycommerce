@@ -1273,21 +1273,31 @@ async def api_list_pages(
         tenant_obj = None
         pages = []
         if selected_tenant_slug:
-            tenant_obj = tenant_manager.get_by_slug(selected_tenant_slug)
-            if tenant_obj:
-                pages = page_manager.list_by_tenant(str(tenant_obj.id), include_unpublished=True)
+            try:
+                tenant_obj = tenant_manager.get_by_slug(selected_tenant_slug)
+                if tenant_obj:
+                    pages = page_manager.list_by_tenant(str(tenant_obj.id), include_unpublished=True)
+            except Exception as e:
+                logger.error(f"Error getting pages for tenant {selected_tenant_slug}: {str(e)}")
+                # Return an empty list rather than failing
+                pages = []
         
-        # Format response
+        # Format response - safely handle any potential errors
         pages_data = []
         for p in pages:
-            pages_data.append({
-                "id": str(p.id),
-                "title": p.title,
-                "slug": p.slug,
-                "is_published": p.is_published,
-                "created_at": p.created_at.isoformat() if p.created_at else None,
-                "updated_at": p.updated_at.isoformat() if p.updated_at else None
-            })
+            try:
+                page_data = {
+                    "id": str(p.id),
+                    "title": p.title,
+                    "slug": p.slug,
+                    "is_published": p.is_published if hasattr(p, 'is_published') else False,
+                    "created_at": p.created_at.isoformat() if hasattr(p, 'created_at') and p.created_at else None,
+                    "updated_at": p.updated_at.isoformat() if hasattr(p, 'updated_at') and p.updated_at else None
+                }
+                pages_data.append(page_data)
+            except Exception as e:
+                logger.error(f"Error formatting page data: {str(e)}")
+                continue
         
         return {
             "pages": pages_data,

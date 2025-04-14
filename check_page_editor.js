@@ -10,20 +10,25 @@
   // Check if Quill is loaded
   if (typeof Quill === 'undefined') {
     console.error("❌ Quill is not loaded");
+    console.log("Make sure Quill.js CDN is properly included in the page");
   } else {
     console.log("✅ Quill is loaded:", Quill.version);
 
     // Check active editors
     const editors = document.querySelectorAll('.ql-container');
-    console.log(`Quill editor containers: ${editors.length}`);
+    console.log(`Found ${editors.length} Quill editor containers`);
 
     editors.forEach((container, index) => {
-      const quillInstance = Quill.find(container);
-      if (quillInstance) {
-        console.log(`- Quill editor #${index}: active`);
-        console.log(`  - Content length: ${quillInstance.getText().length} characters`);
-      } else {
-        console.log(`- Quill editor container #${index}: no Quill instance`);
+      try {
+        const quillInstance = Quill.find(container);
+        if (quillInstance) {
+          console.log(`- Quill editor #${index}: active`);
+          console.log(`  - Content length: ${quillInstance.getText().length} characters`);
+        } else {
+          console.log(`- Quill container #${index}: no Quill instance`);
+        }
+      } catch (e) {
+        console.error(`- Error checking editor #${index}:`, e);
       }
     });
   }
@@ -39,9 +44,14 @@
     console.log(`Found ${modalElements.length} modal elements`);
 
     try {
-      modalElements.forEach(element => {
-        const modalInstance = bootstrap.Modal.getInstance(element);
-        console.log(`- Modal ${element.id}: ${modalInstance ? 'instance found' : 'no instance'}`);
+      modalElements.forEach((element, index) => {
+        console.log(`- Modal #${index} id: ${element.id || 'no-id'}`);
+        try {
+          const modalInstance = bootstrap.Modal.getInstance(element);
+          console.log(`  - Modal instance: ${modalInstance ? 'found' : 'not initialized'}`);
+        } catch (e) {
+          console.error(`  - Error getting modal instance:`, e);
+        }
       });
     } catch (e) {
       console.error("Error checking modal instances:", e);
@@ -55,14 +65,33 @@
 
     if (addSectionBtn) {
       console.log("✅ Add Section button found");
+      console.log(`  - Button text: "${addSectionBtn.innerText}"`);
     } else {
       console.error("❌ Add Section button not found");
+      const possibleButtons = document.querySelectorAll('button');
+      console.log(`  - Found ${possibleButtons.length} other buttons on the page`);
+      const addButtons = Array.from(possibleButtons).filter(btn => 
+        btn.innerText.toLowerCase().includes('add') || 
+        btn.innerText.toLowerCase().includes('section'));
+      if (addButtons.length > 0) {
+        console.log(`  - Possible add section buttons found:`, 
+          addButtons.map(btn => `"${btn.innerText}" (id: ${btn.id || 'none'})`).join(', '));
+      }
     }
 
     if (savePageBtn) {
       console.log("✅ Save Page button found");
+      console.log(`  - Button text: "${savePageBtn.innerText}"`);
     } else {
       console.error("❌ Save Page button not found");
+      const possibleButtons = document.querySelectorAll('button');
+      const saveButtons = Array.from(possibleButtons).filter(btn => 
+        btn.innerText.toLowerCase().includes('save') || 
+        btn.innerText.toLowerCase().includes('page'));
+      if (saveButtons.length > 0) {
+        console.log(`  - Possible save page buttons found:`, 
+          saveButtons.map(btn => `"${btn.innerText}" (id: ${btn.id || 'none'})`).join(', '));
+      }
     }
   } catch (e) {
     console.error("Error checking page editor buttons:", e);
@@ -72,13 +101,23 @@
   try {
     const testApi = async (url, method = 'GET') => {
       try {
+        console.log(`Testing API endpoint: ${url}`);
         const response = await fetch(url, { method });
+        
+        if (!response.ok) {
+          console.error(`API endpoint ${url} returned status ${response.status}`);
+        } else {
+          console.log(`API endpoint ${url} returned status ${response.status} (OK)`);
+        }
+        
         return {
+          url,
           status: response.status,
           ok: response.ok
         };
       } catch (e) {
-        return { error: e.message };
+        console.error(`Error fetching ${url}:`, e.message);
+        return { url, error: e.message };
       }
     };
 
@@ -104,8 +143,27 @@
     const aiButtons = document.querySelectorAll('.ql-toolbar .btn-primary');
     if (aiButtons.length > 0) {
       console.log(`✅ Found ${aiButtons.length} AI Assist buttons`);
+      aiButtons.forEach((btn, i) => {
+        console.log(`  - AI Button #${i} text: "${btn.innerText}"`);
+      });
     } else {
       console.warn("⚠️ No AI Assist buttons found in Quill toolbar");
+      // Look for any buttons in toolbar that might be AI-related
+      const toolbars = document.querySelectorAll('.ql-toolbar');
+      if (toolbars.length > 0) {
+        const allToolbarButtons = Array.from(toolbars).flatMap(tb => 
+          Array.from(tb.querySelectorAll('button')));
+        console.log(`  - Found ${allToolbarButtons.length} total buttons in Quill toolbars`);
+        
+        const aiRelatedButtons = allToolbarButtons.filter(btn => 
+          btn.innerText.toLowerCase().includes('ai') || 
+          btn.className.toLowerCase().includes('ai'));
+        
+        if (aiRelatedButtons.length > 0) {
+          console.log(`  - Possible AI-related buttons:`, 
+            aiRelatedButtons.map(btn => `"${btn.innerText}" (class: ${btn.className})`).join(', '));
+        }
+      }
     }
   } catch (e) {
     console.error("Error checking AI buttons:", e);

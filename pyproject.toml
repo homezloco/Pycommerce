@@ -33,4 +33,5 @@ dependencies = [
     "asyncpg==0.30.0",
     "bleach>=6.2.0",
     "beautifulsoup4>=4.13.3",
+    "quill>=1.0.0",
 ]
