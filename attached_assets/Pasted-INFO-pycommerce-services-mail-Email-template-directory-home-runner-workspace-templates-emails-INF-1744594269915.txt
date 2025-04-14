@@ -1,0 +1,36 @@
+INFO:pycommerce.services.mail:Email template directory: /home/runner/workspace/templates/emails
+INFO:pycommerce.plugins.payment.config:Successfully loaded payment settings from database
+INFO:pycommerce.plugins.payment.config:Using development Stripe credentials
+INFO:pycommerce.plugins.payment.config:Using development PayPal credentials
+INFO:pycommerce.plugins.payment.stripe:Initializing Stripe payment plugin
+INFO:pycommerce.plugins:Registering plugin: stripe_payment v0.1.0
+INFO:pycommerce.plugins.payment.stripe:Initializing Stripe payment plugin
+INFO:pycommerce:Registered payment plugin: stripe
+INFO:pycommerce.plugins.payment.paypal:Initializing PayPal payment plugin
+INFO:pycommerce.plugins:Registering plugin: paypal_payment v0.1.0
+INFO:pycommerce.plugins.payment.paypal:Initializing PayPal payment plugin
+INFO:pycommerce:Registered payment plugin: paypal
+INFO:pycommerce.plugins:Registering plugin: standard_shipping v0.1.0
+INFO:pycommerce.plugins.shipping.standard:Initializing Standard shipping plugin
+INFO:pycommerce:Registered shipping plugin: standard
+Found 5 tenants
+Tenant: Demo Store 1 (slug: demo1)
+  Pages: 1
+    - Page: Welcome to Demo Store 1 (slug: welcome, published: True)
+Tenant: Tech Gadgets (slug: tech)
+  Pages: 1
+    - Page: Welcome to Tech Gadgets (slug: welcome, published: True)
+Tenant: Outdoor Adventure (slug: outdoor)
+  Pages: 1
+    - Page: Welcome to Outdoor Adventure (slug: welcome, published: True)
+Tenant: Fashion Boutique (slug: fashion)
+  Pages: 1
+    - Page: Welcome to Fashion Boutique (slug: welcome, published: True)
+Tenant: Demo Store 2 (slug: demo2)
+  Pages: 1
+    - Page: Welcome to Demo Store 2 (slug: welcome, published: True)
+
+Checking database schema:
+Tables in database: ['alembic_version', 'tenants', 'plugin_configs', 'media', 'order_notes', 'orders', 'products', 'shipments', 'carts', 'users', 'order_items', 'inventory_records', 'cart_items', 'shipment_items', 'inventory_transactions', 'system_settings', 'product_categories', 'media_files', 'return_requests', 'return_items', 'page_templates', 'categories', 'pages', 'page_sections', 'content_blocks']
+Pages table exists: True
+Columns in pages table: ['id', 'tenant_id', 'title', 'slug', 'meta_title', 'meta_description', 'is_published', 'layout_data', 'created_at', 'updated_at']
