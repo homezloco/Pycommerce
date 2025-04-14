@@ -666,9 +666,6 @@ async def pages_debug(request: Request):
         logger.error(f"Error in pages_debug: {str(e)}")
         return HTMLResponse(content=f"<h1>Error</h1><p>{str(e)}</p>", status_code=500)
 
-        # Get all tenants for the sidebar
-        tenants = tenant_manager.get_all()
-
         # Set the selected tenant
         selected_tenant_slug = tenant_obj.slug
         request.session["selected_tenant"] = selected_tenant_slug
