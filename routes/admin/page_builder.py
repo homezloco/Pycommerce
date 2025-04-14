@@ -285,7 +285,7 @@ async def pages_list(
         if not selected_tenant_slug and tenants:
             selected_tenant_slug = tenants[0].slug
             logger.info(f"Auto-selected tenant slug: {selected_tenant_slug}")
-            
+
         # Debug the tenant list
         logger.info(f"Available tenants: {[t.slug for t in tenants]}")
 
@@ -311,12 +311,12 @@ async def pages_list(
                         logger.info(f"Found {len(pages)} pages for tenant {tenant_obj.id}")
                         for p in pages:
                             logger.info(f"  Page: {p.title} (ID: {p.id}, slug: {p.slug})")
-                            
+
                         # Ensure pages is a list even if None was returned
                         if pages is None:
                             logger.warning("Pages is None, converting to empty list")
                             pages = []
-                            
+
                     except Exception as e:
                         logger.error(f"Error listing pages for tenant {tenant_obj.id}: {str(e)}")
                         logger.exception("Full error details:")
@@ -637,10 +637,10 @@ async def page_edit_form(
                 status_code=404,
                 detail=f"Tenant with ID {page.tenant_id} not found"
             )
-        
+
         # Get all tenants for the sidebar
         tenants = tenant_manager.get_all()
-        
+
         # Continue with your existing implementation
         return templates.TemplateResponse(
             "admin/pages/edit.html",
@@ -823,7 +823,7 @@ async def page_update(
 
         return RedirectResponse(
             url=f"/admin/pages/edit/{page_id}?tenant={tenant_slug}&status_message=Error+updating+page:+{str(e)}&status_type=danger",
-            status_code=status.HTTP_303_SEE_OTHER
+            status_codestatus.HTTP_303_SEE_OTHER
         )
     finally:
         session.close()
@@ -1259,16 +1259,16 @@ async def api_list_pages(
         # Get local manager instances
         tenant_manager = TenantManager(session)
         page_manager = PageManager(session)
-        
+
         # Get selected tenant from query or session
         selected_tenant_slug = tenant or request.session.get("selected_tenant")
-        
+
         # If no tenant selected and we have tenants, select the first one
         if not selected_tenant_slug:
             tenants = tenant_manager.get_all()
             if tenants:
                 selected_tenant_slug = tenants[0].slug
-        
+
         # Get tenant and pages
         tenant_obj = None
         pages = []
@@ -1281,7 +1281,7 @@ async def api_list_pages(
                 logger.error(f"Error getting pages for tenant {selected_tenant_slug}: {str(e)}")
                 # Return an empty list rather than failing
                 pages = []
-        
+
         # Format response - safely handle any potential errors
         pages_data = []
         for p in pages:
@@ -1298,7 +1298,7 @@ async def api_list_pages(
             except Exception as e:
                 logger.error(f"Error formatting page data: {str(e)}")
                 continue
-        
+
         return {
             "pages": pages_data,
             "total": len(pages_data),

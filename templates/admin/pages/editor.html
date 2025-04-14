@@ -243,11 +243,11 @@
     window.openTextEditor = function(blockId, content) {
       const modal = document.getElementById('textEditorModal');
       const modalInstance = new bootstrap.Modal(modal);
-      
+
       // Initialize Quill only if it doesn't already exist
       let textEditor;
       const existingEditor = Quill.find(document.querySelector('#textEditor'));
-      
+
       if (existingEditor) {
         textEditor = existingEditor;
         textEditor.clipboard.dangerouslyPasteHTML(content || '');
@@ -268,7 +268,7 @@
           placeholder: 'Enter your content here...',
         });
         textEditor.clipboard.dangerouslyPasteHTML(content || '');
-        
+
         // Add AI Assist button to toolbar
         const toolbar = document.querySelector('#textEditor .ql-toolbar');
         if (toolbar && !toolbar.querySelector('.btn-primary.ai-assist')) {
@@ -277,7 +277,7 @@
           aiButton.innerText = 'AI Assist';
           aiButton.setAttribute('type', 'button');
           toolbar.appendChild(aiButton);
-          
+
           // Add event listener for AI Assist button
           aiButton.addEventListener('click', function() {
             alert('AI Assist feature will be implemented here');
@@ -790,7 +790,8 @@
     });
 
     // Edit section buttons
-    document.addEventListener('if (e.target.closest('.edit-section-btn')) {
+    document.addEventListener('click', function(e) {
+      if (e.target.closest('.edit-section-btn')) {
         const btn = e.target.closest('.edit-section-btn');
         const sectionContainer = btn.closest('.section-container');
         const sectionId = sectionContainer.getAttribute('data-section-id');

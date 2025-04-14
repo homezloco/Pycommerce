@@ -11,6 +11,19 @@
   if (typeof Quill === 'undefined') {
     console.error("❌ Quill is not loaded");
     console.log("Make sure Quill.js CDN is properly included in the page");
+    
+    // Try to load Quill dynamically
+    const script = document.createElement('script');
+    script.src = 'https://cdn.quilljs.com/1.3.6/quill.min.js';
+    script.onload = function() {
+      console.log("✅ Quill loaded dynamically");
+      // Re-run this debugging script after loading
+      setTimeout(() => {
+        console.log("Re-running debug after loading Quill...");
+        eval(document.currentScript.innerText);
+      }, 500);
+    };
+    document.head.appendChild(script);
   } else {
     console.log("✅ Quill is loaded:", Quill.version);
 
