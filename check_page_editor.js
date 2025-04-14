@@ -1,3 +1,4 @@
+
 /**
  * Debug script to check JavaScript execution in the page editor.
  * Add this to the console while on the page editor to diagnose issues.
