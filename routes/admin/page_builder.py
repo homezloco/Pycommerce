@@ -615,7 +615,7 @@ async def page_create(
     finally:
         session.close()
 
-@router.get("/pages/edit/{page_id}", response_class=HTMLResponse)
+@router.get('/pages/edit/{page_id}', response_class=HTMLResponse)
 async def page_edit_form(
     request: Request,
     page_id: str,

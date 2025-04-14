@@ -97,7 +97,7 @@ def check_page_builder_routes():
             ("@router.get('/pages'", "@router.get(\"/pages\""),
             ("@router.get('/pages/create'", "@router.get(\"/pages/create\""), 
             ("@router.post('/pages/create'", "@router.post(\"/pages/create\""),
-            ("@router.get('/pages/edit/'", "@router.get(\"/pages/edit/\"")
+            ("@router.get('/pages/edit/{page_id}'", "@router.get(\"/pages/edit/{page_id}\"")
         ]
 
         for route_options in required_routes:
