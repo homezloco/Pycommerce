@@ -172,7 +172,7 @@ async def debug_pages(request: Request, tenant: Optional[str] = None):
         managers["session"].close()
 
 def setup_routes(jinja_templates: Jinja2Templates = None):
-    """Setup page builder routes with the given templates."""
+    """Set up routes for the page builder."""
     global templates
     templates = jinja_templates
     logger.info("Setting up page builder routes with templates")
@@ -220,6 +220,16 @@ def setup_routes(jinja_templates: Jinja2Templates = None):
                     pages_dir = os.path.join(admin_dir, "pages")
                     if os.path.exists(pages_dir):
                         logger.info(f"Contents of pages directory: {os.listdir(pages_dir)}")
+
+    # Import AI content routes
+    from routes.admin.ai_content import setup_routes as setup_ai_content_routes
+
+    # Setup AI content routes
+    ai_content_router = setup_ai_content_routes(templates)
+
+    # Include AI content router
+    from web_app import app
+    app.include_router(ai_content_router)
 
     # Ensure the router is properly configured and returned
     return router
