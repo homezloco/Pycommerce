@@ -4,6 +4,7 @@ Script to debug page builder data in the database.
 """
 import logging
 import sys
+from sqlalchemy import inspect
 from pycommerce.core.db import SessionLocal
 from pycommerce.models.tenant import TenantManager
 from pycommerce.models.page_builder import PageManager
@@ -54,7 +55,7 @@ def debug_page_data():
                 
         # Check database tables to verify schema
         print("\nChecking database schema:")
-        inspector = session.get_bind().dialect.inspector
+        inspector = inspect(session.get_bind())
         tables = inspector.get_table_names()
         print(f"Tables in database: {tables}")
         
