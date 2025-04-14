@@ -240,7 +240,7 @@ async def pages_list(
     if debug:
         # Return a simple response to check if the route is reachable
         return HTMLResponse(content="<h1>Pages Route Debugging</h1><p>If you can see this, the route is reachable but template rendering may have issues.</p>")
-    
+
     managers = get_managers()
     session = managers["session"]
 
