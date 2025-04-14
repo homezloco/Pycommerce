@@ -626,6 +626,26 @@ async def page_edit_form(
                 status_code=404,
                 detail=f"Tenant with ID {page.tenant_id} not found"
             )
+        
+        # Get all tenants for the sidebar
+        tenants = tenant_manager.get_all()
+        
+        # Continue with your existing implementation
+        return templates.TemplateResponse(
+            "admin/pages/edit.html",
+            {
+                "request": request,
+                "selected_tenant": tenant_obj.slug,
+                "tenant": tenant_obj,
+                "tenants": tenants,
+                "active_page": "pages",
+                "page": page,
+                "status_message": status_message,
+                "status_type": status_type
+            }
+        )
+    finally:
+        session.close()
 
 
 @router.get("/pages-debug", response_class=HTMLResponse)
