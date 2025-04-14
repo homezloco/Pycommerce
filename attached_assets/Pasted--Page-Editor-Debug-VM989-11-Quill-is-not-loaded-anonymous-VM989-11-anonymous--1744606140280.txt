@@ -1,0 +1,70 @@
+===== Page Editor Debug =====
+VM989:11 ❌ Quill is not loaded
+(anonymous) @ VM989:11
+(anonymous) @ VM989:172
+VM989:12 Make sure Quill.js CDN is properly included in the page
+VM989:39 ✅ Bootstrap JS is loaded
+VM989:43 Found 0 modal elements
+VM989:69 ❌ Add Section button not found
+(anonymous) @ VM989:69
+(anonymous) @ VM989:172
+VM989:71   - Found 1 other buttons on the page
+VM989:85 ❌ Save Page button not found
+(anonymous) @ VM989:85
+(anonymous) @ VM989:172
+VM989:125 Testing API endpoints...
+VM989:103 Testing API endpoint: /admin/api/pages
+VM989:149 ⚠️ No AI Assist buttons found in Quill toolbar
+(anonymous) @ VM989:149
+(anonymous) @ VM989:172
+VM989:171 ===== End Debug =====
+undefined
+VM989:104 
+        
+        
+       GET https://41848e68-b72f-4d21-8f0e-227aa2977f4c-00-idfpaw676ap1.janeway.replit.dev:3001/admin/api/pages 502 (Bad Gateway)
+testApi @ VM989:104
+(anonymous) @ VM989:128
+(anonymous) @ VM989:134
+(anonymous) @ VM989:172
+VM989:107 API endpoint /admin/api/pages returned status 502
+testApi @ VM989:107
+await in testApi
+(anonymous) @ VM989:128
+(anonymous) @ VM989:134
+(anonymous) @ VM989:172
+VM989:103 Testing API endpoint: /admin/debug-pages
+VM989:104 
+        
+        
+       GET https://41848e68-b72f-4d21-8f0e-227aa2977f4c-00-idfpaw676ap1.janeway.replit.dev:3001/admin/debug-pages 502 (Bad Gateway)
+testApi @ VM989:104
+(anonymous) @ VM989:129
+await in (anonymous)
+(anonymous) @ VM989:134
+(anonymous) @ VM989:172
+VM989:107 API endpoint /admin/debug-pages returned status 502
+testApi @ VM989:107
+await in testApi
+(anonymous) @ VM989:129
+await in (anonymous)
+(anonymous) @ VM989:134
+(anonymous) @ VM989:172
+VM989:103 Testing API endpoint: /admin/pages
+VM989:104 
+        
+        
+       GET https://41848e68-b72f-4d21-8f0e-227aa2977f4c-00-idfpaw676ap1.janeway.replit.dev:3001/admin/pages 502 (Bad Gateway)
+testApi @ VM989:104
+(anonymous) @ VM989:130
+await in (anonymous)
+(anonymous) @ VM989:134
+(anonymous) @ VM989:172
+VM989:107 API endpoint /admin/pages returned status 502
+testApi @ VM989:107
+await in testApi
+(anonymous) @ VM989:130
+await in (anonymous)
+(anonymous) @ VM989:134
+(anonymous) @ VM989:172
+VM989:133 API test results: 
