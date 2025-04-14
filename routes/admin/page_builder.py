@@ -651,16 +651,39 @@ async def page_edit_form(
         # Get all tenants for the sidebar
         tenants = tenant_manager.get_all()
 
-        # Continue with your existing implementation
+        # Set the selected tenant
+        selected_tenant_slug = tenant_obj.slug
+        request.session["selected_tenant"] = selected_tenant_slug
+
+        # Get page sections
+        sections = section_manager.list_by_page(page_id)
+
+        # Get blocks for each section
+        sections_with_blocks = []
+        for section in sections:
+            blocks = block_manager.list_by_section(str(section.id))
+            sections_with_blocks.append({
+                "section": section,
+                "blocks": blocks
+            })
+
+        # Get editor configuration
+        editor_config = wysiwyg_service.get_editor_config('tinymce', {
+            'tenant_id': str(tenant_obj.id),
+            'media_browse_url': '/admin/api/media'
+        })
+
         return templates.TemplateResponse(
             "admin/pages/edit.html",
             {
                 "request": request,
-                "selected_tenant": tenant_obj.slug,
+                "selected_tenant": selected_tenant_slug,
                 "tenant": tenant_obj,
                 "tenants": tenants,
                 "active_page": "pages",
                 "page": page,
+                "sections": sections_with_blocks,
+                "editor_config": json.dumps(editor_config),
                 "status_message": status_message,
                 "status_type": status_type
             }
