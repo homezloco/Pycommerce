@@ -777,13 +777,13 @@ async def pages_debug(request: Request):
                                         html += '<p><strong>Warning:</strong> No content blocks found. Sections need blocks to display content.</p>';
                                     }
                                     html += '</div>';
-                                    
+
                                     // Add a section for page details
                                     if (data.pages && data.pages.length > 0) {
                                         html += '<h5>Page Details</h5>';
                                         html += '<table class="table table-sm table-bordered">';
                                         html += '<thead><tr><th>ID</th><th>Title</th><th>Slug</th><th>Actions</th></tr></thead><tbody>';
-                                        
+
                                         data.pages.forEach(page => {
                                             html += `<tr>
                                                 <td>${page.id}</td>
@@ -795,7 +795,7 @@ async def pages_debug(request: Request):
                                                 </td>
                                             </tr>`;
                                         });
-                                        
+
                                         html += '</tbody></table>';
                                     }
 
@@ -806,12 +806,12 @@ async def pages_debug(request: Request):
                                     document.getElementById('debugOutput').innerHTML = 
                                         `<div class="alert alert-danger">Error fetching debug information: ${error.message}</div>`;
                                 });
-                                
+
                             // Function to debug a specific page
                             window.debugPage = function(pageId) {
                                 alert('Debug page: ' + pageId + '\nThis would show section and block details for this page.');
                             };
-                            
+
                             // Function to create a default section for the first page
                             window.createDefaultSection = function() {
                                 fetch('/admin/debug-pages')
@@ -819,7 +819,7 @@ async def pages_debug(request: Request):
                                     .then(data => {
                                         if (data.pages && data.pages.length > 0) {
                                             const pageId = data.pages[0].id;
-                                            
+
                                             // Create a basic section
                                             const sectionData = {
                                                 page_id: pageId,
@@ -830,7 +830,7 @@ async def pages_debug(request: Request):
                                                     background: 'white'
                                                 }
                                             };
-                                            
+
                                             fetch('/admin/api/pages/sections', {
                                                 method: 'POST',
                                                 headers: {
@@ -852,7 +852,7 @@ async def pages_debug(request: Request):
                                                         width: 'normal'
                                                     }
                                                 };
-                                                
+
                                                 return fetch('/admin/api/pages/blocks', {
                                                     method: 'POST',
                                                     headers: {
@@ -888,46 +888,6 @@ async def pages_debug(request: Request):
         return HTMLResponse(content=f"<h1>Error</h1><p>{str(e)}</p>", status_code=500)
     finally:
         # Properly close the session
-        session.close()
-
-        # Set the selected tenant
-        selected_tenant_slug = tenant_obj.slug
-        request.session["selected_tenant"] = selected_tenant_slug
-
-        # Get page sections
-        sections = section_manager.list_by_page(page_id)
-
-        # Get blocks for each section
-        sections_with_blocks = []
-        for section in sections:
-            blocks = block_manager.list_by_section(str(section.id))
-            sections_with_blocks.append({
-                "section": section,
-                "blocks": blocks
-            })
-
-        # Get editor configuration
-        editor_config = wysiwyg_service.get_editor_config('tinymce', {
-            'tenant_id': str(tenant_obj.id),
-            'media_browse_url': '/admin/api/media'
-        })
-
-        return templates.TemplateResponse(
-            "admin/pages/edit.html",
-            {
-                "request": request,
-                "selected_tenant": selected_tenant_slug,
-                "tenant": tenant_obj,
-                "tenants": tenants,
-                "active_page": "pages",
-                "page": page,
-                "sections": sections_with_blocks,
-                "editor_config": json.dumps(editor_config),
-                "status_message": status_message,
-                "status_type": status_type
-            }
-        )
-    finally:
         session.close()
 
 @router.post("/pages/edit/{page_id}", response_class=RedirectResponse)
