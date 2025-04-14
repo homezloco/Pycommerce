@@ -3,6 +3,18 @@
 
 {% block title %}Pages - PyCommerce Admin{% endblock %}
 
+{% block head_extra %}
+<script>
+  console.log("Page builder list template loaded");
+  window.addEventListener('DOMContentLoaded', (event) => {
+    console.log("DOM fully loaded, checking page structure");
+    console.log("Pages table exists:", document.querySelector("table") !== null);
+    console.log("Tenant selected:", "{{ selected_tenant }}");
+    console.log("Number of pages:", "{{ pages|length }}");
+  });
+</script>
+{% endblock %}
+
 {% block admin_content %}
 <div class="container-fluid px-4">
     <h1 class="mt-4">Pages</h1>
