@@ -823,7 +823,7 @@ async def page_update(
 
         return RedirectResponse(
             url=f"/admin/pages/edit/{page_id}?tenant={tenant_slug}&status_message=Error+updating+page:+{str(e)}&status_type=danger",
-            status_codestatus.HTTP_303_SEE_OTHER
+            status_code=status.HTTP_303_SEE_OTHER
         )
     finally:
         session.close()
