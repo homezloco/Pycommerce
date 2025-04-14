@@ -8,7 +8,7 @@ from pprint import pformat
 
 # Set up logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-logger = logging.getLogger(__main__)
+logger = logging.getLogger(__name__)
 
 # Add the current directory to path
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
