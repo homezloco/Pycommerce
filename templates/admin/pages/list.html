@@ -1,4 +1,3 @@
-
 {% extends "admin/base_admin.html" %}
 
 {% block title %}Pages - PyCommerce Admin{% endblock %}
@@ -14,7 +13,7 @@
     console.log("Tenant object exists:", "{{ tenant is not none }}");
     console.log("Tenant ID:", "{{ tenant.id if tenant else 'None' }}");
     console.log("Tenant slug:", "{{ tenant.slug if tenant else 'None' }}");
-    
+
     // List all pages if they exist
     {% if pages %}
       console.log("Pages list:");
