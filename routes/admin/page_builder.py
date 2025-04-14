@@ -696,6 +696,59 @@ async def pages_debug(request: Request):
                             <li>Database queries for pages</li>
                         </ul>
                         <a href="/admin/pages?debug=true" class="btn btn-primary">Try Pages Route with Debug</a>
+                        
+                        <hr>
+                        <h3>Direct Debug Information</h3>
+                        <div id="debugOutput" class="mt-4 p-3 border bg-light">
+                            <div class="text-center">
+                                <div class="spinner-border text-primary" role="status"></div>
+                                <p class="mt-2">Loading debug information...</p>
+                            </div>
+                        </div>
+                        
+                        <script>
+                            // Fetch debug data directly
+                            fetch('/admin/debug-pages')
+                                .then(response => response.json())
+                                .then(data => {
+                                    // Display debug information
+                                    let html = '<h4>Page Builder Debug Information</h4>';
+                                    html += '<div class="alert alert-info">This information helps diagnose page builder issues</div>';
+                                    
+                                    // Tenant information
+                                    html += '<h5>Tenant Information</h5>';
+                                    html += `<p>Selected tenant: ${data.selected_tenant_slug || 'None'}</p>`;
+                                    html += `<p>Tenants count: ${data.tenants_count}</p>`;
+                                    
+                                    // Pages information
+                                    html += '<h5>Pages Information</h5>';
+                                    html += `<p>Pages count: ${data.pages_count || 0}</p>`;
+                                    
+                                    // Database information
+                                    if (data.database_info) {
+                                        html += '<h5>Database Information</h5>';
+                                        html += '<table class="table table-sm table-bordered">';
+                                        html += '<thead><tr><th>Table</th><th>Exists</th><th>Records</th></tr></thead><tbody>';
+                                        
+                                        for (const table in data.database_info.tables_exist) {
+                                            html += `<tr>
+                                                <td>${table}</td>
+                                                <td>${data.database_info.tables_exist[table] ? '✅' : '❌'}</td>
+                                                <td>${data.database_info.record_counts ? data.database_info.record_counts[table] : 'N/A'}</td>
+                                            </tr>`;
+                                        }
+                                        
+                                        html += '</tbody></table>';
+                                    }
+                                    
+                                    document.getElementById('debugOutput').innerHTML = html;
+                                })
+                                .catch(error => {
+                                    console.error('Error fetching debug info:', error);
+                                    document.getElementById('debugOutput').innerHTML = 
+                                        `<div class="alert alert-danger">Error fetching debug information: ${error.message}</div>`;
+                                });
+                        </script>
                     </div>
                 </div>
             </div>

@@ -90,6 +90,37 @@
 </script>
 <script src="/static/js/debug-page-builder.js"></script>
 <script src="/static/js/add-debug-button.js"></script>
+<script src="/static/js/force-debug-button.js"></script>
+
+<!-- Direct debug button injection -->
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    console.log("Inline script: adding debug button as a backup method");
+    setTimeout(function() {
+      // Check if debug button exists
+      if (!document.getElementById('debugPageBuilderBtn')) {
+        console.log("Inline script: debug button not found, adding now");
+        
+        // Find the button container
+        const headerActions = document.querySelector('.card-header .d-flex.justify-content-between.align-items-center div:last-child');
+        
+        if (headerActions) {
+          const debugBtn = document.createElement('button');
+          debugBtn.id = 'debugPageBuilderBtn';
+          debugBtn.className = 'btn btn-danger btn-sm ms-2';
+          debugBtn.innerHTML = '<i class="fas fa-bug me-1"></i> Emergency Debug';
+          
+          // Add click event
+          debugBtn.addEventListener('click', function() {
+            window.location.href = '/admin/debug-pages';
+          });
+          
+          headerActions.appendChild(debugBtn);
+        }
+      }
+    }, 1000);
+  });
+</script>
 {% endblock %}
 
 {% block admin_content %}
