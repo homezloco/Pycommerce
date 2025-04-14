@@ -7,13 +7,25 @@ import os
 import sys
 import logging
 import importlib
-from sqlalchemy import create_engine, text
+from sqlalchemy import create_engine, text, inspect
 from sqlalchemy.exc import SQLAlchemyError
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s.%(msecs)03d %(levelname)s %(name)s - %(message)s',
                     datefmt='%Y-%m-%d %H:%M:%S')
 logger = logging.getLogger('main')
+
+# Check for templates directory
+template_dir = os.path.join(os.getcwd(), "templates")
+admin_pages_dir = os.path.join(template_dir, "admin", "pages")
+
+if os.path.exists(admin_pages_dir):
+    logger.info(f"✅ Page builder templates directory exists: {admin_pages_dir}")
+    # List template files
+    template_files = os.listdir(admin_pages_dir)
+    logger.info(f"Found template files: {template_files}")
+else:
+    logger.error(f"❌ Page builder templates directory missing: {admin_pages_dir}")
 
 
 def check_import(module_name):
