@@ -4,8 +4,9 @@
 {% block title %}Create Page - PyCommerce Admin{% endblock %}
 
 {% block head_extra %}
-<!-- TinyMCE -->
-<script src="https://cdn.tiny.cloud/1/no-api-key/tinymce/6/tinymce.min.js" referrerpolicy="origin"></script>
+<!-- Quill Editor -->
+<link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+<script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
 {% endblock %}
 
 {% block admin_content %}
@@ -129,52 +130,84 @@
     }
     
     document.addEventListener('DOMContentLoaded', function() {
-        // Initialize TinyMCE with proper error handling
+        // Initialize Quill with proper error handling
         const editorConfig = {{ editor_config|safe }};
         
         try {
-            if (typeof tinymce !== 'undefined') {
-                console.log("TinyMCE is available, initializing editor");
-                tinymce.init({
-                    selector: '#content',
-                    height: 500,
-                    menubar: true,
-                    plugins: [
-                        'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
-                        'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
-                        'insertdatetime', 'media', 'table', 'help', 'wordcount'
-                    ],
-                    toolbar: 'undo redo | formatselect | ' +
-                        'bold italic backcolor | alignleft aligncenter ' +
-                        'alignright alignjustify | bullist numlist outdent indent | ' +
-                        'removeformat | image media link | help',
-                    content_style: 'body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-size: 14px; }',
-                    // Add file picker for media manager
-                    file_picker_callback: function(callback, value, meta) {
-                        // Open media selector modal
-                        openMediaSelector(function(id, url, name) {
-                            // When a file is selected, handle different types
-                            if (meta.filetype === 'image') {
-                                callback(url, { title: name });
-                            } else if (meta.filetype === 'media') {
-                                callback(url, { title: name });
-                            } else {
-                                callback(url, { title: name });
-                            }
-                        });
+            if (typeof Quill !== 'undefined') {
+                console.log("Quill is available, initializing editor");
+                
+                // Create a container for the Quill editor
+                const editorContainer = document.createElement('div');
+                editorContainer.id = 'quill-editor-container';
+                editorContainer.style.height = '500px';
+                editorContainer.style.marginBottom = '20px';
+                
+                // Replace the textarea with the Quill container
+                const contentTextarea = document.getElementById('content');
+                contentTextarea.style.display = 'none';
+                contentTextarea.parentNode.insertBefore(editorContainer, contentTextarea);
+                
+                // Initialize Quill
+                const quill = new Quill('#quill-editor-container', {
+                    modules: {
+                        toolbar: [
+                            ['bold', 'italic', 'underline', 'strike'],
+                            ['blockquote', 'code-block'],
+                            [{ 'header': 1 }, { 'header': 2 }],
+                            [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                            [{ 'script': 'sub'}, { 'script': 'super' }],
+                            [{ 'indent': '-1'}, { 'indent': '+1' }],
+                            [{ 'direction': 'rtl' }],
+                            [{ 'size': ['small', false, 'large', 'huge'] }],
+                            [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
+                            [{ 'color': [] }, { 'background': [] }],
+                            [{ 'font': [] }],
+                            [{ 'align': [] }],
+                            ['clean'],
+                            ['link', 'image', 'video']
+                        ]
                     },
-                    setup: function(editor) {
-                        console.log("TinyMCE editor setup complete");
-                    }
+                    theme: 'snow'
                 });
+                
+                // Add AI assistance button to toolbar
+                const toolbar = document.querySelector('.ql-toolbar');
+                if (toolbar) {
+                    const aiButton = document.createElement('button');
+                    aiButton.className = 'btn btn-primary btn-sm ms-2';
+                    aiButton.innerHTML = '<i class="fas fa-robot"></i> AI Assist';
+                    aiButton.type = 'button';
+                    aiButton.onclick = function() {
+                        // Open AI assist modal
+                        const aiModal = new bootstrap.Modal(document.getElementById('aiAssistModal'));
+                        aiModal.show();
+                    };
+                    toolbar.appendChild(aiButton);
+                }
+                
+                // Update the textarea with Quill content before form submission
+                document.getElementById('createPageForm').addEventListener('submit', function() {
+                    document.getElementById('content').value = quill.root.innerHTML;
+                });
+                
+                // Add support for media selection
+                document.querySelector('.ql-image')?.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    openMediaSelector(function(id, url, name) {
+                        const range = quill.getSelection();
+                        quill.insertEmbed(range.index, 'image', url);
+                    });
+                });
+                
             } else {
-                console.error("TinyMCE not loaded, adding fallback editor");
-                // Add a basic textarea as fallback
+                console.error("Quill not loaded, using standard textarea");
+                // Use the basic textarea as fallback
                 document.getElementById('content').style.display = 'block';
             }
         } catch (e) {
-            console.error("Error initializing TinyMCE:", e);
-            // Add a basic textarea as fallback
+            console.error("Error initializing Quill:", e);
+            // Use the basic textarea as fallback
             document.getElementById('content').style.display = 'block';
         }
     });

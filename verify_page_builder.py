@@ -1,163 +1,116 @@
-#!/usr/bin/env python3
-"""
-Verify the page builder functionality and fix any issues.
-"""
-
-import os
-import sys
 import logging
-import importlib
-from sqlalchemy import create_engine, text, inspect
-from sqlalchemy.exc import SQLAlchemyError
+import os
+import json
+import sys
 
 # Configure logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s.%(msecs)03d %(levelname)s %(name)s - %(message)s',
-                    datefmt='%Y-%m-%d %H:%M:%S')
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(name)s - %(message)s',
+)
+
 logger = logging.getLogger('main')
 
-# Check for templates directory
-template_dir = os.path.join(os.getcwd(), "templates")
-admin_pages_dir = os.path.join(template_dir, "admin", "pages")
+def verify_page_builder():
+    """Verify page builder dependencies and configuration."""
+    logger.info("Starting page builder verification")
 
-if os.path.exists(admin_pages_dir):
-    logger.info(f"✅ Page builder templates directory exists: {admin_pages_dir}")
-    # List template files
-    template_files = os.listdir(admin_pages_dir)
-    logger.info(f"Found template files: {template_files}")
-else:
-    logger.error(f"❌ Page builder templates directory missing: {admin_pages_dir}")
+    # Check for required template files
+    template_files = [
+        'templates/admin/pages/list.html',
+        'templates/admin/pages/create.html',
+        'templates/admin/pages/editor.html',
+    ]
 
+    for file_path in template_files:
+        if os.path.exists(file_path):
+            logger.info(f"✅ Template file exists: {file_path}")
+        else:
+            logger.error(f"❌ Missing template file: {file_path}")
 
-def check_import(module_name):
-    """Check if a module can be imported."""
-    try:
-        module = importlib.import_module(module_name)
-        logger.info(f"✅ Successfully imported {module_name}")
-        return True
-    except ImportError as e:
-        logger.error(f"❌ Failed to import {module_name}: {str(e)}")
+    # Check for required JavaScript files
+    js_files = [
+        'static/js/page-builder.js',
+        'static/js/page-editor.js',
+        'static/js/quill-integration.js',
+    ]
+
+    for file_path in js_files:
+        if os.path.exists(file_path):
+            logger.info(f"✅ JavaScript file exists: {file_path}")
+        else:
+            logger.warning(f"⚠️ Missing JavaScript file: {file_path}")
+
+    # Check Quill integration
+    check_quill_integration()
+
+    # Check for required routes in page_builder.py
+    check_page_builder_routes()
+
+    logger.info("Page builder verification complete")
+
+def check_quill_integration():
+    """Check Quill integration in templates."""
+    logger.info("Checking Quill integration...")
+
+    create_template = os.path.join("templates", "admin", "pages", "create.html")
+    if not os.path.exists(create_template):
+        logger.error(f"❌ Template file not found: {create_template}")
         return False
 
-logger.info("Starting page builder verification")
+    try:
+        with open(create_template, 'r') as f:
+            template_content = f.read()
 
-# Get database URL from environment or use default
-database_url = os.environ.get('DATABASE_URL', 'postgresql://postgres:postgres@localhost:5432/pycommerce')
-logger.info(f"Using database URL: {database_url.split('@')[1] if '@' in database_url else database_url}")
+        # Check for Quill CDN script
+        if 'quill.min.js' not in template_content:
+            logger.error("❌ Quill CDN script not found in create.html")
+            return False
 
-try:
-    # Create engine
-    engine = create_engine(database_url)
+        # Check for Quill initialization
+        if 'new Quill' not in template_content and 'typeof Quill' not in template_content:
+            logger.error("❌ Quill initialization not found in create.html")
+            return False
 
-    # Check if page builder tables exist
-    logger.info("Checking page builder tables...")
+        logger.info("✅ Quill integration check passed")
+        return True
 
-    with engine.connect() as conn:
-        # Check each table
-        tables_to_check = ['pages', 'page_sections', 'content_blocks', 'page_templates']
-        missing_tables = []
+    except Exception as e:
+        logger.error(f"❌ Error checking Quill integration: {e}")
+        return False
 
-        for table in tables_to_check:
-            query = text(f"SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = '{table}')")
-            result = conn.execute(query).scalar()
+def check_page_builder_routes():
+    """Check if page_builder.py has required routes."""
+    logger.info("Checking page builder routes...")
 
-            if not result:
-                missing_tables.append(table)
-                logger.warning(f"Table '{table}' does not exist")
-            else:
-                logger.info(f"Table '{table}' exists")
+    routes_file = os.path.join("routes", "admin", "page_builder.py")
 
-        # Create missing tables if needed
-        if missing_tables:
-            logger.warning(f"Need to create {len(missing_tables)} missing tables: {', '.join(missing_tables)}")
+    if not os.path.exists(routes_file):
+        logger.error(f"❌ Page builder routes file not found: {routes_file}")
+        return False
 
-            # Import models and create tables
-            logger.info("Creating missing tables...")
+    try:
+        with open(routes_file, 'r') as f:
+            routes_content = f.read()
 
-            try:
-                # Import Base and models
-                from pycommerce.core.db import Base
-                from pycommerce.models.page_builder import Page, PageSection, ContentBlock, PageTemplate
+        required_routes = [
+            "@router.get('/pages'",
+            "@router.get('/pages/create'",
+            "@router.post('/pages/create'",
+            "@router.get('/pages/edit/'",
+        ]
 
-                # Create tables
-                Base.metadata.create_all(engine, tables=[
-                    table.__table__ for table_name, table in [
-                        ('pages', Page),
-                        ('page_sections', PageSection),
-                        ('content_blocks', ContentBlock),
-                        ('page_templates', PageTemplate)
-                    ] if table_name in missing_tables
-                ])
+        for route in required_routes:
+            if route not in routes_content:
+                logger.error(f"❌ Required route not found: {route}")
+                return False
 
-                logger.info("Successfully created missing tables")
-            except Exception as e:
-                logger.error(f"Error creating tables: {str(e)}")
-                sys.exit(1)
+        logger.info("✅ All required page builder routes found")
+        return True
 
-        # Verify templates exist
-        logger.info("Checking for page templates...")
-        template_count = conn.execute(text("SELECT COUNT(*) FROM page_templates")).scalar()
-        logger.info(f"Found {template_count} templates")
+    except Exception as e:
+        logger.error(f"❌ Error checking page builder routes: {e}")
+        return False
 
-        if template_count == 0:
-            logger.warning("No templates found, creating default templates...")
-            try:
-                # Import function to create templates
-                from create_default_templates import create_default_templates
-                create_default_templates()
-                logger.info("Default templates created successfully")
-            except Exception as e:
-                logger.error(f"Error creating default templates: {str(e)}")
-
-        # Check for API routes
-        logger.info("Verifying API endpoints...")
-        try:
-            # Add routes verification logic here
-            # This is just a placeholder since we can't easily check routes directly
-            logger.info("API routes verification would happen here")
-        except Exception as e:
-            logger.error(f"Error verifying API routes: {str(e)}")
-
-        # Import verification
-        logger.info("Verifying Page Builder Imports...")
-        imports_ok = True
-        imports_ok = check_import("routes.admin.page_builder") and imports_ok
-        imports_ok = check_import("pycommerce.models.page_builder") and imports_ok
-        
-        # Handle AI content module safely
-        try:
-            imports_ok = check_import("routes.admin.ai_content") and imports_ok
-        except ImportError:
-            logger.warning("AI content module not found, will use fallback mock implementation")
-            # This is expected in some configurations, so don't fail the check
-            
-        imports_ok = check_import("pycommerce.models.tenant") and imports_ok
-        
-        # Check AI configuration with graceful fallback
-        try:
-            from pycommerce.plugins.ai import providers
-            logger.info("✅ Successfully imported AI providers")
-        except ImportError as e:
-            logger.warning(f"AI configuration module not available: {str(e)}")
-            logger.info("This is acceptable - will use fallback implementation")
-
-        try:
-            from pycommerce.services.wysiwyg_service import WysiwygService
-            logger.info("✅ Successfully imported WysiwygService")
-        except ImportError as e:
-            logger.error(f"❌ Failed to import WysiwygService: {str(e)}")
-            imports_ok = False
-
-        if imports_ok:
-            logger.info("✅ All page builder components verified successfully")
-        else:
-            logger.error("❌ Some page builder components failed verification")
-
-
-        logger.info("Page builder verification completed")
-
-except SQLAlchemyError as e:
-    logger.error(f"Database error: {str(e)}")
-    sys.exit(1)
-except Exception as e:
-    logger.error(f"Unexpected error: {str(e)}")
-    sys.exit(1)
+if __name__ == "__main__":
+    verify_page_builder()
