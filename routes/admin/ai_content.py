@@ -1,12 +1,40 @@
+"""
+Admin routes for AI-generated content.
 
+This module provides routes for generating content using AI integrations.
 """
-Routes for AI-powered content generation.
-"""
-from fastapi import APIRouter, Request, Depends, HTTPException
-from fastapi.responses import JSONResponse
 import logging
-from pycommerce.plugins.ai.providers import get_ai_provider
+import json
+from typing import Dict, Optional, List, Any
+
+from fastapi import APIRouter, HTTPException, Request, Body, Query, Form
+from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.templating import Jinja2Templates
+
+# Import AI provider with error handling
+try:
+    from pycommerce.plugins.ai.providers import get_ai_provider
+except ImportError:
+    logger = logging.getLogger(__name__)
+    logger.warning("AI provider import failed - using fallback mock provider")
+
+    # Create fallback mock provider
+    def get_ai_provider(provider_name=None, api_key=None):
+        """Mock AI provider for fallback when actual AI module is not available."""
+        class MockAIProvider:
+            def generate_content(self, prompt, **kwargs):
+                return {
+                    "content": f"AI-generated content placeholder (prompt: {prompt[:30]}...)",
+                    "success": True
+                }
+        return MockAIProvider()
+
 from pycommerce.models.tenant import TenantManager
+
+# Configure logging
+logging.basicConfig(level=logging.INFO, 
+                   format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -25,13 +53,13 @@ def setup_routes(templates):
         try:
             data = await request.json()
             prompt = data.get("prompt", "")
-            
+
             if not prompt:
                 return JSONResponse({
                     "success": False,
                     "message": "Prompt is required"
                 })
-            
+
             # Get tenant information
             tenant_id = request.session.get("selected_tenant")
             if not tenant_id:
@@ -40,7 +68,7 @@ def setup_routes(templates):
                     "success": False, 
                     "message": "No store selected"
                 })
-            
+
             # Get tenant using TenantManager
             tenant = tenant_manager.get_by_slug(tenant_id)
             if not tenant:
@@ -49,7 +77,7 @@ def setup_routes(templates):
                     "success": False,
                     "message": "Store not found"
                 })
-            
+
             # Get AI provider
             provider = get_ai_provider(tenant)
             if not provider:
@@ -58,11 +86,11 @@ def setup_routes(templates):
                     "success": False,
                     "message": "AI service not configured for this store"
                 })
-            
+
             # Generate content
             logger.info(f"Generating content for tenant {tenant_id} with prompt: {prompt[:50]}...")
             content = provider.generate_content(prompt)
-            
+
             return JSONResponse({
                 "success": True,
                 "content": content

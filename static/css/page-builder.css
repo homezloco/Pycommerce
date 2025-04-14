@@ -230,3 +230,238 @@
         grid-template-columns: 1fr;
     }
 }
+/* Page Builder Styles */
+
+/* Section Styling */
+.page-section {
+    position: relative;
+    margin-bottom: 1.5rem;
+    border: 1px solid #dee2e6;
+    border-radius: 0.25rem;
+    background-color: #fff;
+}
+
+.section-header {
+    padding: 0.75rem;
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.section-title {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.section-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.section-content {
+    padding: 1rem;
+}
+
+.section-footer {
+    padding: 0.75rem;
+    background-color: #f8f9fa;
+    border-top: 1px solid #dee2e6;
+}
+
+/* Block Styling */
+.block-container {
+    margin-bottom: 1rem;
+}
+
+.content-block {
+    position: relative;
+    border: 1px solid #dee2e6;
+    border-radius: 0.25rem;
+    background-color: #fff;
+    margin-bottom: 1rem;
+}
+
+.block-header {
+    padding: 0.5rem 0.75rem;
+    background-color: #f0f0f0;
+    border-bottom: 1px solid #dee2e6;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.block-title {
+    margin: 0;
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+.block-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.block-content {
+    padding: 1rem;
+    min-height: 50px;
+}
+
+/* Drag Handle */
+.drag-handle {
+    cursor: move;
+    color: #6c757d;
+}
+
+.drag-handle:hover {
+    color: #495057;
+}
+
+/* Settings Panels */
+.settings-panel {
+    border-top: 1px solid #dee2e6;
+    padding: 1rem;
+    background-color: #f8f9fa;
+    display: none;
+}
+
+.settings-panel.show {
+    display: block;
+}
+
+/* Editor styling */
+.quill-editor {
+    min-height: 150px;
+    border: 1px solid #ced4da;
+    border-radius: 0.25rem;
+}
+
+.ql-toolbar {
+    border-bottom: 1px solid #ced4da;
+    background-color: #f8f9fa;
+}
+
+/* Toolbar customizations */
+.ql-toolbar .ql-formats {
+    margin-right: 8px;
+}
+
+/* Page Controls */
+.page-controls {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background-color: #fff;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    border-bottom: 1px solid #dee2e6;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.page-title-input {
+    font-size: 1.5rem;
+    font-weight: 600;
+    width: 100%;
+    border: 1px solid transparent;
+    background-color: transparent;
+    padding: 0.25rem 0.5rem;
+    margin-right: 1rem;
+}
+
+.page-title-input:focus {
+    border-color: #80bdff;
+    outline: 0;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.page-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+/* Page Settings Panel */
+#pageSettingsPanel {
+    position: fixed;
+    top: 0;
+    right: -320px;
+    width: 320px;
+    height: 100vh;
+    background-color: #fff;
+    border-left: 1px solid #dee2e6;
+    padding: 1rem;
+    overflow-y: auto;
+    transition: right 0.3s ease;
+    z-index: 1050;
+}
+
+#pageSettingsPanel.show {
+    right: 0;
+}
+
+.settings-close {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    cursor: pointer;
+}
+
+/* Placeholders */
+.empty-section-message {
+    text-align: center;
+    padding: 2rem;
+    color: #6c757d;
+    background-color: #f8f9fa;
+    border: 1px dashed #dee2e6;
+    border-radius: 0.25rem;
+}
+
+/* Preview Frame */
+.preview-frame {
+    width: 100%;
+    height: 600px;
+    border: 1px solid #dee2e6;
+    border-radius: 0.25rem;
+}
+
+/* Section Type Indicators */
+.section-type-badge {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+    background-color: #e9ecef;
+    margin-left: 0.5rem;
+}
+
+/* Add Section Button Area */
+.add-section-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+    background-color: #f8f9fa;
+    border: 2px dashed #dee2e6;
+    border-radius: 0.25rem;
+    margin-bottom: 2rem;
+}
+
+/* Block Type Indicators */
+.block-type-badge {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+    background-color: #e9ecef;
+    margin-left: 0.5rem;
+}
+
+/* Notification Container */
+#notificationContainer {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+    max-width: 350px;
+}
