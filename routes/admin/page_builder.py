@@ -285,6 +285,9 @@ async def pages_list(
         if not selected_tenant_slug and tenants:
             selected_tenant_slug = tenants[0].slug
             logger.info(f"Auto-selected tenant slug: {selected_tenant_slug}")
+            
+        # Debug the tenant list
+        logger.info(f"Available tenants: {[t.slug for t in tenants]}")
 
         # Store the selected tenant in session for future requests
         if selected_tenant_slug:
@@ -308,10 +311,18 @@ async def pages_list(
                         logger.info(f"Found {len(pages)} pages for tenant {tenant_obj.id}")
                         for p in pages:
                             logger.info(f"  Page: {p.title} (ID: {p.id}, slug: {p.slug})")
+                            
+                        # Ensure pages is a list even if None was returned
+                        if pages is None:
+                            logger.warning("Pages is None, converting to empty list")
+                            pages = []
+                            
                     except Exception as e:
                         logger.error(f"Error listing pages for tenant {tenant_obj.id}: {str(e)}")
+                        logger.exception("Full error details:")
                         status_message = f"Error loading pages: {str(e)}"
                         status_type = "error"
+                        pages = []  # Ensure pages is always a list
                 else:
                     logger.warning(f"No tenant found with slug: {selected_tenant_slug}")
                     # If the selected tenant is not found, use the first tenant
