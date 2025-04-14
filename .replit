@@ -8,7 +8,7 @@ deploymentTarget = "autoscale"
 run = ["gunicorn", "--bind", "0.0.0.0:5000", "main:app"]
 
 [workflows]
-runButton = "Restart Page Builder"
+runButton = "Debug Page Builder"
 
 [[workflows.workflow]]
 name = "Project"
@@ -145,6 +145,23 @@ args = "python verify_page_builder.py"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "python main.py"
+
+[[workflows.workflow]]
+name = "Debug Page Builder"
+author = 34384132
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "export DATABASE_URL=$(printenv REPLIT_DB_URL 2>/dev/null || echo \"postgresql://postgres:postgres@localhost:5432/pycommerce\")"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python verify_page_builder.py"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python -c \"from pycommerce.core.db import SessionLocal; from pycommerce.models.tenant import TenantManager; from pycommerce.models.page_builder import PageManager; session = SessionLocal(); tenant_manager = TenantManager(session); tenants = tenant_manager.get_all(); page_manager = PageManager(session); print(f'Found {len(tenants)} tenants'); for tenant in tenants: print(f'Tenant: {tenant.name} (slug: {tenant.slug})'); pages = page_manager.list_by_tenant(str(tenant.id), include_unpublished=True); print(f'  Pages: {len(pages)}'); session.close()\""
 
 [[ports]]
 localPort = 5000

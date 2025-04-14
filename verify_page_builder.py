@@ -175,3 +175,69 @@ def main():
 
 if __name__ == "__main__":
     sys.exit(main())
+import logging
+import sys
+from sqlalchemy import inspect
+from pycommerce.core.db import engine, SessionLocal
+from pycommerce.models.tenant import TenantManager
+from pycommerce.models.page_builder import PageManager
+
+# Configure logging
+logging.basicConfig(level=logging.INFO, 
+                   format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
+
+def verify_page_builder():
+    """Verify page builder setup and data."""
+    logger.info("Starting page builder verification")
+    
+    # Check tables
+    inspector = inspect(engine)
+    tables = inspector.get_table_names()
+    
+    required_tables = ['pages', 'page_sections', 'content_blocks', 'page_templates']
+    missing_tables = [table for table in required_tables if table not in tables]
+    
+    if missing_tables:
+        logger.error(f"Missing tables: {missing_tables}")
+        return False
+    
+    logger.info(f"All required tables exist: {', '.join(required_tables)}")
+    
+    # Check if there are pages in the database
+    session = SessionLocal()
+    try:
+        # Get all tenants
+        tenant_manager = TenantManager(session)
+        tenants = tenant_manager.get_all()
+        
+        logger.info(f"Found {len(tenants)} tenants")
+        
+        # Check if each tenant has pages
+        page_manager = PageManager(session)
+        
+        for tenant in tenants:
+            try:
+                pages = page_manager.list_by_tenant(str(tenant.id), include_unpublished=True)
+                logger.info(f"Tenant '{tenant.name}' (slug: {tenant.slug}) has {len(pages)} pages")
+                
+                # Print page details
+                for page in pages:
+                    logger.info(f"  - Page: '{page.title}' (slug: {page.slug}, published: {page.is_published})")
+            except Exception as e:
+                logger.error(f"Error checking pages for tenant '{tenant.name}': {str(e)}")
+        
+        return True
+    except Exception as e:
+        logger.error(f"Error verifying page builder: {str(e)}")
+        return False
+    finally:
+        session.close()
+
+if __name__ == "__main__":
+    success = verify_page_builder()
+    if success:
+        logger.info("Page builder verification completed successfully")
+    else:
+        logger.error("Page builder verification failed")
+        sys.exit(1)

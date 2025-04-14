@@ -10,7 +10,20 @@
     console.log("DOM fully loaded, checking page structure");
     console.log("Pages table exists:", document.querySelector("table") !== null);
     console.log("Tenant selected:", "{{ selected_tenant }}");
-    console.log("Number of pages:", "{{ pages|length }}");
+    console.log("Number of pages:", "{{ pages|length if pages else 'None' }}");
+    console.log("Tenant object exists:", "{{ tenant is not none }}");
+    console.log("Tenant ID:", "{{ tenant.id if tenant else 'None' }}");
+    console.log("Tenant slug:", "{{ tenant.slug if tenant else 'None' }}");
+    
+    // List all pages if they exist
+    {% if pages %}
+      console.log("Pages list:");
+      {% for page in pages %}
+        console.log("  - Page: {{ page.title }} ({{ page.slug }})");
+      {% endfor %}
+    {% else %}
+      console.log("No pages found in context");
+    {% endif %}
   });
 </script>
 {% endblock %}
