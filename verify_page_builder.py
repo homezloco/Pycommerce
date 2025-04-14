@@ -6,6 +6,7 @@ Verify the page builder functionality and fix any issues.
 import os
 import sys
 import logging
+import importlib
 from sqlalchemy import create_engine, text
 from sqlalchemy.exc import SQLAlchemyError
 
@@ -13,6 +14,17 @@ from sqlalchemy.exc import SQLAlchemyError
 logging.basicConfig(level=logging.INFO, format='%(asctime)s.%(msecs)03d %(levelname)s %(name)s - %(message)s',
                     datefmt='%Y-%m-%d %H:%M:%S')
 logger = logging.getLogger('main')
+
+
+def check_import(module_name):
+    """Check if a module can be imported."""
+    try:
+        module = importlib.import_module(module_name)
+        logger.info(f"✅ Successfully imported {module_name}")
+        return True
+    except ImportError as e:
+        logger.error(f"❌ Failed to import {module_name}: {str(e)}")
+        return False
 
 logger.info("Starting page builder verification")
 
@@ -92,6 +104,27 @@ try:
             logger.info("API routes verification would happen here")
         except Exception as e:
             logger.error(f"Error verifying API routes: {str(e)}")
+
+        #Import verification
+        logger.info("Verifying Page Builder Imports...")
+        imports_ok = True
+        imports_ok = check_import("routes.admin.page_builder") and imports_ok
+        imports_ok = check_import("pycommerce.models.page_builder") and imports_ok
+        imports_ok = check_import("routes.admin.ai_content") and imports_ok
+        imports_ok = check_import("pycommerce.models.tenant") and imports_ok
+
+        try:
+            from pycommerce.services.wysiwyg_service import WysiwygService
+            logger.info("✅ Successfully imported WysiwygService")
+        except ImportError as e:
+            logger.error(f"❌ Failed to import WysiwygService: {str(e)}")
+            imports_ok = False
+
+        if imports_ok:
+            logger.info("✅ All page builder components verified successfully")
+        else:
+            logger.error("❌ Some page builder components failed verification")
+
 
         logger.info("Page builder verification completed")
 

@@ -6,10 +6,13 @@ from fastapi import APIRouter, Request, Depends, HTTPException
 from fastapi.responses import JSONResponse
 import logging
 from pycommerce.plugins.ai.providers import get_ai_provider
-from pycommerce.models.tenant import get_tenant_by_id
+from pycommerce.models.tenant import TenantManager
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
+
+# Initialize tenant manager
+tenant_manager = TenantManager()
 
 def setup_routes(templates):
     """Set up the AI content routes."""
@@ -38,8 +41,8 @@ def setup_routes(templates):
                     "message": "No store selected"
                 })
             
-            # Get AI provider
-            tenant = get_tenant_by_id(tenant_id)
+            # Get tenant using TenantManager
+            tenant = tenant_manager.get_by_slug(tenant_id)
             if not tenant:
                 logger.warning(f"Tenant not found: {tenant_id}")
                 return JSONResponse({
