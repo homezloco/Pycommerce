@@ -469,7 +469,7 @@ async def page_create_form(
         templates_list = template_manager.list_templates()
 
     # Get editor configuration
-        editor_config = wysiwyg_service.get_editor_config('tinymce', {
+        editor_config = wysiwyg_service.get_editor_config('quill', {
             'tenant_id': str(tenant_obj.id) if tenant_obj else None,
             'media_browse_url': '/admin/api/media'
         })

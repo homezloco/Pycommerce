@@ -245,7 +245,7 @@ class WysiwygService:
                 base_config.update(context)
             
             # Editor-specific configuration
-            if editor_type == 'quill':
+            if editor_type == 'quill' or editor_type == 'default':
                 editor_config = {
                     'theme': 'snow',
                     'placeholder': 'Start writing or use the editor tools...',

@@ -85,8 +85,7 @@
     <li class="breadcrumb-item active">Editor</li>
   </ol>
 
-  <!-- TinyMCE Script -->
-  <script src="https://cdn.tiny.cloud/1/no-api-key/tinymce/6/tinymce.min.js" referrerpolicy="origin"></script>
+  <!-- Quill.js is already included in the base template -->
 
   {% if status_message %}
   <div class="alert alert-{{ status_type }}" role="alert">
@@ -103,7 +102,8 @@
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body">
-          <textarea id="textEditor" class="form-control"></textarea>
+          <div id="textEditor" class="form-control"></div>
+          <input type="hidden" id="hiddenTextContent">
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -149,45 +149,6 @@
 
 <script>
   document.addEventListener('DOMContentLoaded', function() {
-    // Initialize TinyMCE
-    const editorConfig = {{ editor_config|safe }};
-
-    // Initialize TinyMCE editor for the modal
-    document.addEventListener('DOMContentLoaded', function() {
-      if (typeof tinymce !== 'undefined') {
-        console.log("TinyMCE is available, initializing editor");
-        tinymce.init({
-          selector: '#textEditor',
-          height: 500,
-          menubar: true,
-          plugins: [
-            'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
-            'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
-            'insertdatetime', 'media', 'table', 'help', 'wordcount'
-          ],
-          toolbar: 'undo redo | formatselect | ' +
-            'bold italic backcolor | alignleft aligncenter ' +
-            'alignright alignjustify | bullist numlist outdent indent | ' +
-            'removeformat | image media link | help',
-          content_style: 'body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-size: 14px; }',
-          file_picker_callback: function(callback, value, meta) {
-            // Open media selector modal
-            openMediaSelector(function(id, url, name) {
-              if (meta.filetype === 'image') {
-                callback(url, { title: name });
-              } else if (meta.filetype === 'media') {
-                callback(url, { title: name });
-              } else {
-                callback(url, { title: name });
-              }
-            });
-          }
-        });
-      } else {
-        console.error("TinyMCE is not loaded properly");
-      }
-    });
-
     // Handle Add Section button click
     const addSectionBtn = document.getElementById('addSectionBtn');
     if (addSectionBtn) {
@@ -279,14 +240,30 @@
     window.openTextEditor = function(blockId, content) {
       const modal = document.getElementById('textEditorModal');
       const modalInstance = new bootstrap.Modal(modal);
+      const textEditor = new Quill('#textEditor', {
+        theme: 'snow',
+        modules: {
+          toolbar: [
+            ['bold', 'italic', 'underline', 'strike'],
+            [{'header': 1}, {'header': 2}],
+            [{'list': 'ordered'}, {'list': 'bullet'}],
+            [{'indent': '-1'}, {'indent': '+1'}],
+            [{'align': []}],
+            ['link', 'image', 'video'],
+            ['clean']
+          ]
+        },
+        placeholder: 'Enter your content here...',
+      });
+      textEditor.clipboard.dangerouslyPasteHTML(content || '');
 
-      // Set content in TinyMCE
-      tinymce.get('textEditor').setContent(content || '');
 
       // Update save button to save to the specific block
       const saveTextBtn = document.getElementById('saveTextBtn');
       saveTextBtn.onclick = function() {
-        const updatedContent = tinymce.get('textEditor').getContent();
+        const updatedContent = textEditor.root.innerHTML;
+        const hiddenTextContent = document.getElementById('hiddenTextContent');
+        hiddenTextContent.value = updatedContent;
         saveBlockContent(blockId, updatedContent);
         modalInstance.hide();
       };
@@ -779,8 +756,7 @@
     });
 
     // Edit section buttons
-    document.addEventListener('click', function(e) {
-      if (e.target.closest('.edit-section-btn')) {
+    document.addEventListener('if (e.target.closest('.edit-section-btn')) {
         const btn = e.target.closest('.edit-section-btn');
         const sectionContainer = btn.closest('.section-container');
         const sectionId = sectionContainer.getAttribute('data-section-id');
@@ -874,7 +850,7 @@
 
       // Collect content data based on block type
       if (blockType === 'text') {
-        content.html = tinymce.get('blockContent').getContent();
+        content.html = document.getElementById('hiddenBlockContent').value;
       } else if (blockType === 'image') {
         content.src = formData.get('content.src');
         content.alt = formData.get('content.alt');
@@ -1226,7 +1202,8 @@
               typeFieldsHTML = `
                 <div class="mb-3">
                   <label for="blockContent" class="form-label">Content</label>
-                  <textarea id="blockContent" name="content.html" class="form-control tinymce-editor" rows="10">${block.content?.html || ''}</textarea>
+                  <div id="blockContent" name="content.html" class="form-control tinymce-editor" style="min-height: 300px;"></div>
+                  <input type="hidden" id="hiddenBlockContent" name="content.html">
                 </div>
               `;
               break;
@@ -1333,22 +1310,35 @@
           // Set the HTML
           typeFieldsContainer.innerHTML = typeFieldsHTML;
 
-          // Initialize TinyMCE if there's a text editor
+          // Initialize Quill editor for text blocks
           if (blockType === 'text') {
-            tinymce.init({
-              selector: '#blockContent',
-              height: 300,
-              menubar: false,
-              plugins: [
-                'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
-                'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
-                'insertdatetime', 'media', 'table', 'help', 'wordcount'
-              ],
-              toolbar: 'undo redo | formatselect | bold italic | ' +
-                'alignleft aligncenter alignright | bullist numlist | ' +
-                'link image | removeformat | help',
-              content_style: 'body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-size: 14px; }'
+            const blockContentEditor = new Quill('#blockContent', {
+              theme: 'snow',
+              modules: {
+                toolbar: [
+                  ['bold', 'italic', 'underline', 'strike'],
+                  [{'header': 1}, {'header': 2}],
+                  [{'list': 'ordered'}, {'list': 'bullet'}],
+                  [{'indent': '-1'}, {'indent': '+1'}],
+                  [{'align': []}],
+                  ['link', 'image', 'video'],
+                  ['clean']
+                ]
+              },
+              placeholder: 'Enter your content here...',
             });
+
+            // Restore previous content
+            if (block.content && block.content.html) {
+              blockContentEditor.clipboard.dangerouslyPasteHTML(block.content.html);
+            }
+
+            // Custom handler to save Quill content
+            document.getElementById('saveBlockSettingsBtn').addEventListener('click', function(){
+              const hiddenBlockContent = document.getElementById('hiddenBlockContent');
+              hiddenBlockContent.value = blockContentEditor.root.innerHTML;
+            });
+
           }
 
           // Initialize product dropdown if it's a product block
