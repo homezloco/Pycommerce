@@ -672,6 +672,7 @@ async def page_edit_form(
 @router.get("/pages-debug", response_class=HTMLResponse)
 async def pages_debug(request: Request):
     """Debug page to check template rendering."""
+    # No session used in this route, so we don't need session management
     try:
         # Create a simple HTML response
         html_content = """
@@ -696,7 +697,7 @@ async def pages_debug(request: Request):
                             <li>Database queries for pages</li>
                         </ul>
                         <a href="/admin/pages?debug=true" class="btn btn-primary">Try Pages Route with Debug</a>
-                        
+
                         <hr>
                         <h3>Direct Debug Information</h3>
                         <div id="debugOutput" class="mt-4 p-3 border bg-light">
@@ -705,7 +706,7 @@ async def pages_debug(request: Request):
                                 <p class="mt-2">Loading debug information...</p>
                             </div>
                         </div>
-                        
+
                         <script>
                             // Fetch debug data directly
                             fetch('/admin/debug-pages')
@@ -714,22 +715,22 @@ async def pages_debug(request: Request):
                                     // Display debug information
                                     let html = '<h4>Page Builder Debug Information</h4>';
                                     html += '<div class="alert alert-info">This information helps diagnose page builder issues</div>';
-                                    
+
                                     // Tenant information
                                     html += '<h5>Tenant Information</h5>';
                                     html += `<p>Selected tenant: ${data.selected_tenant_slug || 'None'}</p>`;
                                     html += `<p>Tenants count: ${data.tenants_count}</p>`;
-                                    
+
                                     // Pages information
                                     html += '<h5>Pages Information</h5>';
                                     html += `<p>Pages count: ${data.pages_count || 0}</p>`;
-                                    
+
                                     // Database information
                                     if (data.database_info) {
                                         html += '<h5>Database Information</h5>';
                                         html += '<table class="table table-sm table-bordered">';
                                         html += '<thead><tr><th>Table</th><th>Exists</th><th>Records</th></tr></thead><tbody>';
-                                        
+
                                         for (const table in data.database_info.tables_exist) {
                                             html += `<tr>
                                                 <td>${table}</td>
@@ -737,10 +738,10 @@ async def pages_debug(request: Request):
                                                 <td>${data.database_info.record_counts ? data.database_info.record_counts[table] : 'N/A'}</td>
                                             </tr>`;
                                         }
-                                        
+
                                         html += '</tbody></table>';
                                     }
-                                    
+
                                     document.getElementById('debugOutput').innerHTML = html;
                                 })
                                 .catch(error => {
@@ -759,6 +760,7 @@ async def pages_debug(request: Request):
     except Exception as e:
         logger.error(f"Error in pages_debug: {str(e)}")
         return HTMLResponse(content=f"<h1>Error</h1><p>{str(e)}</p>", status_code=500)
+    # Removed the finally clause that was trying to close a non-existent session
 
         # Set the selected tenant
         selected_tenant_slug = tenant_obj.slug
