@@ -234,7 +234,7 @@ def setup_routes(jinja_templates: Jinja2Templates = None):
     # Ensure the router is properly configured and returned
     return router
 
-@router.get("/pages", response_class=HTMLResponse)
+@router.get('/pages', response_class=HTMLResponse)
 async def pages_list(
     request: Request,
     tenant: Optional[str] = None,

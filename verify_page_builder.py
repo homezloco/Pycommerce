@@ -94,15 +94,15 @@ def check_page_builder_routes():
             routes_content = f.read()
 
         required_routes = [
-            "@router.get('/pages'",
-            "@router.get('/pages/create'",
-            "@router.post('/pages/create'",
-            "@router.get('/pages/edit/'",
+            ("@router.get('/pages'", "@router.get(\"/pages\""),
+            ("@router.get('/pages/create'", "@router.get(\"/pages/create\""), 
+            ("@router.post('/pages/create'", "@router.post(\"/pages/create\""),
+            ("@router.get('/pages/edit/'", "@router.get(\"/pages/edit/\"")
         ]
 
-        for route in required_routes:
-            if route not in routes_content:
-                logger.error(f"❌ Required route not found: {route}")
+        for route_options in required_routes:
+            if not any(option in routes_content for option in route_options):
+                logger.error(f"❌ Required route not found: {route_options[0]}")
                 return False
 
         logger.info("✅ All required page builder routes found")
