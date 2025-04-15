@@ -262,16 +262,16 @@ class AIConfigService:
         """Load AI configuration from the database."""
         try:
             # Try to get AI config from database
-            plugin_config = self.config_manager.get_plugin_config("ai")
+            plugin_config = self.config_manager.get_config("ai")
             
-            if plugin_config and plugin_config.config_data:
-                self.config = plugin_config.config_data
+            if plugin_config:
+                self.config = plugin_config
                 self.config_loaded = True
                 logger.info("AI configuration loaded successfully")
             else:
                 # If no config exists, create a default one
                 logger.warning("No AI configuration found, using defaults")
-                self.config_manager.save_plugin_config("ai", DEFAULT_CONFIG)
+                self.config_manager.save_config("ai", DEFAULT_CONFIG)
                 self.config = DEFAULT_CONFIG.copy()
                 self.config_loaded = True
         except Exception as e:

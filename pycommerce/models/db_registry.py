@@ -93,7 +93,7 @@ class InventoryRecord(Base):
     # Relationships
     product = relationship("Product", back_populates="inventory_records")
     # Define forward reference for transactions - using string reference to avoid circular import
-    transactions = relationship("InventoryTransaction", 
+    transactions = relationship("pycommerce.models.db_inventory.InventoryTransaction", 
                               back_populates="inventory_record",
                               cascade="all, delete-orphan",
                               lazy="dynamic")
