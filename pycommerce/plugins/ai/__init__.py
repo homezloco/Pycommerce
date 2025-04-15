@@ -10,6 +10,18 @@ from typing import Dict, Any
 
 logger = logging.getLogger(__name__)
 
+def register_plugin(name, plugin_class):
+    """
+    Register an AI plugin.
+    
+    Args:
+        name: Name of the plugin
+        plugin_class: The plugin class to register
+    """
+    from .providers import register_provider
+    register_provider(name, plugin_class)
+    logger.info(f"Registered AI plugin: {name}")
+
 def init_ai_plugin():
     """Initialize the AI plugin."""
     try:
