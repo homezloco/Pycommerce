@@ -52,7 +52,8 @@ class InventoryRecord(Base):
     transactions = relationship("InventoryTransaction", 
                                back_populates="inventory_record", 
                                cascade="all, delete-orphan")
-    # Product relationship will be defined in the product model to avoid circular imports
+    # Define product relationship
+    product = relationship("Product", back_populates="inventory_records")
 
     def __repr__(self):
         return f"<InventoryRecord {self.id} for product {self.product_id}>"
@@ -171,3 +172,7 @@ class MediaFile(Base):
         return self.filename
 
 from pycommerce.models.db_inventory import InventoryTransaction #Import InventoryTransaction here to avoid circular import
+
+# Make sure SQLAlchemy's registry is properly configured
+from sqlalchemy.orm import configure_mappers
+configure_mappers()
