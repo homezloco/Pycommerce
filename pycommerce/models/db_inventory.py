@@ -12,8 +12,8 @@ from sqlalchemy.orm import relationship
 
 from pycommerce.core.db import Base
 
-# Importing these here to avoid circular imports
-from pycommerce.models.db_registry import InventoryRecord
+# Import the relevant models
+# Do not import InventoryRecord here to avoid circular imports
 
 class InventoryTransaction(Base):
     """
@@ -33,8 +33,8 @@ class InventoryTransaction(Base):
     created_by = Column(String(100), nullable=True)  # User who created the transaction
     transaction_metadata = Column(JSON, nullable=True)  # Renamed from metadata to avoid SQLAlchemy conflict
 
-    # Define relationship with InventoryRecord
-    inventory_record = relationship("pycommerce.models.db_registry.InventoryRecord", foreign_keys=[inventory_record_id], 
+    # Define relationship with InventoryRecord - using string reference
+    inventory_record = relationship("InventoryRecord", foreign_keys=[inventory_record_id], 
                                    back_populates="transactions")
 
     def __repr__(self):
