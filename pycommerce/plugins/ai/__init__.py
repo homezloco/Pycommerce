@@ -1,40 +1,41 @@
-"""
-AI plugin for PyCommerce.
 
-This module provides AI-powered content generation and analysis capabilities.
 """
-
+AI Plugin for PyCommerce platform.
+"""
 import logging
-from typing import Dict, Any
+from typing import Optional
+
+from .config import init_ai_config, get_ai_config
+from .providers import MockAIProvider, OpenAIProvider, AIProvider
 
 logger = logging.getLogger(__name__)
 
-def init_ai_plugin():
-    """Initialize the AI plugin."""
-    try:
-        from .config import get_ai_settings, is_ai_enabled
-        settings = get_ai_settings()
+# Initialize AI configuration
+init_ai_config()
 
-        if not is_ai_enabled():
-            logger.info("AI plugin is disabled in configuration")
-            return False
-
-        logger.info(f"Initializing AI plugin with provider: {settings.get('default_provider', 'none')}")
-
-        # Initialize the appropriate provider
-        from .providers import get_provider
-        provider = get_provider(settings.get('default_provider', 'openai'))
-        if provider is None:
-            logger.warning(f"Provider {settings.get('default_provider')} is not available")
-            return False
-
-        return True
-    except ImportError as e:
-        logger.warning(f"Error initializing AI plugin: {str(e)}")
-        return False
-    except Exception as e:
-        logger.error(f"Unexpected error initializing AI plugin: {str(e)}")
-        return False
-
-# Initialize AI plugin
-is_initialized = init_ai_plugin()
+def get_ai_provider() -> Optional[AIProvider]:
+    """
+    Get the configured AI provider.
+    Returns a provider instance or None if no provider is available.
+    """
+    config = get_ai_config()
+    provider_name = config.get("provider", "mock")
+    
+    if provider_name == "openai" and config.get("openai", {}).get("enabled", False):
+        try:
+            api_key = config.get("openai", {}).get("api_key")
+            model = config.get("openai", {}).get("model", "gpt-3.5-turbo")
+            
+            if not api_key:
+                logger.warning("OpenAI provider selected but no API key provided")
+                return MockAIProvider()
+                
+            return OpenAIProvider(api_key=api_key, model=model)
+        except Exception as e:
+            logger.error(f"Error initializing OpenAI provider: {str(e)}")
+            # Fall back to mock provider
+            return MockAIProvider()
+    
+    # Default to mock provider
+    logger.info("Using mock AI provider")
+    return MockAIProvider()

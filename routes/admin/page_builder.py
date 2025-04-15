@@ -188,6 +188,13 @@ def setup_routes(jinja_templates: Jinja2Templates = None):
         if os.path.exists(template_dir):
             templates = Jinja2Templates(directory=template_dir)
             logger.info(f"Created fallback templates object with directory: {template_dir}")
+            
+            # Log the actual template files
+            pages_dir = os.path.join(template_dir, "admin", "pages")
+            if os.path.exists(pages_dir):
+                logger.info(f"Pages templates found: {os.listdir(pages_dir)}")
+            else:
+                logger.error(f"Pages directory not found: {pages_dir}")
     else:
         logger.info("Templates setup complete")
 
