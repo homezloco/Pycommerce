@@ -66,6 +66,16 @@ def initialize_plugins():
         except (ImportError, AttributeError) as e:
             logger.warning(f"Failed to load shipping plugin '{plugin_name}': {e}")
 
+    # Initialize AI plugin. Added based on user request.
+    try:
+        from pycommerce.plugins import ai
+        ai.initialize()
+        logger.info("Registered AI plugin")
+    except (ImportError, AttributeError) as e:
+        logger.warning(f"Failed to load AI plugin: {e}")
+
+
+
 # Initialize plugins
 initialize_plugins()
 
