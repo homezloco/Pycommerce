@@ -1,0 +1,54 @@
+2025-04-15 02:35:39.841 INFO pycommerce.services.mail - Email template directory: /home/runner/workspace/templates/emails
+2025-04-15 02:35:40.024 INFO pycommerce.plugins.payment.config - Successfully loaded payment settings from database
+2025-04-15 02:35:40.058 INFO pycommerce.plugins.payment.config - Using development Stripe credentials
+2025-04-15 02:35:40.058 INFO pycommerce.plugins.payment.config - Using development PayPal credentials
+2025-04-15 02:35:40.061 INFO pycommerce.plugins.payment.stripe - Initializing Stripe payment plugin
+2025-04-15 02:35:40.061 INFO pycommerce.plugins - Registering plugin: stripe_payment v0.1.0
+2025-04-15 02:35:40.062 INFO pycommerce.plugins.payment.stripe - Initializing Stripe payment plugin
+2025-04-15 02:35:40.062 INFO pycommerce - Registered payment plugin: stripe
+2025-04-15 02:35:40.062 INFO pycommerce.plugins.payment.paypal - Initializing PayPal payment plugin
+2025-04-15 02:35:40.062 INFO pycommerce.plugins - Registering plugin: paypal_payment v0.1.0
+2025-04-15 02:35:40.062 INFO pycommerce.plugins.payment.paypal - Initializing PayPal payment plugin
+2025-04-15 02:35:40.062 INFO pycommerce - Registered payment plugin: paypal
+2025-04-15 02:35:40.062 INFO pycommerce.plugins - Registering plugin: standard_shipping v0.1.0
+2025-04-15 02:35:40.062 INFO pycommerce.plugins.shipping.standard - Initializing Standard shipping plugin
+2025-04-15 02:35:40.062 INFO pycommerce - Registered shipping plugin: standard
+2025-04-15 02:35:40.083 INFO main - Starting page builder verification
+2025-04-15 02:35:40.083 INFO main - Checking template files...
+2025-04-15 02:35:40.083 INFO main - ✅ Template exists: /home/runner/workspace/templates/admin/pages/list.html
+2025-04-15 02:35:40.083 INFO main - ✅ Template exists: /home/runner/workspace/templates/admin/pages/create.html
+2025-04-15 02:35:40.083 INFO main - ✅ Template exists: /home/runner/workspace/templates/admin/pages/editor.html
+2025-04-15 02:35:40.083 INFO main - ✅ AI modal template exists: /home/runner/workspace/templates/admin/partials/ai_modal.html
+2025-04-15 02:35:40.083 INFO main - Checking database tables...
+2025-04-15 02:35:40.338 INFO main - ✅ All required tables exist: ['pages', 'page_sections', 'content_blocks', 'page_templates']
+2025-04-15 02:35:40.591 INFO main - Pages count: 5
+2025-04-15 02:35:40.591 INFO main - Sections count: 5
+2025-04-15 02:35:40.591 INFO main - Blocks count: 5
+2025-04-15 02:35:40.591 INFO main - Templates count: 1
+2025-04-15 02:35:40.626 INFO main - Checking routes setup...
+2025-04-15 02:35:40.626 INFO main - ✅ Page builder routes file exists: routes/admin/page_builder.py
+2025-04-15 02:35:40.817 INFO main - ✅ Page builder routes module imported successfully
+2025-04-15 02:35:40.817 INFO main - ✅ setup_routes function exists
+2025-04-15 02:35:40.817 INFO main - ✅ router object exists
+2025-04-15 02:35:40.817 INFO main - Checking JavaScript files...
+2025-04-15 02:35:40.817 INFO main - ✅ JavaScript file exists: static/js/page-builder.js
+2025-04-15 02:35:40.817 INFO main - ✅ JavaScript file exists: static/js/page-editor.js
+2025-04-15 02:35:40.817 INFO main - ✅ JavaScript file exists: static/js/add-debug-button.js
+2025-04-15 02:35:40.817 INFO main - Checking AI configuration...
+2025-04-15 02:35:40.817 INFO main - ✅ AI config file exists: pycommerce/plugins/ai/__init__.py
+2025-04-15 02:35:40.817 INFO main - ✅ AI config file exists: pycommerce/plugins/ai/config.py
+2025-04-15 02:35:40.817 INFO main - ✅ AI config file exists: pycommerce/plugins/ai/providers.py
+2025-04-15 02:35:40.817 INFO main - Checking web_app.py integration...
+2025-04-15 02:35:40.821 INFO main - ✅ setup_page_builder_routes found in web_app.py
+2025-04-15 02:35:40.821 INFO main - ✅ Page builder router initialized in web_app.py
+2025-04-15 02:35:40.821 INFO main - Checking for page templates...
+2025-04-15 02:35:40.923 INFO main - ✅ Found 1 existing page templates
+2025-04-15 02:35:40.959 INFO main - 
+=== Page Builder Verification Summary ===
+2025-04-15 02:35:40.959 INFO main - Templates: ✅ OK
+2025-04-15 02:35:40.959 INFO main - Database tables: ✅ OK
+2025-04-15 02:35:40.959 INFO main - Routes setup: ✅ OK
+2025-04-15 02:35:40.959 INFO main - JavaScript files: ✅ OK
+2025-04-15 02:35:40.959 INFO main - AI configuration: ✅ OK
+2025-04-15 02:35:40.959 INFO main - Web app integration: ✅ OK
+2025-04-15 02:35:40.959 INFO main - ✅ All essential checks passed. Page builder should work properly.
