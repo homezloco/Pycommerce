@@ -1,33 +1,24 @@
 """
-Plugin management for PyCommerce.
+Plugin packages for PyCommerce SDK.
 
-This module provides functionality for managing plugins in the PyCommerce platform.
+This package contains built-in plugins for the PyCommerce SDK,
+organized by functionality type.
 """
 
-import logging
-from pycommerce.core.plugin import PluginManager
+# Import built-in plugins for easier access
+from pycommerce.plugins.payment.stripe import StripePaymentPlugin
+from pycommerce.plugins.shipping.standard import StandardShippingPlugin
 
-logger = logging.getLogger(__name__)
+# Import plugin manager
+from pycommerce import payment_plugins, shipping_plugins
 
-def register_plugin(plugin_id, plugin_name, version):
-    """
-    Register a plugin with the system.
+__all__ = [
+    "StripePaymentPlugin",
+    "StandardShippingPlugin",
+    "get_plugin_registry",
+]
 
-    Args:
-        plugin_id: The unique identifier for the plugin
-        plugin_name: The display name of the plugin
-        version: The version of the plugin
-
-    Returns:
-        bool: True if registration was successful
-    """
-    try:
-        logger.info(f"Registering plugin: {plugin_id} v{version}")
-        return True
-    except Exception as e:
-        logger.error(f"Error registering plugin {plugin_id}: {str(e)}")
-        return False
-
+# Plugin registry access function
 def get_plugin_registry():
     """
     Get the global plugin registry.
@@ -35,8 +26,6 @@ def get_plugin_registry():
     Returns:
         An object with methods to access different plugin types
     """
-    from pycommerce import payment_plugins, shipping_plugins
-    
     class PluginRegistry:
         def get_payment_plugin(self, name):
             """Get a payment plugin by name"""

@@ -1,106 +1,153 @@
 """
-AI API routes for PyCommerce.
+API routes for AI-powered content generation.
 
-This module provides API endpoints for AI content generation.
+This module provides API endpoints for generating and enhancing content using various AI providers.
 """
 
+import os
 import logging
 from typing import Optional, Dict, Any, List
-from fastapi import APIRouter, HTTPException, Query, Body
-from pydantic import BaseModel
+from uuid import UUID
 
-from pycommerce.plugins.ai.config import get_ai_providers, load_ai_config, get_ai_provider_instance
+from fastapi import APIRouter, Depends, HTTPException, Query
+from pydantic import BaseModel
+from starlette.requests import Request
+
+from pycommerce.plugins.ai.config import load_ai_config, get_ai_providers
+from pycommerce.plugins.ai.providers import get_ai_provider
 from pycommerce.models.plugin_config import PluginConfigManager
 
-router = APIRouter(prefix="/ai", tags=["ai"])
+# Configure logging
 logger = logging.getLogger(__name__)
 
-# Models for request/response
-class GenerateContentRequest(BaseModel):
-    """Request model for content generation."""
-    prompt: str
-    content_type: Optional[str] = "general"
-    tone: Optional[str] = "professional"
-    max_length: Optional[int] = None
+# Create a router for AI routes
+router = APIRouter()
 
-class GenerateContentResponse(BaseModel):
-    """Response model for content generation."""
+# Create config manager
+config_manager = PluginConfigManager()
+
+
+class GenerateContentRequest(BaseModel):
+    prompt: str
+    provider: Optional[str] = None
+    model: Optional[str] = None
+
+
+class EnhanceContentRequest(BaseModel):
+    text: str
+    instructions: Optional[str] = None
+    provider: Optional[str] = None
+    model: Optional[str] = None
+
+
+class AIContentResponse(BaseModel):
     content: str
-    provider: str
+
+
+class AIProviderInfo(BaseModel):
+    id: str
+    name: str
+    description: str
+    icon: str
+    fields: List[Dict[str, Any]]
+
 
 class AIProvidersResponse(BaseModel):
-    """Response model for AI providers list."""
-    providers: List[Dict[str, Any]]
+    providers: List[AIProviderInfo]
     active_provider: str
 
-@router.post("/generate-content", response_model=GenerateContentResponse)
+
+@router.post("/generate", response_model=AIContentResponse)
 async def generate_content(
     request: GenerateContentRequest,
     tenant_id: Optional[str] = Query(None, description="Tenant ID for tenant-specific configuration")
 ):
     """
-    Generate content using the active AI provider.
-
+    Generate content using AI.
+    
     Args:
-        request: Content generation request
+        request: Contains the prompt for generating content
         tenant_id: Optional tenant ID for tenant-specific configuration
-
+    
     Returns:
         Generated content
     """
     try:
-        # Get AI provider
-        provider = None
-        provider_id = "unknown"
-
-        try:
-            provider = get_ai_provider_instance(tenant_id)
-            config = load_ai_config(tenant_id)
-            provider_id = config.get("active_provider", "openai")
-        except ValueError as e:
-            # If API key is not configured, try to use a mock response for development
-            if "localhost" in str(e) or "development" in str(e) or "API key" in str(e):
-                logger.warning("AI provider not configured. Using mock response for development.")
-                return GenerateContentResponse(
-                    content="<p>This is a sample AI-generated content for testing purposes.</p><p>Since the AI service is not available, we're showing this placeholder text.</p><p>In a production environment, this would be replaced with actual AI-generated content based on your prompt.</p>",
-                    provider="mock"
-                )
-            else:
-                raise
-
-        # Customize prompt based on content type and tone
-        full_prompt = request.prompt
-
-        if request.content_type == "heading":
-            full_prompt = f"Create a compelling headline or heading in a {request.tone} tone: {request.prompt}"
-        elif request.content_type == "description":
-            full_prompt = f"Write a detailed description in a {request.tone} tone: {request.prompt}"
-        elif request.content_type == "list":
-            full_prompt = f"Create a bulleted list in a {request.tone} tone about: {request.prompt}"
-        else:
-            full_prompt = f"Generate content in a {request.tone} tone: {request.prompt}"
-
+        # Load AI configuration
+        config = load_ai_config(tenant_id)
+        
+        # Get provider ID (either from request or from configuration)
+        provider_id = request.provider or config.get("active_provider", "openai")
+        
+        # Get provider configuration
+        provider_config = config.get("provider_config", {})
+        
+        # Override model if specified in request
+        if request.model:
+            provider_config["model"] = request.model
+        
+        # Get provider
+        provider = get_ai_provider(provider_id, provider_config)
+        
         # Generate content
-        content = provider.generate_text(full_prompt)
-
-        return GenerateContentResponse(
-            content=content,
-            provider=provider_id
-        )
-
+        content = provider.generate_text(request.prompt)
+        
+        return AIContentResponse(content=content)
+    
     except ValueError as e:
-        logger.error(f"Error generating content: {str(e)}")
-        raise HTTPException(
-            status_code=400, 
-            detail=f"AI provider not configured correctly: {str(e)}"
-        )
-
+        logger.error(f"Configuration error: {str(e)}")
+        raise HTTPException(status_code=400, detail=str(e))
+    
     except Exception as e:
         logger.error(f"Error generating content: {str(e)}")
-        raise HTTPException(
-            status_code=500, 
-            detail=f"Error generating content: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=f"Error generating content: {str(e)}")
+
+
+@router.post("/enhance", response_model=AIContentResponse)
+async def enhance_content(
+    request: EnhanceContentRequest,
+    tenant_id: Optional[str] = Query(None, description="Tenant ID for tenant-specific configuration")
+):
+    """
+    Enhance existing content using AI.
+    
+    Args:
+        request: Contains the text to enhance and optional instructions
+        tenant_id: Optional tenant ID for tenant-specific configuration
+    
+    Returns:
+        Enhanced content
+    """
+    try:
+        # Load AI configuration
+        config = load_ai_config(tenant_id)
+        
+        # Get provider ID (either from request or from configuration)
+        provider_id = request.provider or config.get("active_provider", "openai")
+        
+        # Get provider configuration
+        provider_config = config.get("provider_config", {})
+        
+        # Override model if specified in request
+        if request.model:
+            provider_config["model"] = request.model
+        
+        # Get provider
+        provider = get_ai_provider(provider_id, provider_config)
+        
+        # Enhance content
+        content = provider.enhance_text(request.text, request.instructions)
+        
+        return AIContentResponse(content=content)
+    
+    except ValueError as e:
+        logger.error(f"Configuration error: {str(e)}")
+        raise HTTPException(status_code=400, detail=str(e))
+    
+    except Exception as e:
+        logger.error(f"Error enhancing content: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error enhancing content: {str(e)}")
+
 
 @router.get("/providers", response_model=AIProvidersResponse)
 async def get_providers(
@@ -108,31 +155,32 @@ async def get_providers(
 ):
     """
     Get available AI providers and active provider.
-
+    
     Args:
         tenant_id: Optional tenant ID for tenant-specific configuration
-
+    
     Returns:
         List of available providers and active provider
     """
     try:
         # Load AI configuration
         config = load_ai_config(tenant_id)
-
+        
         # Get active provider
         active_provider = config.get("active_provider", "openai")
-
+        
         # Get available providers
         providers = get_ai_providers()
-
+        
         return AIProvidersResponse(
             providers=providers,
             active_provider=active_provider
         )
-
+    
     except Exception as e:
         logger.error(f"Error getting AI providers: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error getting AI providers: {str(e)}")
+
 
 @router.post("/set-provider")
 async def set_active_provider(
@@ -141,11 +189,11 @@ async def set_active_provider(
 ):
     """
     Set the active AI provider.
-
+    
     Args:
         provider_id: Provider ID to set as active
         tenant_id: Optional tenant ID for tenant-specific configuration
-
+    
     Returns:
         Success message
     """
@@ -153,26 +201,25 @@ async def set_active_provider(
         # Validate provider ID
         providers = get_ai_providers()
         valid_providers = [p["id"] for p in providers]
-
+        
         if provider_id not in valid_providers:
             raise HTTPException(
                 status_code=400,
                 detail=f"Invalid provider ID. Valid providers are: {', '.join(valid_providers)}"
             )
-
+        
         # Save active provider
-        config_manager = PluginConfigManager()
         config_manager.save_config(
             "ai_active_provider",
             {"provider": provider_id},
             tenant_id
         )
-
+        
         return {"success": True, "message": f"Active provider set to {provider_id}"}
-
+    
     except HTTPException:
         raise
-
+    
     except Exception as e:
         logger.error(f"Error setting active AI provider: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error setting active AI provider: {str(e)}")

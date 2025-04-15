@@ -61,7 +61,7 @@ class UserResponse(BaseModel):
             updated_at=user.updated_at
         )
 
-router = APIRouter(prefix="/users")
+router = APIRouter()
 logger = logging.getLogger("pycommerce.api.users")
 
 # Create a reusable OAuth2 scheme that can be updated with the correct tokenUrl
@@ -156,7 +156,7 @@ async def get_current_user(
     return user
 
 
-@router.get("", response_model=UserResponse)
+@router.get("/me", response_model=UserResponse)
 async def get_current_user_info(
     current_user: User = Depends(get_current_user)
 ):
