@@ -23,7 +23,7 @@ def get_session():
     """Import and return the session factory to avoid circular imports."""
     from pycommerce.core.db import get_session as core_get_session
     return core_get_session()
-from pycommerce.models.order_note import OrderNote
+# Import these classes inside methods to avoid circular imports
 from pycommerce.models.order_item import OrderItem
 from pycommerce.models.shipment import Shipment
 
@@ -108,7 +108,7 @@ class Order(Base):
     delivered_at = Column(DateTime, nullable=True)
     
     # Relationships
-    notes = relationship("OrderNote", back_populates="order", cascade="all, delete-orphan")
+    notes = relationship("pycommerce.models.order_note.OrderNote", back_populates="order", cascade="all, delete-orphan", lazy="selectin")
     items = relationship("OrderItem", back_populates="order", cascade="all, delete-orphan")
     shipments = relationship("Shipment", back_populates="order", cascade="all, delete-orphan")
     returns = relationship("ReturnRequest", back_populates="order", cascade="all, delete-orphan")

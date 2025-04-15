@@ -32,8 +32,8 @@ class OrderNote(Base):
     is_customer_note = Column(Boolean, default=False)
     created_at = Column(DateTime, default=datetime.utcnow)
     
-    # Define relationship
-    order = relationship("Order", back_populates="notes")
+    # Define relationship with string reference to avoid circular imports
+    order = relationship("pycommerce.models.order.Order", back_populates="notes", lazy="selectin")
 
 class OrderNoteManager:
     """Manager class for order notes."""
