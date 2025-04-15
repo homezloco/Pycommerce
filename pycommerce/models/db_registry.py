@@ -6,7 +6,7 @@ and model declaration conflicts.
 """
 
 import logging
-from sqlalchemy import MetaData, Column, String, DateTime, ForeignKey, Integer, Text, Boolean, JSON
+from sqlalchemy import MetaData, Column, String, DateTime, ForeignKey, Integer, Text, Boolean, JSON, Float
 from sqlalchemy.orm import relationship
 from pycommerce.core.db import Base
 from datetime import datetime
@@ -18,6 +18,42 @@ logger = logging.getLogger(__name__)
 metadata = MetaData()
 
 # Define all models here to avoid circular imports
+
+class InventoryRecord(Base):
+    """
+    Represents inventory status for a product.
+    """
+    __tablename__ = "inventory_records"
+    __table_args__ = {'extend_existing': True}
+
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    product_id = Column(String(36), ForeignKey("products.id"), nullable=False)
+    sku = Column(String(100), nullable=True, index=True)
+    quantity_available = Column(Integer, default=0)
+    quantity_reserved = Column(Integer, default=0)
+    reorder_point = Column(Integer, default=10)
+    reorder_quantity = Column(Integer, default=20)
+    last_inventory_update = Column(DateTime, default=datetime.utcnow)
+    warehouse_location = Column(String(100), nullable=True)
+    aisle = Column(String(50), nullable=True)
+    bin = Column(String(50), nullable=True)
+    shelf = Column(String(50), nullable=True)
+    supplier_id = Column(String(36), nullable=True)
+    supplier_sku = Column(String(100), nullable=True)
+    supplier_price = Column(Float, nullable=True)
+    lead_time_days = Column(Integer, nullable=True)
+    notes = Column(Text, nullable=True)
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    inventory_metadata = Column(JSON, nullable=True)  # Renamed from metadata to avoid SQLAlchemy conflict
+
+    # Define the relationship with InventoryTransaction using string reference
+    transactions = relationship("InventoryTransaction", back_populates="inventory_record", cascade="all, delete-orphan")
+    # Product relationship will be defined in the product model to avoid circular imports
+
+    def __repr__(self):
+        return f"<InventoryRecord {self.id} for product {self.product_id}>"
 class Tenant(Base):
     """SQLAlchemy Tenant model."""
     __tablename__ = "tenants"
