@@ -34,7 +34,8 @@ class InventoryTransaction(Base):
     transaction_metadata = Column(JSON, nullable=True)  # Renamed from metadata to avoid SQLAlchemy conflict
 
     # Define relationship with InventoryRecord
-    inventory_record = relationship("InventoryRecord", backref="transactions")
+    inventory_record = relationship("InventoryRecord", foreign_keys=[inventory_record_id], 
+                                   back_populates="transactions")
 
     def __repr__(self):
         return f"<InventoryTransaction {self.id} of type {self.transaction_type}>"

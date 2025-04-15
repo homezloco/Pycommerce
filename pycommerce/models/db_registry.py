@@ -92,8 +92,10 @@ class InventoryRecord(Base):
 
     # Relationships
     product = relationship("Product", back_populates="inventory_records")
-    # Define forward reference for transactions - actual relationship is defined in InventoryTransaction
-    transactions = []
+    # Define forward reference for transactions
+    transactions = relationship("InventoryTransaction", 
+                              back_populates="inventory_record",
+                              cascade="all, delete-orphan")
 
     def __repr__(self):
         return f"<InventoryRecord {self.id} for product {self.product_id}>"
