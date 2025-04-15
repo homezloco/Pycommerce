@@ -579,7 +579,7 @@ async def process_payment(
         )
 
 
-@router.post("/orders/{order_id}/cancel", response_model=Order)
+@router.post("/orders/{order_id}/cancel", response_model=None)
 async def cancel_order(
     order_id: str,
     order_manager: OrderManager = Depends(get_order_manager)
@@ -599,7 +599,21 @@ async def cancel_order(
     try:
         order = order_manager.cancel(order_id)
         logger.info(f"Cancelled order: {order_id}")
-        return order
+        
+        # Convert order to serializable format
+        if hasattr(order, "to_dict"):
+            return order.to_dict()
+        else:
+            # Basic serialization if to_dict is not available
+            order_dict = {
+                "id": str(order.id),
+                "status": order.status,
+                "total": float(order.total),
+                "created_at": order.created_at.isoformat() if hasattr(order, "created_at") else None,
+                "customer_name": getattr(order, "customer_name", None),
+                "customer_email": getattr(order, "customer_email", None)
+            }
+            return order_dict
     except Exception as e:
         logger.error(f"Error cancelling order {order_id}: {str(e)}")
         raise HTTPException(
