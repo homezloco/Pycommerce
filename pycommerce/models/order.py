@@ -16,7 +16,13 @@ from sqlalchemy import Column, String, Float, Integer, Boolean, DateTime, Foreig
 from sqlalchemy.orm import relationship
 import sqlalchemy.orm
 
-from pycommerce.core.db import Base, get_session
+from pycommerce.core.db import Base
+
+# Import get_session function inside methods to avoid circular imports
+def get_session():
+    """Import and return the session factory to avoid circular imports."""
+    from pycommerce.core.db import get_session as core_get_session
+    return core_get_session()
 from pycommerce.models.order_note import OrderNote
 from pycommerce.models.order_item import OrderItem
 from pycommerce.models.shipment import Shipment
@@ -133,7 +139,8 @@ class OrderManager:
             The order if found, None otherwise
         """
         try:
-            with get_session() as session:
+            session_factory = get_session()
+            with session_factory() as session:
                 return session.query(Order).filter(Order.id == order_id).first()
         except Exception as e:
             logger.error(f"Error getting order: {str(e)}")
@@ -151,7 +158,8 @@ class OrderManager:
             List of orders
         """
         try:
-            with get_session() as session:
+            session_factory = get_session()
+            with session_factory() as session:
                 # Use joinedload to eagerly load items - this prevents 
                 # "not bound to a session" errors when items are accessed later
                 query = session.query(Order).options(
@@ -201,7 +209,8 @@ class OrderManager:
             The created order if successful, None otherwise
         """
         try:
-            with get_session() as session:
+            session_factory = get_session()
+            with session_factory() as session:
                 # Generate order number if not provided
                 if 'order_number' not in data or not data['order_number']:
                     data['order_number'] = self.generate_order_number()
@@ -227,7 +236,8 @@ class OrderManager:
             The updated order if successful, None otherwise
         """
         try:
-            with get_session() as session:
+            session_factory = get_session()
+            with session_factory() as session:
                 order = session.query(Order).filter(Order.id == order_id).first()
                 if not order:
                     return None
@@ -256,7 +266,8 @@ class OrderManager:
             True if the status was updated successfully, False otherwise
         """
         try:
-            with get_session() as session:
+            session_factory = get_session()
+            with session_factory() as session:
                 order = session.query(Order).filter(Order.id == order_id).first()
                 if not order:
                     return False
@@ -292,7 +303,8 @@ class OrderManager:
             True if the shipping info was updated successfully, False otherwise
         """
         try:
-            with get_session() as session:
+            session_factory = get_session()
+            with session_factory() as session:
                 order = session.query(Order).filter(Order.id == order_id).first()
                 if not order:
                     return False
@@ -332,7 +344,8 @@ class OrderManager:
             True if the order was deleted successfully, False otherwise
         """
         try:
-            with get_session() as session:
+            session_factory = get_session()
+            with session_factory() as session:
                 order = session.query(Order).filter(Order.id == order_id).first()
                 if order:
                     session.delete(order)
