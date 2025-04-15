@@ -107,12 +107,6 @@ class PageTemplate(Base):
 
 # Add to Tenant model - check both for attribute and mapper property to prevent SQLAlchemy warnings
 if not hasattr(Tenant, 'pages') or not isinstance(getattr(Tenant, 'pages', None), QueryableAttribute):
-    # Add this relationship after all classes are defined to avoid initialization errors
-    pass  # This will be initialized when the models are loaded
-
-# Import Tenant after all models are defined to avoid circular imports
-from pycommerce.models.db_tenant import Tenant
-if not hasattr(Tenant, 'pages'):
     Tenant.pages = relationship("Page", back_populates="tenant", cascade="all, delete-orphan")
 
 

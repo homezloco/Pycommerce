@@ -56,7 +56,7 @@ class InventoryTransaction(Base):
     # Define relationship with the proper foreign key
     inventory_record = relationship("InventoryRecord",
                                    foreign_keys=[inventory_record_id],
-                                   back_populates="transactions")
+                                   backref="transactions")
 
     def __repr__(self):
         return f"<InventoryTransaction {self.id} of type {self.transaction_type}>"

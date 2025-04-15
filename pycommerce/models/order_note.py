@@ -1,4 +1,3 @@
-
 """
 Order note module for PyCommerce.
 
@@ -12,15 +11,9 @@ from sqlalchemy import Column, String, Text, Boolean, DateTime, ForeignKey
 from sqlalchemy.orm import relationship
 import logging
 
-from pycommerce.core.db import Base
+from pycommerce.core.db import Base, get_session
 
 logger = logging.getLogger(__name__)
-
-# Import get_session function inside methods to avoid circular imports
-def get_session():
-    """Import and return the session factory to avoid circular imports."""
-    from pycommerce.core.db import get_session as core_get_session
-    return core_get_session()
 
 class OrderNote(Base):
     """Order note model."""
@@ -32,8 +25,8 @@ class OrderNote(Base):
     is_customer_note = Column(Boolean, default=False)
     created_at = Column(DateTime, default=datetime.utcnow)
     
-    # Define relationship with string reference to avoid circular imports
-    order = relationship("pycommerce.models.order.Order", back_populates="notes", lazy="selectin")
+    # Define relationship
+    order = relationship("Order", back_populates="notes")
 
 class OrderNoteManager:
     """Manager class for order notes."""
@@ -49,8 +42,7 @@ class OrderNoteManager:
             List of order notes
         """
         try:
-            session_factory = get_session()
-            with session_factory() as session:
+            with get_session() as session:
                 notes = session.query(OrderNote).filter(
                     OrderNote.order_id == order_id
                 ).order_by(OrderNote.created_at.desc()).all()
@@ -72,8 +64,7 @@ class OrderNoteManager:
             True if the note was added successfully, False otherwise
         """
         try:
-            session_factory = get_session()
-            with session_factory() as session:
+            with get_session() as session:
                 note = OrderNote(
                     order_id=order_id,
                     content=content,
@@ -97,8 +88,7 @@ class OrderNoteManager:
             True if the note was deleted successfully, False otherwise
         """
         try:
-            session_factory = get_session()
-            with session_factory() as session:
+            with get_session() as session:
                 note = session.query(OrderNote).filter(OrderNote.id == note_id).first()
                 if note:
                     session.delete(note)
