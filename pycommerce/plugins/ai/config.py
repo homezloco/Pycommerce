@@ -20,7 +20,7 @@ OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
 def get_ai_providers() -> List[Dict[str, Any]]:
     """
     Get a list of available AI providers with their configuration fields.
-    
+
     Returns:
         List of provider configuration objects
     """
@@ -151,37 +151,37 @@ def get_ai_providers() -> List[Dict[str, Any]]:
 def load_ai_config(tenant_id: Optional[str] = None) -> Dict[str, Any]:
     """
     Load AI configuration for a tenant or globally.
-    
+
     Args:
         tenant_id: Optional tenant ID for tenant-specific configuration
-    
+
     Returns:
         AI configuration dictionary
     """
     config_manager = PluginConfigManager()
-    
+
     # Get active provider
     active_provider_config = {}
     try:
         active_provider_config = config_manager.get_config("ai_active_provider", tenant_id) or {}
     except Exception as e:
         logger.warning(f"Error loading active AI provider config: {str(e)}")
-    
+
     # Default to OpenAI if no active provider is set
     active_provider = active_provider_config.get("provider", "openai") 
-    
+
     # Get provider configuration
     provider_config = {}
     try:
         provider_config = config_manager.get_config(f"ai_{active_provider}", tenant_id) or {}
     except Exception as e:
         logger.warning(f"Error loading AI provider config: {str(e)}")
-    
+
     # If no API key is configured and we're using OpenAI, use the environment variable
     if active_provider == "openai" and not provider_config.get("api_key") and OPENAI_API_KEY:
         provider_config["api_key"] = OPENAI_API_KEY
         logger.info("Using OpenAI API key from environment")
-    
+
     return {
         "active_provider": active_provider,
         "provider_config": provider_config
@@ -190,27 +190,27 @@ def load_ai_config(tenant_id: Optional[str] = None) -> Dict[str, Any]:
 def get_ai_provider_instance(tenant_id: Optional[str] = None):
     """
     Get an instance of the active AI provider.
-    
+
     Args:
         tenant_id: Optional tenant ID for tenant-specific configuration
-    
+
     Returns:
         An AIProvider instance
-        
+
     Raises:
         ValueError: If the provider configuration is incomplete
     """
     from pycommerce.plugins.ai.providers import get_ai_provider
-    
+
     # Load configuration
     config = load_ai_config(tenant_id)
     active_provider = config["active_provider"]
     provider_config = config["provider_config"]
-    
+
     # Check if we have an API key
     if not provider_config.get("api_key"):
         raise ValueError(f"API key for {active_provider} is not configured")
-    
+
     # Create provider instance
     try:
         return get_ai_provider(active_provider, provider_config)
@@ -218,82 +218,35 @@ def get_ai_provider_instance(tenant_id: Optional[str] = None):
         logger.error(f"Error creating AI provider: {str(e)}")
         raise ValueError(f"Failed to initialize AI provider: {str(e)}")
 
-"""
-Configuration for AI functionality in PyCommerce.
-
-This module provides configuration settings and utilities for AI features.
-"""
-
-import os
-import logging
-from typing import Dict, Optional, Any
-
-logger = logging.getLogger(__name__)
-
-# Default configurations
-DEFAULT_AI_CONFIG = {
-    "enabled": True,
-    "default_provider": "openai",
-    "temperature": 0.7,
-    "max_tokens": 500
-}
-
-# Load AI configuration from environment or use defaults
-def get_ai_config() -> Dict[str, Any]:
-    """
-    Get AI configuration settings.
-
-    Returns:
-        Dictionary of AI configuration settings
-    """
-    try:
-        config = DEFAULT_AI_CONFIG.copy()
-
-        # Override with environment variables if they exist
-        if os.environ.get("AI_ENABLED") is not None:
-            config["enabled"] = os.environ.get("AI_ENABLED").lower() in ("true", "1", "yes")
-
-        if os.environ.get("AI_PROVIDER"):
-            config["default_provider"] = os.environ.get("AI_PROVIDER")
-
-        if os.environ.get("AI_TEMPERATURE"):
-            try:
-                config["temperature"] = float(os.environ.get("AI_TEMPERATURE"))
-            except (ValueError, TypeError):
-                logger.warning("Invalid AI_TEMPERATURE value, using default")
-
-        if os.environ.get("AI_MAX_TOKENS"):
-            try:
-                config["max_tokens"] = int(os.environ.get("AI_MAX_TOKENS"))
-            except (ValueError, TypeError):
-                logger.warning("Invalid AI_MAX_TOKENS value, using default")
-
-        # Add OpenAI specific configuration
-        config["openai"] = {
-            "api_key": os.environ.get("OPENAI_API_KEY", ""),
-            "model": os.environ.get("OPENAI_MODEL", "gpt-3.5-turbo")
-        }
-
-        logger.info("AI configuration loaded successfully")
-        return config
-    except Exception as e:
-        logger.error(f"Error loading AI configuration: {str(e)}")
-        return DEFAULT_AI_CONFIG
-
-# Singleton instance of AI configuration
-_ai_config: Optional[Dict[str, Any]] = None
-
 def get_ai_settings() -> Dict[str, Any]:
     """
-    Get the AI settings, initializing if necessary.
+    Get the current AI settings.
 
     Returns:
         Dictionary of AI settings
     """
-    global _ai_config
-    if _ai_config is None:
-        _ai_config = get_ai_config()
-    return _ai_config
+    # Default settings
+    settings = {
+        "enabled": True,
+        "default_provider": "openai",
+        "temperature": 0.7,
+        "max_tokens": 500
+    }
+
+    # Override with environment variables if they exist
+    if os.environ.get("AI_ENABLED") is not None:
+        settings["enabled"] = os.environ.get("AI_ENABLED").lower() in ("true", "1", "yes")
+
+    if os.environ.get("AI_PROVIDER"):
+        settings["default_provider"] = os.environ.get("AI_PROVIDER")
+
+    # Add provider-specific settings
+    settings["openai"] = {
+        "api_key": os.environ.get("OPENAI_API_KEY", ""),
+        "model": os.environ.get("OPENAI_MODEL", "gpt-3.5-turbo")
+    }
+
+    return settings
 
 def update_ai_settings(settings: Dict[str, Any]) -> Dict[str, Any]:
     """
@@ -305,20 +258,9 @@ def update_ai_settings(settings: Dict[str, Any]) -> Dict[str, Any]:
     Returns:
         Updated settings dictionary
     """
-    global _ai_config
-    if _ai_config is None:
-        _ai_config = get_ai_config()
-
-    # Update the configuration with new settings
-    _ai_config.update(settings)
-
-    # For nested dictionaries like provider-specific settings
-    for key, value in settings.items():
-        if isinstance(value, dict) and key in _ai_config and isinstance(_ai_config[key], dict):
-            _ai_config[key].update(value)
-
-    logger.info("AI settings updated")
-    return _ai_config
+    # This would normally update a database or config file
+    # For now, just return the settings
+    return settings
 
 def is_ai_enabled() -> bool:
     """
