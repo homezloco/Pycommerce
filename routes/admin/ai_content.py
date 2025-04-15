@@ -1,3 +1,4 @@
+
 """
 Admin routes for AI-generated content.
 
@@ -14,6 +15,7 @@ from fastapi.templating import Jinja2Templates
 # Import AI provider with error handling
 try:
     from pycommerce.plugins.ai.providers import get_ai_provider
+    from pycommerce.plugins.ai.config import get_ai_provider_instance
 except ImportError:
     logger = logging.getLogger(__name__)
     logger.warning("AI provider import failed - using fallback mock provider")
@@ -28,6 +30,10 @@ except ImportError:
                     "success": True
                 }
         return MockAIProvider()
+        
+    def get_ai_provider_instance(tenant_id=None):
+        """Mock AI provider instance function."""
+        return get_ai_provider()
 
 from pycommerce.models.tenant import TenantManager
 
@@ -36,14 +42,12 @@ logging.basicConfig(level=logging.INFO,
                    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-router = APIRouter()
-logger = logging.getLogger(__name__)
-
 # Initialize tenant manager
 tenant_manager = TenantManager()
 
 def setup_routes(templates):
     """Set up the AI content routes."""
+    router = APIRouter()
 
     @router.post("/admin/api/ai/generate-content")
     async def generate_content(request: Request):
@@ -78,23 +82,25 @@ def setup_routes(templates):
                     "message": "Store not found"
                 })
 
-            # Get AI provider
-            provider = get_ai_provider(tenant)
-            if not provider:
-                logger.warning(f"No AI provider configured for tenant: {tenant_id}")
+            try:
+                # Get AI provider
+                ai_provider = get_ai_provider_instance(tenant_id)
+                
+                # Generate content
+                logger.info(f"Generating content for tenant {tenant_id} with prompt: {prompt[:50]}...")
+                content = ai_provider.generate_text(prompt)
+                
+                return JSONResponse({
+                    "success": True,
+                    "content": content
+                })
+            except ValueError as e:
+                logger.warning(f"AI provider error: {str(e)}")
                 return JSONResponse({
                     "success": False,
-                    "message": "AI service not configured for this store"
+                    "message": f"AI service error: {str(e)}"
                 })
 
-            # Generate content
-            logger.info(f"Generating content for tenant {tenant_id} with prompt: {prompt[:50]}...")
-            content = provider.generate_content(prompt)
-
-            return JSONResponse({
-                "success": True,
-                "content": content
-            })
         except Exception as e:
             logger.error(f"Error generating content: {str(e)}")
             return JSONResponse({
