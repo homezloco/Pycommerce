@@ -199,6 +199,21 @@
                         quill.insertEmbed(range.index, 'image', url);
                     });
                 });
+
+                // Add AI assist button to toolbar
+                const toolbar = document.querySelector('.ql-toolbar');
+                if (toolbar) {
+                    const aiButton = document.createElement('button');
+                    aiButton.className = 'btn btn-primary btn-sm ms-2';
+                    aiButton.innerHTML = '<i class="fas fa-robot"></i> AI Assist';
+                    aiButton.type = 'button';
+                    aiButton.onclick = function() {
+                        // Open AI assist modal
+                        const aiModal = new bootstrap.Modal(document.getElementById('aiAssistModal'));
+                        aiModal.show();
+                    };
+                    toolbar.appendChild(aiButton);
+                }
                 
             } else {
                 console.error("Quill not loaded, using standard textarea");
@@ -354,4 +369,198 @@
         </div>
     </div>
 </div>
+
+<!-- AI Assist Modal -->
+<div class="modal fade" id="aiAssistModal" tabindex="-1" aria-labelledby="aiAssistModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="aiAssistModalLabel">AI Content Assistant</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="aiContentTask" class="form-label">What would you like AI to help with?</label>
+                    <select class="form-select mb-3" id="aiContentTask">
+                        <option value="generate">Generate new content</option>
+                        <option value="improve">Improve my selected content</option>
+                        <option value="expand">Expand my selected content</option>
+                        <option value="shorten">Shorten my selected content</option>
+                        <option value="proofread">Proofread & fix errors</option>
+                    </select>
+                </div>
+
+                <div id="aiPromptContainer" class="mb-3">
+                    <label for="aiPrompt" class="form-label">Prompt or instructions</label>
+                    <textarea class="form-control" id="aiPrompt" rows="3" placeholder="Example: Write a compelling product description for a new camping tent"></textarea>
+                </div>
+
+                <div id="aiSelectedContent" class="mb-3 d-none">
+                    <label class="form-label">Selected content</label>
+                    <div class="border p-3 bg-light" style="max-height: 150px; overflow-y: auto;">
+                        <p class="text-muted fst-italic" id="aiSelectedContentText">No content selected. Please select some text in the editor first.</p>
+                    </div>
+                </div>
+
+                <div id="aiResultContainer" class="mb-3 d-none">
+                    <label class="form-label">AI Generated Content</label>
+                    <div class="border p-3" id="aiResult" style="max-height: 300px; overflow-y: auto;">
+                        <div class="placeholder-glow">
+                            <span class="placeholder col-12"></span>
+                            <span class="placeholder col-12"></span>
+                            <span class="placeholder col-10"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="aiError" class="alert alert-danger d-none" role="alert">
+                    Error connecting to AI service. Please check your AI configuration.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="aiGenerateBtn" onclick="generateAIContent()">Generate Content</button>
+                <button type="button" class="btn btn-success d-none" id="aiInsertBtn" onclick="insertAIContent()">Insert into Editor</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // AI Functionality
+    let aiGeneratedContent = '';
+    let quillEditor = null;
+    let quillSelectedText = '';
+    let quillSelectionRange = null;
+    
+    // Store editor reference when it's created
+    document.addEventListener('DOMContentLoaded', function() {
+        setTimeout(() => {
+            if (typeof Quill !== 'undefined') {
+                quillEditor = Quill.find(document.getElementById('quill-editor-container'));
+            }
+        }, 1000);
+    });
+    
+    // Update the task selector to show/hide relevant UI elements
+    document.getElementById('aiContentTask').addEventListener('change', function() {
+        const task = this.value;
+        const promptContainer = document.getElementById('aiPromptContainer');
+        const selectedContent = document.getElementById('aiSelectedContent');
+        
+        if (task === 'generate') {
+            promptContainer.classList.remove('d-none');
+            selectedContent.classList.add('d-none');
+        } else {
+            // For tasks that work with existing content
+            promptContainer.classList.remove('d-none');
+            
+            // Check if we have content selected in the editor
+            if (quillEditor) {
+                const range = quillEditor.getSelection();
+                if (range && range.length > 0) {
+                    quillSelectedText = quillEditor.getText(range.index, range.length);
+                    quillSelectionRange = range;
+                    
+                    document.getElementById('aiSelectedContentText').textContent = quillSelectedText;
+                    selectedContent.classList.remove('d-none');
+                } else {
+                    document.getElementById('aiSelectedContentText').textContent = 'No content selected. Please select some text in the editor first.';
+                    selectedContent.classList.remove('d-none');
+                }
+            }
+        }
+    });
+    
+    // Function to generate AI content
+    function generateAIContent() {
+        const task = document.getElementById('aiContentTask').value;
+        const prompt = document.getElementById('aiPrompt').value;
+        const aiResultContainer = document.getElementById('aiResultContainer');
+        const aiResult = document.getElementById('aiResult');
+        const aiError = document.getElementById('aiError');
+        const aiGenerateBtn = document.getElementById('aiGenerateBtn');
+        const aiInsertBtn = document.getElementById('aiInsertBtn');
+        
+        // Show loading state
+        aiResultContainer.classList.remove('d-none');
+        aiError.classList.add('d-none');
+        aiGenerateBtn.disabled = true;
+        aiGenerateBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Generating...';
+        
+        // Prepare request data
+        let requestData = {
+            task: task,
+            prompt: prompt
+        };
+        
+        // Add selected text if needed
+        if (task !== 'generate' && quillSelectedText) {
+            requestData.content = quillSelectedText;
+        }
+        
+        // Send request to backend
+        fetch('/admin/api/ai/generate-content', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(requestData)
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('API request failed');
+            }
+            return response.json();
+        })
+        .then(data => {
+            // Show result
+            aiResult.innerHTML = `<div>${data.content.replace(/\n/g, '<br>')}</div>`;
+            aiGeneratedContent = data.content;
+            
+            // Enable insert button
+            aiInsertBtn.classList.remove('d-none');
+            
+            // Reset generate button
+            aiGenerateBtn.disabled = false;
+            aiGenerateBtn.textContent = 'Generate Again';
+        })
+        .catch(error => {
+            console.error('Error generating AI content:', error);
+            aiError.textContent = 'Error generating content: ' + error.message;
+            aiError.classList.remove('d-none');
+            aiResult.innerHTML = '';
+        })
+        .finally(() => {
+            aiGenerateBtn.disabled = false;
+            aiGenerateBtn.textContent = 'Generate Content';
+        });
+    }
+    
+    // Function to insert AI content into editor
+    function insertAIContent() {
+        if (!quillEditor || !aiGeneratedContent) return;
+        
+        const task = document.getElementById('aiContentTask').value;
+        
+        if (task === 'generate') {
+            // Insert at current cursor position
+            const range = quillEditor.getSelection() || { index: quillEditor.getLength(), length: 0 };
+            quillEditor.insertText(range.index, aiGeneratedContent);
+        } else if (quillSelectionRange) {
+            // Replace selected text
+            quillEditor.deleteText(quillSelectionRange.index, quillSelectionRange.length);
+            quillEditor.insertText(quillSelectionRange.index, aiGeneratedContent);
+        }
+        
+        // Close modal
+        const aiModal = bootstrap.Modal.getInstance(document.getElementById('aiAssistModal'));
+        aiModal.hide();
+        
+        // Reset state
+        aiGeneratedContent = '';
+        document.getElementById('aiResultContainer').classList.add('d-none');
+        document.getElementById('aiInsertBtn').classList.add('d-none');
+    }
+</script>
 {% endblock admin_content %}
