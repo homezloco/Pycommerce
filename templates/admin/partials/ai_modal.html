@@ -1,5 +1,5 @@
 
-<!-- AI Content Generation Modal -->
+<!-- AI Assistance Modal -->
 <div class="modal fade" id="aiAssistModal" tabindex="-1" aria-labelledby="aiAssistModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
@@ -8,45 +8,93 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <div class="mb-3">
-                    <label for="aiPrompt" class="form-label">What would you like the AI to generate?</label>
-                    <textarea class="form-control" id="aiPrompt" rows="3" 
-                              placeholder="Describe the content you need. For example: 'Write a product description for a hiking backpack with water resistance and multiple compartments.'"></textarea>
+                <ul class="nav nav-tabs" id="aiTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="generate-tab" data-bs-toggle="tab" data-bs-target="#generate-content" 
+                                type="button" role="tab" aria-controls="generate-content" aria-selected="true">
+                            Generate Content
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="enhance-tab" data-bs-toggle="tab" data-bs-target="#enhance-content" 
+                                type="button" role="tab" aria-controls="enhance-content" aria-selected="false">
+                            Enhance Content
+                        </button>
+                    </li>
+                </ul>
+                <div class="tab-content mt-3" id="aiTabsContent">
+                    <!-- Generate Content Tab -->
+                    <div class="tab-pane fade show active" id="generate-content" role="tabpanel" aria-labelledby="generate-tab">
+                        <form id="generateContentForm">
+                            <div class="mb-3">
+                                <label for="generatePrompt" class="form-label">Tell AI what to write</label>
+                                <textarea class="form-control" id="generatePrompt" rows="3" 
+                                          placeholder="e.g. Write a product description for a waterproof hiking backpack with details about its features and benefits."></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label for="generateContext" class="form-label">Additional Context (optional)</label>
+                                <textarea class="form-control" id="generateContext" rows="2" 
+                                          placeholder="e.g. Our brand focuses on high-quality, eco-friendly materials. Target audience is outdoor enthusiasts."></textarea>
+                            </div>
+                            <div class="d-grid">
+                                <button type="button" class="btn btn-primary" id="generateContentBtn">
+                                    <i class="fas fa-robot me-2"></i> Generate Content
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                    
+                    <!-- Enhance Content Tab -->
+                    <div class="tab-pane fade" id="enhance-content" role="tabpanel" aria-labelledby="enhance-tab">
+                        <form id="enhanceContentForm">
+                            <div class="mb-3">
+                                <label for="enhanceContent" class="form-label">Content to Enhance</label>
+                                <textarea class="form-control" id="enhanceContent" rows="4" 
+                                          placeholder="Paste the content you want to improve..."></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label for="enhanceInstructions" class="form-label">Enhancement Instructions</label>
+                                <textarea class="form-control" id="enhanceInstructions" rows="2" 
+                                          placeholder="e.g. Make this more engaging and add SEO keywords about hiking and outdoors."></textarea>
+                            </div>
+                            <div class="d-grid">
+                                <button type="button" class="btn btn-primary" id="enhanceContentBtn">
+                                    <i class="fas fa-magic me-2"></i> Enhance Content
+                                </button>
+                            </div>
+                        </form>
+                    </div>
                 </div>
                 
-                <div class="d-grid gap-2">
-                    <button type="button" class="btn btn-primary" id="generateAiContentBtn" onclick="generateAIContent()">
-                        <i class="fas fa-robot me-2"></i>Generate Content
-                    </button>
-                </div>
-                
-                <div id="aiContentResult" class="mt-4" style="display: none;">
+                <!-- Results Section -->
+                <div id="aiResultsSection" class="mt-4 d-none">
+                    <hr>
+                    <h5>Generated Content</h5>
                     <div class="card">
-                        <div class="card-header d-flex justify-content-between align-items-center">
-                            <span>Generated Content</span>
-                            <button class="btn btn-sm btn-outline-primary" id="useAiContentBtn" onclick="useAIContent()">
-                                Use This Content
-                            </button>
-                        </div>
                         <div class="card-body">
-                            <div id="aiContentText" class="border p-3 bg-light">
-                                <!-- AI generated content will appear here -->
+                            <div id="aiResultsContent" class="mb-3"></div>
+                            <div class="d-flex justify-content-end">
+                                <button type="button" class="btn btn-success btn-sm me-2" id="useContentBtn">
+                                    <i class="fas fa-check me-1"></i> Use This Content
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary btn-sm" id="regenerateBtn">
+                                    <i class="fas fa-redo me-1"></i> Regenerate
+                                </button>
                             </div>
                         </div>
                     </div>
                 </div>
                 
-                <div id="aiContentLoading" class="text-center my-4" style="display: none;">
+                <!-- Loading Indicator -->
+                <div id="aiLoadingIndicator" class="text-center my-4 d-none">
                     <div class="spinner-border text-primary" role="status">
                         <span class="visually-hidden">Loading...</span>
                     </div>
-                    <p class="mt-2">Generating content...</p>
+                    <p class="mt-2">Generating content. This might take a few moments...</p>
                 </div>
                 
-                <div id="aiContentError" class="alert alert-danger mt-4" style="display: none;">
-                    <i class="fas fa-exclamation-triangle me-2"></i>
-                    <span id="aiErrorMessage">Error generating content.</span>
-                </div>
+                <!-- Error Message -->
+                <div id="aiErrorMessage" class="alert alert-danger mt-3 d-none"></div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
@@ -56,75 +104,187 @@
 </div>
 
 <script>
-    // Function to generate AI content
-    function generateAIContent() {
-        const prompt = document.getElementById('aiPrompt').value.trim();
+    document.addEventListener('DOMContentLoaded', function() {
+        // Generate content button
+        document.getElementById('generateContentBtn')?.addEventListener('click', function() {
+            generateAIContent();
+        });
         
+        // Enhance content button
+        document.getElementById('enhanceContentBtn')?.addEventListener('click', function() {
+            enhanceAIContent();
+        });
+        
+        // Use content button
+        document.getElementById('useContentBtn')?.addEventListener('click', function() {
+            useGeneratedContent();
+        });
+        
+        // Regenerate button
+        document.getElementById('regenerateBtn')?.addEventListener('click', function() {
+            if (document.getElementById('generate-tab').classList.contains('active')) {
+                generateAIContent();
+            } else {
+                enhanceAIContent();
+            }
+        });
+    });
+    
+    // Generate content using AI
+    function generateAIContent() {
+        const prompt = document.getElementById('generatePrompt').value.trim();
         if (!prompt) {
-            document.getElementById('aiContentError').style.display = 'block';
-            document.getElementById('aiErrorMessage').textContent = 'Please enter a prompt for the AI.';
+            showAIError('Please enter a prompt for content generation.');
             return;
         }
         
-        // Hide previous results/errors and show loading
-        document.getElementById('aiContentResult').style.display = 'none';
-        document.getElementById('aiContentError').style.display = 'none';
-        document.getElementById('aiContentLoading').style.display = 'block';
+        const context = document.getElementById('generateContext').value.trim();
         
-        // Send request to backend API
-        fetch('/admin/api/ai/generate-content', {
+        // Show loading indicator
+        document.getElementById('aiLoadingIndicator').classList.remove('d-none');
+        document.getElementById('aiResultsSection').classList.add('d-none');
+        document.getElementById('aiErrorMessage').classList.add('d-none');
+        
+        // Create form data
+        const formData = new FormData();
+        formData.append('prompt', prompt);
+        formData.append('format', 'html');
+        if (context) {
+            formData.append('context', context);
+        }
+        
+        // Send request to server
+        fetch('/admin/ai/generate-content', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ prompt: prompt }),
+            body: formData
         })
         .then(response => response.json())
         .then(data => {
-            // Hide loading
-            document.getElementById('aiContentLoading').style.display = 'none';
+            // Hide loading indicator
+            document.getElementById('aiLoadingIndicator').classList.add('d-none');
             
             if (data.success) {
-                // Show result
-                document.getElementById('aiContentResult').style.display = 'block';
-                document.getElementById('aiContentText').innerHTML = data.content.replace(/\n/g, '<br>');
+                // Show results
+                document.getElementById('aiResultsSection').classList.remove('d-none');
+                document.getElementById('aiResultsContent').innerHTML = data.content;
             } else {
-                // Show error
-                document.getElementById('aiContentError').style.display = 'block';
-                document.getElementById('aiErrorMessage').textContent = data.message || 'Error generating content.';
+                showAIError(data.message || 'An error occurred while generating content.');
             }
         })
         .catch(error => {
-            // Hide loading and show error
-            document.getElementById('aiContentLoading').style.display = 'none';
-            document.getElementById('aiContentError').style.display = 'block';
-            document.getElementById('aiErrorMessage').textContent = 'Network error: ' + error.message;
+            // Hide loading indicator
+            document.getElementById('aiLoadingIndicator').classList.add('d-none');
+            
+            showAIError('Failed to connect to the AI service. Please try again later.');
+            console.error('Error generating content:', error);
         });
     }
     
-    // Function to use the generated AI content
-    function useAIContent() {
-        const content = document.getElementById('aiContentText').innerHTML.replace(/<br>/g, '\n');
-        
-        // If we're in the page editor, insert the content in the Quill editor
-        try {
-            if (typeof quill !== 'undefined') {
-                quill.root.innerHTML = content;
-            } else {
-                // Fall back to textarea if Quill is not available
-                const contentTextarea = document.getElementById('content');
-                if (contentTextarea) {
-                    contentTextarea.value = content.replace(/<[^>]*>/g, ''); // Strip HTML
-                }
-            }
-            // Close the modal
-            const modal = bootstrap.Modal.getInstance(document.getElementById('aiAssistModal'));
-            if (modal) {
-                modal.hide();
-            }
-        } catch (e) {
-            console.error('Error applying AI content:', e);
-            alert('Could not apply the content. Please copy it manually.');
+    // Enhance content using AI
+    function enhanceAIContent() {
+        const content = document.getElementById('enhanceContent').value.trim();
+        if (!content) {
+            showAIError('Please enter content to enhance.');
+            return;
         }
+        
+        const instructions = document.getElementById('enhanceInstructions').value.trim();
+        if (!instructions) {
+            showAIError('Please enter enhancement instructions.');
+            return;
+        }
+        
+        // Show loading indicator
+        document.getElementById('aiLoadingIndicator').classList.remove('d-none');
+        document.getElementById('aiResultsSection').classList.add('d-none');
+        document.getElementById('aiErrorMessage').classList.add('d-none');
+        
+        // Create form data
+        const formData = new FormData();
+        formData.append('content', content);
+        formData.append('instructions', instructions);
+        formData.append('format', 'html');
+        
+        // Send request to server
+        fetch('/admin/ai/enhance-content', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            // Hide loading indicator
+            document.getElementById('aiLoadingIndicator').classList.add('d-none');
+            
+            if (data.success) {
+                // Show results
+                document.getElementById('aiResultsSection').classList.remove('d-none');
+                document.getElementById('aiResultsContent').innerHTML = data.content;
+            } else {
+                showAIError(data.message || 'An error occurred while enhancing content.');
+            }
+        })
+        .catch(error => {
+            // Hide loading indicator
+            document.getElementById('aiLoadingIndicator').classList.add('d-none');
+            
+            showAIError('Failed to connect to the AI service. Please try again later.');
+            console.error('Error enhancing content:', error);
+        });
+    }
+    
+    // Use the generated content
+    function useGeneratedContent() {
+        const content = document.getElementById('aiResultsContent').innerHTML;
+        
+        // Get Quill editor instance if available
+        if (typeof Quill !== 'undefined') {
+            try {
+                const editor = Quill.find(document.getElementById('quill-editor-container'));
+                if (editor) {
+                    editor.clipboard.dangerouslyPasteHTML(content);
+                    // Close the modal
+                    bootstrap.Modal.getInstance(document.getElementById('aiAssistModal')).hide();
+                    return;
+                }
+            } catch (e) {
+                console.error('Error inserting content into Quill editor:', e);
+            }
+        }
+        
+        // Fallback to updating a textarea with id="content"
+        const textarea = document.getElementById('content');
+        if (textarea) {
+            // If it's a rich text editor in an iframe
+            if (textarea.tagName.toLowerCase() === 'iframe') {
+                try {
+                    const iframeDocument = textarea.contentWindow.document;
+                    const body = iframeDocument.querySelector('body');
+                    if (body) {
+                        body.innerHTML = content;
+                        // Close the modal
+                        bootstrap.Modal.getInstance(document.getElementById('aiAssistModal')).hide();
+                        return;
+                    }
+                } catch (e) {
+                    console.error('Error inserting content into iframe:', e);
+                }
+            } else {
+                // Regular textarea
+                textarea.value = content.replace(/<[^>]*>/g, ''); // Strip HTML tags
+                // Close the modal
+                bootstrap.Modal.getInstance(document.getElementById('aiAssistModal')).hide();
+                return;
+            }
+        }
+        
+        // If we couldn't find an editor, show a message
+        alert('Please copy the content manually and paste it into your editor.');
+    }
+    
+    // Show error message
+    function showAIError(message) {
+        const errorElement = document.getElementById('aiErrorMessage');
+        errorElement.textContent = message;
+        errorElement.classList.remove('d-none');
     }
 </script>

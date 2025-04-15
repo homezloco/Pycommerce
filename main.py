@@ -113,6 +113,28 @@ if __name__ == "__main__":
     # Import admin modules
     from routes.admin import dashboard, products as admin_products, orders, customers, settings, plugins, tenants, media, inventory, analytics, page_builder
 
+    # Include all routes
+    from routes.admin.dashboard import setup_routes as setup_dashboard_routes
+    from routes.admin.products import setup_routes as setup_products_routes
+    from routes.admin.categories import setup_routes as setup_categories_routes
+    from routes.admin.orders import setup_routes as setup_orders_routes
+    from routes.admin.customers import setup_routes as setup_customers_routes
+    from routes.admin.settings import setup_routes as setup_settings_routes
+    from routes.admin.users import setup_routes as setup_users_routes
+    from routes.admin.analytics import setup_routes as setup_analytics_routes
+    from routes.admin.marketing import setup_routes as setup_marketing_routes
+    from routes.admin.media import setup_routes as setup_media_routes
+    from routes.admin.inventory import setup_routes as setup_inventory_routes
+    from routes.admin.returns import setup_routes as setup_returns_routes
+    from routes.admin.store_settings import setup_routes as setup_store_settings_routes
+    from routes.admin.tenants import setup_routes as setup_tenants_routes
+    from routes.admin.theme_settings import setup_routes as setup_theme_settings_routes
+    from routes.admin.shipping import setup_routes as setup_shipping_routes
+    from routes.admin.market_analysis import setup_routes as setup_market_analysis_routes
+    from routes.admin.page_builder import setup_routes as setup_page_builder_routes
+    from routes.admin.ai_config import setup_routes as setup_ai_config_routes
+    from routes.admin.ai_content import setup_routes as setup_ai_content_routes
+
     # Set up admin routes with the templates
     dashboard_router = dashboard.setup_routes(templates)
     fastapi_app.include_router(dashboard_router)
@@ -138,6 +160,29 @@ if __name__ == "__main__":
     # Register page_builder routes with FastAPI app
     page_builder_router = page_builder.setup_routes(templates)
     fastapi_app.include_router(page_builder_router)
+
+    # Set up admin routes
+    fastapi_app.include_router(setup_dashboard_routes(templates))
+    fastapi_app.include_router(setup_products_routes(templates))
+    fastapi_app.include_router(setup_categories_routes(templates))
+    fastapi_app.include_router(setup_orders_routes(templates))
+    fastapi_app.include_router(setup_customers_routes(templates))
+    fastapi_app.include_router(setup_settings_routes(templates))
+    fastapi_app.include_router(setup_users_routes(templates))
+    fastapi_app.include_router(setup_analytics_routes(templates))
+    fastapi_app.include_router(setup_marketing_routes(templates))
+    fastapi_app.include_router(setup_media_routes(templates))
+    fastapi_app.include_router(setup_inventory_routes(templates))
+    fastapi_app.include_router(setup_returns_routes(templates))
+    fastapi_app.include_router(setup_store_settings_routes(templates))
+    fastapi_app.include_router(setup_tenants_routes(templates))
+    fastapi_app.include_router(setup_theme_settings_routes(templates))
+    fastapi_app.include_router(setup_shipping_routes(templates))
+    fastapi_app.include_router(setup_market_analysis_routes(templates))
+    fastapi_app.include_router(setup_page_builder_routes(templates))
+    fastapi_app.include_router(setup_ai_config_routes(templates))
+    fastapi_app.include_router(setup_ai_content_routes(templates))
+
 
     # Note: No need to include the router in the WSGI app, it's already included in the FastAPI app
 
@@ -200,13 +245,13 @@ if __name__ == "__main__":
 
         # Ensure page builder tables exist
         ensure_page_builder_tables()
-        
+
         # Verify page builder tables were created properly
         from sqlalchemy import inspect
         inspector = inspect(engine)
         existing_tables = inspector.get_table_names()
         page_builder_tables = ['pages', 'page_sections', 'content_blocks', 'page_templates']
-        
+
         # Import uvicorn for running the server
         import uvicorn
         missing_tables = [table for table in page_builder_tables if table not in existing_tables]
@@ -247,4 +292,26 @@ if __name__ == "__main__":
     import uvicorn
     import multiprocessing
     multiprocessing.freeze_support()
+    # Set up plugins
+    try:
+        # Configure Stripe plugin
+        from pycommerce.plugins import StripePaymentPlugin
+        stripe_plugin = StripePaymentPlugin()
+        stripe_plugin.initialize()
+
+        # Configure PayPal plugin
+        from pycommerce.plugins.payment.paypal import PayPalPaymentPlugin
+        paypal_plugin = PayPalPaymentPlugin()
+        paypal_plugin.initialize()
+
+        # Configure shipping plugins
+        from pycommerce.plugins.shipping.standard import StandardShippingPlugin
+        standard_shipping = StandardShippingPlugin()
+        standard_shipping.initialize()
+
+        # Configure AI plugin
+        from pycommerce.plugins.ai import register_plugin
+        register_plugin()
+    except Exception as e:
+        logger.error(f"Error initializing plugins: {str(e)}")
     uvicorn.run("web_app:app", host="0.0.0.0", port=port, reload=True, log_level="info")

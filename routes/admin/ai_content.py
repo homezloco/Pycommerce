@@ -110,3 +110,145 @@ def setup_routes(templates):
             })
 
     return router
+"""
+Routes for AI content generation in admin interface.
+"""
+
+import json
+import logging
+from typing import Optional, Dict, Any
+
+from fastapi import APIRouter, HTTPException, Request, Form
+from fastapi.templating import Jinja2Templates
+from fastapi.responses import HTMLResponse, JSONResponse
+
+from pycommerce.plugins.ai.config import load_ai_config, get_ai_provider_instance
+from pycommerce.models.tenant import TenantManager
+
+logger = logging.getLogger(__name__)
+
+# Create router
+router = APIRouter(prefix="/admin/ai", tags=["admin"])
+
+# Template setup will be passed from main app
+templates = None
+
+# Initialize tenant manager
+tenant_manager = TenantManager()
+
+@router.post("/generate-content", response_class=JSONResponse)
+async def generate_content(
+    request: Request,
+    prompt: str = Form(...),
+    context: Optional[str] = Form(None),
+    format: Optional[str] = Form("html")
+):
+    """Generate content using AI."""
+    try:
+        # Get selected tenant from session
+        tenant_id = None
+        if 'selected_tenant' in request.session:
+            tenant_slug = request.session['selected_tenant']
+            if tenant_slug and tenant_slug != 'all':
+                tenant = tenant_manager.get_by_slug(tenant_slug)
+                if tenant:
+                    tenant_id = str(tenant.id)
+        
+        # Get AI provider
+        try:
+            ai_provider = get_ai_provider_instance(tenant_id)
+        except ValueError as e:
+            logger.warning(f"AI provider not configured properly: {str(e)}")
+            return JSONResponse(
+                status_code=400,
+                content={
+                    "success": False,
+                    "error": str(e),
+                    "message": "AI provider not configured. Please set up AI in the configuration page."
+                }
+            )
+        
+        # Generate content
+        generation_prompt = f"{prompt}"
+        if context:
+            generation_prompt = f"Context:\n{context}\n\nPrompt:\n{prompt}"
+        
+        content = ai_provider.generate_text(generation_prompt)
+        
+        return {
+            "success": True,
+            "content": content,
+            "format": format
+        }
+    except Exception as e:
+        logger.error(f"Error generating content: {str(e)}")
+        return JSONResponse(
+            status_code=500,
+            content={
+                "success": False,
+                "error": str(e),
+                "message": "An error occurred while generating content"
+            }
+        )
+
+@router.post("/enhance-content", response_class=JSONResponse)
+async def enhance_content(
+    request: Request,
+    content: str = Form(...),
+    instructions: str = Form(...),
+    format: Optional[str] = Form("html")
+):
+    """Enhance existing content using AI."""
+    try:
+        # Get selected tenant from session
+        tenant_id = None
+        if 'selected_tenant' in request.session:
+            tenant_slug = request.session['selected_tenant']
+            if tenant_slug and tenant_slug != 'all':
+                tenant = tenant_manager.get_by_slug(tenant_slug)
+                if tenant:
+                    tenant_id = str(tenant.id)
+        
+        # Get AI provider
+        try:
+            ai_provider = get_ai_provider_instance(tenant_id)
+        except ValueError as e:
+            logger.warning(f"AI provider not configured properly: {str(e)}")
+            return JSONResponse(
+                status_code=400,
+                content={
+                    "success": False,
+                    "error": str(e),
+                    "message": "AI provider not configured. Please set up AI in the configuration page."
+                }
+            )
+        
+        # Enhance content
+        enhanced_content = ai_provider.enhance_text(content, instructions)
+        
+        return {
+            "success": True,
+            "content": enhanced_content,
+            "format": format
+        }
+    except Exception as e:
+        logger.error(f"Error enhancing content: {str(e)}")
+        return JSONResponse(
+            status_code=500,
+            content={
+                "success": False,
+                "error": str(e),
+                "message": "An error occurred while enhancing content"
+            }
+        )
+
+def setup_routes(app_templates):
+    """
+    Set up routes with the given templates.
+
+    Args:
+        app_templates: Jinja2Templates instance from the main app
+    """
+    global templates
+    templates = app_templates
+    return router
