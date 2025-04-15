@@ -111,7 +111,7 @@ if __name__ == "__main__":
     fastapi_app.include_router(pages_router)
 
     # Import admin modules
-    from routes.admin import dashboard, products as admin_products, orders, customers, settings, plugins, tenants, media, inventory, analytics, page_builder, ai_config, ai_content
+    from routes.admin import dashboard, products as admin_products, orders, customers, settings, plugins, tenants, media, inventory, analytics, page_builder
 
     # Set up admin routes with the templates
     dashboard_router = dashboard.setup_routes(templates)
@@ -138,9 +138,6 @@ if __name__ == "__main__":
     # Register page_builder routes with FastAPI app
     page_builder_router = page_builder.setup_routes(templates)
     fastapi_app.include_router(page_builder_router)
-    fastapi_app.include_router(ai_config.router, prefix="/admin", tags=["admin"])
-    fastapi_app.include_router(ai_content.router, prefix="/admin", tags=["admin"])
-
 
     # Note: No need to include the router in the WSGI app, it's already included in the FastAPI app
 
@@ -203,13 +200,13 @@ if __name__ == "__main__":
 
         # Ensure page builder tables exist
         ensure_page_builder_tables()
-
+        
         # Verify page builder tables were created properly
         from sqlalchemy import inspect
         inspector = inspect(engine)
         existing_tables = inspector.get_table_names()
         page_builder_tables = ['pages', 'page_sections', 'content_blocks', 'page_templates']
-
+        
         # Import uvicorn for running the server
         import uvicorn
         missing_tables = [table for table in page_builder_tables if table not in existing_tables]
