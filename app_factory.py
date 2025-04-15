@@ -23,7 +23,8 @@ from pycommerce.models.product import ProductManager
 from pycommerce.models.order import OrderManager
 from pycommerce.models.user import UserManager
 from pycommerce.services.media_service import MediaService
-from pycommerce.plugins import StripePaymentPlugin, StandardShippingPlugin
+from pycommerce.plugins.payment.stripe import StripePaymentPlugin
+from pycommerce.plugins.shipping.standard import StandardShippingPlugin
 
 # Import route registration
 from routes import register_routes
