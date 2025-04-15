@@ -49,7 +49,7 @@ class InventoryRecord(Base):
     inventory_metadata = Column(JSON, nullable=True)  # Renamed from metadata to avoid SQLAlchemy conflict
 
     # Define the relationship with InventoryTransaction using full package path
-    transactions = relationship("pycommerce.models.db_inventory.InventoryTransaction", 
+    transactions = relationship("InventoryTransaction", 
                                back_populates="inventory_record", 
                                cascade="all, delete-orphan")
     # Product relationship will be defined in the product model to avoid circular imports
@@ -169,3 +169,5 @@ class MediaFile(Base):
     def file_name(self):
         """Alias for filename for compatibility with existing code."""
         return self.filename
+
+from pycommerce.models.db_inventory import InventoryTransaction #Import InventoryTransaction here to avoid circular import

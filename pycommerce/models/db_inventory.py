@@ -1,4 +1,3 @@
-
 """
 Database models for inventory management.
 
