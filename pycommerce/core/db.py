@@ -4,14 +4,81 @@ Database configuration for PyCommerce.
 This module configures the SQLAlchemy engine and session for the application.
 """
 
-import os
-from typing import Any, Optional
-import logging
-from sqlalchemy import create_engine, MetaData
+from sqlalchemy import create_engine, MetaData, event
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker, scoped_session
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import QueuePool
+
+import os
+import logging
+import time
+import backoff
 
 logger = logging.getLogger(__name__)
+
+# Get database URL from environment variable or use SQLite as fallback
+DATABASE_URL = os.environ.get("DATABASE_URL", "sqlite:///pycommerce.db")
+
+# Configure engine with more resilient connection pooling settings
+engine_args = {
+    "pool_recycle": 300,  # Recycle connections after 5 minutes
+    "pool_timeout": 30,   # Wait up to 30 seconds for a connection
+    "pool_size": 5,       # Keep 5 connections in the pool
+    "max_overflow": 10,   # Allow up to 10 additional connections
+    "connect_args": {}    # Connection-specific args
+}
+
+# Additional connect_args for PostgreSQL
+if DATABASE_URL.startswith("postgresql"):
+    engine_args["connect_args"].update({
+        "connect_timeout": 10,  # 10 second connection timeout
+        "keepalives": 1,        # Enable keepalives
+        "keepalives_idle": 30,  # Start keepalives after 30 seconds
+        "keepalives_interval": 10, # 10 seconds between keepalives
+        "keepalives_count": 5   # 5 failures before connection is considered dead
+    })
+
+# Create SQLAlchemy engine with retries for transient errors
+@backoff.on_exception(backoff.expo, 
+                     (Exception),
+                     max_tries=5,
+                     max_time=30)
+def create_db_engine():
+    logger.info(f"Creating database engine with URL: {DATABASE_URL}")
+    return create_engine(DATABASE_URL, **engine_args)
+
+try:
+    engine = create_db_engine()
+    logger.info("Database engine created successfully")
+except Exception as e:
+    logger.error(f"Error creating database engine: {str(e)}")
+    # Fallback to SQLite if PostgreSQL connection fails
+    if DATABASE_URL.startswith("postgresql"):
+        logger.warning("Falling back to SQLite database")
+        DATABASE_URL = "sqlite:///pycommerce.db"
+        engine_args = {"pool_recycle": 300}
+        engine = create_engine(DATABASE_URL, **engine_args)
+    else:
+        raise
+
+# Create session factory
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+# Create base class for declarative models
+Base = declarative_base()
+
+# Add connection event listeners for better debugging
+@event.listens_for(engine, "connect")
+def connect(dbapi_connection, connection_record):
+    logger.debug("Database connection established")
+
+@event.listens_for(engine, "checkout")
+def checkout(dbapi_connection, connection_record, connection_proxy):
+    logger.debug("Database connection checkout")
+
+@event.listens_for(engine, "checkin")
+def checkin(dbapi_connection, connection_record):
+    logger.debug("Database connection checkin")
 
 # Create a base class for declarative models
 convention = {
@@ -25,59 +92,58 @@ convention = {
 metadata = MetaData(naming_convention=convention)
 Base = declarative_base(metadata=metadata)
 
-# Database configuration
-DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/pycommerce")
-
-# Initialize SQLAlchemy engine
-engine = create_engine(
-    DATABASE_URL,
-    echo=os.getenv("SQLALCHEMY_ECHO", "false").lower() == "true",
-    pool_pre_ping=True
-)
-
-# Create session factory
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
-# Create thread-local session
-db_session = scoped_session(SessionLocal)
-
-
-def get_db() -> scoped_session:
-    """Get a database session."""
-    return db_session
-
-
-def init_db() -> None:
-    """Initialize the database by creating all tables."""
-    try:
-        logger.info("Initializing database...")
-
-        # Import all models from the registry to ensure they are registered
-        # This centralizes model definitions and prevents duplicate table definitions
-        from pycommerce.models.db_registry import (
+# Initialize database
+def init_db():
+    """Initialize database by creating all tables."""
+    # Import all models to ensure they are registered with SQLAlchemy
+    from pycommerce.models.tenant import Tenant
+    from pycommerce.models.product import Product
+    from pycommerce.models.user import User
+    from pycommerce.models.cart import Cart, CartItem
+    from pycommerce.models.order import Order, OrderItem
+    from pycommerce.models.db_registry import (
             Tenant, 
             Product, 
             InventoryRecord,
             PluginConfig,
             MediaFile
         )
-        
-        # Explicitly import models that define tables but aren't in the registry
-        # We need to ensure they're imported before creating tables
-        from pycommerce.models.inventory import InventoryTransaction
-        
-        # Create tables with checkfirst=True to avoid errors for existing tables
-        Base.metadata.create_all(bind=engine, checkfirst=True)
-        logger.info("Database initialized successfully.")
+    from pycommerce.models.inventory import InventoryTransaction
+
+    logger.info(f"Initializing database with URL: {DATABASE_URL}")
+    retry_attempts = 3
+
+    for attempt in range(retry_attempts):
+        try:
+            Base.metadata.create_all(bind=engine)
+            logger.info("Database tables created successfully")
+            return
+        except Exception as e:
+            if attempt < retry_attempts - 1:
+                logger.warning(f"Database initialization failed (attempt {attempt+1}/{retry_attempts}): {str(e)}")
+                time.sleep(2 * (attempt + 1))  # Exponential backoff
+            else:
+                logger.error(f"Database initialization failed after {retry_attempts} attempts: {str(e)}")
+                raise
+
+# Get database session
+def get_db():
+    """Get database session."""
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+# Database session context manager
+def db_session():
+    """Database session context manager."""
+    session = SessionLocal()
+    try:
+        return session
     except Exception as e:
-        logger.error(f"Error initializing database: {e}")
-        raise
-
-
-def close_db() -> None:
-    """Close the database session."""
-    db_session.remove()
-
+        session.rollback()
+        raise e
 
 def get_session():
     """
