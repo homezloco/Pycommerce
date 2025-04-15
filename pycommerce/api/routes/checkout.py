@@ -108,7 +108,20 @@ def get_plugin_manager() -> Optional[PluginManager]:
     return _plugin_manager
 
 
-@router.post("/orders", response_model=Order)
+from pydantic import BaseModel
+from typing import List, Optional, Dict, Any
+
+class OrderResponse(BaseModel):
+    id: str
+    status: str
+    total: float
+    items: Optional[List[Dict[str, Any]]] = None
+    customer_id: Optional[str] = None
+    
+    class Config:
+        orm_mode = True
+
+@router.post("/orders", response_model=OrderResponse)
 async def create_order(
     request: Request,
     cart_id: str,
