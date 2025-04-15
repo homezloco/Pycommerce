@@ -92,10 +92,11 @@ class InventoryRecord(Base):
 
     # Relationships
     product = relationship("Product", back_populates="inventory_records")
-    # Define forward reference for transactions
+    # Define forward reference for transactions - using string reference to avoid circular import
     transactions = relationship("InventoryTransaction", 
                               back_populates="inventory_record",
-                              cascade="all, delete-orphan")
+                              cascade="all, delete-orphan",
+                              lazy="dynamic")
 
     def __repr__(self):
         return f"<InventoryRecord {self.id} for product {self.product_id}>"

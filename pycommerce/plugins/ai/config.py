@@ -253,7 +253,7 @@ class AIConfigService:
     def __init__(self):
         """Initialize the AI configuration service."""
         self.session = SessionLocal()
-        self.config_manager = PluginConfigManager(self.session)
+        self.config_manager = PluginConfigManager()
         self.config_loaded = False
         self.config = DEFAULT_CONFIG.copy()
         self._load_config()
