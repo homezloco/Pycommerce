@@ -1,0 +1,57 @@
+INFO:pycommerce.services.mail:Email template directory: /home/runner/workspace/templates/emails
+INFO:pycommerce.plugins.payment.config:Successfully loaded payment settings from database
+INFO:pycommerce.plugins.payment.config:Using development Stripe credentials
+INFO:pycommerce.plugins.payment.config:Using development PayPal credentials
+INFO:pycommerce.plugins.payment.stripe:Initializing Stripe payment plugin
+INFO:pycommerce.plugins:Registering plugin: stripe_payment v0.1.0
+INFO:pycommerce.plugins.payment.stripe:Initializing Stripe payment plugin
+INFO:pycommerce:Registered payment plugin: stripe
+INFO:pycommerce.plugins.payment.paypal:Initializing PayPal payment plugin
+INFO:pycommerce.plugins:Registering plugin: paypal_payment v0.1.0
+INFO:pycommerce.plugins.payment.paypal:Initializing PayPal payment plugin
+INFO:pycommerce:Registered payment plugin: paypal
+INFO:pycommerce.plugins:Registering plugin: standard_shipping v0.1.0
+INFO:pycommerce.plugins.shipping.standard:Initializing Standard shipping plugin
+INFO:pycommerce:Registered shipping plugin: standard
+INFO:pycommerce.models.category:Found Flask app in module app
+INFO:pycommerce.models.category:CategoryManager initialized
+ERROR:pycommerce.models.plugin_config:Error retrieving configuration for plugin ai_active_provider: (psycopg2.errors.UndefinedColumn) column plugin_configs.plugin_type does not exist
+LINE 1: ...in_configs.tenant_id AS plugin_configs_tenant_id, plugin_con...
+                                                             ^
+
+[SQL: SELECT plugin_configs.id AS plugin_configs_id, plugin_configs.tenant_id AS plugin_configs_tenant_id, plugin_configs.plugin_type AS plugin_configs_plugin_type, plugin_configs.plugin_id AS plugin_configs_plugin_id, plugin_configs.config AS plugin_configs_config, plugin_configs.created_at AS plugin_configs_created_at, plugin_configs.updated_at AS plugin_configs_updated_at 
+FROM plugin_configs 
+WHERE plugin_configs.plugin_id = %(plugin_id_1)s AND plugin_configs.tenant_id IS NULL 
+ LIMIT %(param_1)s]
+[parameters: {'plugin_id_1': 'ai_active_provider', 'param_1': 1}]
+(Background on this error at: https://sqlalche.me/e/20/f405)
+WARNING:pycommerce.plugins.ai.config:Error loading active AI provider config: Failed to retrieve plugin configuration: (psycopg2.errors.UndefinedColumn) column plugin_configs.plugin_type does not exist
+LINE 1: ...in_configs.tenant_id AS plugin_configs_tenant_id, plugin_con...
+                                                             ^
+
+[SQL: SELECT plugin_configs.id AS plugin_configs_id, plugin_configs.tenant_id AS plugin_configs_tenant_id, plugin_configs.plugin_type AS plugin_configs_plugin_type, plugin_configs.plugin_id AS plugin_configs_plugin_id, plugin_configs.config AS plugin_configs_config, plugin_configs.created_at AS plugin_configs_created_at, plugin_configs.updated_at AS plugin_configs_updated_at 
+FROM plugin_configs 
+WHERE plugin_configs.plugin_id = %(plugin_id_1)s AND plugin_configs.tenant_id IS NULL 
+ LIMIT %(param_1)s]
+[parameters: {'plugin_id_1': 'ai_active_provider', 'param_1': 1}]
+(Background on this error at: https://sqlalche.me/e/20/f405)
+ERROR:pycommerce.models.plugin_config:Error retrieving configuration for plugin ai_openai: (psycopg2.errors.UndefinedColumn) column plugin_configs.plugin_type does not exist
+LINE 1: ...in_configs.tenant_id AS plugin_configs_tenant_id, plugin_con...
+                                                             ^
+
+[SQL: SELECT plugin_configs.id AS plugin_configs_id, plugin_configs.tenant_id AS plugin_configs_tenant_id, plugin_configs.plugin_type AS plugin_configs_plugin_type, plugin_configs.plugin_id AS plugin_configs_plugin_id, plugin_configs.config AS plugin_configs_config, plugin_configs.created_at AS plugin_configs_created_at, plugin_configs.updated_at AS plugin_configs_updated_at 
+FROM plugin_configs 
+WHERE plugin_configs.plugin_id = %(plugin_id_1)s AND plugin_configs.tenant_id IS NULL 
+ LIMIT %(param_1)s]
+[parameters: {'plugin_id_1': 'ai_openai', 'param_1': 1}]
+(Background on this error at: https://sqlalche.me/e/20/f405)
+WARNING:pycommerce.plugins.ai.config:Error loading AI provider config: Failed to retrieve plugin configuration: (psycopg2.errors.UndefinedColumn) column plugin_configs.plugin_type does not exist
+LINE 1: ...in_configs.tenant_id AS plugin_configs_tenant_id, plugin_con...
+                                                             ^
+
+[SQL: SELECT plugin_configs.id AS plugin_configs_id, plugin_configs.tenant_id AS plugin_configs_tenant_id, plugin_configs.plugin_type AS plugin_configs_plugin_type, plugin_configs.plugin_id AS plugin_configs_plugin_id, plugin_configs.config AS plugin_configs_config, plugin_configs.created_at AS plugin_configs_created_at, plugin_configs.updated_at AS plugin_configs_updated_at 
+FROM plugin_configs 
+WHERE plugin_configs.plugin_id = %(plugin_id_1)s AND plugin_configs.tenant_id IS NULL 
+ LIMIT %(param_1)s]
+[parameters: {'plugin_id_1': 'ai_openai', 'param_1': 1}]
+(Background on this error at: https://sqlalche.me/e/20/f405)
