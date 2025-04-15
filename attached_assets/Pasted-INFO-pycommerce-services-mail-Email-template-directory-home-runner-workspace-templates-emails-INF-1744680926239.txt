@@ -1,0 +1,34 @@
+INFO:pycommerce.services.mail:Email template directory: /home/runner/workspace/templates/emails
+INFO:pycommerce.plugins.payment.config:Successfully loaded payment settings from database
+INFO:pycommerce.plugins.payment.config:Using development Stripe credentials
+INFO:pycommerce.plugins.payment.config:Using development PayPal credentials
+INFO:pycommerce.plugins.payment.stripe:Initializing Stripe payment plugin
+INFO:pycommerce.plugins:Registering plugin: stripe_payment v0.1.0
+INFO:pycommerce.plugins.payment.stripe:Initializing Stripe payment plugin
+INFO:pycommerce:Registered payment plugin: stripe
+INFO:pycommerce.plugins.payment.paypal:Initializing PayPal payment plugin
+INFO:pycommerce.plugins:Registering plugin: paypal_payment v0.1.0
+INFO:pycommerce.plugins.payment.paypal:Initializing PayPal payment plugin
+INFO:pycommerce:Registered payment plugin: paypal
+INFO:pycommerce.plugins:Registering plugin: standard_shipping v0.1.0
+INFO:pycommerce.plugins.shipping.standard:Initializing Standard shipping plugin
+INFO:pycommerce:Registered shipping plugin: standard
+INFO:pycommerce.plugins:Registering plugin: ai_content v0.1.0
+INFO:pycommerce.plugins.ai:Initialized AI content plugin
+INFO:pycommerce:Registered AI plugin
+INFO:pycommerce.models.category:Found Flask app in module app
+INFO:pycommerce.models.category:CategoryManager initialized
+Traceback (most recent call last):
+  File "/home/runner/workspace/main.py", line 12, in <module>
+    from asgi_wsgi_app import proxy_to_uvicorn, start_uvicorn_server
+  File "/home/runner/workspace/asgi_wsgi_app.py", line 8, in <module>
+    from web_app import app as asgi_app
+  File "/home/runner/workspace/web_app.py", line 19, in <module>
+    from app_factory import create_app
+  File "/home/runner/workspace/app_factory.py", line 30, in <module>
+    from routes import register_routes
+  File "/home/runner/workspace/routes/__init__.py", line 20, in <module>
+    from routes.admin.plugins import setup_routes as setup_plugins_routes
+  File "/home/runner/workspace/routes/admin/plugins.py", line 14, in <module>
+    from pycommerce.plugins import get_plugin_registry
+ImportError: cannot import name 'get_plugin_registry' from 'pycommerce.plugins' (/home/runner/workspace/pycommerce/plugins/__init__.py)
