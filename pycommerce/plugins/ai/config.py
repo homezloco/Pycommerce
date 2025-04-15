@@ -20,7 +20,7 @@ OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
 def get_ai_providers() -> List[Dict[str, Any]]:
     """
     Get a list of available AI providers with their configuration fields.
-
+    
     Returns:
         List of provider configuration objects
     """
@@ -59,15 +59,15 @@ def get_ai_providers() -> List[Dict[str, Any]]:
                     "step": 0.1,
                     "default": 0.7,
                     "required": False,
-                    "description": "Controls randomness: lower values are more deterministic"
+                    "description": "Controls randomness (0 = deterministic, 1 = creative)"
                 }
             ]
         },
         {
             "id": "gemini",
             "name": "Google Gemini",
-            "description": "AI models from Google's Gemini family",
-            "icon": "google-icon.png",
+            "description": "Google's Gemini AI models",
+            "icon": "gemini-icon.png",
             "fields": [
                 {
                     "id": "api_key",
@@ -81,12 +81,68 @@ def get_ai_providers() -> List[Dict[str, Any]]:
                     "name": "Model",
                     "type": "select",
                     "options": [
-                        {"value": "gemini-pro", "label": "Gemini Pro"},
-                        {"value": "gemini-ultra", "label": "Gemini Ultra"}
+                        {"value": "gemini-pro", "label": "Gemini Pro"}
                     ],
                     "default": "gemini-pro",
                     "required": True,
                     "description": "The Gemini model to use"
+                }
+            ]
+        },
+        {
+            "id": "deepseek",
+            "name": "DeepSeek",
+            "description": "DeepSeek AI large language models",
+            "icon": "deepseek-icon.png",
+            "fields": [
+                {
+                    "id": "api_key",
+                    "name": "API Key", 
+                    "type": "password",
+                    "required": True,
+                    "description": "Your DeepSeek API key"
+                },
+                {
+                    "id": "model",
+                    "name": "Model",
+                    "type": "select",
+                    "options": [
+                        {"value": "deepseek-chat", "label": "DeepSeek Chat"}
+                    ],
+                    "default": "deepseek-chat",
+                    "required": True,
+                    "description": "The DeepSeek model to use"
+                }
+            ]
+        },
+        {
+            "id": "openrouter",
+            "name": "OpenRouter",
+            "description": "Access to multiple AI models through a single API",
+            "icon": "openrouter-icon.png",
+            "fields": [
+                {
+                    "id": "api_key",
+                    "name": "API Key",
+                    "type": "password",
+                    "required": True,
+                    "description": "Your OpenRouter API key"
+                },
+                {
+                    "id": "model",
+                    "name": "Model",
+                    "type": "select",
+                    "options": [
+                        {"value": "openai/gpt-3.5-turbo", "label": "OpenAI GPT-3.5 Turbo"},
+                        {"value": "openai/gpt-4", "label": "OpenAI GPT-4"},
+                        {"value": "anthropic/claude-3-opus", "label": "Anthropic Claude 3 Opus"},
+                        {"value": "anthropic/claude-3-sonnet", "label": "Anthropic Claude 3 Sonnet"},
+                        {"value": "mistralai/mistral-large", "label": "Mistral Large"},
+                        {"value": "meta-llama/llama-3-70b-instruct", "label": "Llama 3 70B Instruct"}
+                    ],
+                    "default": "openai/gpt-3.5-turbo",
+                    "required": True,
+                    "description": "The AI model to use through OpenRouter"
                 }
             ]
         }
@@ -95,70 +151,41 @@ def get_ai_providers() -> List[Dict[str, Any]]:
 def load_ai_config(tenant_id: Optional[str] = None) -> Dict[str, Any]:
     """
     Load AI configuration for a tenant or globally.
-
+    
     Args:
         tenant_id: Optional tenant ID for tenant-specific configuration
-
+    
     Returns:
         AI configuration dictionary
     """
     config_manager = PluginConfigManager()
-
+    
     # Get active provider
     active_provider_config = {}
     try:
         active_provider_config = config_manager.get_config("ai_active_provider", tenant_id) or {}
     except Exception as e:
         logger.warning(f"Error loading active AI provider config: {str(e)}")
-
+    
     # Default to OpenAI if no active provider is set
     active_provider = active_provider_config.get("provider", "openai") 
-
+    
     # Get provider configuration
     provider_config = {}
     try:
         provider_config = config_manager.get_config(f"ai_{active_provider}", tenant_id) or {}
     except Exception as e:
         logger.warning(f"Error loading AI provider config: {str(e)}")
-
+    
     # If no API key is configured and we're using OpenAI, use the environment variable
     if active_provider == "openai" and not provider_config.get("api_key") and OPENAI_API_KEY:
         provider_config["api_key"] = OPENAI_API_KEY
         logger.info("Using OpenAI API key from environment")
-
+    
     return {
         "active_provider": active_provider,
         "provider_config": provider_config
     }
-
-def save_ai_config(provider_id: str, config: Dict[str, Any], tenant_id: Optional[str] = None) -> None:
-    """
-    Save AI provider configuration.
-
-    Args:
-        provider_id: ID of the provider
-        config: Configuration dictionary
-        tenant_id: Optional tenant ID for tenant-specific configuration
-    """
-    config_manager = PluginConfigManager()
-
-    # Save provider configuration
-    try:
-        config_manager.save_config(f"ai_{provider_id}", tenant_id, config)
-        logger.info(f"Saved configuration for AI provider {provider_id}")
-    except Exception as e:
-        logger.error(f"Error saving AI provider config: {str(e)}")
-        raise
-
-    # If this is the active provider, save that too
-    try:
-        active_config = config_manager.get_config("ai_active_provider", tenant_id) or {}
-        active_config["provider"] = provider_id
-        config_manager.save_config("ai_active_provider", tenant_id, active_config)
-        logger.info(f"Set active AI provider to {provider_id}")
-    except Exception as e:
-        logger.error(f"Error setting active AI provider: {str(e)}")
-        raise
 
 def get_ai_provider_instance(tenant_id: Optional[str] = None):
     """
