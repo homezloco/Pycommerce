@@ -1,0 +1,279 @@
+INFO:pycommerce.services.mail:Email template directory: /home/runner/workspace/templates/emails
+INFO:pycommerce.plugins.payment.config:Successfully loaded payment settings from database
+INFO:pycommerce.plugins.payment.config:Using development Stripe credentials
+INFO:pycommerce.plugins.payment.config:Using development PayPal credentials
+INFO:pycommerce.plugins.payment.stripe:Initializing Stripe payment plugin
+INFO:pycommerce.plugins:Registering plugin: stripe_payment v0.1.0
+INFO:pycommerce.plugins.payment.stripe:Initializing Stripe payment plugin
+INFO:pycommerce:Registered payment plugin: stripe
+INFO:pycommerce.plugins.payment.paypal:Initializing PayPal payment plugin
+INFO:pycommerce.plugins:Registering plugin: paypal_payment v0.1.0
+INFO:pycommerce.plugins.payment.paypal:Initializing PayPal payment plugin
+INFO:pycommerce:Registered payment plugin: paypal
+INFO:pycommerce.plugins:Registering plugin: standard_shipping v0.1.0
+INFO:pycommerce.plugins.shipping.standard:Initializing Standard shipping plugin
+INFO:pycommerce:Registered shipping plugin: standard
+INFO:pycommerce.models.category:Found Flask app in module app
+INFO:pycommerce.models.category:CategoryManager initialized
+WARNING:root:AI configuration module not available
+INFO:pycommerce.core.db:Initializing database...
+INFO:pycommerce.core.db:Database initialized successfully.
+INFO:pycommerce.core.db:Initializing database...
+INFO:pycommerce.core.db:Database initialized successfully.
+INFO:pycommerce.migrations:Database migrations initialized
+INFO:pycommerce.models.category:CategoryManager initialized
+INFO:pycommerce.services.market_analysis:Flask ProductManager initialized for fallback product lookups
+INFO:pycommerce.services.market_analysis:Market analysis service initialized
+INFO:routes.admin.categories:Initializing managers for categories routes
+INFO:pycommerce.models.category:CategoryManager initialized
+INFO:routes.admin.categories:Successfully initialized CategoryManager for admin categories routes
+INFO:routes.admin.categories:Manager initialization complete
+INFO:routes.storefront.home:Home routes registered successfully
+INFO:routes.storefront.stores:Initialized SDK TenantManager
+INFO:routes.storefront.stores:Initialized SDK ProductManager
+INFO:routes.storefront.stores:Initialized SDK CartManager
+INFO:routes.storefront.stores:Finished loading managers
+INFO:routes.storefront.cart:Initialized SDK ProductManager
+INFO:routes.storefront.cart:Initialized SDK CartManager
+INFO:routes.storefront.cart:Initialized SDK TenantManager
+INFO:routes.storefront.cart:Finished loading managers
+INFO:routes.storefront.checkout:Initialized SDK TenantManager
+INFO:routes.storefront.checkout:Initialized SDK ProductManager
+INFO:routes.storefront.checkout:Initialized SDK CartManager
+INFO:routes.storefront.checkout:Initialized SDK OrderManager
+INFO:routes.storefront.checkout:Finished loading Flask app managers
+/home/runner/workspace/pycommerce/models/page_builder.py:110: SAWarning: User-placed attribute InventoryRecord.transactions on Mapper[InventoryRecord(inventory_records)] is replacing an existing class-bound attribute of the same name.  Behavior is not fully defined in this case.  This use is deprecated and will raise an error in a future release (This warning originated from the `configure_mappers()` process, which was invoked automatically in response to a user-initiated operation.)
+  Tenant.pages = relationship("Page", back_populates="tenant", cascade="all, delete-orphan")
+INFO:routes.admin.page_builder:Setting up page builder routes with templates
+INFO:routes.admin.page_builder:Templates setup complete
+INFO:routes.admin.page_builder:Base directory: /home/runner/workspace
+INFO:routes.admin.page_builder:Template directory: /home/runner/workspace/templates
+INFO:routes.admin.page_builder:Template found: /home/runner/workspace/templates/admin/pages/list.html
+INFO:routes.admin.page_builder:Template found: /home/runner/workspace/templates/admin/pages/create.html
+INFO:routes.admin.page_builder:Template found: /home/runner/workspace/templates/admin/pages/editor.html
+INFO:web_app:Page Builder routes initialized successfully with templates
+INFO:web_app:Admin routes registered successfully
+INFO:routes.storefront.home:Home routes registered successfully
+INFO:routes.storefront.cart:Initialized SDK ProductManager
+INFO:routes.storefront.cart:Initialized SDK CartManager
+INFO:routes.storefront.cart:Initialized SDK TenantManager
+INFO:routes.storefront.cart:Finished loading managers
+INFO:routes.storefront.checkout:Initialized SDK TenantManager
+INFO:routes.storefront.checkout:Initialized SDK ProductManager
+INFO:routes.storefront.checkout:Initialized SDK CartManager
+INFO:routes.storefront.checkout:Finished loading Flask app managers
+INFO:routes.storefront.stores:Initialized SDK TenantManager
+INFO:routes.storefront.stores:Initialized SDK ProductManager
+INFO:routes.storefront.stores:Initialized SDK CartManager
+INFO:routes.storefront.stores:Finished loading managers
+INFO:web_app:Storefront routes registered successfully
+INFO:web_app:Store settings test routes registered successfully
+INFO:pycommerce.models.category:CategoryManager initialized
+INFO:pycommerce.services.market_analysis:Flask ProductManager initialized for fallback product lookups
+INFO:pycommerce.services.market_analysis:Market analysis service initialized
+INFO:web_app:API routes registered successfully
+INFO:asgi_wsgi_app:No existing uvicorn processes found
+INFO:asgi_wsgi_app:Starting uvicorn server with command: /home/runner/workspace/.pythonlibs/bin/python -m uvicorn web_app:app --host 127.0.0.1 --port 8000 --reload --no-use-colors
+INFO:asgi_wsgi_app:Waiting for uvicorn server to start...
+INFO:asgi_wsgi_app:Waiting for uvicorn server (attempt 1/10)
+INFO:asgi_wsgi_app:Uvicorn: INFO:     Will watch for changes in these directories: ['/home/runner/workspace']
+INFO:asgi_wsgi_app:Uvicorn: INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+INFO:asgi_wsgi_app:Uvicorn: INFO:     Started reloader process [13728] using WatchFiles
+INFO:asgi_wsgi_app:Waiting for uvicorn server (attempt 2/10)
+INFO:asgi_wsgi_app:Waiting for uvicorn server (attempt 3/10)
+INFO:asgi_wsgi_app:Waiting for uvicorn server (attempt 4/10)
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.services.mail:Email template directory: /home/runner/workspace/templates/emails
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.plugins.payment.config:Successfully loaded payment settings from database
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.plugins.payment.config:Using development Stripe credentials
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.plugins.payment.config:Using development PayPal credentials
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.plugins.payment.stripe:Initializing Stripe payment plugin
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.plugins:Registering plugin: stripe_payment v0.1.0
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.plugins.payment.stripe:Initializing Stripe payment plugin
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce:Registered payment plugin: stripe
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.plugins.payment.paypal:Initializing PayPal payment plugin
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.plugins:Registering plugin: paypal_payment v0.1.0
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.plugins.payment.paypal:Initializing PayPal payment plugin
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce:Registered payment plugin: paypal
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.plugins:Registering plugin: standard_shipping v0.1.0
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.plugins.shipping.standard:Initializing Standard shipping plugin
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce:Registered shipping plugin: standard
+INFO:asgi_wsgi_app:Waiting for uvicorn server (attempt 5/10)
+INFO:asgi_wsgi_app:Waiting for uvicorn server (attempt 6/10)
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.models.category:Found Flask app in module app
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.models.category:CategoryManager initialized
+INFO:asgi_wsgi_app:Uvicorn: WARNING:root:AI configuration module not available
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.core.db:Initializing database...
+INFO:asgi_wsgi_app:Waiting for uvicorn server (attempt 7/10)
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.core.db:Database initialized successfully.
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.core.db:Initializing database...
+INFO:asgi_wsgi_app:Waiting for uvicorn server (attempt 8/10)
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.core.db:Database initialized successfully.
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.migrations:Database migrations initialized
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.models.category:CategoryManager initialized
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.services.market_analysis:Flask ProductManager initialized for fallback product lookups
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.services.market_analysis:Market analysis service initialized
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.admin.categories:Initializing managers for categories routes
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.models.category:CategoryManager initialized
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.admin.categories:Successfully initialized CategoryManager for admin categories routes
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.admin.categories:Manager initialization complete
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.storefront.home:Home routes registered successfully
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.storefront.stores:Initialized SDK TenantManager
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.storefront.stores:Initialized SDK ProductManager
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.storefront.stores:Initialized SDK CartManager
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.storefront.stores:Finished loading managers
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.storefront.cart:Initialized SDK ProductManager
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.storefront.cart:Initialized SDK CartManager
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.storefront.cart:Initialized SDK TenantManager
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.storefront.cart:Finished loading managers
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.storefront.checkout:Initialized SDK TenantManager
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.storefront.checkout:Initialized SDK ProductManager
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.storefront.checkout:Initialized SDK CartManager
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.storefront.checkout:Initialized SDK OrderManager
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.storefront.checkout:Finished loading Flask app managers
+INFO:asgi_wsgi_app:Uvicorn: /home/runner/workspace/pycommerce/models/page_builder.py:110: SAWarning: User-placed attribute InventoryRecord.transactions on Mapper[InventoryRecord(inventory_records)] is replacing an existing class-bound attribute of the same name.  Behavior is not fully defined in this case.  This use is deprecated and will raise an error in a future release (This warning originated from the `configure_mappers()` process, which was invoked automatically in response to a user-initiated operation.)
+INFO:asgi_wsgi_app:Uvicorn: Tenant.pages = relationship("Page", back_populates="tenant", cascade="all, delete-orphan")
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.admin.page_builder:Setting up page builder routes with templates
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.admin.page_builder:Templates setup complete
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.admin.page_builder:Base directory: /home/runner/workspace
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.admin.page_builder:Template directory: /home/runner/workspace/templates
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.admin.page_builder:Template found: /home/runner/workspace/templates/admin/pages/list.html
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.admin.page_builder:Template found: /home/runner/workspace/templates/admin/pages/create.html
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.admin.page_builder:Template found: /home/runner/workspace/templates/admin/pages/editor.html
+INFO:asgi_wsgi_app:Uvicorn: INFO:web_app:Page Builder routes initialized successfully with templates
+INFO:asgi_wsgi_app:Uvicorn: INFO:web_app:Admin routes registered successfully
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.storefront.home:Home routes registered successfully
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.storefront.cart:Initialized SDK ProductManager
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.storefront.cart:Initialized SDK CartManager
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.storefront.cart:Initialized SDK TenantManager
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.storefront.cart:Finished loading managers
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.storefront.checkout:Initialized SDK TenantManager
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.storefront.checkout:Initialized SDK ProductManager
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.storefront.checkout:Initialized SDK CartManager
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.storefront.checkout:Finished loading Flask app managers
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.storefront.stores:Initialized SDK TenantManager
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.storefront.stores:Initialized SDK ProductManager
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.storefront.stores:Initialized SDK CartManager
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.storefront.stores:Finished loading managers
+INFO:asgi_wsgi_app:Uvicorn: INFO:web_app:Storefront routes registered successfully
+INFO:asgi_wsgi_app:Uvicorn: INFO:web_app:Store settings test routes registered successfully
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.models.category:CategoryManager initialized
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.services.market_analysis:Flask ProductManager initialized for fallback product lookups
+INFO:asgi_wsgi_app:Uvicorn: INFO:pycommerce.services.market_analysis:Market analysis service initialized
+INFO:asgi_wsgi_app:Uvicorn: INFO:web_app:API routes registered successfully
+INFO:asgi_wsgi_app:Uvicorn: INFO:     Started server process [13735]
+INFO:asgi_wsgi_app:Uvicorn: INFO:     Waiting for application startup.
+INFO:asgi_wsgi_app:Uvicorn: INFO:     Application startup complete.
+INFO:asgi_wsgi_app:Waiting for uvicorn server (attempt 9/10)
+INFO:asgi_wsgi_app:Uvicorn: INFO:     127.0.0.1:49592 - "GET /api/health HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET http://127.0.0.1:8000/api/health "HTTP/1.1 200 OK"
+INFO:asgi_wsgi_app:Uvicorn server is running
+INFO:routes.storefront.home:Home routes registered successfully
+INFO:routes.storefront.cart:Initialized SDK ProductManager
+INFO:routes.storefront.cart:Initialized SDK CartManager
+INFO:routes.storefront.cart:Initialized SDK TenantManager
+INFO:routes.storefront.cart:Finished loading managers
+INFO:routes.storefront.checkout:Initialized SDK TenantManager
+INFO:routes.storefront.checkout:Initialized SDK ProductManager
+INFO:routes.storefront.checkout:Initialized SDK CartManager
+INFO:routes.storefront.checkout:Finished loading Flask app managers
+INFO:routes.admin.page_builder:Setting up page builder routes with templates
+INFO:routes.admin.page_builder:Templates setup complete
+INFO:routes.admin.page_builder:Base directory: /home/runner/workspace
+INFO:routes.admin.page_builder:Template directory: /home/runner/workspace/templates
+INFO:routes.admin.page_builder:Template found: /home/runner/workspace/templates/admin/pages/list.html
+INFO:routes.admin.page_builder:Template found: /home/runner/workspace/templates/admin/pages/create.html
+INFO:routes.admin.page_builder:Template found: /home/runner/workspace/templates/admin/pages/editor.html
+INFO:root:Starting application with all routes registered
+INFO:__main__:All page builder tables already exist
+INFO:__main__:All page builder tables exist and are ready to use
+INFO:__main__:Creating default page templates...
+INFO:create_default_templates:Found 1 existing templates - skipping creation
+INFO:__main__:Starting server on port 8001
+INFO:     Will watch for changes in these directories: ['/home/runner/workspace']
+INFO:     Uvicorn running on http://0.0.0.0:8001 (Press CTRL+C to quit)
+INFO:     Started reloader process [13675] using WatchFiles
+INFO:pycommerce.services.mail:Email template directory: /home/runner/workspace/templates/emails
+INFO:pycommerce.plugins.payment.config:Successfully loaded payment settings from database
+INFO:pycommerce.plugins.payment.config:Using development Stripe credentials
+INFO:pycommerce.plugins.payment.config:Using development PayPal credentials
+INFO:pycommerce.plugins.payment.stripe:Initializing Stripe payment plugin
+INFO:pycommerce.plugins:Registering plugin: stripe_payment v0.1.0
+INFO:pycommerce.plugins.payment.stripe:Initializing Stripe payment plugin
+INFO:pycommerce:Registered payment plugin: stripe
+INFO:pycommerce.plugins.payment.paypal:Initializing PayPal payment plugin
+INFO:pycommerce.plugins:Registering plugin: paypal_payment v0.1.0
+INFO:pycommerce.plugins.payment.paypal:Initializing PayPal payment plugin
+INFO:pycommerce:Registered payment plugin: paypal
+INFO:pycommerce.plugins:Registering plugin: standard_shipping v0.1.0
+INFO:pycommerce.plugins.shipping.standard:Initializing Standard shipping plugin
+INFO:pycommerce:Registered shipping plugin: standard
+INFO:pycommerce.models.category:Found Flask app in module app
+INFO:pycommerce.models.category:CategoryManager initialized
+WARNING:root:AI configuration module not available
+INFO:pycommerce.core.db:Initializing database...
+INFO:pycommerce.core.db:Database initialized successfully.
+INFO:pycommerce.core.db:Initializing database...
+INFO:pycommerce.core.db:Database initialized successfully.
+INFO:pycommerce.migrations:Database migrations initialized
+INFO:pycommerce.models.category:CategoryManager initialized
+INFO:pycommerce.services.market_analysis:Flask ProductManager initialized for fallback product lookups
+INFO:pycommerce.services.market_analysis:Market analysis service initialized
+INFO:routes.admin.categories:Initializing managers for categories routes
+INFO:pycommerce.models.category:CategoryManager initialized
+INFO:routes.admin.categories:Successfully initialized CategoryManager for admin categories routes
+INFO:routes.admin.categories:Manager initialization complete
+INFO:routes.storefront.home:Home routes registered successfully
+INFO:routes.storefront.stores:Initialized SDK TenantManager
+INFO:routes.storefront.stores:Initialized SDK ProductManager
+INFO:routes.storefront.stores:Initialized SDK CartManager
+INFO:routes.storefront.stores:Finished loading managers
+INFO:routes.storefront.cart:Initialized SDK ProductManager
+INFO:routes.storefront.cart:Initialized SDK CartManager
+INFO:routes.storefront.cart:Initialized SDK TenantManager
+INFO:routes.storefront.cart:Finished loading managers
+INFO:routes.storefront.checkout:Initialized SDK TenantManager
+INFO:routes.storefront.checkout:Initialized SDK ProductManager
+INFO:routes.storefront.checkout:Initialized SDK CartManager
+INFO:routes.storefront.checkout:Initialized SDK OrderManager
+INFO:routes.storefront.checkout:Finished loading Flask app managers
+/home/runner/workspace/pycommerce/models/page_builder.py:110: SAWarning: User-placed attribute InventoryRecord.transactions on Mapper[InventoryRecord(inventory_records)] is replacing an existing class-bound attribute of the same name.  Behavior is not fully defined in this case.  This use is deprecated and will raise an error in a future release (This warning originated from the `configure_mappers()` process, which was invoked automatically in response to a user-initiated operation.)
+  Tenant.pages = relationship("Page", back_populates="tenant", cascade="all, delete-orphan")
+INFO:routes.admin.page_builder:Setting up page builder routes with templates
+INFO:routes.admin.page_builder:Templates setup complete
+INFO:routes.admin.page_builder:Base directory: /home/runner/workspace
+INFO:routes.admin.page_builder:Template directory: /home/runner/workspace/templates
+INFO:routes.admin.page_builder:Template found: /home/runner/workspace/templates/admin/pages/list.html
+INFO:routes.admin.page_builder:Template found: /home/runner/workspace/templates/admin/pages/create.html
+INFO:routes.admin.page_builder:Template found: /home/runner/workspace/templates/admin/pages/editor.html
+INFO:web_app:Page Builder routes initialized successfully with templates
+INFO:web_app:Admin routes registered successfully
+INFO:routes.storefront.home:Home routes registered successfully
+INFO:routes.storefront.cart:Initialized SDK ProductManager
+INFO:routes.storefront.cart:Initialized SDK CartManager
+INFO:routes.storefront.cart:Initialized SDK TenantManager
+INFO:routes.storefront.cart:Finished loading managers
+INFO:routes.storefront.checkout:Initialized SDK TenantManager
+INFO:routes.storefront.checkout:Initialized SDK ProductManager
+INFO:routes.storefront.checkout:Initialized SDK CartManager
+INFO:routes.storefront.checkout:Finished loading Flask app managers
+INFO:routes.storefront.stores:Initialized SDK TenantManager
+INFO:routes.storefront.stores:Initialized SDK ProductManager
+INFO:routes.storefront.stores:Initialized SDK CartManager
+INFO:routes.storefront.stores:Finished loading managers
+INFO:web_app:Storefront routes registered successfully
+INFO:web_app:Store settings test routes registered successfully
+INFO:pycommerce.models.category:CategoryManager initialized
+INFO:pycommerce.services.market_analysis:Flask ProductManager initialized for fallback product lookups
+INFO:pycommerce.services.market_analysis:Market analysis service initialized
+INFO:web_app:API routes registered successfully
+INFO:asgi_wsgi_app:Uvicorn: INFO:     127.0.0.1:34536 - "GET /api/health HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET http://127.0.0.1:8000/api/health "HTTP/1.1 200 OK"
+INFO:asgi_wsgi_app:Uvicorn server is already running and responsive
+INFO:__mp_main__:Creating default page templates...
+INFO:create_default_templates:Found 1 existing templates - skipping creation
+INFO:__mp_main__:Starting server on port 8002
+INFO:     Started server process [13746]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     172.31.128.33:58692 - "GET / HTTP/1.1" 200 OK
+INFO:     172.31.128.33:58692 - "GET / HTTP/1.1" 200 OK
