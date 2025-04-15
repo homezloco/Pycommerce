@@ -5,7 +5,7 @@ This module configures the SQLAlchemy engine and session for the application.
 """
 
 import os
-from typing import Any, Optional
+import time
 import logging
 from sqlalchemy import create_engine, MetaData
 from sqlalchemy.ext.declarative import declarative_base
@@ -47,31 +47,53 @@ def get_db() -> scoped_session:
     return db_session
 
 
-def init_db() -> None:
-    """Initialize the database by creating all tables."""
-    try:
-        logger.info("Initializing database...")
+def init_db():
+    """Initialize the database connection with retry logic."""
+    global engine, Session
 
-        # Import all models from the registry to ensure they are registered
-        # This centralizes model definitions and prevents duplicate table definitions
-        from pycommerce.models.db_registry import (
-            Tenant, 
-            Product, 
-            InventoryRecord,
-            PluginConfig,
-            MediaFile
-        )
-        
-        # Explicitly import models that define tables but aren't in the registry
-        # We need to ensure they're imported before creating tables
-        from pycommerce.models.inventory import InventoryTransaction
-        
-        # Create tables with checkfirst=True to avoid errors for existing tables
-        Base.metadata.create_all(bind=engine, checkfirst=True)
-        logger.info("Database initialized successfully.")
-    except Exception as e:
-        logger.error(f"Error initializing database: {e}")
-        raise
+    # Get database URL from environment variable or use SQLite as fallback
+    database_url = os.environ.get("DATABASE_URL")
+    if database_url is None:
+        logger.warning("DATABASE_URL not set, using SQLite by default")
+        database_url = "sqlite:///pycommerce.db"
+
+    # Maximum number of retry attempts
+    max_retries = 3
+    retry_delay = 2  # seconds
+
+    for attempt in range(max_retries):
+        try:
+            if engine is None:
+                logger.info(f"Connecting to database (attempt {attempt+1}/{max_retries})...")
+
+                # Create engine with connection pool settings
+                engine = create_engine(
+                    database_url,
+                    pool_pre_ping=True,  # Test connections before use
+                    pool_recycle=3600,   # Recycle connections every hour
+                    connect_args={
+                        "connect_timeout": 10,  # Timeout after 10 seconds
+                    } if 'postgresql' in database_url else {}
+                )
+
+                # Create session factory
+                Session = sessionmaker(bind=engine)
+
+                # Create tables
+                Base.metadata.create_all(bind=engine, checkfirst=True)
+
+                logger.info(f"Connected to database: {database_url.split('@')[-1]}")
+                return True
+            return True
+        except Exception as e:
+            logger.error(f"Error initializing database (attempt {attempt+1}/{max_retries}): {str(e)}")
+            if attempt < max_retries - 1:
+                logger.info(f"Retrying in {retry_delay} seconds...")
+                time.sleep(retry_delay)
+                retry_delay *= 2  # Exponential backoff
+            else:
+                logger.error("Maximum retry attempts reached. Could not connect to database.")
+                return False
 
 
 def close_db() -> None:
@@ -106,3 +128,29 @@ class DBSessionContext:
         if exc_type is not None:
             self.session.rollback()
         self.session.close()
+
+def get_db():
+    """Get a database session with error handling.
+
+    Returns:
+        SQLAlchemy Session: A new database session
+    """
+    if engine is None:
+        if not init_db():
+            raise Exception("Failed to initialize database connection")
+
+    session = Session()
+    try:
+        # Test the connection
+        session.execute("SELECT 1")
+        return session
+    except Exception as e:
+        session.close()
+        logger.error(f"Error getting database session: {str(e)}")
+
+        # Try to reinitialize the connection
+        if init_db():
+            # Return a new session if reinitialization was successful
+            return Session()
+        else:
+            raise Exception("Failed to reconnect to database")
