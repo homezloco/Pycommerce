@@ -297,7 +297,7 @@ async def get_order(
         )
 
 
-@router.get("/orders", response_model=List[Order])
+@router.get("/orders", response_model=None)
 async def list_orders(
     user_id: Optional[str] = None,
     status: Optional[str] = None,
@@ -326,7 +326,25 @@ async def list_orders(
                 )
 
         orders = order_manager.list(user_id, order_status)
-        return orders
+        
+        # Convert orders to a serializable format
+        serialized_orders = []
+        for order in orders:
+            if hasattr(order, "to_dict"):
+                serialized_orders.append(order.to_dict())
+            else:
+                # Basic serialization if to_dict is not available
+                order_dict = {
+                    "id": str(order.id),
+                    "status": order.status,
+                    "total": float(order.total),
+                    "created_at": order.created_at.isoformat() if hasattr(order, "created_at") else None,
+                    "customer_name": getattr(order, "customer_name", None),
+                    "customer_email": getattr(order, "customer_email", None)
+                }
+                serialized_orders.append(order_dict)
+                
+        return serialized_orders
 
     except HTTPException:
         raise
