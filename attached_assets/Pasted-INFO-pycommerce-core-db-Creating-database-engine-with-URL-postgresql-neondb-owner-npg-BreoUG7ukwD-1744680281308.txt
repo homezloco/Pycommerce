@@ -1,0 +1,61 @@
+INFO:pycommerce.core.db:Creating database engine with URL: postgresql://neondb_owner:npg_BreoUG7ukwD2@ep-red-hall-a51hczs5.us-east-2.aws.neon.tech/neondb?sslmode=require
+INFO:pycommerce.core.db:Database engine created successfully
+Traceback (most recent call last):
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/sqlalchemy/orm/clsregistry.py", line 516, in _resolve_name
+    rval = d[token]
+           ~^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/sqlalchemy/util/_collections.py", line 345, in __missing__
+    self[key] = val = self.creator(key)
+                      ^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/sqlalchemy/orm/clsregistry.py", line 484, in _access_cls
+    return self.fallback[key]
+           ~~~~~~~~~~~~~^^^^^
+KeyError: 'Order'
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/runner/workspace/main.py", line 12, in <module>
+    from asgi_wsgi_app import proxy_to_uvicorn, start_uvicorn_server
+  File "/home/runner/workspace/asgi_wsgi_app.py", line 8, in <module>
+    from web_app import app as asgi_app
+  File "/home/runner/workspace/web_app.py", line 19, in <module>
+    from app_factory import create_app
+  File "/home/runner/workspace/app_factory.py", line 19, in <module>
+    from pycommerce.core.db import init_db
+  File "/home/runner/workspace/pycommerce/__init__.py", line 17, in <module>
+    from pycommerce.core.db import Base, init_db
+  File "/home/runner/workspace/pycommerce/core/__init__.py", line 9, in <module>
+    from pycommerce.core.db import Base, init_db, get_db
+  File "/home/runner/workspace/pycommerce/core/db.py", line 96, in <module>
+    from pycommerce.models.tenant import Tenant
+  File "/home/runner/workspace/pycommerce/models/__init__.py", line 8, in <module>
+    from .order import Order, OrderStatus
+  File "/home/runner/workspace/pycommerce/models/order.py", line 27, in <module>
+    from pycommerce.models.order_item import OrderItem
+  File "/home/runner/workspace/pycommerce/models/order_item.py", line 15, in <module>
+    from pycommerce.models.db_product import Product
+  File "/home/runner/workspace/pycommerce/models/db_product.py", line 16, in <module>
+    from pycommerce.models.db_registry import Product
+  File "/home/runner/workspace/pycommerce/models/db_registry.py", line 180, in <module>
+    configure_mappers()
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/sqlalchemy/orm/mapper.py", line 4183, in configure_mappers
+    _configure_registries(_all_registries(), cascade=True)
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/sqlalchemy/orm/mapper.py", line 4214, in _configure_registries
+    _do_configure_registries(registries, cascade)
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/sqlalchemy/orm/mapper.py", line 4255, in _do_configure_registries
+    mapper._post_configure_properties()
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/sqlalchemy/orm/mapper.py", line 2418, in _post_configure_properties
+    prop.init()
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/sqlalchemy/orm/interfaces.py", line 589, in init
+    self.do_init()
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/sqlalchemy/orm/relationships.py", line 1656, in do_init
+    self._setup_entity()
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/sqlalchemy/orm/relationships.py", line 1868, in _setup_entity
+    self._clsregistry_resolve_name(argument)(),
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/sqlalchemy/orm/clsregistry.py", line 520, in _resolve_name
+    self._raise_for_name(name, err)
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/sqlalchemy/orm/clsregistry.py", line 501, in _raise_for_name
+    raise exc.InvalidRequestError(
+sqlalchemy.exc.InvalidRequestError: When initializing mapper Mapper[OrderNote(order_notes)], expression 'Order' failed to locate a name ('Order'). If this is a class name, consider adding this relationship() to the <class 'pycommerce.models.order_note.OrderNote'> class after both dependent classes have been defined.
