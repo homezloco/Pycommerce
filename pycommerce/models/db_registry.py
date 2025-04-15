@@ -48,8 +48,10 @@ class InventoryRecord(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     inventory_metadata = Column(JSON, nullable=True)  # Renamed from metadata to avoid SQLAlchemy conflict
 
-    # Define the relationship with InventoryTransaction using string reference
-    transactions = relationship("InventoryTransaction", back_populates="inventory_record", cascade="all, delete-orphan")
+    # Define the relationship with InventoryTransaction using full package path
+    transactions = relationship("pycommerce.models.db_inventory.InventoryTransaction", 
+                               back_populates="inventory_record", 
+                               cascade="all, delete-orphan")
     # Product relationship will be defined in the product model to avoid circular imports
 
     def __repr__(self):
@@ -106,36 +108,7 @@ from datetime import datetime
 from sqlalchemy import Column, String, Float, DateTime, ForeignKey, JSON, Boolean, Integer, Text
 from sqlalchemy.orm import relationship
 
-# Define the InventoryRecord model in the registry to avoid multiple definitions
-class InventoryRecord(Base):
-    """SQLAlchemy InventoryRecord model."""
-    __tablename__ = "inventory_records"
-    __table_args__ = {'extend_existing': True}  # This is crucial to allow table redefinition
-
-    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
-    product_id = Column(String(36), ForeignKey("products.id"), nullable=False)
-    tenant_id = Column(String(36), ForeignKey("tenants.id"), nullable=False)
-    sku = Column(String(100), nullable=True)
-    location = Column(String(255), nullable=True)
-    quantity = Column(Integer, default=0)
-    available_quantity = Column(Integer, default=0)
-    reserved_quantity = Column(Integer, default=0)
-    reorder_point = Column(Integer, default=0)
-    reorder_quantity = Column(Integer, default=0)
-    inventory_metadata = Column(JSON, nullable=True)  # Using inventory_metadata instead of metadata
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-
-    # Relationships
-    product = relationship("Product", back_populates="inventory_records")
-    # Define forward reference for transactions - using string reference to avoid circular import
-    transactions = relationship("pycommerce.models.db_inventory.InventoryTransaction", 
-                              back_populates="inventory_record",
-                              cascade="all, delete-orphan",
-                              lazy="dynamic")
-
-    def __repr__(self):
-        return f"<InventoryRecord {self.id} for product {self.product_id}>"
+# The InventoryRecord model is already defined above, we don't need a duplicate definition
 
 
 class PluginConfig(Base):
