@@ -92,23 +92,26 @@ convention = {
 metadata = MetaData(naming_convention=convention)
 Base = declarative_base(metadata=metadata)
 
+# Import models to ensure they're registered before connections are made
+from pycommerce.models.tenant import Tenant
+from pycommerce.models.product import Product
+from pycommerce.models.user import User
+from pycommerce.models.cart import Cart, CartItem
+from pycommerce.models.order import Order, OrderItem
+from pycommerce.models.db_registry import (
+        Tenant, 
+        Product, 
+        InventoryRecord,
+        PluginConfig,
+        MediaFile
+    )
+from pycommerce.models.inventory import InventoryTransaction
+
+
 # Initialize database
 def init_db():
     """Initialize database by creating all tables."""
     # Import all models to ensure they are registered with SQLAlchemy
-    from pycommerce.models.tenant import Tenant
-    from pycommerce.models.product import Product
-    from pycommerce.models.user import User
-    from pycommerce.models.cart import Cart, CartItem
-    from pycommerce.models.order import Order, OrderItem
-    from pycommerce.models.db_registry import (
-            Tenant, 
-            Product, 
-            InventoryRecord,
-            PluginConfig,
-            MediaFile
-        )
-    from pycommerce.models.inventory import InventoryTransaction
 
     logger.info(f"Initializing database with URL: {DATABASE_URL}")
     retry_attempts = 3

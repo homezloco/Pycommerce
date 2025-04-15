@@ -171,8 +171,10 @@ class MediaFile(Base):
         """Alias for filename for compatibility with existing code."""
         return self.filename
 
-from pycommerce.models.db_inventory import InventoryTransaction #Import InventoryTransaction here to avoid circular import
+from sqlalchemy.orm import configure_mappers
+
+# Import InventoryTransaction at the end to avoid circular imports
+from pycommerce.models.db_inventory import InventoryTransaction 
 
 # Make sure SQLAlchemy's registry is properly configured
-from sqlalchemy.orm import configure_mappers
 configure_mappers()
