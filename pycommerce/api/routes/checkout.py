@@ -413,7 +413,7 @@ async def update_order_status(
         )
 
 
-@router.post("/orders/{order_id}/payment", response_model=Order)
+@router.post("/orders/{order_id}/payment", response_model=None)
 async def process_payment(
     request: Request,
     order_id: str,
@@ -553,7 +553,21 @@ async def process_payment(
                 logger.error(f"Error sending payment confirmation email: {str(e)}")
 
         logger.info(f"Processed payment for order {order_id}")
-        return order
+        
+        # Convert order to serializable format
+        if hasattr(order, "to_dict"):
+            return order.to_dict()
+        else:
+            # Basic serialization if to_dict is not available
+            order_dict = {
+                "id": str(order.id),
+                "status": order.status,
+                "total": float(order.total),
+                "created_at": order.created_at.isoformat() if hasattr(order, "created_at") else None,
+                "customer_name": getattr(order, "customer_name", None),
+                "customer_email": getattr(order, "customer_email", None)
+            }
+            return order_dict
 
     except HTTPException:
         raise
