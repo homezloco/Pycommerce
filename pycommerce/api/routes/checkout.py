@@ -356,7 +356,7 @@ async def list_orders(
         )
 
 
-@router.put("/orders/{order_id}/status", response_model=Order)
+@router.put("/orders/{order_id}/status", response_model=None)
 async def update_order_status(
     order_id: str,
     status: str,
@@ -387,7 +387,21 @@ async def update_order_status(
 
         order = order_manager.update_status(order_id, order_status)
         logger.info(f"Updated order {order_id} status to {status}")
-        return order
+        
+        # Convert order to serializable format
+        if hasattr(order, "to_dict"):
+            return order.to_dict()
+        else:
+            # Basic serialization if to_dict is not available
+            order_dict = {
+                "id": str(order.id),
+                "status": order.status,
+                "total": float(order.total),
+                "created_at": order.created_at.isoformat() if hasattr(order, "created_at") else None,
+                "customer_name": getattr(order, "customer_name", None),
+                "customer_email": getattr(order, "customer_email", None)
+            }
+            return order_dict
 
     except HTTPException:
         raise
