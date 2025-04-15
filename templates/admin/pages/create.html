@@ -1,4 +1,3 @@
-
 {% extends "admin/base_admin.html" %}
 
 {% block title %}Create Page - PyCommerce Admin{% endblock %}
@@ -124,30 +123,30 @@
             .replace(/\s+/g, '-')    // Replace spaces with hyphens
             .replace(/-+/g, '-')      // Collapse multiple hyphens
             .trim();                 // Trim whitespace
-        
+
         document.getElementById('slug').value = slug;
         document.getElementById('slugPreview').textContent = slug;
     }
-    
+
     document.addEventListener('DOMContentLoaded', function() {
         // Initialize Quill with proper error handling
         const editorConfig = {{ editor_config|safe }};
-        
+
         try {
             if (typeof Quill !== 'undefined') {
                 console.log("Quill is available, initializing editor");
-                
+
                 // Create a container for the Quill editor
                 const editorContainer = document.createElement('div');
                 editorContainer.id = 'quill-editor-container';
                 editorContainer.style.height = '500px';
                 editorContainer.style.marginBottom = '20px';
-                
+
                 // Replace the textarea with the Quill container
                 const contentTextarea = document.getElementById('content');
                 contentTextarea.style.display = 'none';
                 contentTextarea.parentNode.insertBefore(editorContainer, contentTextarea);
-                
+
                 // Initialize Quill
                 const quill = new Quill('#quill-editor-container', {
                     modules: {
@@ -170,7 +169,7 @@
                     },
                     theme: 'snow'
                 });
-                
+
                 // Add AI assistance button to toolbar
                 const toolbar = document.querySelector('.ql-toolbar');
                 if (toolbar) {
@@ -179,18 +178,38 @@
                     aiButton.innerHTML = '<i class="fas fa-robot"></i> AI Assist';
                     aiButton.type = 'button';
                     aiButton.onclick = function() {
-                        // Open AI assist modal
-                        const aiModal = new bootstrap.Modal(document.getElementById('aiAssistModal'));
-                        aiModal.show();
+                        // Fetch and inject the AI modal if it doesn't exist yet
+                        if (!document.getElementById('aiAssistModal')) {
+                            fetch('/admin/ai/modal')
+                                .then(response => response.text())
+                                .then(html => {
+                                    // Inject the modal HTML
+                                    const modalContainer = document.createElement('div');
+                                    modalContainer.innerHTML = html;
+                                    document.body.appendChild(modalContainer.firstChild);
+
+                                    // Show the modal
+                                    const aiModal = new bootstrap.Modal(document.getElementById('aiAssistModal'));
+                                    aiModal.show();
+                                })
+                                .catch(error => {
+                                    console.error('Error loading AI modal:', error);
+                                    alert('Could not load AI assistant. Please try again later.');
+                                });
+                        } else {
+                            // Show existing modal
+                            const aiModal = new bootstrap.Modal(document.getElementById('aiAssistModal'));
+                            aiModal.show();
+                        }
                     };
                     toolbar.appendChild(aiButton);
                 }
-                
+
                 // Update the textarea with Quill content before form submission
                 document.getElementById('createPageForm').addEventListener('submit', function() {
                     document.getElementById('content').value = quill.root.innerHTML;
                 });
-                
+
                 // Add support for media selection
                 document.querySelector('.ql-image')?.addEventListener('click', function(e) {
                     e.preventDefault();
@@ -199,7 +218,7 @@
                         quill.insertEmbed(range.index, 'image', url);
                     });
                 });
-                
+
             } else {
                 console.error("Quill not loaded, using standard textarea");
                 // Use the basic textarea as fallback
@@ -211,24 +230,24 @@
             document.getElementById('content').style.display = 'block';
         }
     });
-    
+
     // Function to open the media selector modal
     function openMediaSelector(callback) {
         // Store the callback function for later use
         window.mediaSelectionCallback = callback;
-        
+
         // Show the media selector modal
         const mediaSelectorModal = new bootstrap.Modal(document.getElementById('mediaSelectorModal'));
         mediaSelectorModal.show();
-        
+
         // Load media items
         loadMediaItems();
     }
-    
+
     // Function to load media items from the API
     function loadMediaItems() {
         const mediaGrid = document.getElementById('mediaSelectorGrid');
-        
+
         // Show loading indicator
         mediaGrid.innerHTML = `
             <div class="col-12 text-center py-5">
@@ -237,11 +256,11 @@
                 </div>
                 <p class="mt-2">Loading media...</p>
             </div>`;
-        
+
         // Get filter values
         const searchTerm = document.getElementById('searchMedia')?.value || '';
         const mediaType = document.getElementById('filterMediaType')?.value || 'image';
-        
+
         // Fetch media items from the API
         fetch(`/admin/api/media?search=${encodeURIComponent(searchTerm)}&type=${encodeURIComponent(mediaType)}`)
             .then(response => {
@@ -261,7 +280,7 @@
                         } else if (item.thumbnail_url) {
                             previewSrc = item.thumbnail_url;
                         }
-                        
+
                         html += `
                             <div class="col">
                                 <div class="card h-100">
@@ -290,12 +309,12 @@
                 mediaGrid.innerHTML = '<div class="col-12 text-center py-5"><p>Error loading media. Please try again later.</p></div>';
             });
     }
-    
+
     // Function to handle media selection
     function selectMedia(id, url, name) {
         if (window.mediaSelectionCallback) {
             window.mediaSelectionCallback(id, url, name);
-            
+
             // Close the modal
             const mediaSelectorModal = bootstrap.Modal.getInstance(document.getElementById('mediaSelectorModal'));
             if (mediaSelectorModal) {

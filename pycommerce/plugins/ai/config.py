@@ -20,7 +20,7 @@ OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
 def get_ai_providers() -> List[Dict[str, Any]]:
     """
     Get a list of available AI providers with their configuration fields.
-    
+
     Returns:
         List of provider configuration objects
     """
@@ -97,7 +97,7 @@ def get_ai_providers() -> List[Dict[str, Any]]:
             "fields": [
                 {
                     "id": "api_key",
-                    "name": "API Key", 
+                    "name": "API Key",
                     "type": "password",
                     "required": True,
                     "description": "Your DeepSeek API key"
@@ -148,70 +148,97 @@ def get_ai_providers() -> List[Dict[str, Any]]:
         }
     ]
 
-def load_ai_config(tenant_id: Optional[str] = None) -> Dict[str, Any]:
-    """
-    Load AI configuration for a tenant or globally.
-    
-    Args:
-        tenant_id: Optional tenant ID for tenant-specific configuration
-    
+# Initialize the plugin config manager
+plugin_config_manager = PluginConfigManager()
+
+def get_active_provider() -> Optional[str]:
+    """Get the currently active AI provider.
+
     Returns:
-        AI configuration dictionary
+        The name of the active provider or None if not configured
     """
-    config_manager = PluginConfigManager()
-    
-    # Get active provider
-    active_provider_config = {}
     try:
-        active_provider_config = config_manager.get_config("ai_active_provider", tenant_id) or {}
+        config = plugin_config_manager.get_config("ai_active_provider")
+        if config and isinstance(config, dict) and "provider" in config:
+            return config["provider"]
     except Exception as e:
         logger.warning(f"Error loading active AI provider config: {str(e)}")
-    
-    # Default to OpenAI if no active provider is set
-    active_provider = active_provider_config.get("provider", "openai") 
-    
-    # Get provider configuration
-    provider_config = {}
+
+    return "openai"  # Default provider
+
+def get_provider_config(provider_name: str) -> Dict[str, Any]:
+    """Get configuration for a specific AI provider.
+
+    Args:
+        provider_name: The name of the provider
+
+    Returns:
+        Provider configuration dictionary
+    """
     try:
-        provider_config = config_manager.get_config(f"ai_{active_provider}", tenant_id) or {}
+        config = plugin_config_manager.get_config(f"ai_provider_{provider_name}")
+        if config and isinstance(config, dict):
+            return config
     except Exception as e:
-        logger.warning(f"Error loading AI provider config: {str(e)}")
-    
+        logger.warning(f"Error loading AI provider config for {provider_name}: {str(e)}")
+
+    return {"api_key": "", "model": "gpt-3.5-turbo"}
+
+def save_provider_config(provider_name: str, config: Dict[str, Any]) -> bool:
+    """Save configuration for a specific AI provider.
+
+    Args:
+        provider_name: The name of the provider
+        config: Provider configuration dictionary
+
+    Returns:
+        True if successful, False otherwise
+    """
+    try:
+        return plugin_config_manager.save_config(f"ai_provider_{provider_name}", config)
+    except Exception as e:
+        logger.error(f"Error saving AI provider config for {provider_name}: {str(e)}")
+        return False
+
+def set_active_provider(provider_name: str) -> bool:
+    """Set the active AI provider.
+
+    Args:
+        provider_name: The name of the provider to make active
+
+    Returns:
+        True if successful, False otherwise
+    """
+    try:
+        return plugin_config_manager.save_config("ai_active_provider", {"provider": provider_name})
+    except Exception as e:
+        logger.error(f"Error setting active AI provider: {str(e)}")
+        return False
+
+def load_ai_config(tenant_id: Optional[str] = None) -> Dict[str, Any]:
+    active_provider = get_active_provider()
+    provider_config = get_provider_config(active_provider)
+
     # If no API key is configured and we're using OpenAI, use the environment variable
     if active_provider == "openai" and not provider_config.get("api_key") and OPENAI_API_KEY:
         provider_config["api_key"] = OPENAI_API_KEY
         logger.info("Using OpenAI API key from environment")
-    
+
     return {
         "active_provider": active_provider,
         "provider_config": provider_config
     }
 
 def get_ai_provider_instance(tenant_id: Optional[str] = None):
-    """
-    Get an instance of the active AI provider.
-    
-    Args:
-        tenant_id: Optional tenant ID for tenant-specific configuration
-    
-    Returns:
-        An AIProvider instance
-        
-    Raises:
-        ValueError: If the provider configuration is incomplete
-    """
     from pycommerce.plugins.ai.providers import get_ai_provider
-    
-    # Load configuration
+
     config = load_ai_config(tenant_id)
     active_provider = config["active_provider"]
     provider_config = config["provider_config"]
-    
-    # Check if we have an API key
+
     if not provider_config.get("api_key"):
         raise ValueError(f"API key for {active_provider} is not configured")
-    
-    # Create provider instance
+
     try:
         return get_ai_provider(active_provider, provider_config)
     except Exception as e:
