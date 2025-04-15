@@ -1,26 +1,40 @@
-
 """
-AI Plugin package for PyCommerce.
+AI plugin for PyCommerce.
 
-This package provides AI text generation capabilities for the PyCommerce platform.
+This module provides AI-powered content generation and analysis capabilities.
 """
 
 import logging
+from typing import Dict, Any
 
 logger = logging.getLogger(__name__)
 
-# Import core configuration functions 
-from pycommerce.plugins.ai.config import load_ai_config, get_ai_providers
-from pycommerce.plugins.ai.providers import get_ai_provider, AIProvider
-
-# Register the plugin
-def register_plugin():
-    """Register the AI plugin with the system."""
-    from pycommerce.plugins import register_plugin
+def init_ai_plugin():
+    """Initialize the AI plugin."""
     try:
-        register_plugin("ai_assistant", "0.1.0", "AI Assistant")
-        logger.info("AI plugin registered successfully")
+        from .config import get_ai_settings, is_ai_enabled
+        settings = get_ai_settings()
+
+        if not is_ai_enabled():
+            logger.info("AI plugin is disabled in configuration")
+            return False
+
+        logger.info(f"Initializing AI plugin with provider: {settings.get('default_provider', 'none')}")
+
+        # Initialize the appropriate provider
+        from .providers import get_provider
+        provider = get_provider(settings.get('default_provider', 'openai'))
+        if provider is None:
+            logger.warning(f"Provider {settings.get('default_provider')} is not available")
+            return False
+
         return True
-    except Exception as e:
-        logger.error(f"Failed to register AI plugin: {str(e)}")
+    except ImportError as e:
+        logger.warning(f"Error initializing AI plugin: {str(e)}")
         return False
+    except Exception as e:
+        logger.error(f"Unexpected error initializing AI plugin: {str(e)}")
+        return False
+
+# Initialize AI plugin
+is_initialized = init_ai_plugin()

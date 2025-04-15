@@ -217,3 +217,115 @@ def get_ai_provider_instance(tenant_id: Optional[str] = None):
     except Exception as e:
         logger.error(f"Error creating AI provider: {str(e)}")
         raise ValueError(f"Failed to initialize AI provider: {str(e)}")
+
+"""
+Configuration for AI functionality in PyCommerce.
+
+This module provides configuration settings and utilities for AI features.
+"""
+
+import os
+import logging
+from typing import Dict, Optional, Any
+
+logger = logging.getLogger(__name__)
+
+# Default configurations
+DEFAULT_AI_CONFIG = {
+    "enabled": True,
+    "default_provider": "openai",
+    "temperature": 0.7,
+    "max_tokens": 500
+}
+
+# Load AI configuration from environment or use defaults
+def get_ai_config() -> Dict[str, Any]:
+    """
+    Get AI configuration settings.
+
+    Returns:
+        Dictionary of AI configuration settings
+    """
+    try:
+        config = DEFAULT_AI_CONFIG.copy()
+
+        # Override with environment variables if they exist
+        if os.environ.get("AI_ENABLED") is not None:
+            config["enabled"] = os.environ.get("AI_ENABLED").lower() in ("true", "1", "yes")
+
+        if os.environ.get("AI_PROVIDER"):
+            config["default_provider"] = os.environ.get("AI_PROVIDER")
+
+        if os.environ.get("AI_TEMPERATURE"):
+            try:
+                config["temperature"] = float(os.environ.get("AI_TEMPERATURE"))
+            except (ValueError, TypeError):
+                logger.warning("Invalid AI_TEMPERATURE value, using default")
+
+        if os.environ.get("AI_MAX_TOKENS"):
+            try:
+                config["max_tokens"] = int(os.environ.get("AI_MAX_TOKENS"))
+            except (ValueError, TypeError):
+                logger.warning("Invalid AI_MAX_TOKENS value, using default")
+
+        # Add OpenAI specific configuration
+        config["openai"] = {
+            "api_key": os.environ.get("OPENAI_API_KEY", ""),
+            "model": os.environ.get("OPENAI_MODEL", "gpt-3.5-turbo")
+        }
+
+        logger.info("AI configuration loaded successfully")
+        return config
+    except Exception as e:
+        logger.error(f"Error loading AI configuration: {str(e)}")
+        return DEFAULT_AI_CONFIG
+
+# Singleton instance of AI configuration
+_ai_config: Optional[Dict[str, Any]] = None
+
+def get_ai_settings() -> Dict[str, Any]:
+    """
+    Get the AI settings, initializing if necessary.
+
+    Returns:
+        Dictionary of AI settings
+    """
+    global _ai_config
+    if _ai_config is None:
+        _ai_config = get_ai_config()
+    return _ai_config
+
+def update_ai_settings(settings: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Update AI settings.
+
+    Args:
+        settings: New settings to apply
+
+    Returns:
+        Updated settings dictionary
+    """
+    global _ai_config
+    if _ai_config is None:
+        _ai_config = get_ai_config()
+
+    # Update the configuration with new settings
+    _ai_config.update(settings)
+
+    # For nested dictionaries like provider-specific settings
+    for key, value in settings.items():
+        if isinstance(value, dict) and key in _ai_config and isinstance(_ai_config[key], dict):
+            _ai_config[key].update(value)
+
+    logger.info("AI settings updated")
+    return _ai_config
+
+def is_ai_enabled() -> bool:
+    """
+    Check if AI functionality is enabled.
+
+    Returns:
+        True if AI is enabled, False otherwise
+    """
+    settings = get_ai_settings()
+    return settings.get("enabled", False)
