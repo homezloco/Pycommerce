@@ -16,24 +16,25 @@ from fastapi.templating import Jinja2Templates
 try:
     from pycommerce.plugins.ai.providers import get_ai_provider
     from pycommerce.plugins.ai.config import get_ai_provider_instance
-except ImportError:
+except ImportError as e:
     logger = logging.getLogger(__name__)
-    logger.warning("AI provider import failed - using fallback mock provider")
+    logger.warning(f"AI provider import failed: {str(e)} - using fallback mock provider")
 
     # Create fallback mock provider
+    class MockAIProvider:
+        def generate_text(self, prompt, **kwargs):
+            return f"AI-generated content placeholder (prompt: {prompt[:30]}...)"
+
+        def enhance_text(self, text, instructions=None, **kwargs):
+            return f"Enhanced: {text[:50]}..."
+            
     def get_ai_provider(provider_name=None, api_key=None):
         """Mock AI provider for fallback when actual AI module is not available."""
-        class MockAIProvider:
-            def generate_content(self, prompt, **kwargs):
-                return {
-                    "content": f"AI-generated content placeholder (prompt: {prompt[:30]}...)",
-                    "success": True
-                }
         return MockAIProvider()
         
     def get_ai_provider_instance(tenant_id=None):
         """Mock AI provider instance function."""
-        return get_ai_provider()
+        return MockAIProvider()
 
 from pycommerce.models.tenant import TenantManager
 

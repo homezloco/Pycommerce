@@ -1,138 +1,130 @@
 
 <!-- AI Content Generation Modal -->
 <div class="modal fade" id="aiAssistModal" tabindex="-1" aria-labelledby="aiAssistModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="aiAssistModalLabel">Generate Content with AI</h5>
+                <h5 class="modal-title" id="aiAssistModalLabel">AI Content Assistant</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <div class="mb-3">
-                    <label for="aiPromptInput" class="form-label">What would you like to generate?</label>
-                    <textarea class="form-control" id="aiPromptInput" rows="4" placeholder="E.g., Write a detailed page description about our company's sustainability initiatives"></textarea>
+                    <label for="aiPrompt" class="form-label">What would you like the AI to generate?</label>
+                    <textarea class="form-control" id="aiPrompt" rows="3" 
+                              placeholder="Describe the content you need. For example: 'Write a product description for a hiking backpack with water resistance and multiple compartments.'"></textarea>
                 </div>
-                <div id="aiModalLoading" class="text-center" style="display: none;">
-                    <div class="spinner-border text-primary" role="status">
-                        <span class="visually-hidden">Loading...</span>
-                    </div>
-                    <p class="mt-2">Generating content with AI...</p>
+                
+                <div class="d-grid gap-2">
+                    <button type="button" class="btn btn-primary" id="generateAiContentBtn" onclick="generateAIContent()">
+                        <i class="fas fa-robot me-2"></i>Generate Content
+                    </button>
                 </div>
-                <div id="aiModalResult" class="mt-3" style="display: none;">
+                
+                <div id="aiContentResult" class="mt-4" style="display: none;">
                     <div class="card">
                         <div class="card-header d-flex justify-content-between align-items-center">
                             <span>Generated Content</span>
-                            <button class="btn btn-sm btn-outline-primary" id="aiCopyBtn" title="Copy to clipboard">
-                                <i class="fas fa-copy"></i> Copy
+                            <button class="btn btn-sm btn-outline-primary" id="useAiContentBtn" onclick="useAIContent()">
+                                Use This Content
                             </button>
                         </div>
                         <div class="card-body">
-                            <div id="aiGeneratedContent"></div>
+                            <div id="aiContentText" class="border p-3 bg-light">
+                                <!-- AI generated content will appear here -->
+                            </div>
                         </div>
                     </div>
                 </div>
+                
+                <div id="aiContentLoading" class="text-center my-4" style="display: none;">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2">Generating content...</p>
+                </div>
+                
+                <div id="aiContentError" class="alert alert-danger mt-4" style="display: none;">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <span id="aiErrorMessage">Error generating content.</span>
+                </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-success" id="aiInsertBtn" style="display: none;">Insert Content</button>
-                <button type="button" class="btn btn-primary" id="aiGenerateBtn">Generate</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
             </div>
         </div>
     </div>
 </div>
 
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Set up AI modal functionality
-        const aiModal = document.getElementById('aiAssistModal');
-        const promptInput = document.getElementById('aiPromptInput');
-        const generateBtn = document.getElementById('aiGenerateBtn');
-        const insertBtn = document.getElementById('aiInsertBtn');
-        const copyBtn = document.getElementById('aiCopyBtn');
-        const loadingDiv = document.getElementById('aiModalLoading');
-        const resultDiv = document.getElementById('aiModalResult');
-        const contentDiv = document.getElementById('aiGeneratedContent');
+    // Function to generate AI content
+    function generateAIContent() {
+        const prompt = document.getElementById('aiPrompt').value.trim();
         
-        if (generateBtn) {
-            generateBtn.addEventListener('click', function() {
-                // Get the prompt text
-                const prompt = promptInput.value.trim();
-                if (!prompt) {
-                    alert('Please enter a prompt for content generation');
-                    return;
+        if (!prompt) {
+            document.getElementById('aiContentError').style.display = 'block';
+            document.getElementById('aiErrorMessage').textContent = 'Please enter a prompt for the AI.';
+            return;
+        }
+        
+        // Hide previous results/errors and show loading
+        document.getElementById('aiContentResult').style.display = 'none';
+        document.getElementById('aiContentError').style.display = 'none';
+        document.getElementById('aiContentLoading').style.display = 'block';
+        
+        // Send request to backend API
+        fetch('/admin/api/ai/generate-content', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ prompt: prompt }),
+        })
+        .then(response => response.json())
+        .then(data => {
+            // Hide loading
+            document.getElementById('aiContentLoading').style.display = 'none';
+            
+            if (data.success) {
+                // Show result
+                document.getElementById('aiContentResult').style.display = 'block';
+                document.getElementById('aiContentText').innerHTML = data.content.replace(/\n/g, '<br>');
+            } else {
+                // Show error
+                document.getElementById('aiContentError').style.display = 'block';
+                document.getElementById('aiErrorMessage').textContent = data.message || 'Error generating content.';
+            }
+        })
+        .catch(error => {
+            // Hide loading and show error
+            document.getElementById('aiContentLoading').style.display = 'none';
+            document.getElementById('aiContentError').style.display = 'block';
+            document.getElementById('aiErrorMessage').textContent = 'Network error: ' + error.message;
+        });
+    }
+    
+    // Function to use the generated AI content
+    function useAIContent() {
+        const content = document.getElementById('aiContentText').innerHTML.replace(/<br>/g, '\n');
+        
+        // If we're in the page editor, insert the content in the Quill editor
+        try {
+            if (typeof quill !== 'undefined') {
+                quill.root.innerHTML = content;
+            } else {
+                // Fall back to textarea if Quill is not available
+                const contentTextarea = document.getElementById('content');
+                if (contentTextarea) {
+                    contentTextarea.value = content.replace(/<[^>]*>/g, ''); // Strip HTML
                 }
-                
-                // Show loading, hide buttons
-                loadingDiv.style.display = 'block';
-                resultDiv.style.display = 'none';
-                generateBtn.disabled = true;
-                
-                // Make API call to generate content
-                fetch('/admin/api/ai/generate-content', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        prompt: prompt
-                    })
-                })
-                .then(response => response.json())
-                .then(data => {
-                    // Hide loading
-                    loadingDiv.style.display = 'none';
-                    generateBtn.disabled = false;
-                    
-                    if (data.success) {
-                        // Show the generated content
-                        contentDiv.innerHTML = data.content.replace(/\n/g, '<br>');
-                        resultDiv.style.display = 'block';
-                        insertBtn.style.display = 'inline-block';
-                    } else {
-                        alert('Error: ' + (data.message || 'Failed to generate content'));
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    loadingDiv.style.display = 'none';
-                    generateBtn.disabled = false;
-                    alert('Error generating content. Please try again.');
-                });
-            });
+            }
+            // Close the modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('aiAssistModal'));
+            if (modal) {
+                modal.hide();
+            }
+        } catch (e) {
+            console.error('Error applying AI content:', e);
+            alert('Could not apply the content. Please copy it manually.');
         }
-        
-        if (insertBtn) {
-            insertBtn.addEventListener('click', function() {
-                // Get the current Quill editor instance
-                const quill = Quill.find(document.getElementById('quill-editor-container'));
-                if (quill) {
-                    // Insert the content at the current cursor position
-                    const range = quill.getSelection() || { index: quill.getLength(), length: 0 };
-                    quill.insertText(range.index, contentDiv.innerText);
-                    
-                    // Close the modal
-                    bootstrap.Modal.getInstance(aiModal).hide();
-                }
-            });
-        }
-        
-        if (copyBtn) {
-            copyBtn.addEventListener('click', function() {
-                // Copy content to clipboard
-                navigator.clipboard.writeText(contentDiv.innerText)
-                    .then(() => {
-                        // Show success feedback
-                        const originalText = copyBtn.innerHTML;
-                        copyBtn.innerHTML = '<i class="fas fa-check"></i> Copied!';
-                        setTimeout(() => {
-                            copyBtn.innerHTML = originalText;
-                        }, 2000);
-                    })
-                    .catch(err => {
-                        console.error('Error copying text: ', err);
-                        alert('Failed to copy text');
-                    });
-            });
-        }
-    });
+    }
 </script>
