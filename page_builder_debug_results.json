@@ -1,9 +1,68 @@
 {
   "database": {
-    "success": false,
-    "error": "Can't load plugin: sqlalchemy.dialects:https",
-    "type": "database",
-    "traceback": "Traceback (most recent call last):\n  File \"/home/runner/workspace/debug_page_builder.py\", line 104, in check_database\n    engine = create_engine(db_url)\n             ^^^^^^^^^^^^^^^^^^^^^\n  File \"<string>\", line 2, in create_engine\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/sqlalchemy/util/deprecations.py\", line 281, in warned\n    return fn(*args, **kwargs)  # type: ignore[no-any-return]\n           ^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/sqlalchemy/engine/create.py\", line 553, in create_engine\n    entrypoint = u._get_entrypoint()\n                 ^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/sqlalchemy/engine/url.py\", line 772, in _get_entrypoint\n    cls = registry.load(name)\n          ^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/sqlalchemy/util/langhelpers.py\", line 375, in load\n    raise exc.NoSuchModuleError(\nsqlalchemy.exc.NoSuchModuleError: Can't load plugin: sqlalchemy.dialects:https\n"
+    "success": true,
+    "db_info": {
+      "version": "PostgreSQL 16.8 on x86_64-pc-linux-gnu, compiled by gcc (Debian 10.2.1-6) 10.2.1 20210110, 64-bit"
+    },
+    "tables": {
+      "pages": {
+        "exists": true,
+        "record_count": 5,
+        "columns": [
+          "id",
+          "tenant_id",
+          "title",
+          "slug",
+          "meta_title",
+          "meta_description",
+          "is_published",
+          "layout_data",
+          "created_at",
+          "updated_at"
+        ]
+      },
+      "page_sections": {
+        "exists": true,
+        "record_count": 5,
+        "columns": [
+          "id",
+          "page_id",
+          "section_type",
+          "position",
+          "settings",
+          "created_at",
+          "updated_at"
+        ]
+      },
+      "content_blocks": {
+        "exists": true,
+        "record_count": 5,
+        "columns": [
+          "id",
+          "section_id",
+          "block_type",
+          "position",
+          "content",
+          "settings",
+          "created_at",
+          "updated_at"
+        ]
+      },
+      "page_templates": {
+        "exists": true,
+        "record_count": 1,
+        "columns": [
+          "id",
+          "name",
+          "description",
+          "thumbnail_url",
+          "is_system",
+          "template_data",
+          "created_at",
+          "updated_at"
+        ]
+      }
+    }
   },
   "templates": {
     "templates/admin/pages/list.html": {
@@ -59,39 +118,33 @@
   },
   "imports": {
     "routes.admin.page_builder": {
-      "success": false,
-      "error": "Can't load plugin: sqlalchemy.dialects:https",
-      "type": "unexpected",
-      "traceback": "Traceback (most recent call last):\n  File \"/home/runner/workspace/debug_page_builder.py\", line 52, in check_import\n    module = importlib.import_module(module_name)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/nix/store/clx0mcir7qw8zk36zbr4jra789g3knf6-python3-3.11.10/lib/python3.11/importlib/__init__.py\", line 126, in import_module\n    return _bootstrap._gcd_import(name[level:], package, level)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"<frozen importlib._bootstrap>\", line 1204, in _gcd_import\n  File \"<frozen importlib._bootstrap>\", line 1176, in _find_and_load\n  File \"<frozen importlib._bootstrap>\", line 1126, in _find_and_load_unlocked\n  File \"<frozen importlib._bootstrap>\", line 241, in _call_with_frames_removed\n  File \"<frozen importlib._bootstrap>\", line 1204, in _gcd_import\n  File \"<frozen importlib._bootstrap>\", line 1176, in _find_and_load\n  File \"<frozen importlib._bootstrap>\", line 1126, in _find_and_load_unlocked\n  File \"<frozen importlib._bootstrap>\", line 241, in _call_with_frames_removed\n  File \"<frozen importlib._bootstrap>\", line 1204, in _gcd_import\n  File \"<frozen importlib._bootstrap>\", line 1176, in _find_and_load\n  File \"<frozen importlib._bootstrap>\", line 1147, in _find_and_load_unlocked\n  File \"<frozen importlib._bootstrap>\", line 690, in _load_unlocked\n  File \"<frozen importlib._bootstrap_external>\", line 940, in exec_module\n  File \"<frozen importlib._bootstrap>\", line 241, in _call_with_frames_removed\n  File \"/home/runner/workspace/routes/__init__.py\", line 11, in <module>\n    from routes.admin.dashboard import setup_routes as setup_dashboard_routes\n  File \"/home/runner/workspace/routes/admin/dashboard.py\", line 26, in <module>\n    from pycommerce.models.tenant import TenantManager\n  File \"/home/runner/workspace/pycommerce/__init__.py\", line 17, in <module>\n    from pycommerce.core.db import Base, init_db\n  File \"/home/runner/workspace/pycommerce/core/__init__.py\", line 9, in <module>\n    from pycommerce.core.db import Base, init_db, get_db, close_db\n  File \"/home/runner/workspace/pycommerce/core/db.py\", line 32, in <module>\n    engine = create_engine(\n             ^^^^^^^^^^^^^^\n  File \"<string>\", line 2, in create_engine\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/sqlalchemy/util/deprecations.py\", line 281, in warned\n    return fn(*args, **kwargs)  # type: ignore[no-any-return]\n           ^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/sqlalchemy/engine/create.py\", line 553, in create_engine\n    entrypoint = u._get_entrypoint()\n                 ^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/sqlalchemy/engine/url.py\", line 772, in _get_entrypoint\n    cls = registry.load(name)\n          ^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/sqlalchemy/util/langhelpers.py\", line 375, in load\n    raise exc.NoSuchModuleError(\nsqlalchemy.exc.NoSuchModuleError: Can't load plugin: sqlalchemy.dialects:https\n"
+      "success": true,
+      "module": "<module 'routes.admin.page_builder' from '/home/runner/workspace/routes/admin/page_builder.py'>"
     },
     "pycommerce.models.page_builder": {
-      "success": false,
-      "error": "Can't load plugin: sqlalchemy.dialects:https",
-      "type": "unexpected",
-      "traceback": "Traceback (most recent call last):\n  File \"/home/runner/workspace/debug_page_builder.py\", line 52, in check_import\n    module = importlib.import_module(module_name)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/nix/store/clx0mcir7qw8zk36zbr4jra789g3knf6-python3-3.11.10/lib/python3.11/importlib/__init__.py\", line 126, in import_module\n    return _bootstrap._gcd_import(name[level:], package, level)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"<frozen importlib._bootstrap>\", line 1204, in _gcd_import\n  File \"<frozen importlib._bootstrap>\", line 1176, in _find_and_load\n  File \"<frozen importlib._bootstrap>\", line 1126, in _find_and_load_unlocked\n  File \"<frozen importlib._bootstrap>\", line 241, in _call_with_frames_removed\n  File \"<frozen importlib._bootstrap>\", line 1204, in _gcd_import\n  File \"<frozen importlib._bootstrap>\", line 1176, in _find_and_load\n  File \"<frozen importlib._bootstrap>\", line 1126, in _find_and_load_unlocked\n  File \"<frozen importlib._bootstrap>\", line 241, in _call_with_frames_removed\n  File \"<frozen importlib._bootstrap>\", line 1204, in _gcd_import\n  File \"<frozen importlib._bootstrap>\", line 1176, in _find_and_load\n  File \"<frozen importlib._bootstrap>\", line 1147, in _find_and_load_unlocked\n  File \"<frozen importlib._bootstrap>\", line 690, in _load_unlocked\n  File \"<frozen importlib._bootstrap_external>\", line 940, in exec_module\n  File \"<frozen importlib._bootstrap>\", line 241, in _call_with_frames_removed\n  File \"/home/runner/workspace/pycommerce/__init__.py\", line 17, in <module>\n    from pycommerce.core.db import Base, init_db\n  File \"/home/runner/workspace/pycommerce/core/__init__.py\", line 9, in <module>\n    from pycommerce.core.db import Base, init_db, get_db, close_db\n  File \"/home/runner/workspace/pycommerce/core/db.py\", line 32, in <module>\n    engine = create_engine(\n             ^^^^^^^^^^^^^^\n  File \"<string>\", line 2, in create_engine\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/sqlalchemy/util/deprecations.py\", line 281, in warned\n    return fn(*args, **kwargs)  # type: ignore[no-any-return]\n           ^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/sqlalchemy/engine/create.py\", line 553, in create_engine\n    entrypoint = u._get_entrypoint()\n                 ^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/sqlalchemy/engine/url.py\", line 772, in _get_entrypoint\n    cls = registry.load(name)\n          ^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/sqlalchemy/util/langhelpers.py\", line 375, in load\n    raise exc.NoSuchModuleError(\nsqlalchemy.exc.NoSuchModuleError: Can't load plugin: sqlalchemy.dialects:https\n"
+      "success": true,
+      "module": "<module 'pycommerce.models.page_builder' from '/home/runner/workspace/pycommerce/models/page_builder.py'>"
     },
     "routes.admin.ai_content": {
-      "success": false,
-      "error": "Can't load plugin: sqlalchemy.dialects:https",
-      "type": "unexpected",
-      "traceback": "Traceback (most recent call last):\n  File \"/home/runner/workspace/debug_page_builder.py\", line 52, in check_import\n    module = importlib.import_module(module_name)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/nix/store/clx0mcir7qw8zk36zbr4jra789g3knf6-python3-3.11.10/lib/python3.11/importlib/__init__.py\", line 126, in import_module\n    return _bootstrap._gcd_import(name[level:], package, level)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"<frozen importlib._bootstrap>\", line 1204, in _gcd_import\n  File \"<frozen importlib._bootstrap>\", line 1176, in _find_and_load\n  File \"<frozen importlib._bootstrap>\", line 1147, in _find_and_load_unlocked\n  File \"<frozen importlib._bootstrap>\", line 690, in _load_unlocked\n  File \"<frozen importlib._bootstrap_external>\", line 940, in exec_module\n  File \"<frozen importlib._bootstrap>\", line 241, in _call_with_frames_removed\n  File \"/home/runner/workspace/routes/admin/ai_content.py\", line 16, in <module>\n    from pycommerce.plugins.ai.providers import get_ai_provider\n  File \"/home/runner/workspace/pycommerce/__init__.py\", line 17, in <module>\n    from pycommerce.core.db import Base, init_db\n  File \"/home/runner/workspace/pycommerce/core/__init__.py\", line 9, in <module>\n    from pycommerce.core.db import Base, init_db, get_db, close_db\n  File \"/home/runner/workspace/pycommerce/core/db.py\", line 32, in <module>\n    engine = create_engine(\n             ^^^^^^^^^^^^^^\n  File \"<string>\", line 2, in create_engine\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/sqlalchemy/util/deprecations.py\", line 281, in warned\n    return fn(*args, **kwargs)  # type: ignore[no-any-return]\n           ^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/sqlalchemy/engine/create.py\", line 553, in create_engine\n    entrypoint = u._get_entrypoint()\n                 ^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/sqlalchemy/engine/url.py\", line 772, in _get_entrypoint\n    cls = registry.load(name)\n          ^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/sqlalchemy/util/langhelpers.py\", line 375, in load\n    raise exc.NoSuchModuleError(\nsqlalchemy.exc.NoSuchModuleError: Can't load plugin: sqlalchemy.dialects:https\n"
+      "success": true,
+      "module": "<module 'routes.admin.ai_content' from '/home/runner/workspace/routes/admin/ai_content.py'>"
     },
     "pycommerce.models.tenant": {
-      "success": false,
-      "error": "Can't load plugin: sqlalchemy.dialects:https",
-      "type": "unexpected",
-      "traceback": "Traceback (most recent call last):\n  File \"/home/runner/workspace/debug_page_builder.py\", line 52, in check_import\n    module = importlib.import_module(module_name)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/nix/store/clx0mcir7qw8zk36zbr4jra789g3knf6-python3-3.11.10/lib/python3.11/importlib/__init__.py\", line 126, in import_module\n    return _bootstrap._gcd_import(name[level:], package, level)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"<frozen importlib._bootstrap>\", line 1204, in _gcd_import\n  File \"<frozen importlib._bootstrap>\", line 1176, in _find_and_load\n  File \"<frozen importlib._bootstrap>\", line 1126, in _find_and_load_unlocked\n  File \"<frozen importlib._bootstrap>\", line 241, in _call_with_frames_removed\n  File \"<frozen importlib._bootstrap>\", line 1204, in _gcd_import\n  File \"<frozen importlib._bootstrap>\", line 1176, in _find_and_load\n  File \"<frozen importlib._bootstrap>\", line 1126, in _find_and_load_unlocked\n  File \"<frozen importlib._bootstrap>\", line 241, in _call_with_frames_removed\n  File \"<frozen importlib._bootstrap>\", line 1204, in _gcd_import\n  File \"<frozen importlib._bootstrap>\", line 1176, in _find_and_load\n  File \"<frozen importlib._bootstrap>\", line 1147, in _find_and_load_unlocked\n  File \"<frozen importlib._bootstrap>\", line 690, in _load_unlocked\n  File \"<frozen importlib._bootstrap_external>\", line 940, in exec_module\n  File \"<frozen importlib._bootstrap>\", line 241, in _call_with_frames_removed\n  File \"/home/runner/workspace/pycommerce/__init__.py\", line 17, in <module>\n    from pycommerce.core.db import Base, init_db\n  File \"/home/runner/workspace/pycommerce/core/__init__.py\", line 9, in <module>\n    from pycommerce.core.db import Base, init_db, get_db, close_db\n  File \"/home/runner/workspace/pycommerce/core/db.py\", line 32, in <module>\n    engine = create_engine(\n             ^^^^^^^^^^^^^^\n  File \"<string>\", line 2, in create_engine\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/sqlalchemy/util/deprecations.py\", line 281, in warned\n    return fn(*args, **kwargs)  # type: ignore[no-any-return]\n           ^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/sqlalchemy/engine/create.py\", line 553, in create_engine\n    entrypoint = u._get_entrypoint()\n                 ^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/sqlalchemy/engine/url.py\", line 772, in _get_entrypoint\n    cls = registry.load(name)\n          ^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/sqlalchemy/util/langhelpers.py\", line 375, in load\n    raise exc.NoSuchModuleError(\nsqlalchemy.exc.NoSuchModuleError: Can't load plugin: sqlalchemy.dialects:https\n"
+      "success": true,
+      "module": "<module 'pycommerce.models.tenant' from '/home/runner/workspace/pycommerce/models/tenant.py'>"
     },
     "pycommerce.services.wysiwyg_service": {
-      "success": false,
-      "error": "Can't load plugin: sqlalchemy.dialects:https",
-      "type": "unexpected",
-      "traceback": "Traceback (most recent call last):\n  File \"/home/runner/workspace/debug_page_builder.py\", line 52, in check_import\n    module = importlib.import_module(module_name)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/nix/store/clx0mcir7qw8zk36zbr4jra789g3knf6-python3-3.11.10/lib/python3.11/importlib/__init__.py\", line 126, in import_module\n    return _bootstrap._gcd_import(name[level:], package, level)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"<frozen importlib._bootstrap>\", line 1204, in _gcd_import\n  File \"<frozen importlib._bootstrap>\", line 1176, in _find_and_load\n  File \"<frozen importlib._bootstrap>\", line 1126, in _find_and_load_unlocked\n  File \"<frozen importlib._bootstrap>\", line 241, in _call_with_frames_removed\n  File \"<frozen importlib._bootstrap>\", line 1204, in _gcd_import\n  File \"<frozen importlib._bootstrap>\", line 1176, in _find_and_load\n  File \"<frozen importlib._bootstrap>\", line 1126, in _find_and_load_unlocked\n  File \"<frozen importlib._bootstrap>\", line 241, in _call_with_frames_removed\n  File \"<frozen importlib._bootstrap>\", line 1204, in _gcd_import\n  File \"<frozen importlib._bootstrap>\", line 1176, in _find_and_load\n  File \"<frozen importlib._bootstrap>\", line 1147, in _find_and_load_unlocked\n  File \"<frozen importlib._bootstrap>\", line 690, in _load_unlocked\n  File \"<frozen importlib._bootstrap_external>\", line 940, in exec_module\n  File \"<frozen importlib._bootstrap>\", line 241, in _call_with_frames_removed\n  File \"/home/runner/workspace/pycommerce/__init__.py\", line 17, in <module>\n    from pycommerce.core.db import Base, init_db\n  File \"/home/runner/workspace/pycommerce/core/__init__.py\", line 9, in <module>\n    from pycommerce.core.db import Base, init_db, get_db, close_db\n  File \"/home/runner/workspace/pycommerce/core/db.py\", line 32, in <module>\n    engine = create_engine(\n             ^^^^^^^^^^^^^^\n  File \"<string>\", line 2, in create_engine\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/sqlalchemy/util/deprecations.py\", line 281, in warned\n    return fn(*args, **kwargs)  # type: ignore[no-any-return]\n           ^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/sqlalchemy/engine/create.py\", line 553, in create_engine\n    entrypoint = u._get_entrypoint()\n                 ^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/sqlalchemy/engine/url.py\", line 772, in _get_entrypoint\n    cls = registry.load(name)\n          ^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/sqlalchemy/util/langhelpers.py\", line 375, in load\n    raise exc.NoSuchModuleError(\nsqlalchemy.exc.NoSuchModuleError: Can't load plugin: sqlalchemy.dialects:https\n"
+      "success": true,
+      "module": "<module 'pycommerce.services.wysiwyg_service' from '/home/runner/workspace/pycommerce/services/wysiwyg_service.py'>"
     }
   },
   "model_classes": {
-    "success": false,
-    "error": "Can't load plugin: sqlalchemy.dialects:https",
-    "traceback": "Traceback (most recent call last):\n  File \"/home/runner/workspace/debug_page_builder.py\", line 284, in run_debug\n    from pycommerce.models.page_builder import Page, PageSection, ContentBlock, PageTemplate\n  File \"/home/runner/workspace/pycommerce/__init__.py\", line 17, in <module>\n    from pycommerce.core.db import Base, init_db\n  File \"/home/runner/workspace/pycommerce/core/__init__.py\", line 9, in <module>\n    from pycommerce.core.db import Base, init_db, get_db, close_db\n  File \"/home/runner/workspace/pycommerce/core/db.py\", line 32, in <module>\n    engine = create_engine(\n             ^^^^^^^^^^^^^^\n  File \"<string>\", line 2, in create_engine\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/sqlalchemy/util/deprecations.py\", line 281, in warned\n    return fn(*args, **kwargs)  # type: ignore[no-any-return]\n           ^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/sqlalchemy/engine/create.py\", line 553, in create_engine\n    entrypoint = u._get_entrypoint()\n                 ^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/sqlalchemy/engine/url.py\", line 772, in _get_entrypoint\n    cls = registry.load(name)\n          ^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/sqlalchemy/util/langhelpers.py\", line 375, in load\n    raise exc.NoSuchModuleError(\nsqlalchemy.exc.NoSuchModuleError: Can't load plugin: sqlalchemy.dialects:https\n"
+    "success": true,
+    "classes": [
+      "Page",
+      "PageSection",
+      "ContentBlock",
+      "PageTemplate"
+    ]
   }
 }
