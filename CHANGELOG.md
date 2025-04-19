@@ -11,7 +11,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Multi-tenant ecommerce platform with plugin-based architecture
 - Product management with categories and variants
-- Shipping notification emails when order status changes to "shipped"
 - Shopping cart and checkout functionality
 - Order management with order notes and status tracking
 - Payment processing with Stripe and PayPal plugins
@@ -29,10 +28,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Market analysis dashboard with sales trends and category performance metrics
 - Product category caching system for improved database query performance
 - Page builder system with customizable sections and blocks for creating dynamic storefront pages
+- AI-powered product recommendations with related items and trending products
+- Return processing workflow for customer returns and refunds
+- Comprehensive email template system with specialized templates for various notifications
 
 ### Changed
 - Updated order status to use string values instead of integers for improved readability and better display in the admin interface
-- Email notifications for order confirmations
+- Email notifications for order confirmations and shipping updates
 - Theme customization with dynamic CSS styling
 - Enhanced mobile responsiveness with hamburger menu toggle for admin dashboard
 - Refactored monolithic web_server.py into specialized route modules
@@ -42,6 +44,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Improved database query efficiency
 
 ### Fixed
+- [2025-04-15] Added comprehensive email template system with base template and specialized templates
+- [2025-04-14] Fixed Quill editor initialization in page editor by ensuring proper script loading
 - [2025-04-13] Fixed page builder router registration to properly include routes in both main and FastAPI applications
 - [2025-04-12] Fixed media selector in theme settings page by properly structuring HTML modal outside JavaScript function
 - [2025-04-12] Fixed "No media found" issue in media browser by improving fallback image loading functionality
