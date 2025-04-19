@@ -158,9 +158,9 @@ window.debugPageBuilderEditor = function() {
     console.error("Error testing API endpoints:", e);
   }
 
-  // Check for the AI Assist button in Quill toolbar
+  // Check for AI Assist button in Quill toolbar
   try {
-    const aiButtons = document.querySelectorAll('.ql-toolbar .btn-primary');
+    const aiButtons = document.querySelectorAll('.ql-toolbar .btn-primary, .ql-toolbar .ai-assist-btn');
     if (aiButtons.length > 0) {
       console.log(`✅ Found ${aiButtons.length} AI Assist buttons`);
       aiButtons.forEach((btn, i) => {
@@ -185,8 +185,73 @@ window.debugPageBuilderEditor = function() {
         }
       }
     }
+
+    // Add repair function if no AI buttons found
+    if (aiButtons.length === 0 && typeof window.PyCommerceQuill !== 'undefined') {
+      console.log("Checking if we can add missing AI assist button...");
+      const toolbars = document.querySelectorAll('.ql-toolbar');
+      if (toolbars.length > 0) {
+        toolbars.forEach((toolbar, i) => {
+          if (!toolbar.querySelector('.ai-assist-btn')) {
+            console.log(`Adding missing AI assist button to toolbar #${i}`);
+            const aiButton = document.createElement('button');
+            aiButton.className = 'btn btn-primary btn-sm ms-2 ai-assist-btn';
+            aiButton.innerHTML = '<i class="fas fa-robot"></i> AI Assist';
+            aiButton.type = 'button';
+
+            aiButton.onclick = function() {
+              const modal = document.getElementById('aiAssistModal');
+              if (modal && typeof bootstrap !== 'undefined') {
+                const modalInstance = new bootstrap.Modal(modal);
+                modalInstance.show();
+              }
+            };
+
+            toolbar.appendChild(aiButton);
+          }
+        });
+      }
+    }
   } catch (e) {
     console.error("Error checking AI buttons:", e);
+  }
+
+  // Check media selector functionality
+  try {
+    const mediaSelectorModal = document.getElementById('mediaSelectorModal');
+    if (mediaSelectorModal) {
+      console.log("✅ Media selector modal found");
+
+      // Check if the media selector function exists
+      if (typeof window.openMediaSelector === 'function') {
+        console.log("✅ openMediaSelector function available");
+      } else {
+        console.warn("⚠️ openMediaSelector function not defined");
+
+        // Try to add the function if missing
+        if (!window.openMediaSelector) {
+          console.log("Adding missing openMediaSelector function");
+          window.openMediaSelector = function(callback) {
+            window.mediaSelectionCallback = callback;
+
+            // Show the media selector modal
+            if (typeof bootstrap !== 'undefined') {
+              const mediaSelectorModal = new bootstrap.Modal(document.getElementById('mediaSelectorModal'));
+              mediaSelectorModal.show();
+            }
+
+            // Load media items
+            if (typeof loadMediaItems === 'function') {
+              loadMediaItems();
+            }
+          };
+        }
+      }
+    } else {
+      console.warn("❌ Media selector modal not found");
+    }
+  } catch (e) {
+    console.error("Error checking media selector:", e);
   }
 
   console.log("===== End Debug =====");

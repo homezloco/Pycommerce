@@ -89,3 +89,49 @@
     console.log("Debug button already exists");
   }
 })();
+/**
+ * Add Debug Button
+ * 
+ * This script adds a debug button to the page for diagnosing editor issues.
+ * It can be included directly in the page or loaded dynamically.
+ */
+(function() {
+  // Only add if not already present
+  if (document.getElementById('quill-debug-btn')) return;
+  
+  function addDebugButton() {
+    const btn = document.createElement('button');
+    btn.id = 'quill-debug-btn';
+    btn.className = 'btn btn-info position-fixed';
+    btn.style.bottom = '20px';
+    btn.style.right = '20px';
+    btn.style.zIndex = '9999';
+    btn.innerHTML = '<i class="fas fa-bug"></i> Debug Editor';
+    
+    btn.onclick = function() {
+      // Load and run Quill debug utility if not already loaded
+      if (typeof PyCommerceQuillDebug === 'undefined') {
+        console.log("Loading Quill debug utility...");
+        const script = document.createElement('script');
+        script.src = '/static/js/quill-debug-utility.js';
+        script.onload = function() {
+          console.log("Running diagnostics...");
+          if (typeof PyCommerceQuillDebug !== 'undefined') {
+            PyCommerceQuillDebug.diagnose();
+          } else {
+            console.error("Failed to load PyCommerceQuillDebug");
+          }
+        };
+        document.head.appendChild(script);
+      } else {
+        PyCommerceQuillDebug.diagnose();
+      }
+    };
+    
+    document.body.appendChild(btn);
+    console.log("Debug button added");
+  }
+  
+  // Add the button after a delay to ensure the page is loaded
+  setTimeout(addDebugButton, 1000);
+})();

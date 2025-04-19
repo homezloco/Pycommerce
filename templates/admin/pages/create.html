@@ -9,6 +9,19 @@
 <!-- Quill Debug Utilities -->
 <script src="/static/js/quill-debug-utility.js"></script>
 <script src="/static/js/debug-page-builder.js"></script>
+<script src="/static/js/debug-quill-editor.js"></script>
+<script>
+    // Register diagnostic function for easy access from console
+    window.debugPageEditor = function() {
+        console.log("Running comprehensive page editor diagnostics...");
+        if (typeof PyCommerceQuillDebug !== 'undefined') {
+            PyCommerceQuillDebug.diagnose();
+        }
+        if (typeof window.debugPageBuilderEditor === 'function') {
+            window.debugPageBuilderEditor();
+        }
+    };
+</script>
 {% endblock %}
 
 {% block admin_content %}
