@@ -6,6 +6,9 @@
 <!-- Quill Editor -->
 <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
 <script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
+<!-- Quill Debug Utilities -->
+<script src="/static/js/quill-debug-utility.js"></script>
+<script src="/static/js/debug-page-builder.js"></script>
 {% endblock %}
 
 {% block admin_content %}
@@ -157,21 +160,40 @@
         
         // Function to initialize the editor when Quill is available
         function initializePageEditor() {
-            // Ensure we have PyCommerceQuill
-            if (typeof PyCommerceQuill === 'undefined') {
-                console.log("Loading PyCommerceQuill integration...");
+            // Load debugging utility first
+            if (typeof PyCommerceQuillDebug === 'undefined') {
+                console.log("Loading Quill debugging utility...");
                 
-                const integrationScript = document.createElement('script');
-                integrationScript.src = '/static/js/quill-integration.js';
-                integrationScript.onload = function() {
-                    console.log("PyCommerceQuill loaded, initializing...");
-                    initWithPyCommerce();
+                const debugScript = document.createElement('script');
+                debugScript.src = '/static/js/quill-debug-utility.js';
+                debugScript.onload = function() {
+                    console.log("Debug utility loaded, checking editor setup...");
+                    loadIntegration();
                 };
                 
-                document.head.appendChild(integrationScript);
+                document.head.appendChild(debugScript);
             } else {
-                console.log("PyCommerceQuill already loaded, initializing...");
-                initWithPyCommerce();
+                loadIntegration();
+            }
+            
+            // Load the main integration
+            function loadIntegration() {
+                // Ensure we have PyCommerceQuill
+                if (typeof PyCommerceQuill === 'undefined') {
+                    console.log("Loading PyCommerceQuill integration...");
+                    
+                    const integrationScript = document.createElement('script');
+                    integrationScript.src = '/static/js/quill-integration.js';
+                    integrationScript.onload = function() {
+                        console.log("PyCommerceQuill loaded, initializing...");
+                        initWithPyCommerce();
+                    };
+                    
+                    document.head.appendChild(integrationScript);
+                } else {
+                    console.log("PyCommerceQuill already loaded, initializing...");
+                    initWithPyCommerce();
+                }
             }
         }
         
