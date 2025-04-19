@@ -1,251 +1,404 @@
+
 /**
- * Quill.js integration for PyCommerce with AI capabilities
+ * Quill Editor Integration
  * 
- * This script initializes Quill.js WYSIWYG editors for textareas with the 'quill-editor' class
- * and adds AI content generation and enhancement capabilities.
+ * This script handles the integration of Quill WYSIWYG editor
+ * with the PyCommerce admin interface, ensuring proper loading
+ * and initialization of the editor.
  */
 
-document.addEventListener('DOMContentLoaded', function() {
-    // Find all elements with class 'quill-editor'
-    const editorElements = document.querySelectorAll('.quill-editor');
+(function() {
+    // Configuration
+    const QUILL_VERSION = '1.3.6';
+    const QUILL_CSS_URL = `https://cdn.quilljs.com/${QUILL_VERSION}/quill.snow.css`;
+    const QUILL_JS_URL = `https://cdn.quilljs.com/${QUILL_VERSION}/quill.min.js`;
     
-    // Configure Quill toolbar
-    const toolbarOptions = [
-        ['bold', 'italic', 'underline', 'strike'],
-        ['blockquote', 'code-block'],
-        [{ 'header': 1 }, { 'header': 2 }],
-        [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-        [{ 'script': 'sub'}, { 'script': 'super' }],
-        [{ 'indent': '-1'}, { 'indent': '+1' }],
-        [{ 'direction': 'rtl' }],
-        [{ 'size': ['small', false, 'large', 'huge'] }],
-        [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
-        [{ 'color': [] }, { 'background': [] }],
-        [{ 'font': [] }],
-        [{ 'align': [] }],
-        ['clean'],
-        ['link', 'image', 'video']
-    ];
+    // Track load state
+    let isQuillLoaded = false;
+    let isQuillCssLoaded = false;
     
-    // Initialize Quill for each editor element
-    editorElements.forEach(function(editorElement) {
-        // Create a container for the Quill editor
-        const quillContainer = document.createElement('div');
-        quillContainer.classList.add('quill-container');
-        editorElement.parentNode.insertBefore(quillContainer, editorElement);
+    // Store editor instances
+    const editorInstances = {};
+    
+    /**
+     * Check if Quill is already loaded on the page
+     */
+    function checkQuillLoaded() {
+        return typeof window.Quill !== 'undefined';
+    }
+    
+    /**
+     * Load Quill's CSS stylesheet if not already loaded
+     */
+    function loadQuillCss() {
+        if (isQuillCssLoaded || document.querySelector(`link[href="${QUILL_CSS_URL}"]`)) {
+            isQuillCssLoaded = true;
+            return;
+        }
         
-        // Hide the original textarea
-        editorElement.style.display = 'none';
+        const link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.href = QUILL_CSS_URL;
+        link.onload = () => {
+            console.log("✅ Quill CSS loaded");
+            isQuillCssLoaded = true;
+        };
+        document.head.appendChild(link);
+    }
+    
+    /**
+     * Load Quill JavaScript if not already loaded
+     * @param {Function} callback - Function to call when Quill is loaded
+     */
+    function loadQuillJs(callback) {
+        if (checkQuillLoaded()) {
+            isQuillLoaded = true;
+            callback();
+            return;
+        }
         
-        // Get the form that contains this editor
-        const form = editorElement.closest('form');
-        
-        // Initialize Quill
-        const quill = new Quill(quillContainer, {
+        const script = document.createElement('script');
+        script.src = QUILL_JS_URL;
+        script.async = true;
+        script.onload = () => {
+            console.log("✅ Quill JS loaded");
+            isQuillLoaded = true;
+            callback();
+        };
+        script.onerror = (error) => {
+            console.error("❌ Failed to load Quill:", error);
+        };
+        document.head.appendChild(script);
+    }
+    
+    /**
+     * Initialize Quill on the specified element
+     * @param {string} selector - CSS selector for the container element
+     * @param {Object} options - Quill initialization options
+     * @returns {Object|null} - Quill instance or null if initialization failed
+     */
+    function initializeQuill(selector, options = {}) {
+        // Set default options
+        const defaultOptions = {
             modules: {
-                toolbar: {
-                    container: toolbarOptions,
-                    handlers: {
-                        // Custom handlers will be added after initialization
-                    }
-                }
+                toolbar: [
+                    ['bold', 'italic', 'underline', 'strike'],
+                    ['blockquote', 'code-block'],
+                    [{ 'header': 1 }, { 'header': 2 }],
+                    [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                    [{ 'script': 'sub'}, { 'script': 'super' }],
+                    [{ 'indent': '-1'}, { 'indent': '+1' }],
+                    [{ 'size': ['small', false, 'large', 'huge'] }],
+                    [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
+                    [{ 'color': [] }, { 'background': [] }],
+                    [{ 'font': [] }],
+                    [{ 'align': [] }],
+                    ['clean'],
+                    ['link', 'image', 'video']
+                ]
             },
             theme: 'snow'
-        });
+        };
         
-        // Apply custom styling to the toolbar
-        const toolbarElement = quillContainer.querySelector('.ql-toolbar');
-        if (toolbarElement) {
-            toolbarElement.style.display = 'flex';
-            toolbarElement.style.flexWrap = 'wrap';
-            toolbarElement.style.alignItems = 'center';
-            toolbarElement.style.justifyContent = 'flex-start';
+        // Merge options
+        const mergedOptions = { ...defaultOptions, ...options };
+        
+        try {
+            const container = document.querySelector(selector);
+            if (!container) {
+                console.error(`❌ Element not found: ${selector}`);
+                return null;
+            }
+            
+            const quill = new Quill(selector, mergedOptions);
+            console.log(`✅ Quill initialized on ${selector}`);
+            
+            // Store instance for later access
+            const instanceId = selector.replace(/[^a-zA-Z0-9]/g, '_');
+            editorInstances[instanceId] = quill;
+            
+            return quill;
+        } catch (error) {
+            console.error("❌ Failed to initialize Quill:", error);
+            return null;
         }
-        
-        // If there's initial content in the textarea, load it into Quill
-        quill.root.innerHTML = editorElement.value;
-        
-        // When the form is submitted, update the textarea with Quill content
-        if (form) {
-            form.addEventListener('submit', function() {
-                editorElement.value = quill.root.innerHTML;
-            });
+    }
+    
+    /**
+     * Create a container for Quill editor
+     * @param {string} targetSelector - Selector for the target element (usually a textarea)
+     * @param {string} containerId - ID to give the new container
+     * @returns {Element|null} - The created container or null if creation failed
+     */
+    function createEditorContainer(targetSelector, containerId) {
+        try {
+            const targetElement = document.querySelector(targetSelector);
+            if (!targetElement) {
+                console.error(`❌ Target element not found: ${targetSelector}`);
+                return null;
+            }
+            
+            // Check if container already exists
+            let container = document.getElementById(containerId);
+            if (container) {
+                console.log(`⚠️ Container already exists: ${containerId}`);
+                return container;
+            }
+            
+            // Create new container
+            container = document.createElement('div');
+            container.id = containerId;
+            container.style.height = '400px';
+            container.style.marginBottom = '20px';
+            
+            // Hide the target element (usually a textarea)
+            targetElement.style.display = 'none';
+            
+            // Insert container before the target element
+            targetElement.parentNode.insertBefore(container, targetElement);
+            
+            console.log(`✅ Created editor container: ${containerId}`);
+            return container;
+        } catch (error) {
+            console.error("❌ Failed to create editor container:", error);
+            return null;
         }
-        
-        // Add AI buttons to the toolbar
-        const toolbar = quillContainer.querySelector('.ql-toolbar');
-        if (toolbar) {
-            // Add spacer between regular toolbar and AI buttons
-            const spacer = document.createElement('span');
-            spacer.className = 'ql-toolbar-spacer';
-            spacer.style.flex = '1';
-            toolbar.appendChild(spacer);
+    }
+    
+    /**
+     * Add AI Assist button to Quill toolbar
+     * @param {Object} quill - Quill editor instance
+     * @param {string} modalId - ID of the AI Assist modal
+     */
+    function addAIAssistButton(quill, modalId = 'aiAssistModal') {
+        try {
+            const toolbar = document.querySelector('.ql-toolbar');
+            if (!toolbar) {
+                console.warn("⚠️ Quill toolbar not found");
+                return;
+            }
             
-            // Create AI Generate button
-            const aiGenerateBtn = document.createElement('button');
-            aiGenerateBtn.className = 'ql-ai-generate';
-            aiGenerateBtn.innerHTML = 'AI Generate';
-            aiGenerateBtn.title = 'Generate content with AI';
-            toolbar.appendChild(aiGenerateBtn);
+            // Check if button already exists
+            if (toolbar.querySelector('.ai-assist-btn')) {
+                return;
+            }
             
-            // Create AI Enhance button
-            const aiEnhanceBtn = document.createElement('button');
-            aiEnhanceBtn.className = 'ql-ai-enhance';
-            aiEnhanceBtn.innerHTML = 'AI Enhance';
-            aiEnhanceBtn.title = 'Enhance selected text with AI';
-            toolbar.appendChild(aiEnhanceBtn);
+            const aiButton = document.createElement('button');
+            aiButton.className = 'btn btn-primary btn-sm ms-2 ai-assist-btn';
+            aiButton.innerHTML = '<i class="fas fa-robot"></i> AI Assist';
+            aiButton.type = 'button';
             
-            // Add click handler for AI Generate button
-            aiGenerateBtn.addEventListener('click', function() {
-                const modal = document.getElementById('aiModal');
-                const promptInput = document.getElementById('aiPromptInput');
-                const generateBtn = document.getElementById('aiGenerateBtn');
-                
-                // Show the modal using Bootstrap
-                const bootstrapModal = bootstrap.Modal.getOrCreateInstance(modal);
-                bootstrapModal.show();
-                
-                // Setup the generate button
-                const oldClickHandler = generateBtn.onclick;
-                generateBtn.onclick = function() {
-                    const prompt = promptInput.value.trim();
-                    if (!prompt) return;
-                    
-                    // Show loading
-                    document.getElementById('aiModalLoading').style.display = 'block';
-                    
-                    // Call API to generate content
-                    fetch('/api/ai/generate', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ prompt: prompt })
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        // Hide loading
-                        document.getElementById('aiModalLoading').style.display = 'none';
-                        
-                        // Insert generated content at cursor position
-                        const range = quill.getSelection();
-                        if (range) {
-                            quill.insertText(range.index, data.content);
-                        } else {
-                            quill.insertText(quill.getLength(), data.content);
-                        }
-                        
-                        // Close modal using Bootstrap
-                        const bootstrapModal = bootstrap.Modal.getInstance(modal);
-                        if (bootstrapModal) {
-                            bootstrapModal.hide();
-                        }
-                        promptInput.value = '';
-                    })
-                    .catch(error => {
-                        console.error('Error generating content:', error);
-                        document.getElementById('aiModalLoading').style.display = 'none';
-                        alert('Error generating content. Please try again.');
-                    });
-                };
-                
-                // Reset input on modal close
-                const closeModal = function() {
-                    const bootstrapModal = bootstrap.Modal.getInstance(modal);
-                    if (bootstrapModal) {
-                        bootstrapModal.hide();
+            aiButton.onclick = function() {
+                const modal = document.getElementById(modalId);
+                if (modal) {
+                    // Initialize Bootstrap modal if Bootstrap is available
+                    if (typeof bootstrap !== 'undefined') {
+                        const modalInstance = new bootstrap.Modal(modal);
+                        modalInstance.show();
+                    } else {
+                        // Fallback for when Bootstrap is not available
+                        modal.style.display = 'block';
                     }
-                    promptInput.value = '';
-                    generateBtn.onclick = oldClickHandler;
-                };
+                } else {
+                    console.error(`❌ Modal not found: ${modalId}`);
+                }
+            };
+            
+            toolbar.appendChild(aiButton);
+            console.log("✅ Added AI Assist button to toolbar");
+        } catch (error) {
+            console.error("❌ Failed to add AI Assist button:", error);
+        }
+    }
+    
+    /**
+     * Set up the media selector for image insertion
+     * @param {Object} quill - Quill editor instance
+     */
+    function setupMediaSelector(quill) {
+        try {
+            const imageButton = document.querySelector('.ql-image');
+            if (!imageButton) {
+                console.warn("⚠️ Image button not found in Quill toolbar");
+                return;
+            }
+            
+            // Remove existing event listeners by cloning
+            const newImageButton = imageButton.cloneNode(true);
+            imageButton.parentNode.replaceChild(newImageButton, imageButton);
+            
+            newImageButton.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
                 
-                // Close modal when user clicks cancel or X
-                modal.querySelector('.btn-secondary').onclick = closeModal;
-                modal.querySelector('.btn-close').onclick = closeModal;
-                
-                // Event listener for when the modal is hidden
-                modal.addEventListener('hidden.bs.modal', function() {
-                    promptInput.value = '';
-                    generateBtn.onclick = oldClickHandler;
-                });
+                // Use the global openMediaSelector function if available
+                if (typeof window.openMediaSelector === 'function') {
+                    window.openMediaSelector(function(id, url, name) {
+                        const range = quill.getSelection() || { index: 0 };
+                        quill.insertEmbed(range.index, 'image', url);
+                    });
+                } else {
+                    console.error("❌ openMediaSelector function not found");
+                    
+                    // Try to find and show the media selector modal directly
+                    const modal = document.getElementById('mediaSelectorModal');
+                    if (modal && typeof bootstrap !== 'undefined') {
+                        const modalInstance = new bootstrap.Modal(modal);
+                        modalInstance.show();
+                    } else {
+                        console.error("❌ Cannot find media selector modal or Bootstrap is not available");
+                    }
+                }
             });
             
-            // Add click handler for AI Enhance button
-            aiEnhanceBtn.addEventListener('click', function() {
-                const range = quill.getSelection();
-                if (!range || range.length === 0) {
-                    alert('Please select text to enhance.');
-                    return;
+            console.log("✅ Set up media selector for Quill editor");
+        } catch (error) {
+            console.error("❌ Failed to set up media selector:", error);
+        }
+    }
+    
+    /**
+     * Connect a Quill instance to a form for submission
+     * @param {Object} quill - Quill editor instance
+     * @param {string} formSelector - Selector for the form
+     * @param {string} textareaSelector - Selector for the textarea to receive Quill content
+     */
+    function connectQuillToForm(quill, formSelector, textareaSelector) {
+        try {
+            const form = document.querySelector(formSelector);
+            if (!form) {
+                console.error(`❌ Form not found: ${formSelector}`);
+                return;
+            }
+            
+            const textarea = document.querySelector(textareaSelector);
+            if (!textarea) {
+                console.error(`❌ Textarea not found: ${textareaSelector}`);
+                return;
+            }
+            
+            // Clone and replace to remove existing handlers
+            const newForm = form.cloneNode(true);
+            form.parentNode.replaceChild(newForm, form);
+            
+            newForm.addEventListener('submit', function(e) {
+                try {
+                    textarea.value = quill.root.innerHTML;
+                    console.log("✅ Updated form content with Quill editor content");
+                } catch (err) {
+                    console.error("❌ Error updating form content:", err);
+                    e.preventDefault();
                 }
-                
-                const selectedText = quill.getText(range.index, range.length);
-                if (!selectedText.trim()) {
-                    alert('Selected text is empty. Please select text to enhance.');
-                    return;
-                }
-                
-                // Show a loading placeholder
-                quill.deleteText(range.index, range.length);
-                quill.insertText(range.index, 'Enhancing with AI...', {
-                    'color': '#0dcaf0',
-                    'background': '#212529',
-                    'italic': true
-                });
-                
-                // Call API to enhance content
-                fetch('/api/ai/enhance', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                        text: selectedText,
-                        instructions: 'Improve this text by making it more engaging and professional.'
-                    })
-                })
-                .then(response => response.json())
-                .then(data => {
-                    // Replace placeholder with enhanced content
-                    quill.deleteText(range.index, 'Enhancing with AI...'.length);
-                    quill.insertText(range.index, data.content);
-                })
-                .catch(error => {
-                    console.error('Error enhancing content:', error);
-                    // Restore original text
-                    quill.deleteText(range.index, 'Enhancing with AI...'.length);
-                    quill.insertText(range.index, selectedText);
-                    alert('Error enhancing content. Please try again.');
-                });
             });
             
-            // Add some styling for the AI buttons
-            const style = document.createElement('style');
-            style.textContent = `
-                .ql-ai-generate, .ql-ai-enhance {
-                    background-color: #6c5ce7;
-                    color: white;
-                    border: none;
-                    border-radius: 4px;
-                    padding: 8px 12px;
-                    margin-left: 8px;
-                    font-size: 14px;
-                    font-weight: bold;
-                    cursor: pointer;
-                    display: inline-flex;
-                    align-items: center;
-                    justify-content: center;
-                    min-width: 100px;
-                    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-                }
-                .ql-ai-generate::before, .ql-ai-enhance::before {
-                    content: "✨";
-                    margin-right: 6px;
-                    font-size: 16px;
-                }
-                .ql-ai-generate:hover, .ql-ai-enhance:hover {
-                    background-color: #5649c9;
-                    box-shadow: 0 3px 6px rgba(0,0,0,0.3);
-                    transform: translateY(-1px);
-                    transition: all 0.2s ease;
-                }
-            `;
-            document.head.appendChild(style);
+            console.log("✅ Connected Quill to form");
+        } catch (error) {
+            console.error("❌ Failed to connect Quill to form:", error);
+        }
+    }
+    
+    /**
+     * Initialize a complete Quill editor setup
+     * @param {Object} config - Configuration object
+     */
+    function initializeCompleteEditor(config) {
+        const defaults = {
+            targetSelector: '#content',
+            containerId: 'quill-editor-container',
+            formSelector: 'form',
+            height: '500px',
+            modalId: 'aiAssistModal',
+            options: {}
+        };
+        
+        const cfg = { ...defaults, ...config };
+        
+        // Ensure Quill is loaded
+        if (!checkQuillLoaded()) {
+            loadQuillCss();
+            loadQuillJs(() => initializeCompleteEditorInternal(cfg));
+        } else {
+            initializeCompleteEditorInternal(cfg);
+        }
+    }
+    
+    /**
+     * Internal function to initialize editor once Quill is loaded
+     * @param {Object} cfg - Configuration object
+     */
+    function initializeCompleteEditorInternal(cfg) {
+        // Create container
+        const container = createEditorContainer(cfg.targetSelector, cfg.containerId);
+        if (!container) return;
+        
+        // Set height if specified
+        if (cfg.height) {
+            container.style.height = cfg.height;
+        }
+        
+        // Initialize Quill
+        const quill = initializeQuill(`#${cfg.containerId}`, cfg.options);
+        if (!quill) return;
+        
+        // Add AI button
+        addAIAssistButton(quill, cfg.modalId);
+        
+        // Set up media selector
+        setupMediaSelector(quill);
+        
+        // Connect to form
+        connectQuillToForm(quill, cfg.formSelector, cfg.targetSelector);
+        
+        // Make globally accessible
+        window.currentQuillEditor = quill;
+        
+        // Return the instance
+        return quill;
+    }
+    
+    // Expose public API
+    window.PyCommerceQuill = {
+        init: initializeCompleteEditor,
+        loadQuill: function(callback) {
+            loadQuillCss();
+            loadQuillJs(callback);
+        },
+        getEditor: function(selector) {
+            const instanceId = selector.replace(/[^a-zA-Z0-9]/g, '_');
+            return editorInstances[instanceId] || null;
+        }
+    };
+    
+    // Auto-initialize when DOM is ready
+    document.addEventListener('DOMContentLoaded', function() {
+        // Auto-detect and initialize editors with data-quill-editor attribute
+        const autoInitElements = document.querySelectorAll('[data-quill-editor]');
+        if (autoInitElements.length > 0) {
+            loadQuillCss();
+            loadQuillJs(() => {
+                autoInitElements.forEach(element => {
+                    const targetId = element.id;
+                    const containerId = `${targetId}-quill-container`;
+                    
+                    // Create a container next to the target element
+                    const container = document.createElement('div');
+                    container.id = containerId;
+                    container.style.height = element.getAttribute('data-quill-height') || '300px';
+                    element.style.display = 'none';
+                    element.parentNode.insertBefore(container, element.nextSibling);
+                    
+                    // Initialize Quill on the container
+                    const quill = initializeQuill(`#${containerId}`);
+                    
+                    // Set up form connection if in a form
+                    const form = element.closest('form');
+                    if (form && quill) {
+                        form.addEventListener('submit', function() {
+                            element.value = quill.root.innerHTML;
+                        });
+                    }
+                });
+            });
         }
     });
-});
+})();
