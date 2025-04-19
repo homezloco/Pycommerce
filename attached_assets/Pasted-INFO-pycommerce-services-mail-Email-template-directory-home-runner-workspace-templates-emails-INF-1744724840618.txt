@@ -1,0 +1,67 @@
+INFO:pycommerce.services.mail:Email template directory: /home/runner/workspace/templates/emails
+INFO:pycommerce.plugins.payment.config:Successfully loaded payment settings from database
+INFO:pycommerce.plugins.payment.config:Using development Stripe credentials
+INFO:pycommerce.plugins.payment.config:Using development PayPal credentials
+INFO:pycommerce.plugins.payment.stripe:Initializing Stripe payment plugin
+INFO:pycommerce.plugins:Registering plugin: stripe_payment v0.1.0
+INFO:pycommerce.plugins.payment.stripe:Initializing Stripe payment plugin
+INFO:pycommerce:Registered payment plugin: stripe
+INFO:pycommerce.plugins.payment.paypal:Initializing PayPal payment plugin
+INFO:pycommerce.plugins:Registering plugin: paypal_payment v0.1.0
+INFO:pycommerce.plugins.payment.paypal:Initializing PayPal payment plugin
+INFO:pycommerce:Registered payment plugin: paypal
+INFO:pycommerce.plugins:Registering plugin: standard_shipping v0.1.0
+INFO:pycommerce.plugins.shipping.standard:Initializing Standard shipping plugin
+INFO:pycommerce:Registered shipping plugin: standard
+INFO:pycommerce.models.category:Found Flask app in module app
+INFO:pycommerce.models.category:CategoryManager initialized
+INFO:pycommerce.plugins.ai:AI configuration initialized with provider: openai
+INFO:pycommerce.plugins.ai.providers:Registered AI provider: mock
+INFO:pycommerce.plugins.ai.providers:Registered AI provider: openai
+INFO:pycommerce.plugins.ai:Successfully initialized AI provider: openai
+WARNING:root:AI configuration module not available
+INFO:pycommerce.core.db:Initializing database...
+INFO:pycommerce.core.db:Database initialized successfully.
+INFO:pycommerce.core.db:Initializing database...
+INFO:pycommerce.core.db:Database initialized successfully.
+INFO:pycommerce.migrations:Database migrations initialized
+INFO:pycommerce.models.category:CategoryManager initialized
+INFO:pycommerce.services.market_analysis:Flask ProductManager initialized for fallback product lookups
+INFO:pycommerce.services.market_analysis:Market analysis service initialized
+INFO:routes.admin.categories:Initializing managers for categories routes
+INFO:pycommerce.models.category:CategoryManager initialized
+INFO:routes.admin.categories:Successfully initialized CategoryManager for admin categories routes
+INFO:routes.admin.categories:Manager initialization complete
+INFO:routes.storefront.home:Home routes registered successfully
+INFO:routes.storefront.stores:Initialized SDK TenantManager
+INFO:routes.storefront.stores:Initialized SDK ProductManager
+INFO:routes.storefront.stores:Initialized SDK CartManager
+INFO:routes.storefront.stores:Finished loading managers
+INFO:routes.storefront.cart:Initialized SDK ProductManager
+INFO:routes.storefront.cart:Initialized SDK CartManager
+INFO:routes.storefront.cart:Initialized SDK TenantManager
+INFO:routes.storefront.cart:Finished loading managers
+INFO:routes.storefront.checkout:Initialized SDK TenantManager
+INFO:routes.storefront.checkout:Initialized SDK ProductManager
+INFO:routes.storefront.checkout:Initialized SDK CartManager
+INFO:routes.storefront.checkout:Initialized SDK OrderManager
+INFO:routes.storefront.checkout:Finished loading Flask app managers
+/home/runner/workspace/pycommerce/models/page_builder.py:110: SAWarning: User-placed attribute InventoryRecord.transactions on Mapper[InventoryRecord(inventory_records)] is replacing an existing class-bound attribute of the same name.  Behavior is not fully defined in this case.  This use is deprecated and will raise an error in a future release (This warning originated from the `configure_mappers()` process, which was invoked automatically in response to a user-initiated operation.)
+  Tenant.pages = relationship("Page", back_populates="tenant", cascade="all, delete-orphan")
+INFO:routes.admin.page_builder:Setting up page builder routes with templates
+INFO:routes.admin.page_builder:Templates setup complete
+INFO:routes.admin.page_builder:Base directory: /home/runner/workspace
+INFO:routes.admin.page_builder:Template directory: /home/runner/workspace/templates
+INFO:routes.admin.page_builder:Template found: /home/runner/workspace/templates/admin/pages/list.html
+INFO:routes.admin.page_builder:Template found: /home/runner/workspace/templates/admin/pages/create.html
+INFO:routes.admin.page_builder:Template found: /home/runner/workspace/templates/admin/pages/editor.html
+INFO:web_app:Page Builder routes initialized successfully with templates
+INFO:web_app:Admin routes registered successfully
+INFO:routes.storefront.home:Home routes registered successfully
+INFO:routes.storefront.cart:Initialized SDK ProductManager
+INFO:routes.storefront.cart:Initialized SDK CartManager
+INFO:routes.storefront.cart:Initialized SDK TenantManager
+INFO:routes.storefront.cart:Finished loading managers
+INFO:routes.storefront.checkout:Initialized SDK TenantManager
+INFO:routes.storefront.checkout:Initialized SDK ProductManager
+INFO:routes.storefront.checkout:Initialized ...
