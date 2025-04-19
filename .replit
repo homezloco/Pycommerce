@@ -249,6 +249,15 @@ args = "export DATABASE_URL=$(printenv REPLIT_DB_URL 2>/dev/null || echo \"postg
 task = "shell.exec"
 args = "python main.py"
 
+[[workflows.workflow]]
+name = "Fix Database and Run Debug"
+author = 34384132
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python fix_database_connection.py --run-debug"
+
 [[ports]]
 localPort = 5000
 externalPort = 80
