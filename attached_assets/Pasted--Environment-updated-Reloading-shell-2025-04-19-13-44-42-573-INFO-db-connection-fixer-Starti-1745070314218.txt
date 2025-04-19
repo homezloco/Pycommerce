@@ -1,0 +1,73 @@
+ Environment updated. Reloading shell...
+2025-04-19 13:44:42.573 INFO db_connection_fixer - Starting database connection fixer
+2025-04-19 13:44:42.573 INFO db_connection_fixer - DATABASE_URL is properly formatted: postgresql://neondb_owner:npg_BreoUG7ukwD2@ep-red-hall-a51hczs5.us-east-2.aws.neon.tech/neondb?sslmode=require
+2025-04-19 13:44:42.573 INFO db_connection_fixer - No changes needed to DATABASE_URL.
+2025-04-19 13:44:42.573 INFO db_connection_fixer - Current DATABASE_URL: postgresql://neondb_owner:npg_BreoUG7ukwD2@ep-red-hall-a51hczs5.us-east-2.aws.neon.tech/neondb?sslmode=require
+2025-04-19 13:44:42.573 INFO db_connection_fixer - Running page builder debug with fixed DATABASE_URL
+2025-04-19 13:44:42.872 INFO page_builder_debug - Starting page builder advanced diagnostic
+2025-04-19 13:44:42.872 INFO page_builder_debug - Checking database configuration...
+2025-04-19 13:44:42.872 INFO page_builder_debug - Checking database at ep-red-hall-a51hczs5.us-east-2.aws.neon.tech/neondb?sslmode=require
+2025-04-19 13:44:43.560 INFO page_builder_debug - Database version: PostgreSQL 16.8 on x86_64-pc-linux-gnu, compiled by gcc (Debian 10.2.1-6) 10.2.1 20210110, 64-bit
+2025-04-19 13:44:43.876 INFO page_builder_debug - Found 25 tables in database
+2025-04-19 13:44:43.876 INFO page_builder_debug - ✅ Table 'pages'
+2025-04-19 13:44:43.928 INFO page_builder_debug -   - Contains 5 records
+2025-04-19 13:44:44.231 INFO page_builder_debug -   - Columns: id, tenant_id, title, slug, meta_title, meta_description, is_published, layout_data, created_at, updated_at
+2025-04-19 13:44:44.267 INFO page_builder_debug - ✅ Table 'page_sections'
+2025-04-19 13:44:44.304 INFO page_builder_debug -   - Contains 5 records
+2025-04-19 13:44:44.409 INFO page_builder_debug -   - Columns: id, page_id, section_type, position, settings, created_at, updated_at
+2025-04-19 13:44:44.444 INFO page_builder_debug - ✅ Table 'content_blocks'
+2025-04-19 13:44:44.481 INFO page_builder_debug -   - Contains 5 records
+2025-04-19 13:44:44.590 INFO page_builder_debug -   - Columns: id, section_id, block_type, position, content, settings, created_at, updated_at
+2025-04-19 13:44:44.625 INFO page_builder_debug - ✅ Table 'page_templates'
+2025-04-19 13:44:44.660 INFO page_builder_debug -   - Contains 1 records
+2025-04-19 13:44:44.762 INFO page_builder_debug -   - Columns: id, name, description, thumbnail_url, is_system, template_data, created_at, updated_at
+2025-04-19 13:44:44.832 INFO page_builder_debug - Checking template files...
+2025-04-19 13:44:44.832 INFO page_builder_debug - Checking template: templates/admin/pages/list.html
+2025-04-19 13:44:44.832 INFO page_builder_debug - ✅ Template exists: templates/admin/pages/list.html
+2025-04-19 13:44:44.832 INFO page_builder_debug - Checking template: templates/admin/pages/create.html
+2025-04-19 13:44:44.832 INFO page_builder_debug - ✅ Template exists: templates/admin/pages/create.html
+2025-04-19 13:44:44.832 INFO page_builder_debug - Checking template: templates/admin/pages/editor.html
+2025-04-19 13:44:44.832 INFO page_builder_debug - ✅ Template exists: templates/admin/pages/editor.html
+2025-04-19 13:44:44.832 INFO page_builder_debug - Checking static files...
+2025-04-19 13:44:44.832 INFO page_builder_debug - Checking static file: static/js/page-editor.js
+2025-04-19 13:44:44.833 INFO page_builder_debug - ✅ Static file exists: static/js/page-editor.js
+2025-04-19 13:44:44.833 INFO page_builder_debug - Checking static file: static/js/page-builder.js
+2025-04-19 13:44:44.833 INFO page_builder_debug - ✅ Static file exists: static/js/page-builder.js
+2025-04-19 13:44:44.833 INFO page_builder_debug - Checking static file: static/css/page-builder.css
+2025-04-19 13:44:44.833 INFO page_builder_debug - ✅ Static file exists: static/css/page-builder.css
+2025-04-19 13:44:44.833 INFO page_builder_debug - Checking imports for page builder components...
+2025-04-19 13:44:47.143 INFO pycommerce.services.mail - Email template directory: /home/runner/workspace/templates/emails
+2025-04-19 13:44:47.342 INFO pycommerce.plugins.payment.config - Successfully loaded payment settings from database
+2025-04-19 13:44:47.378 INFO pycommerce.plugins.payment.config - Using development Stripe credentials
+2025-04-19 13:44:47.378 INFO pycommerce.plugins.payment.config - Using development PayPal credentials
+2025-04-19 13:44:47.381 INFO pycommerce.plugins.payment.stripe - Initializing Stripe payment plugin
+2025-04-19 13:44:47.381 INFO pycommerce.plugins - Registering plugin: stripe_payment v0.1.0
+2025-04-19 13:44:47.381 INFO pycommerce.plugins.payment.stripe - Initializing Stripe payment plugin
+2025-04-19 13:44:47.381 INFO pycommerce - Registered payment plugin: stripe
+2025-04-19 13:44:47.381 INFO pycommerce.plugins.payment.paypal - Initializing PayPal payment plugin
+2025-04-19 13:44:47.381 INFO pycommerce.plugins - Registering plugin: paypal_payment v0.1.0
+2025-04-19 13:44:47.381 INFO pycommerce.plugins.payment.paypal - Initializing PayPal payment plugin
+2025-04-19 13:44:47.381 INFO pycommerce - Registered payment plugin: paypal
+2025-04-19 13:44:47.381 INFO pycommerce.plugins - Registering plugin: standard_shipping v0.1.0
+2025-04-19 13:44:47.381 INFO pycommerce.plugins.shipping.standard - Initializing Standard shipping plugin
+2025-04-19 13:44:47.381 INFO pycommerce - Registered shipping plugin: standard
+2025-04-19 13:44:48.755 INFO pycommerce.models.category - Found Flask app in module app
+2025-04-19 13:44:48.755 INFO pycommerce.models.category - CategoryManager initialized
+2025-04-19 13:44:48.822 INFO pycommerce.plugins.ai - AI configuration initialized with provider: openai
+2025-04-19 13:44:48.822 INFO pycommerce.plugins.ai.providers - Registered AI provider: mock
+2025-04-19 13:44:49.113 INFO pycommerce.plugins.ai.providers - Registered AI provider: openai
+2025-04-19 13:44:49.140 INFO pycommerce.plugins.ai - Successfully initialized AI provider: openai
+2025-04-19 13:44:49.140 WARNING root - AI configuration module not available
+2025-04-19 13:44:49.372 INFO page_builder_debug - ✅ Successfully imported routes.admin.page_builder with attributes: APIRouter, Any, Body, ContentBlockManager, Dict, Form, HTMLResponse, HTTPException, JSONResponse, Jinja2Templates, List, Optional, Page, PageManager, PageSectionManager, PageTemplate, PageTemplateManager, RedirectResponse, Request, SessionLocal, TenantManager, WysiwygService, admin_create_page, api_create_page, api_delete_page, api_list_pages, api_update_page, create_block, create_section, debug_pages, delete_block, delete_section, get_managers, json, logger, logging, page_create, page_create_form, page_delete, page_edit_form, page_editor, page_preview, page_templates_list, page_update, pages_debug, pages_list, router, setup_routes, status, templates, update_block, update_section, wysiwyg_service
+2025-04-19 13:44:49.372 INFO page_builder_debug - ✅ Successfully imported pycommerce.models.page_builder with attributes: Any, Base, Boolean, Column, ContentBlock, ContentBlockManager, DateTime, Dict, ForeignKey, Integer, JSON, List, Optional, Page, PageManager, PageSection, PageSectionManager, PageTemplate, PageTemplateManager, QueryableAttribute, Session, SessionLocal, String, Tenant, Text, UUID, Union, datetime, logger, logging, relationship, uuid
+2025-04-19 13:44:49.376 INFO page_builder_debug - ✅ Successfully imported routes.admin.ai_content with attributes: APIRouter, Any, Body, Dict, Form, HTMLResponse, HTTPException, JSONResponse, Jinja2Templates, List, Optional, Query, Request, TenantManager, enhance_content, generate_content, get_ai_config, get_ai_provider, get_ai_provider_instance, get_ai_settings, is_ai_enabled, json, load_ai_config, logger, logging, router, setup_routes, templates, tenant_manager, update_ai_config, update_ai_settings
+2025-04-19 13:44:49.376 INFO page_builder_debug - ✅ Successfully imported pycommerce.models.tenant with attributes: Any, Dict, List, Optional, Tenant, TenantDTO, TenantManager, UUID, datetime, db_session, logger, logging, uuid
+2025-04-19 13:44:49.376 INFO page_builder_debug - ✅ Successfully imported pycommerce.services.wysiwyg_service with attributes: ALLOWED_ATTRS, ALLOWED_STYLES, ALLOWED_TAGS, Any, BeautifulSoup, Dict, List, MediaService, Optional, Tuple, WysiwygService, bleach, json, logger, logging, re, uuid
+2025-04-19 13:44:49.376 INFO page_builder_debug - Checking model classes...
+2025-04-19 13:44:49.376 INFO page_builder_debug - ✅ Successfully imported model classes
+2025-04-19 13:44:49.377 INFO page_builder_debug - Debug results saved to page_builder_debug_results.json
+2025-04-19 13:44:49.377 INFO page_builder_debug - Import checks: 5/5 successful
+2025-04-19 13:44:49.377 INFO page_builder_debug - Table checks: 4/4 tables exist
+2025-04-19 13:44:49.377 INFO page_builder_debug - Template checks: 3/3 templates exist
+2025-04-19 13:44:49.377 INFO page_builder_debug - Static file checks: 3/3 files exist
+2025-04-19 13:44:49.377 INFO page_builder_debug - Page builder diagnostics completed
