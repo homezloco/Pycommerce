@@ -1,0 +1,33 @@
+2025-04-19 13:39:14.396 INFO page_builder_debug - Starting page builder advanced diagnostic
+2025-04-19 13:39:14.396 INFO page_builder_debug - Checking database configuration...
+2025-04-19 13:39:14.396 INFO page_builder_debug - Checking database at https://kv.replit.com/v0/eyJhbGciOiJIUzUxMiIsImlzcyI6ImNvbm1hbiIsImtpZCI6InByb2Q6MSIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjb25tYW4iLCJleHAiOjE3NDUxNzc4ODUsImlhdCI6MTc0NTA2NjI4NSwiZGF0YWJhc2VfaWQiOiI0MTg0OGU2OC1iNzJmLTRkMjEtOGYwZS0yMjdhYTI5NzdmNGMifQ.nWuyhZMXkd9JRQ6meLwPoyEUCDkCbT8sdcLFfzrX7mFU4msX8tSuoywlRaK7L0hj737iQVHaAadtlkEybzTlaw
+2025-04-19 13:39:14.409 ERROR page_builder_debug - Database error: Can't load plugin: sqlalchemy.dialects:https
+2025-04-19 13:39:14.426 INFO page_builder_debug - Checking template files...
+2025-04-19 13:39:14.426 INFO page_builder_debug - Checking template: templates/admin/pages/list.html
+2025-04-19 13:39:14.426 INFO page_builder_debug - ✅ Template exists: templates/admin/pages/list.html
+2025-04-19 13:39:14.427 INFO page_builder_debug - Checking template: templates/admin/pages/create.html
+2025-04-19 13:39:14.427 INFO page_builder_debug - ✅ Template exists: templates/admin/pages/create.html
+2025-04-19 13:39:14.427 INFO page_builder_debug - Checking template: templates/admin/pages/editor.html
+2025-04-19 13:39:14.427 INFO page_builder_debug - ✅ Template exists: templates/admin/pages/editor.html
+2025-04-19 13:39:14.427 INFO page_builder_debug - Checking static files...
+2025-04-19 13:39:14.427 INFO page_builder_debug - Checking static file: static/js/page-editor.js
+2025-04-19 13:39:14.427 INFO page_builder_debug - ✅ Static file exists: static/js/page-editor.js
+2025-04-19 13:39:14.427 INFO page_builder_debug - Checking static file: static/js/page-builder.js
+2025-04-19 13:39:14.427 INFO page_builder_debug - ✅ Static file exists: static/js/page-builder.js
+2025-04-19 13:39:14.427 INFO page_builder_debug - Checking static file: static/css/page-builder.css
+2025-04-19 13:39:14.427 INFO page_builder_debug - ✅ Static file exists: static/css/page-builder.css
+2025-04-19 13:39:14.427 INFO page_builder_debug - Checking imports for page builder components...
+2025-04-19 13:39:14.814 ERROR page_builder_debug - ❌ Failed to import routes.admin.page_builder with unexpected error: Can't load plugin: sqlalchemy.dialects:https
+2025-04-19 13:39:14.834 ERROR page_builder_debug - ❌ Failed to import pycommerce.models.page_builder with unexpected error: Can't load plugin: sqlalchemy.dialects:https
+2025-04-19 13:39:14.841 ERROR page_builder_debug - ❌ Failed to import routes.admin.ai_content with unexpected error: Can't load plugin: sqlalchemy.dialects:https
+2025-04-19 13:39:14.855 ERROR page_builder_debug - ❌ Failed to import pycommerce.models.tenant with unexpected error: Can't load plugin: sqlalchemy.dialects:https
+2025-04-19 13:39:14.862 ERROR page_builder_debug - ❌ Failed to import pycommerce.services.wysiwyg_service with unexpected error: Can't load plugin: sqlalchemy.dialects:https
+2025-04-19 13:39:14.863 INFO page_builder_debug - Checking model classes...
+2025-04-19 13:39:14.869 ERROR page_builder_debug - ❌ Failed to import model classes: Can't load plugin: sqlalchemy.dialects:https
+2025-04-19 13:39:14.870 INFO page_builder_debug - Debug results saved to page_builder_debug_results.json
+2025-04-19 13:39:14.870 INFO page_builder_debug - Import checks: 0/5 successful
+2025-04-19 13:39:14.870 INFO page_builder_debug - Template checks: 3/3 templates exist
+2025-04-19 13:39:14.870 INFO page_builder_debug - Static file checks: 3/3 files exist
+2025-04-19 13:39:14.870 INFO page_builder_debug - Page builder diagnostics completed
+2025-04-19 13:39:14.870 ERROR page_builder_debug - ❌ CRITICAL: Unable to load model classes
+2025-04-19 13:39:14.871 ERROR page_builder_debug - ❌ CRITICAL: Database connection failed
