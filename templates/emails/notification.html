@@ -1,0 +1,21 @@
+
+{% extends "emails/base.html" %}
+
+{% block title %}PyCommerce Notification{% endblock %}
+
+{% block header %}Notification{% endblock %}
+
+{% block content %}
+<p>Hello {{ recipient_name }},</p>
+
+<p>{{ message }}</p>
+
+{% if action_url %}
+<p style="text-align: center; margin: 30px 0;">
+    <a href="{{ action_url }}" class="btn">{{ action_text|default:"View Details" }}</a>
+</p>
+{% endif %}
+
+<p>Thank you,<br>
+The PyCommerce Team</p>
+{% endblock %}
