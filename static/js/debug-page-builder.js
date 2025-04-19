@@ -293,3 +293,135 @@ function addDebugButton() {
 
 // Try to add the debug button when the script loads
 setTimeout(addDebugButton, 1500);
+/**
+ * Debug utility for the page builder interface
+ * This script provides helpful diagnostics and troubleshooting for the page builder
+ */
+
+(function() {
+    console.log("===== Page Builder Debug Utility =====");
+    
+    window.debugPageBuilderEditor = function() {
+        console.log("Running page builder editor diagnostics...");
+        
+        // Check for editor container
+        const editorContainer = document.querySelector('#content, #page-editor-container, [data-page-builder]');
+        if (!editorContainer) {
+            console.error("❌ No page editor container found");
+            return false;
+        }
+        
+        console.log(`✅ Found editor container: ${editorContainer.id || editorContainer.className}`);
+        
+        // Check for Quill integration
+        if (typeof Quill !== 'undefined') {
+            console.log("✅ Quill is available");
+            
+            // Check if there's a Quill instance
+            try {
+                const quillInstance = Quill.find(editorContainer);
+                if (quillInstance) {
+                    console.log("✅ Active Quill instance found");
+                    console.log(`   - Content length: ${quillInstance.getText().length} characters`);
+                } else {
+                    console.warn("⚠️ No Quill instance found for the editor container");
+                }
+            } catch (e) {
+                console.error("❌ Error checking Quill instance:", e);
+            }
+        } else {
+            console.error("❌ Quill is not loaded");
+        }
+        
+        // Check form integration
+        const form = editorContainer.closest('form');
+        if (form) {
+            console.log(`✅ Editor is within a form: ${form.id || 'unnamed form'}`);
+            console.log(`   - Form action: ${form.action}`);
+            console.log(`   - Form method: ${form.method}`);
+            
+            // Check for submit handler
+            const formSubmitEvents = getEventListeners(form, 'submit');
+            console.log(`   - Form has ${formSubmitEvents.length} submit handlers`);
+        } else {
+            console.warn("⚠️ Editor is not within a form");
+        }
+        
+        // Check for media selector integration
+        const mediaSelectorModal = document.getElementById('mediaSelectorModal');
+        if (mediaSelectorModal) {
+            console.log("✅ Media selector modal found");
+            
+            // Check if it's properly initialized with Bootstrap
+            if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+                try {
+                    const modalInstance = bootstrap.Modal.getInstance(mediaSelectorModal);
+                    console.log(`   - Modal initialized: ${modalInstance !== null}`);
+                } catch (e) {
+                    console.warn("⚠️ Modal not properly initialized:", e);
+                }
+            } else {
+                console.warn("⚠️ Bootstrap modal functionality not available");
+            }
+        } else {
+            console.warn("⚠️ Media selector modal not found");
+        }
+        
+        // Check for page sections handling
+        const pageSections = document.querySelectorAll('.page-section, [data-section-id]');
+        if (pageSections.length > 0) {
+            console.log(`✅ Found ${pageSections.length} page sections`);
+            
+            pageSections.forEach((section, index) => {
+                const sectionId = section.dataset.sectionId || 'unknown';
+                const sectionType = section.dataset.sectionType || 'unknown';
+                console.log(`   - Section #${index + 1}: ID=${sectionId}, Type=${sectionType}`);
+            });
+        } else {
+            console.log("ℹ️ No page sections found (may be a new page)");
+        }
+        
+        // Check content blocks
+        const contentBlocks = document.querySelectorAll('.content-block, [data-block-id]');
+        if (contentBlocks.length > 0) {
+            console.log(`✅ Found ${contentBlocks.length} content blocks`);
+        } else {
+            console.log("ℹ️ No content blocks found (may be a new page)");
+        }
+        
+        // Check template functionality
+        if (window.pageBuilderTemplates) {
+            console.log(`✅ Page builder templates available: ${Object.keys(window.pageBuilderTemplates).length} templates`);
+        } else {
+            console.warn("⚠️ Page builder templates not defined");
+        }
+        
+        console.log("===== End of Page Builder Diagnostics =====");
+        return true;
+    };
+    
+    // Helper function to get event listeners (browser support varies)
+    function getEventListeners(element, eventType) {
+        // This is a simplified version since getEventListeners is only in Chrome DevTools
+        try {
+            // For browsers that support getEventListeners in console
+            if (window.getEventListeners) {
+                return window.getEventListeners(element)[eventType] || [];
+            } else {
+                // For browsers that don't support it, we can't reliably tell
+                return [];
+            }
+        } catch (e) {
+            console.log("Cannot determine event listeners count");
+            return [];
+        }
+    }
+    
+    // Auto-run detection on page load
+    setTimeout(function() {
+        // Only run on pages that likely have the page builder
+        if (document.querySelector('#content, #page-editor-container, [data-page-builder]')) {
+            console.log("Page builder detected, debug utility ready (call window.debugPageBuilderEditor() to run diagnostics)");
+        }
+    }, 1000);
+})();

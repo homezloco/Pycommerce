@@ -153,7 +153,7 @@ def check_database(db_url):
                             for idx, col_name in enumerate(column_names):
                                 value = result[idx]
                                 # Convert non-serializable types to string
-                                if isinstance(value, (datetime.datetime, uuid.UUID)):
+                                if isinstance(value, (datetime, uuid.UUID)):
                                     value = str(value)
                                 sample_data[col_name] = value
                             table_results[table]["sample_record"] = sample_data
