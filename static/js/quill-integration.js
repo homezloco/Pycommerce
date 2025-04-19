@@ -340,17 +340,45 @@
             height: '500px',
             modalId: 'aiAssistModal',
             options: {},
-            maxRetries: 3,
-            retryDelay: 500
+            maxRetries: 5,
+            retryDelay: 500,
+            debug: false
         };
 
         const cfg = { ...defaults, ...config };
+        
+        // Enable extra logging if debug mode
+        if (cfg.debug) {
+            console.log(`Initializing Quill editor with config:`, cfg);
+        }
 
         // Check if the target element exists
         const targetElement = document.querySelector(cfg.targetSelector);
         if (!targetElement) {
             console.error(`❌ Target element not found: ${cfg.targetSelector}`);
             console.log(`Will retry initialization in ${cfg.retryDelay}ms...`);
+
+            // Try to look for alternative targets
+            const potentialTargets = document.querySelectorAll('textarea[name*="content"], textarea[id*="content"]');
+            if (potentialTargets.length > 0) {
+                console.log(`Found ${potentialTargets.length} potential alternative targets`);
+                potentialTargets.forEach((target, i) => {
+                    console.log(`  - Alternative target #${i+1}: #${target.id || 'no-id'} (name: ${target.name || 'no-name'})`);
+                });
+                
+                // Try the first alternative if this is our last retry
+                if (!cfg.currentRetry) cfg.currentRetry = 0;
+                if (cfg.currentRetry >= cfg.maxRetries - 1 && potentialTargets.length > 0) {
+                    const alternativeTarget = potentialTargets[0];
+                    console.log(`Trying alternative target: #${alternativeTarget.id || 'no-id'}`);
+                    
+                    const newCfg = { ...cfg };
+                    newCfg.targetSelector = alternativeTarget.id ? `#${alternativeTarget.id}` : `textarea[name="${alternativeTarget.name}"]`;
+                    newCfg.containerId = `quill-editor-container-alternative`;
+                    
+                    return initializeCompleteEditor(newCfg);
+                }
+            }
 
             if (!cfg.currentRetry) cfg.currentRetry = 0;
             if (cfg.currentRetry < cfg.maxRetries) {
@@ -361,6 +389,18 @@
                 }, cfg.retryDelay);
             } else {
                 console.error(`❌ Failed to initialize editor after ${cfg.maxRetries} retries`);
+                
+                // Report detailed error state to help debugging
+                console.error("Editor initialization state:");
+                console.error(`  - Target selector: ${cfg.targetSelector}`);
+                console.error(`  - Quill loaded: ${typeof Quill !== 'undefined'}`);
+                console.error(`  - Bootstrap available: ${typeof bootstrap !== 'undefined'}`);
+                console.error(`  - Form found: ${document.querySelector(cfg.formSelector) ? 'Yes' : 'No'}`);
+                
+                if (typeof PyCommerceQuillDebug !== 'undefined') {
+                    console.log("Running PyCommerceQuillDebug to diagnose issues...");
+                    PyCommerceQuillDebug.diagnose();
+                }
             }
             return;
         }

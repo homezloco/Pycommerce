@@ -131,139 +131,230 @@
         document.getElementById('slugPreview').textContent = slug;
     }
 
-    document.addEventListener('DOMContentLoaded', function() {
-        // Initialize PyCommerceQuill with the editor config
-        const editorConfig = {{ editor_config|safe }};
+    // Track script loading state
+    const scriptLoadState = {
+        quill: false,
+        quillDebug: false,
+        quillIntegration: false
+    };
 
-        // Make sure Quill and PyCommerceQuill are loaded
-        if (typeof Quill === 'undefined') {
+    // Function to check if all scripts are loaded
+    function checkAllScriptsLoaded() {
+        if (scriptLoadState.quill && scriptLoadState.quillDebug && scriptLoadState.quillIntegration) {
+            console.log("✅ All scripts loaded successfully, initializing editor...");
+            initWithPyCommerce();
+            return true;
+        }
+        return false;
+    }
+
+    // Load the required scripts in parallel but initialize in the right order
+    function loadEditorScripts() {
+        // Check if Quill is already loaded
+        if (typeof Quill !== 'undefined') {
+            console.log("Quill already loaded");
+            scriptLoadState.quill = true;
+        } else {
             console.log("Loading Quill dynamically...");
-            const quillScript = document.createElement('script');
-            quillScript.src = 'https://cdn.quilljs.com/1.3.6/quill.min.js';
             
+            // Load Quill CSS
             const quillCSS = document.createElement('link');
             quillCSS.rel = 'stylesheet';
             quillCSS.href = 'https://cdn.quilljs.com/1.3.6/quill.snow.css';
-            
             document.head.appendChild(quillCSS);
             
+            // Load Quill JS
+            const quillScript = document.createElement('script');
+            quillScript.src = 'https://cdn.quilljs.com/1.3.6/quill.min.js';
             quillScript.onload = function() {
-                console.log("Quill loaded, initializing editor...");
-                initializePageEditor();
+                console.log("✅ Quill loaded");
+                scriptLoadState.quill = true;
+                checkAllScriptsLoaded();
             };
-            
+            quillScript.onerror = function(e) {
+                console.error("❌ Failed to load Quill:", e);
+                fallbackToDirectInitialization();
+            };
             document.head.appendChild(quillScript);
-        } else {
-            console.log("Quill already loaded, initializing editor...");
-            initializePageEditor();
         }
         
-        // Function to initialize the editor when Quill is available
-        function initializePageEditor() {
-            // Load debugging utility first
-            if (typeof PyCommerceQuillDebug === 'undefined') {
-                console.log("Loading Quill debugging utility...");
+        // Check if debug utility is already loaded
+        if (typeof PyCommerceQuillDebug !== 'undefined') {
+            console.log("Quill debug utility already loaded");
+            scriptLoadState.quillDebug = true;
+        } else {
+            console.log("Loading Quill debugging utility...");
+            const debugScript = document.createElement('script');
+            debugScript.src = '/static/js/quill-debug-utility.js';
+            debugScript.onload = function() {
+                console.log("✅ Debug utility loaded");
+                scriptLoadState.quillDebug = true;
+                checkAllScriptsLoaded();
+            };
+            debugScript.onerror = function(e) {
+                console.error("❌ Failed to load debug utility:", e);
+                scriptLoadState.quillDebug = true; // Mark as loaded anyway to continue
+                checkAllScriptsLoaded();
+            };
+            document.head.appendChild(debugScript);
+        }
+        
+        // Check if PyCommerceQuill is already loaded
+        if (typeof PyCommerceQuill !== 'undefined') {
+            console.log("PyCommerceQuill integration already loaded");
+            scriptLoadState.quillIntegration = true;
+        } else {
+            console.log("Loading PyCommerceQuill integration...");
+            const integrationScript = document.createElement('script');
+            integrationScript.src = '/static/js/quill-integration.js';
+            integrationScript.onload = function() {
+                console.log("✅ PyCommerceQuill loaded");
+                scriptLoadState.quillIntegration = true;
+                checkAllScriptsLoaded();
+            };
+            integrationScript.onerror = function(e) {
+                console.error("❌ Failed to load PyCommerceQuill integration:", e);
+                fallbackToDirectInitialization();
+            };
+            document.head.appendChild(integrationScript);
+        }
+        
+        // Set a timeout to check if all scripts loaded
+        setTimeout(function() {
+            if (!checkAllScriptsLoaded()) {
+                console.warn("⚠️ Not all scripts loaded after timeout, attempting initialization anyway");
+                // Try to initialize with whatever we have
+                if (typeof Quill !== 'undefined') {
+                    if (typeof PyCommerceQuill !== 'undefined' && PyCommerceQuill.init) {
+                        initWithPyCommerce();
+                    } else {
+                        fallbackToDirectInitialization();
+                    }
+                } else {
+                    console.error("❌ Quill not loaded, cannot initialize editor");
+                }
+            }
+        }, 3000);
+    }
+    
+    // Initialize with PyCommerceQuill
+    function initWithPyCommerce() {
+        const editorConfig = {{ editor_config|safe }};
+        
+        if (window.PyCommerceQuill && PyCommerceQuill.init) {
+            console.log("Initializing Quill editor with PyCommerceQuill integration");
+            
+            PyCommerceQuill.init({
+                targetSelector: '#content',
+                formSelector: '#createPageForm',
+                containerId: 'quill-editor-container',
+                modalId: 'aiAssistModal',
+                height: '500px',
+                options: editorConfig || {},
+                debug: true
+            });
+            
+            console.log("✅ Editor initialization requested");
+        } else {
+            console.error("❌ PyCommerceQuill integration not available");
+            fallbackToDirectInitialization();
+        }
+    }
+    
+    // Fallback to direct Quill initialization without PyCommerceQuill
+    function fallbackToDirectInitialization() {
+        console.log("Falling back to direct Quill initialization");
+        
+        // Only proceed if Quill is available
+        if (typeof Quill === 'undefined') {
+            console.error("❌ Cannot fall back - Quill is not available");
+            return;
+        }
+        
+        const contentTextarea = document.getElementById('content');
+        if (contentTextarea) {
+            console.log("Creating container for direct Quill initialization");
+            
+            // Create container for Quill if it doesn't exist
+            let container = document.getElementById('quill-editor-container');
+            if (!container) {
+                container = document.createElement('div');
+                container.id = 'quill-editor-container';
+                container.style.height = '500px';
+                container.style.marginBottom = '20px';
                 
-                const debugScript = document.createElement('script');
-                debugScript.src = '/static/js/quill-debug-utility.js';
-                debugScript.onload = function() {
-                    console.log("Debug utility loaded, checking editor setup...");
-                    loadIntegration();
-                };
+                // Hide the textarea
+                contentTextarea.style.display = 'none';
                 
-                document.head.appendChild(debugScript);
-            } else {
-                loadIntegration();
+                // Insert container before textarea
+                contentTextarea.parentNode.insertBefore(container, contentTextarea);
             }
             
-            // Load the main integration
-            function loadIntegration() {
-                // Ensure we have PyCommerceQuill
-                if (typeof PyCommerceQuill === 'undefined') {
-                    console.log("Loading PyCommerceQuill integration...");
-                    
-                    const integrationScript = document.createElement('script');
-                    integrationScript.src = '/static/js/quill-integration.js';
-                    integrationScript.onload = function() {
-                        console.log("PyCommerceQuill loaded, initializing...");
-                        initWithPyCommerce();
+            // Initialize Quill directly
+            const quill = new Quill('#quill-editor-container', {
+                modules: {
+                    toolbar: [
+                        ['bold', 'italic', 'underline', 'strike'],
+                        ['blockquote', 'code-block'],
+                        [{ 'header': 1 }, { 'header': 2 }],
+                        [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                        [{ 'indent': '-1'}, { 'indent': '+1' }],
+                        [{ 'size': ['small', false, 'large', 'huge'] }],
+                        [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
+                        [{ 'color': [] }, { 'background': [] }],
+                        [{ 'align': [] }],
+                        ['clean'],
+                        ['link', 'image']
+                    ]
+                },
+                theme: 'snow'
+            });
+            
+            // Add submit handler to form
+            const form = document.getElementById('createPageForm');
+            if (form) {
+                form.addEventListener('submit', function() {
+                    contentTextarea.value = quill.root.innerHTML;
+                });
+            }
+            
+            console.log("✅ Direct Quill initialization complete");
+        } else {
+            console.error("❌ Content textarea not found");
+        }
+    }
+    
+    // Initialize when DOM is ready
+    document.addEventListener('DOMContentLoaded', function() {
+        loadEditorScripts();
+        
+        // Add a manual retry button (hidden by default, shown if initialization fails)
+        setTimeout(function() {
+            if (document.querySelectorAll('.ql-container').length === 0) {
+                console.warn("⚠️ No Quill containers found after timeout, adding retry button");
+                
+                const contentArea = document.querySelector('#content');
+                if (contentArea && contentArea.parentNode) {
+                    const retryButton = document.createElement('button');
+                    retryButton.type = 'button';
+                    retryButton.className = 'btn btn-warning mt-2 mb-3';
+                    retryButton.innerHTML = '<i class="fas fa-sync"></i> Retry Editor Initialization';
+                    retryButton.onclick = function() {
+                        this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Initializing...';
+                        loadEditorScripts();
+                        setTimeout(() => {
+                            if (document.querySelectorAll('.ql-container').length > 0) {
+                                this.remove();
+                            } else {
+                                this.innerHTML = '<i class="fas fa-sync"></i> Retry Editor Initialization';
+                            }
+                        }, 3000);
                     };
                     
-                    document.head.appendChild(integrationScript);
-                } else {
-                    console.log("PyCommerceQuill already loaded, initializing...");
-                    initWithPyCommerce();
+                    contentArea.parentNode.insertBefore(retryButton, contentArea);
                 }
             }
-        }
-        
-        // Initialize with PyCommerceQuill
-        function initWithPyCommerce() {
-            if (window.PyCommerceQuill && PyCommerceQuill.init) {
-                console.log("Initializing Quill editor with PyCommerceQuill integration");
-                
-                PyCommerceQuill.init({
-                    targetSelector: '#content',
-                    formSelector: '#createPageForm',
-                    containerId: 'quill-editor-container',
-                    modalId: 'aiAssistModal',
-                    height: '500px',
-                    options: editorConfig || {}
-                });
-                
-                console.log("Editor initialization complete");
-            } else {
-                console.error("PyCommerceQuill integration not available");
-                
-                // Fallback to direct Quill initialization
-                const contentTextarea = document.getElementById('content');
-                if (contentTextarea) {
-                    console.log("Fallback: creating container for direct Quill initialization");
-                    
-                    // Create container for Quill
-                    const container = document.createElement('div');
-                    container.id = 'quill-editor-container';
-                    container.style.height = '500px';
-                    container.style.marginBottom = '20px';
-                    
-                    // Hide the textarea
-                    contentTextarea.style.display = 'none';
-                    
-                    // Insert container before textarea
-                    contentTextarea.parentNode.insertBefore(container, contentTextarea);
-                    
-                    // Initialize Quill directly
-                    const quill = new Quill('#quill-editor-container', {
-                        modules: {
-                            toolbar: [
-                                ['bold', 'italic', 'underline', 'strike'],
-                                ['blockquote', 'code-block'],
-                                [{ 'header': 1 }, { 'header': 2 }],
-                                [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-                                [{ 'indent': '-1'}, { 'indent': '+1' }],
-                                [{ 'size': ['small', false, 'large', 'huge'] }],
-                                [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
-                                [{ 'color': [] }, { 'background': [] }],
-                                [{ 'align': [] }],
-                                ['clean'],
-                                ['link', 'image']
-                            ]
-                        },
-                        theme: 'snow'
-                    });
-                    
-                    // Add submit handler to form
-                    const form = document.getElementById('createPageForm');
-                    if (form) {
-                        form.addEventListener('submit', function() {
-                            contentTextarea.value = quill.root.innerHTML;
-                        });
-                    }
-                    
-                    console.log("Direct Quill initialization complete");
-                }
-            }
-        }
+        }, 5000);
     });
 
     // Function to open the media selector modal

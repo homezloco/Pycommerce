@@ -351,6 +351,48 @@ document.addEventListener('DOMContentLoaded', function() {
     // Wait a short time to ensure other scripts have loaded
     setTimeout(function() {
         console.log("Running automatic Quill editor diagnostic...");
-        PyCommerceQuillDebug.diagnose();
-    }, 500);
+        // Only run diagnostic if we're on a page that might have an editor
+        const potentialEditorElements = document.querySelectorAll('textarea[name*="content"], #content, [id*="editor"]');
+        if (potentialEditorElements.length > 0) {
+            console.log(`Found ${potentialEditorElements.length} potential editor elements, running diagnostics...`);
+            PyCommerceQuillDebug.diagnose();
+            
+            // Try to fix common issues automatically if diagnostics reveal problems
+            const quillLoaded = typeof Quill !== 'undefined';
+            const containers = document.querySelectorAll('.ql-container');
+            
+            if (!quillLoaded || containers.length === 0) {
+                console.log("Detecting potential issues, attempting automatic fixes...");
+                PyCommerceQuillDebug.fix();
+            }
+        } else {
+            console.log("No editor elements detected on this page. Skipping automatic diagnostics.");
+        }
+    }, 800);
+});
+
+// Add a debug button to the interface
+document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(function() {
+        // Only add button on admin pages with potential editors
+        if (window.location.pathname.includes('/admin/') && 
+            document.querySelector('textarea[name*="content"], #content, [id*="editor"]')) {
+            
+            if (!document.getElementById('quill-debug-button')) {
+                const button = document.createElement('button');
+                button.id = 'quill-debug-button';
+                button.className = 'btn btn-sm btn-info position-fixed';
+                button.style.bottom = '20px';
+                button.style.right = '20px';
+                button.style.zIndex = '9999';
+                button.innerHTML = '<i class="fas fa-bug"></i> Debug Editor';
+                button.onclick = function() {
+                    PyCommerceQuillDebug.diagnose();
+                };
+                
+                document.body.appendChild(button);
+                console.log("Quill debug button added to page");
+            }
+        }
+    }, 1200);
 });
