@@ -1484,8 +1484,8 @@ async def api_list_pages(
     """List pages via API."""
     session = SessionLocal()
     try:
-        # Get local manager instances
-        tenant_manager = TenantManager(session)
+        # Get local manager instances - don't pass session to TenantManager
+        tenant_manager = TenantManager()
         page_manager = PageManager(session)
 
         # Get selected tenant from query or session

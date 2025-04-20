@@ -23,8 +23,10 @@
     {% else %}
       console.log("No pages found in context");
     {% endif %}
+  });
+  
   // Add debug button functionality
-    document.addEventListener('DOMContentLoaded', function() {
+  document.addEventListener('DOMContentLoaded', function() {
       const debugBtn = document.getElementById('debugPageBuilderBtn');
       if (debugBtn) {
         debugBtn.addEventListener('click', function() {
