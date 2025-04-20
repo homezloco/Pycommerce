@@ -749,7 +749,7 @@ async def page_edit_form(
         })
 
         return templates.TemplateResponse(
-            "admin/pages/edit.html",
+            "admin/pages/editor.html",
             {
                 "request": request,
                 "selected_tenant": selected_tenant_slug,
