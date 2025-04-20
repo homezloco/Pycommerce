@@ -1,0 +1,23 @@
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.admin.page_builder:  Page attributes: {'tenant_id': UUID('0a38d2a1-00fe-47ea-a6d2-f1595048aab0'), 'id': UUID('709b90b0-41e0-497b-8a41-3b357a94a117'), 'meta_title': 'Welcome to Demo Store 1 - Home Page', 'is_published': True, 'created_at': datetime.datetime(2025, 4, 13, 9, 3, 24, 61526), 'title': 'Welcome to Demo Store 1', 'slug': 'welcome', 'meta_description': 'Welcome to Demo Store 1, your one-stop shop for all your needs.', 'layout_data': {'type': 'page', 'sections': []}, 'updated_at': datetime.datetime(2025, 4, 13, 9, 3, 24, 61530)}
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.admin.page_builder:Pages list context - Selected tenant slug: demo1
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.admin.page_builder:Pages list context - Tenant object: <pycommerce.models.tenant.TenantDTO object at 0x7f61a1f432d0>
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.admin.page_builder:Pages list context - Tenant ID: 0a38d2a1-00fe-47ea-a6d2-f1595048aab0, Name: Demo Store 1
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.admin.page_builder:Pages list context - Number of pages: 1
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.admin.page_builder:Page in context: Welcome to Demo Store 1 (709b90b0-41e0-497b-8a41-3b357a94a117)
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.admin.page_builder:Template context prepared with 1 pages
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.admin.page_builder:Template found at path: /home/runner/workspace/templates/admin/pages/list.html
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.admin.page_builder:Template engine: <starlette.templating.Jinja2Templates object at 0x7f61a993e510>
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.admin.page_builder:Attempting to render with minimal context first
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.admin.page_builder:Minimal context rendering succeeded, attempting full context
+INFO:asgi_wsgi_app:Uvicorn: INFO:     127.0.0.1:41196 - "GET /admin/pages?tenant=demo1 HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET http://127.0.0.1:8000/admin/pages?tenant=demo1 "HTTP/1.1 200 OK"
+INFO:asgi_wsgi_app:Uvicorn: INFO:     127.0.0.1:41198 - "GET /admin/pages/edit/709b90b0-41e0-497b-8a41-3b357a94a117 HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET http://127.0.0.1:8000/admin/pages/edit/709b90b0-41e0-497b-8a41-3b357a94a117 "HTTP/1.1 200 OK"
+INFO:asgi_wsgi_app:Uvicorn: INFO:     127.0.0.1:41670 - "GET /api/health HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET http://127.0.0.1:8000/api/health "HTTP/1.1 200 OK"
+INFO:asgi_wsgi_app:Uvicorn: INFO:     127.0.0.1:41684 - "POST /admin/api/pages/blocks HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: POST http://127.0.0.1:8000/admin/api/pages/blocks "HTTP/1.1 200 OK"
+INFO:asgi_wsgi_app:Uvicorn: INFO:     127.0.0.1:41700 - "GET /admin/api/pages/blocks/4fbf97a5-fa00-41c9-8cae-ffbffd575f2a HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET http://127.0.0.1:8000/admin/api/pages/blocks/4fbf97a5-fa00-41c9-8cae-ffbffd575f2a "HTTP/1.1 200 OK"
+INFO:asgi_wsgi_app:Uvicorn: INFO:     127.0.0.1:41716 - "GET /admin/api/products HTTP/1.1" 404 Not Found
+INFO:httpx:HTTP Request: GET http://127.0.0.1:8000/admin/api/products "HTTP/1.1 404 Not Found"

@@ -827,6 +827,54 @@ function ensureSortableLoaded(callback) {
 
 <script>
   // Define global functions that are called directly from HTML elements
+  function loadProducts(selectedProductId) {
+    // Get the current tenant from the URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const tenant = urlParams.get('tenant');
+    
+    // Fetch products from the API
+    fetch(`/admin/api/products?tenant=${tenant}`)
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Error fetching products');
+        }
+        return response.json();
+      })
+      .then(data => {
+        // Populate the select dropdown
+        const productSelect = document.getElementById('blockProductId');
+        
+        // Clear existing options
+        productSelect.innerHTML = '';
+        
+        // Add a default option
+        const defaultOption = document.createElement('option');
+        defaultOption.value = '';
+        defaultOption.textContent = '-- Select a product --';
+        productSelect.appendChild(defaultOption);
+        
+        // Add product options
+        data.products.forEach(product => {
+          const option = document.createElement('option');
+          option.value = product.id;
+          option.textContent = product.name;
+          if (product.id === selectedProductId) {
+            option.selected = true;
+          }
+          productSelect.appendChild(option);
+        });
+        
+        // Mark as loaded
+        productSelect.setAttribute('data-products-loaded', 'true');
+      })
+      .catch(error => {
+        console.error('Error fetching products:', error);
+        // Add an error message to the select
+        const productSelect = document.getElementById('blockProductId');
+        productSelect.innerHTML = '<option value="">Error loading products</option>';
+      });
+  }
+  
   function editSection(sectionId, sectionType) {
     // Fetch current section data
     fetch(`/admin/api/pages/sections/${sectionId}`)

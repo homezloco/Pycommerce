@@ -1650,6 +1650,63 @@ async def api_delete_page(page_id: str):
     finally:
         session.close()
 
+@router.get("/admin/api/products", response_class=JSONResponse)
+async def get_products_for_editor(request: Request, tenant: Optional[str] = None):
+    """Get products for the page editor."""
+    from pycommerce.sdk import AppProductManager, AppTenantManager
+    
+    session = SessionLocal()
+    try:
+        # Initialize managers
+        tenant_manager = AppTenantManager()
+        product_manager = AppProductManager(session)
+        
+        # Get selected tenant from query or session
+        selected_tenant_slug = tenant or request.session.get("selected_tenant")
+        
+        # If no tenant selected, return empty list
+        if not selected_tenant_slug:
+            return {"products": [], "count": 0}
+        
+        # Get tenant
+        tenant_obj = tenant_manager.get_by_slug(selected_tenant_slug)
+        if not tenant_obj:
+            return {"products": [], "count": 0, "error": f"Tenant with slug {selected_tenant_slug} not found"}
+        
+        # Get products for tenant
+        products = product_manager.list_by_tenant(str(tenant_obj.id))
+        
+        # Format response
+        product_list = []
+        for product in products:
+            try:
+                product_list.append({
+                    "id": str(product.id),
+                    "name": product.name,
+                    "price": product.price,
+                    "sku": product.sku,
+                    "image_url": product.primary_image_url if hasattr(product, 'primary_image_url') else None,
+                    "stock": product.stock if hasattr(product, 'stock') else 0
+                })
+            except Exception as e:
+                logger.error(f"Error formatting product: {str(e)}")
+                continue
+        
+        return {
+            "products": product_list,
+            "count": len(product_list),
+            "tenant": {
+                "id": str(tenant_obj.id),
+                "slug": tenant_obj.slug,
+                "name": tenant_obj.name
+            }
+        }
+    except Exception as e:
+        logger.error(f"Error getting products for editor: {str(e)}")
+        return {"products": [], "count": 0, "error": str(e)}
+    finally:
+        session.close()
+
 
 @router.post("/pages/create-with-template", response_class=RedirectResponse)
 async def admin_create_page(
