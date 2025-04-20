@@ -156,13 +156,13 @@ async def debug_dashboard(request: Request):
                 document.head.appendChild(debugScript);
 
                 // Run diagnostics button
-                document.getElementById('runDebugBtn').addEventListener('click', function() {
+                document.getElementById('runDebugBtn').addEventListener('click', function() {{
                     const resultsDiv = document.getElementById('debugResults');
                     resultsDiv.innerHTML = '<div class="d-flex justify-content-center"><div class="spinner-border text-primary" role="status"></div></div><p class="text-center mt-2">Running diagnostics...</p>';
 
                     fetch('/admin/debug-pages')
                         .then(response => response.json())
-                        .then(data => {
+                        .then(data => {{
                             let html = '<div class="accordion" id="debugAccordion">';
 
                             // Database info
@@ -170,25 +170,21 @@ async def debug_dashboard(request: Request):
                             html += '<h2 class="accordion-header"><button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseDatabase">Database Information</button></h2>';
                             html += '<div id="collapseDatabase" class="accordion-collapse collapse show" data-bs-parent="#debugAccordion"><div class="accordion-body">';
 
-                            if (data.database_info && data.database_info.tables_exist) {
+                            if (data.database_info && data.database_info.tables_exist) {{
                                 html += '<table class="table table-sm">';
                                 html += '<thead><tr><th>Table</th><th>Status</th><th>Records</th></tr></thead><tbody>';
 
-                                for (const table in data.database_info.tables_exist) {
+                                for (const table in data.database_info.tables_exist) {{
                                     const exists = data.database_info.tables_exist[table];
                                     const count = data.database_info.record_counts ? data.database_info.record_counts[table] : 'N/A';
 
-                                    html += `<tr>
-                                        <td>${table}</td>
-                                        <td>${exists ? '<span class="badge bg-success">✓</span>' : '<span class="badge bg-danger">✗</span>'}</td>
-                                        <td>${count}</td>
-                                    </tr>`;
-                                }
+                                    html += '<tr><td>' + table + '</td><td>' + (exists ? '<span class="badge bg-success">✓</span>' : '<span class="badge bg-danger">✗</span>') + '</td><td>' + count + '</td></tr>';
+                                }}
 
                                 html += '</tbody></table>';
-                            } else {
+                            }} else {{
                                 html += '<div class="alert alert-warning">No database information available</div>';
-                            }
+                            }}
 
                             html += '</div></div></div>';
 
@@ -197,23 +193,21 @@ async def debug_dashboard(request: Request):
                             html += '<h2 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTenants">Tenant Information</button></h2>';
                             html += '<div id="collapseTenants" class="accordion-collapse collapse" data-bs-parent="#debugAccordion"><div class="accordion-body">';
 
-                            html += `<p>Current tenant: <strong>${data.selected_tenant_slug || 'None'}</strong></p>`;
-                            html += `<p>Found ${data.tenants_count || 0} tenants</p>`;
+                            html += '<p>Current tenant: <strong>' + (data.selected_tenant_slug || 'None') + '</strong></p>';
+                            html += '<p>Found ' + (data.tenants_count || 0) + ' tenants</p>';
 
-                            if (data.tenants && data.tenants.length > 0) {
+                            if (data.tenants && data.tenants.length > 0) {{
                                 html += '<table class="table table-sm">';
                                 html += '<thead><tr><th>ID</th><th>Name</th><th>Slug</th></tr></thead><tbody>';
 
-                                data.tenants.forEach(tenant => {
-                                    html += `<tr>
-                                        <td>${tenant.id}</td>
-                                        <td>${tenant.name}</td>
-                                        <td>${tenant.slug}</td>
-                                    </tr>`;
-                                });
+                                data.tenants.forEach(tenant => {{
+                                    html += '<tr><td>' + tenant.id + '</td><td>' + tenant.name + '</td><td>' + tenant.slug + '</td></tr>';
+                                }});
 
                                 html += '</tbody></table>';
-                            }
+                            }} else {{
+                                html += '<div class="alert alert-info">No tenants found</div>';
+                            }}
 
                             html += '</div></div></div>';
 
@@ -222,38 +216,34 @@ async def debug_dashboard(request: Request):
                             html += '<h2 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapsePages">Pages Information</button></h2>';
                             html += '<div id="collapsePages" class="accordion-collapse collapse" data-bs-parent="#debugAccordion"><div class="accordion-body">';
 
-                            html += `<p>Found ${data.pages_count || 0} pages</p>`;
+                            html += '<p>Found ' + (data.pages_count || 0) + ' pages</p>';
 
-                            if (data.pages && data.pages.length > 0) {
+                            if (data.pages && data.pages.length > 0) {{
                                 html += '<table class="table table-sm">';
                                 html += '<thead><tr><th>Title</th><th>Slug</th><th>Published</th></tr></thead><tbody>';
 
-                                data.pages.forEach(page => {
-                                    html += `<tr>
-                                        <td>${page.title}</td>
-                                        <td>${page.slug}</td>
-                                        <td>${page.is_published ? 'Yes' : 'No'}</td>
-                                    </tr>`;
-                                });
+                                data.pages.forEach(page => {{
+                                    html += '<tr><td>' + page.title + '</td><td>' + page.slug + '</td><td>' + (page.is_published ? 'Yes' : 'No') + '</td></tr>';
+                                }});
 
                                 html += '</tbody></table>';
-                            } else {
+                            }} else {{
                                 html += '<div class="alert alert-info">No pages found for current tenant</div>';
-                            }
+                            }}
 
                             html += '</div></div></div>';
 
                             html += '</div>'; // Close accordion
 
                             resultsDiv.innerHTML = html;
-                        })
-                        .catch(error => {
-                            resultsDiv.innerHTML = `<div class="alert alert-danger">Error fetching debug info: ${error.message}</div>`;
-                        });
-                });
+                        }})
+                        .catch(error => {{
+                            resultsDiv.innerHTML = '<div class="alert alert-danger">Error fetching debug info: ' + error.message + '</div>';
+                        }});
+                }});
 
                 // Run JS button
-                document.getElementById('runJsDebugBtn').addEventListener('click', function() {
+                document.getElementById('runJsDebugBtn').addEventListener('click', function() {{
                     const code = document.getElementById('jsDebugCode').value;
                     const resultsDiv = document.getElementById('jsResults');
 
@@ -263,66 +253,66 @@ async def debug_dashboard(request: Request):
                     const origConsoleWarn = console.warn;
                     const logs = [];
 
-                    console.log = function(...args) {
+                    console.log = function(...args) {{
                         logs.push(['log', args.map(a => String(a)).join(' ')]);
                         origConsoleLog.apply(console, args);
-                    };
+                    }};
 
-                    console.error = function(...args) {
+                    console.error = function(...args) {{
                         logs.push(['error', args.map(a => String(a)).join(' ')]);
                         origConsoleError.apply(console, args);
-                    };
+                    }};
 
-                    console.warn = function(...args) {
+                    console.warn = function(...args) {{
                         logs.push(['warn', args.map(a => String(a)).join(' ')]);
                         origConsoleWarn.apply(console, args);
-                    };
+                    }};
 
-                    try {
+                    try {{
                         // Run the code
                         const result = eval(code);
 
                         // Build output HTML
                         let html = '<div class="border-bottom pb-2 mb-2"><strong>Result:</strong> ';
 
-                        if (result !== undefined) {
-                            if (typeof result === 'object') {
-                                html += `<pre>${JSON.stringify(result, null, 2)}</pre>`;
-                            } else {
-                                html += `<span>${result}</span>`;
-                            }
-                        } else {
+                        if (result !== undefined) {{
+                            if (typeof result === 'object') {{
+                                html += '<pre>' + JSON.stringify(result, null, 2) + '</pre>';
+                            }} else {{
+                                html += '<span>' + result + '</span>';
+                            }}
+                        }} else {{
                             html += '<span class="text-muted">undefined</span>';
-                        }
+                        }}
 
                         html += '</div>';
 
                         // Add logs
-                        if (logs.length > 0) {
+                        if (logs.length > 0) {{
                             html += '<div><strong>Console output:</strong></div>';
                             html += '<div class="mt-2 console-output">';
 
-                            logs.forEach(([type, message]) => {
+                            logs.forEach(([type, message]) => {{
                                 let className = 'text-dark';
                                 if (type === 'error') className = 'text-danger';
                                 if (type === 'warn') className = 'text-warning';
 
-                                html += `<div class="${className}">${message}</div>`;
-                            });
+                                html += '<div class="' + className + '">' + message + '</div>';
+                            }});
 
                             html += '</div>';
-                        }
+                        }}
 
                         resultsDiv.innerHTML = html;
-                    } catch (e) {
-                        resultsDiv.innerHTML = `<div class="text-danger">Error: ${e.message}</div>`;
-                    } finally {
+                    }} catch (e) {{
+                        resultsDiv.innerHTML = '<div class="text-danger">Error: ' + e.message + '</div>';
+                    }} finally {{
                         // Restore console functions
                         console.log = origConsoleLog;
                         console.error = origConsoleError;
                         console.warn = origConsoleWarn;
-                    }
-                });
+                    }}
+                }});
             </script>
         </body>
         </html>
