@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+
+{% block title %}{{ page.meta_title or page.title }} - {{ tenant.name }}{% endblock %}
+
+{% block meta %}
+{% if page.meta_description %}
+<meta name="description" content="{{ page.meta_description }}">
+{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="mb-4">{{ page.title }}</h1>
+            
+            {% if preview_mode %}
+            <div class="alert alert-info mb-4">
+                <i class="fas fa-eye me-2"></i> Preview Mode
+                <a href="/admin/pages/edit/{{ page.id }}" class="btn btn-primary btn-sm float-end">
+                    <i class="fas fa-edit me-1"></i> Back to Editor
+                </a>
+            </div>
+            {% endif %}
+            
+            {% if sections %}
+                {% for section_data in sections %}
+                <div class="section section-{{ section_data.section.section_type }} mb-5">
+                    {% if preview_mode %}
+                    <div class="section-debug bg-light p-2 mb-2 text-muted small">
+                        <strong>Section Type:</strong> {{ section_data.section.section_type }}
+                        <span class="float-end">ID: {{ section_data.section.id }}</span>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="section-content">
+                        {% if section_data.blocks %}
+                            {% for block in section_data.blocks %}
+                                <div class="block block-{{ block.block_type }} mb-3">
+                                    {% if preview_mode %}
+                                    <div class="block-debug bg-light p-1 mb-1 text-muted small">
+                                        <strong>Block Type:</strong> {{ block.block_type }}
+                                        <span class="float-end">ID: {{ block.id }}</span>
+                                    </div>
+                                    {% endif %}
+                                    
+                                    <div class="block-content">
+                                        {% if block.block_type == 'text' and block.content and block.content.html %}
+                                            {{ block.content.html|safe }}
+                                        {% elif block.block_type == 'image' and block.content and block.content.src %}
+                                            <img src="{{ block.content.src }}" alt="{{ block.content.alt|default('') }}" class="img-fluid">
+                                            {% if block.content.caption %}
+                                            <div class="text-center text-muted mt-2">{{ block.content.caption }}</div>
+                                            {% endif %}
+                                        {% elif block.block_type == 'video' and block.content and block.content.src %}
+                                            <div class="ratio ratio-16x9">
+                                                <iframe src="{{ block.content.src }}" title="Video" allowfullscreen></iframe>
+                                            </div>
+                                            {% if block.content.caption %}
+                                            <div class="text-center text-muted mt-2">{{ block.content.caption }}</div>
+                                            {% endif %}
+                                        {% elif block.block_type == 'button' and block.content %}
+                                            <div class="d-grid gap-2 d-md-flex justify-content-md-center">
+                                                <a href="{{ block.content.url|default('#') }}" class="btn btn-primary">
+                                                    {{ block.content.text|default('Click Here') }}
+                                                </a>
+                                            </div>
+                                        {% elif block.block_type == 'product' and block.content and block.content.product_id %}
+                                            <div class="card">
+                                                <div class="card-body text-center">
+                                                    <h5>Product Placeholder</h5>
+                                                    <p>Product ID: {{ block.content.product_id }}</p>
+                                                    <a href="/{{ tenant.slug }}/products/{{ block.content.product_id }}" class="btn btn-sm btn-outline-primary">View Product</a>
+                                                </div>
+                                            </div>
+                                        {% else %}
+                                            {% if preview_mode %}
+                                            <div class="alert alert-warning">
+                                                Content not available for this block type or missing content data.
+                                            </div>
+                                            {% endif %}
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        {% else %}
+                            {% if preview_mode %}
+                            <div class="alert alert-info">
+                                No blocks in this section. Use the page builder to add content blocks.
+                            </div>
+                            {% endif %}
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                {% if preview_mode %}
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-circle me-2"></i>
+                    This page doesn't have any content sections yet. Use the page builder to add content.
+                </div>
+                {% endif %}
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
