@@ -1,0 +1,430 @@
+/* Page Editor CSS - Shopify-like UI */
+
+/* Global editor styles */
+.page-editor-wrapper {
+  --editor-primary: #5c6ac4;
+  --editor-secondary: #5c6ac4;
+  --editor-success: #50b83c;
+  --editor-danger: #de3618;
+  --editor-border: #e6e9eb;
+  --editor-background: #f9fafb;
+  --editor-text: #212b36;
+  --editor-component-bg: #ffffff;
+  --editor-hover: #f5f5f5;
+  --editor-shadow: 0 2px 5px rgba(0,0,0,0.08);
+  --editor-section-bg: #ffffff;
+  --editor-section-border: #dfe3e8;
+  --editor-block-border: #e6e9eb;
+  --editor-toolbox-background: #fff;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+}
+
+/* Main container */
+.editor-container {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  grid-gap: 20px;
+  min-height: calc(100vh - 120px);
+}
+
+/* Left sidebar */
+.editor-sidebar {
+  background-color: var(--editor-component-bg);
+  border-radius: 8px;
+  box-shadow: var(--editor-shadow);
+  padding: 0;
+  height: 100%;
+  overflow-y: auto;
+}
+
+.editor-sidebar-header {
+  padding: 16px;
+  border-bottom: 1px solid var(--editor-border);
+  font-weight: 600;
+  color: var(--editor-text);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.editor-sidebar-content {
+  padding: 8px;
+}
+
+/* Component library */
+.component-library {
+  margin-bottom: 24px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--editor-section-border);
+}
+
+.component-library-header {
+  padding: 12px 16px;
+  background-color: var(--editor-background);
+  font-weight: 500;
+  font-size: 14px;
+  color: var(--editor-text);
+  border-bottom: 1px solid var(--editor-section-border);
+}
+
+.component-library-body {
+  padding: 8px;
+  background-color: var(--editor-component-bg);
+}
+
+/* Component items */
+.component-item {
+  padding: 12px;
+  margin-bottom: 8px;
+  background-color: var(--editor-component-bg);
+  border: 1px solid var(--editor-border);
+  border-radius: 6px;
+  cursor: grab;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--editor-text);
+}
+
+.component-item:hover {
+  background-color: var(--editor-hover);
+  transform: translateY(-1px);
+  box-shadow: var(--editor-shadow);
+}
+
+.component-item i {
+  font-size: 16px;
+  color: var(--editor-primary);
+  width: 20px;
+  text-align: center;
+}
+
+/* Canvas / work area */
+.editor-canvas {
+  background-color: var(--editor-background);
+  border-radius: 8px;
+  padding: 20px;
+  min-height: 100%;
+}
+
+.canvas-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--editor-border);
+}
+
+.canvas-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--editor-text);
+}
+
+.canvas-actions {
+  display: flex;
+  gap: 8px;
+}
+
+/* Page container - where sections are dropped */
+#pageContainer {
+  min-height: 500px;
+  background-color: var(--editor-component-bg);
+  border: 1px solid var(--editor-section-border);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+/* Empty state */
+.placeholder {
+  border: 2px dashed var(--editor-border);
+  padding: 40px 20px;
+  margin: 0;
+  text-align: center;
+  background-color: var(--editor-component-bg);
+  color: #637381;
+  font-size: 15px;
+  border-radius: 6px;
+}
+
+.placeholder i {
+  font-size: 24px;
+  color: #c4cdd5;
+  margin-bottom: 12px;
+  display: block;
+}
+
+/* Section styling */
+.section-container {
+  margin-bottom: 20px;
+  background-color: var(--editor-section-bg);
+  border: 1px solid var(--editor-section-border);
+  border-radius: 6px;
+  overflow: hidden;
+  transition: box-shadow 0.2s ease;
+}
+
+.section-container:hover {
+  box-shadow: var(--editor-shadow);
+}
+
+.section-header {
+  padding: 12px 16px;
+  background-color: var(--editor-background);
+  border-bottom: 1px solid var(--editor-section-border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.section-header h5 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--editor-text);
+  display: flex;
+  align-items: center;
+}
+
+.section-header h5 i {
+  margin-right: 8px;
+  color: var(--editor-primary);
+}
+
+.section-controls {
+  display: flex;
+  gap: 6px;
+}
+
+.blocks-container {
+  padding: 16px;
+  min-height: 60px;
+}
+
+/* Block styling */
+.block-container {
+  position: relative;
+  border: 1px solid var(--editor-block-border);
+  border-radius: 6px;
+  margin-bottom: 12px;
+  background-color: var(--editor-component-bg);
+  transition: box-shadow 0.2s ease, transform 0.1s ease;
+  overflow: hidden;
+}
+
+.block-container:hover {
+  box-shadow: var(--editor-shadow);
+}
+
+.block-container.is-dragging {
+  opacity: 0.8;
+  transform: scale(1.02);
+}
+
+.block-content {
+  padding: 16px;
+  position: relative;
+}
+
+.block-controls {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: flex;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  z-index: 10;
+}
+
+.block-container:hover .block-controls {
+  opacity: 1;
+}
+
+/* Text block specific styling */
+.text-content {
+  position: relative;
+  min-height: 24px;
+  padding: 8px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.text-content:hover {
+  border: 1px dashed var(--editor-primary);
+  background-color: rgba(92, 106, 196, 0.05);
+}
+
+.text-content:hover::after {
+  content: "Click to edit";
+  position: absolute;
+  top: -25px;
+  right: 8px;
+  background: var(--editor-primary);
+  color: white;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+/* Button styling overrides for editor */
+.btn-shopify-primary {
+  background-color: var(--editor-primary);
+  border-color: var(--editor-primary);
+  color: white;
+}
+
+.btn-shopify-primary:hover {
+  background-color: #4959bd;
+  border-color: #4959bd;
+}
+
+.btn-shopify-secondary {
+  background-color: white;
+  border-color: var(--editor-border);
+  color: var(--editor-text);
+}
+
+.btn-shopify-secondary:hover {
+  background-color: var(--editor-hover);
+  border-color: var(--editor-border);
+}
+
+.btn-shopify-success {
+  background-color: var(--editor-success);
+  border-color: var(--editor-success);
+  color: white;
+}
+
+.btn-shopify-success:hover {
+  background-color: #47a636;
+  border-color: #47a636;
+}
+
+.btn-shopify-danger {
+  background-color: var(--editor-danger);
+  border-color: var(--editor-danger);
+  color: white;
+}
+
+.btn-shopify-danger:hover {
+  background-color: #c73118;
+  border-color: #c73118;
+}
+
+/* Add block button styled like Shopify */
+.add-block-btn {
+  width: 100%;
+  padding: 10px;
+  background-color: transparent;
+  border: 1px dashed var(--editor-border);
+  color: var(--editor-primary);
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.add-block-btn:hover {
+  background-color: rgba(92, 106, 196, 0.05);
+  border-color: var(--editor-primary);
+}
+
+.add-block-btn i {
+  margin-right: 8px;
+}
+
+/* Block type specific styling */
+.image-content {
+  padding: 8px;
+  text-align: center;
+}
+
+.image-content img {
+  max-width: 100%;
+  border-radius: 4px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.button-content {
+  padding: 8px;
+  text-align: center;
+}
+
+.product-content {
+  padding: 16px;
+  border: 1px solid var(--editor-border);
+  border-radius: 6px;
+  background-color: var(--editor-background);
+}
+
+.generic-block {
+  padding: 16px;
+  text-align: center;
+  background-color: var(--editor-background);
+  border: 1px dashed var(--editor-border);
+  border-radius: 4px;
+  color: #637381;
+}
+
+/* Drag and drop visual cues */
+.drag-over {
+  background-color: rgba(92, 106, 196, 0.1);
+  border: 2px dashed var(--editor-primary);
+}
+
+/* Custom scrollbar */
+.editor-sidebar::-webkit-scrollbar {
+  width: 8px;
+}
+
+.editor-sidebar::-webkit-scrollbar-track {
+  background: var(--editor-component-bg);
+}
+
+.editor-sidebar::-webkit-scrollbar-thumb {
+  background-color: #c4cdd5;
+  border-radius: 20px;
+  border: 2px solid var(--editor-component-bg);
+}
+
+/* Modal customizations for editor */
+.editor-modal .modal-header {
+  background-color: var(--editor-background);
+  border-bottom: 1px solid var(--editor-border);
+}
+
+.editor-modal .modal-title {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.editor-modal .modal-footer {
+  background-color: var(--editor-background);
+  border-top: 1px solid var(--editor-border);
+}
+
+/* Responsive adjustments */
+@media (max-width: 992px) {
+  .editor-container {
+    grid-template-columns: 1fr;
+  }
+  
+  .editor-sidebar {
+    max-height: 300px;
+    margin-bottom: 20px;
+  }
+}
+
+/* Make block controls visible on touch devices */
+@media (hover: none) {
+  .block-controls {
+    opacity: 1;
+    background-color: rgba(255,255,255,0.8);
+    padding: 4px;
+    border-radius: 4px;
+  }
+}
