@@ -166,10 +166,19 @@
                         window.quill.insertText(range.index, plainText);
                     }
                     inserted = true;
-                } else if (typeof tinymce !== 'undefined' && tinymce.activeEditor) {
-                    // For TinyMCE
-                    tinymce.activeEditor.insertContent(generatedContent);
-                    inserted = true;
+                } else if (typeof Quill !== 'undefined') {
+                    // Try to find active Quill instance
+                    const quillInstances = document.querySelectorAll('.ql-editor');
+                    if (quillInstances.length > 0) {
+                        const quillElement = quillInstances[0];
+                        const quillInstance = Quill.find(quillElement.parentNode);
+                        
+                        if (quillInstance) {
+                            const range = quillInstance.getSelection() || { index: quillInstance.getLength(), length: 0 };
+                            quillInstance.clipboard.dangerouslyPasteHTML(range.index, generatedContent);
+                            inserted = true;
+                        }
+                    }
                 }
             } catch (e) {
                 console.error('Error inserting content:', e);
