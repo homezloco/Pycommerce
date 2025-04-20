@@ -63,35 +63,8 @@ function initEditors() {
         }
     });
     
-    // Also handle TinyMCE if it's being used
-    if (typeof tinymce !== 'undefined') {
-        tinymce.init({
-            selector: '.tinymce-editor',
-            height: 300,
-            menubar: true,
-            plugins: [
-                'advlist autolink lists link image charmap print preview anchor',
-                'searchreplace visualblocks code fullscreen',
-                'insertdatetime media table paste code help wordcount'
-            ],
-            toolbar: 'undo redo | formatselect | ' +
-                'bold italic backcolor | alignleft aligncenter ' +
-                'alignright alignjustify | bullist numlist outdent indent | ' +
-                'removeformat | help',
-            setup: function(editor) {
-                // Add AI assist button
-                editor.ui.registry.addButton('aiassist', {
-                    text: 'AI Assist',
-                    tooltip: 'Generate content with AI',
-                    onAction: function() {
-                        showAIPromptDialog(editor.id, function(content) {
-                            editor.insertContent(content);
-                        });
-                    }
-                });
-            }
-        });
-    }
+    // Note: TinyMCE has been fully replaced by Quill
+    // AI assist functionality is now handled through the Quill toolbar
 }
 
 function loadQuillDynamically() {
