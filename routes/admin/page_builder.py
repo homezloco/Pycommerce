@@ -1521,7 +1521,7 @@ async def api_delete_page(page_id: str):
         session.close()
 
 
-@router.post("/pages/create", response_class=RedirectResponse)
+@router.post("/pages/create-with-template", response_class=RedirectResponse)
 async def admin_create_page(
     request: Request,
     tenant_id: str = Form(...),
@@ -1532,7 +1532,7 @@ async def admin_create_page(
     is_published: bool = Form(False),
     template_id: str = Form(None)
 ):
-    """Create a new page."""
+    """Create a new page using a template."""
     session = SessionLocal()
     try:
         page_manager = PageManager(session)
