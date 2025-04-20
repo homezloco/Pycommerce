@@ -188,6 +188,9 @@
     </div>
   </div>
 
+  <!-- Hidden fields for important data -->
+  <input type="hidden" id="tenantId" value="{{ page.tenant_id }}">
+
   <div class="editor-container">
     <!-- Left sidebar - Components & Settings -->
     <div class="editor-sidebar">
@@ -828,14 +831,23 @@ function ensureSortableLoaded(callback) {
 <script>
   // Define global functions that are called directly from HTML elements
   function loadProducts(selectedProductId) {
-    // Get the current tenant from the URL
+    // Get the current tenant from the URL or use a default value
     const urlParams = new URLSearchParams(window.location.search);
-    const tenant = urlParams.get('tenant');
+    let tenant = urlParams.get('tenant');
+    
+    // If tenant is null, empty or undefined, try to get it from hidden field or use 'demo1' as fallback
+    if (!tenant) {
+      tenant = document.getElementById('tenantId')?.value || document.querySelector('input[name="tenant_id"]')?.value || 'demo1';
+      console.log('Using tenant ID from form field:', tenant);
+    }
+    
+    console.log('Loading products for tenant:', tenant);
     
     // Fetch products from the API
     fetch(`/admin/api/products?tenant=${tenant}`)
       .then(response => {
         if (!response.ok) {
+          console.error('API response not OK:', response.status, response.statusText);
           throw new Error('Error fetching products');
         }
         return response.json();
