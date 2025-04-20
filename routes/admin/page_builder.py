@@ -593,7 +593,7 @@ async def page_create(
     session = SessionLocal()
     try:
         # Initialize managers
-        tenant_manager = TenantManager(session)
+        tenant_manager = TenantManager()
         page_manager = PageManager(session)
         section_manager = PageSectionManager(session)
         block_manager = ContentBlockManager(session)
@@ -703,7 +703,7 @@ async def page_edit_form(
     try:
         # Initialize managers
         page_manager = PageManager(session)
-        tenant_manager = TenantManager(session)
+        tenant_manager = TenantManager()
         section_manager = PageSectionManager(session)
         block_manager = ContentBlockManager(session)
 
@@ -981,7 +981,7 @@ async def page_update(
     try:
         # Initialize managers
         page_manager = PageManager(session)
-        tenant_manager = TenantManager(session)
+        tenant_manager = TenantManager()
 
         # Get the page
         page = page_manager.get(page_id)
@@ -1069,7 +1069,7 @@ async def page_editor(
     try:
         # Initialize managers
         page_manager = PageManager(session)
-        tenant_manager = TenantManager(session)
+        tenant_manager = TenantManager()
         section_manager = PageSectionManager(session)
         block_manager = ContentBlockManager(session)
 
@@ -1142,7 +1142,7 @@ async def page_delete(
     try:
         # Initialize managers
         page_manager = PageManager(session)
-        tenant_manager = TenantManager(session)
+        tenant_manager = TenantManager()
 
         # Get the page
         page = page_manager.get(page_id)
@@ -1193,7 +1193,7 @@ async def page_preview(
     try:
         # Initialize managers
         page_manager = PageManager(session)
-        tenant_manager = TenantManager(session)
+        tenant_manager = TenantManager()
         section_manager = PageSectionManager(session)
         block_manager = ContentBlockManager(session)
 
@@ -1247,7 +1247,7 @@ async def page_templates_list(
     session = SessionLocal()
     try:
         # Initialize managers
-        tenant_manager = TenantManager(session)
+        tenant_manager = TenantManager()
         template_manager = PageTemplateManager(session)
 
         # Get all tenants for the sidebar
