@@ -835,10 +835,11 @@ function ensureSortableLoaded(callback) {
     const urlParams = new URLSearchParams(window.location.search);
     let tenant = urlParams.get('tenant');
     
-    // If tenant is null, empty or undefined, try to get it from hidden field or use 'demo1' as fallback
+    // If tenant is null, empty or undefined, use 'demo1' as fallback
+    // We must use a tenant slug rather than a UUID
     if (!tenant) {
-      tenant = document.getElementById('tenantId')?.value || document.querySelector('input[name="tenant_id"]')?.value || 'demo1';
-      console.log('Using tenant ID from form field:', tenant);
+      tenant = 'demo1'; // Default tenant slug
+      console.log('Using default tenant slug:', tenant);
     }
     
     console.log('Loading products for tenant:', tenant);
