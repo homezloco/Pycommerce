@@ -223,7 +223,7 @@ class WysiwygService:
         Get configuration for a WYSIWYG editor.
         
         Args:
-            editor_type: The type of editor ('quill', 'tinymce', etc.)
+            editor_type: The type of editor ('quill' is the default)
             context: Optional context information
             
         Returns:
@@ -244,7 +244,7 @@ class WysiwygService:
             if context:
                 base_config.update(context)
             
-            # Editor-specific configuration
+            # Editor-specific configuration - we only support Quill now
             if editor_type == 'quill' or editor_type == 'default':
                 editor_config = {
                     'theme': 'snow',
@@ -261,25 +261,23 @@ class WysiwygService:
                         ]
                     }
                 }
-            elif editor_type == 'tinymce':
-                editor_config = {
-                    'height': 400,
-                    'menubar': True,
-                    'plugins': [
-                        'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
-                        'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
-                        'insertdatetime', 'media', 'table', 'help', 'wordcount'
-                    ],
-                    'toolbar': 'undo redo | formatselect | bold italic backcolor | ' +
-                               'alignleft aligncenter alignright alignjustify | ' +
-                               'bullist numlist outdent indent | removeformat | help | ' +
-                               'link image media code',
-                    'content_style': 'body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-size: 14px; }'
-                }
             else:
-                # Default to a simple configuration
+                # Default to Quill configuration
+                logger.warning(f"Unsupported editor type {editor_type}, defaulting to Quill")
                 editor_config = {
-                    'basic': True
+                    'theme': 'snow',
+                    'placeholder': 'Start writing or use the editor tools...',
+                    'modules': {
+                        'toolbar': [
+                            ['bold', 'italic', 'underline', 'strike'],
+                            [{'header': 1}, {'header': 2}],
+                            [{'list': 'ordered'}, {'list': 'bullet'}],
+                            [{'indent': '-1'}, {'indent': '+1'}],
+                            [{'align': []}],
+                            ['link', 'image', 'video'],
+                            ['clean']
+                        ]
+                    }
                 }
             
             # Merge the configs
