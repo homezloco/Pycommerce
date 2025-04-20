@@ -63,9 +63,9 @@ def check_template_syntax():
                 logger.error(f"❌ Unbalanced for tags in {template_name}")
                 all_valid = False
                 
-            # Check for tinymce initialization
-            if 'tinymce.init' in template_content:
-                logger.info(f"✅ TinyMCE initialization found in {template_name}")
+            # Check for Quill initialization
+            if 'Quill' in template_content or 'quill' in template_content:
+                logger.info(f"✅ Quill initialization found in {template_name}")
                 
             logger.info(f"✅ Template syntax check passed: {template_name}")
             
@@ -80,8 +80,8 @@ def check_js_files():
     logger.info("Checking JavaScript files...")
     
     js_files = [
-        os.path.join("static", "js", "tinymce-ai.js"),
-        os.path.join("static", "js", "quill-integration.js")
+        os.path.join("static", "js", "quill-integration.js"),
+        os.path.join("static", "js", "page-builder.js")
     ]
     
     all_valid = True
@@ -113,34 +113,34 @@ def check_js_files():
             
     return all_valid
 
-def check_tinymce_integration():
-    """Check TinyMCE integration in templates."""
-    logger.info("Checking TinyMCE integration...")
+def check_quill_integration():
+    """Check Quill integration in templates."""
+    logger.info("Checking Quill integration...")
     
-    create_template = os.path.join("templates", "admin", "pages", "create.html")
-    if not os.path.exists(create_template):
-        logger.error(f"❌ Template file not found: {create_template}")
+    editor_template = os.path.join("templates", "admin", "pages", "editor.html")
+    if not os.path.exists(editor_template):
+        logger.error(f"❌ Template file not found: {editor_template}")
         return False
         
     try:
-        with open(create_template, 'r') as f:
+        with open(editor_template, 'r') as f:
             template_content = f.read()
             
-        # Check for TinyMCE CDN script
-        if 'tinymce.min.js' not in template_content:
-            logger.error("❌ TinyMCE CDN script not found in create.html")
+        # Check for Quill CDN script
+        if 'quill.min.js' not in template_content and 'cdn.quilljs.com' not in template_content:
+            logger.error("❌ Quill CDN script not found in editor.html")
             return False
             
-        # Check for TinyMCE initialization
-        if 'tinymce.init' not in template_content:
-            logger.error("❌ TinyMCE initialization not found in create.html")
+        # Check for Quill initialization
+        if 'new Quill' not in template_content and 'quill-editor' not in template_content:
+            logger.error("❌ Quill initialization not found in editor.html")
             return False
             
-        logger.info("✅ TinyMCE integration check passed")
+        logger.info("✅ Quill integration check passed")
         return True
             
     except Exception as e:
-        logger.error(f"❌ Error checking TinyMCE integration: {str(e)}")
+        logger.error(f"❌ Error checking Quill integration: {str(e)}")
         return False
 
 def main():
@@ -150,15 +150,15 @@ def main():
     # Record results
     templates_ok = check_template_syntax()
     js_ok = check_js_files()
-    tinymce_ok = check_tinymce_integration()
+    quill_ok = check_quill_integration()
     
     # Report overall status
     logger.info("\n=== Frontend Verification Results ===")
     logger.info(f"Template syntax check: {'✅ PASS' if templates_ok else '❌ FAIL'}")
     logger.info(f"JavaScript syntax check: {'✅ PASS' if js_ok else '❌ FAIL'}")
-    logger.info(f"TinyMCE integration check: {'✅ PASS' if tinymce_ok else '❌ FAIL'}")
+    logger.info(f"Quill integration check: {'✅ PASS' if quill_ok else '❌ FAIL'}")
     
-    if templates_ok and js_ok and tinymce_ok:
+    if templates_ok and js_ok and quill_ok:
         logger.info("✅ All frontend components are correctly set up")
         return 0
     else:
@@ -167,8 +167,8 @@ def main():
             missing.append("template syntax")
         if not js_ok:
             missing.append("JavaScript syntax")
-        if not tinymce_ok:
-            missing.append("TinyMCE integration")
+        if not quill_ok:
+            missing.append("Quill integration")
         
         logger.error(f"❌ Frontend verification failed: issues with {', '.join(missing)}")
         return 1

@@ -1109,7 +1109,7 @@ async def page_editor(
             })
 
         # Get editor configuration
-        editor_config = wysiwyg_service.get_editor_config('tinymce', {
+        editor_config = wysiwyg_service.get_editor_config('quill', {
             'tenant_id': str(tenant_obj.id),
             'media_browse_url': '/admin/api/media'
         })
