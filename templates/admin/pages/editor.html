@@ -1543,12 +1543,17 @@ function ensureSortableLoaded(callback) {
               // We need to fetch products for the dropdown
               typeFieldsHTML = `
                 <div class="mb-3">
-                  <label for="productId" class="form-label">Select Product</label>
-                  <select class="form-select" id="productId" name="content.product_id">
+                  <label for="blockProductId" class="form-label">Select Product</label>
+                  <select class="form-select" id="blockProductId" name="content.product_id">
                     <option value="">Loading products...</option>
                   </select>
                 </div>
               `;
+              
+              // After setting the HTML, we'll load the products
+              setTimeout(() => {
+                loadProducts(block.content?.product_id || '');
+              }, 100);
               break;
 
             case 'video':
@@ -1652,26 +1657,7 @@ function ensureSortableLoaded(callback) {
           }
 
           // Initialize product dropdown if it's a product block
-          if (blockType === 'product') {
-            // Fetch products from API
-            fetch('/admin/api/products')
-              .then(response => response.json())
-              .then(products => {
-                const productIdSelect = document.getElementById('productId');
-                let options = '<option value="">Select a product...</option>';
-
-                products.forEach(product => {
-                  const selected = block.content?.product_id === product.id ? 'selected' : '';
-                  options += `<option value="${product.id}" ${selected}>${product.name}</option>`;
-                });
-
-                productIdSelect.innerHTML = options;
-              })
-              .catch(error => {
-                console.error('Error fetching products:', error);
-                document.getElementById('productId').innerHTML = '<option value="">Error loading products</option>';
-              });
-          }
+          // (Now handled by the loadProducts function called after setting typeFieldsHTML)
 
           // Add media browser handler for image blocks
           if (blockType === 'image' && document.getElementById('browseMediaBtn')) {
