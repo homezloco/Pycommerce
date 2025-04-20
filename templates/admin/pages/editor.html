@@ -510,12 +510,12 @@
                 <div class="section-container" data-section-id="{{ section_data.section.id }}" data-section-type="{{ section_data.section.section_type }}">
                   <div class="section-header">
                     <h5>{{ section_data.section.section_type|title }} Section</h5>
-                    <div class="section-controls">
-                      <button class="btn btn-sm btn-shopify-secondary edit-section-btn">
-                        <i class="fas fa-cog"></i>
+                    <div class="section-controls" style="display: flex; visibility: visible;">
+                      <button class="btn btn-sm btn-shopify-secondary edit-section-btn" onclick="editSection('{{ section_data.section.id }}', '{{ section_data.section.section_type }}')">
+                        <i class="fas fa-cog"></i> Edit
                       </button>
-                      <button class="btn btn-sm btn-shopify-danger delete-section-btn">
-                        <i class="fas fa-trash"></i>
+                      <button class="btn btn-sm btn-shopify-danger delete-section-btn" onclick="deleteSection('{{ section_data.section.id }}')">
+                        <i class="fas fa-trash"></i> Delete
                       </button>
                     </div>
                   </div>
@@ -725,27 +725,27 @@
       </div>
       <div class="modal-body">
         <div class="list-group">
-          <button type="button" class="list-group-item list-group-item-action section-type-option" data-type="hero">
+          <button type="button" class="list-group-item list-group-item-action section-type-option" data-type="hero" onclick="addNewSection('hero')">
             <i class="fas fa-image me-2"></i> Hero Section
             <small class="d-block text-muted">Full-width banner with text and call-to-action</small>
           </button>
-          <button type="button" class="list-group-item list-group-item-action section-type-option" data-type="content">
+          <button type="button" class="list-group-item list-group-item-action section-type-option" data-type="content" onclick="addNewSection('content')">
             <i class="fas fa-paragraph me-2"></i> Content Section
             <small class="d-block text-muted">Rich text content with optional images</small>
           </button>
-          <button type="button" class="list-group-item list-group-item-action section-type-option" data-type="products">
+          <button type="button" class="list-group-item list-group-item-action section-type-option" data-type="products" onclick="addNewSection('products')">
             <i class="fas fa-boxes me-2"></i> Products Grid
             <small class="d-block text-muted">Display products in a grid layout</small>
           </button>
-          <button type="button" class="list-group-item list-group-item-action section-type-option" data-type="cta">
+          <button type="button" class="list-group-item list-group-item-action section-type-option" data-type="cta" onclick="addNewSection('cta')">
             <i class="fas fa-bullhorn me-2"></i> Call to Action
             <small class="d-block text-muted">Prominent call-to-action with background</small>
           </button>
-          <button type="button" class="list-group-item list-group-item-action section-type-option" data-type="features">
+          <button type="button" class="list-group-item list-group-item-action section-type-option" data-type="features" onclick="addNewSection('features')"">
             <i class="fas fa-star me-2"></i> Features List
             <small class="d-block text-muted">Highlight product or service features</small>
           </button>
-          <button type="button" class="list-group-item list-group-item-action section-type-option" data-type="testimonials">
+          <button type="button" class="list-group-item list-group-item-action section-type-option" data-type="testimonials" onclick="addNewSection('testimonials')">
             <i class="fas fa-quote-right me-2"></i> Testimonials
             <small class="d-block text-muted">Customer testimonials or reviews</small>
           </button>
