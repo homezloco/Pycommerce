@@ -23,7 +23,7 @@
       },
       "page_sections": {
         "exists": true,
-        "record_count": 5,
+        "record_count": 6,
         "columns": [
           "id",
           "page_id",
@@ -36,7 +36,7 @@
       },
       "content_blocks": {
         "exists": true,
-        "record_count": 5,
+        "record_count": 6,
         "columns": [
           "id",
           "section_id",
@@ -67,24 +67,24 @@
   "templates": {
     "templates/admin/pages/list.html": {
       "exists": true,
-      "size": 13598,
-      "last_modified": 1744684598.0165992,
+      "size": 15438,
+      "last_modified": 1745142327.357939,
       "is_empty": false,
       "readable": true,
       "sample": "{% extends \"admin/base_admin.html\" %}\n\n{% block title %}Pages - PyCommerce Admin{% endblock %}\n\n{% b"
     },
     "templates/admin/pages/create.html": {
       "exists": true,
-      "size": 24195,
-      "last_modified": 1745069581.8533967,
+      "size": 30277,
+      "last_modified": 1745145364.7745726,
       "is_empty": false,
       "readable": true,
       "sample": "{% extends \"admin/base_admin.html\" %}\n\n{% block title %}Create Page - PyCommerce Admin{% endblock %}"
     },
     "templates/admin/pages/editor.html": {
       "exists": true,
-      "size": 62564,
-      "last_modified": 1744606530.6372328,
+      "size": 72286,
+      "last_modified": 1745145894.7234933,
       "is_empty": false,
       "readable": true,
       "sample": "{% extends \"admin/base_admin.html\" %}\n\n{% block title %}Page Editor - PyCommerce Admin{% endblock %}"
@@ -93,16 +93,16 @@
   "static_files": {
     "static/js/page-editor.js": {
       "exists": true,
-      "size": 27610,
-      "last_modified": 1744634349.504213,
+      "size": 26608,
+      "last_modified": 1745145616.9985337,
       "is_empty": false,
       "readable": true,
       "sample": "\n/**\n * Page Editor JavaScript\n * Handles the interactive functionality of the visual page editor\n *"
     },
     "static/js/page-builder.js": {
       "exists": true,
-      "size": 12229,
-      "last_modified": 1744634348.8452132,
+      "size": 12989,
+      "last_modified": 1745143463.3738067,
       "is_empty": false,
       "readable": true,
       "sample": "\n/**\n * Page Builder JavaScript\n * Handles the interactive functionality of the visual page builder\n"
