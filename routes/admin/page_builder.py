@@ -377,6 +377,16 @@ async def pages_list(
         return JSONResponse({"error": f"Error: {str(e)}"}, status_code=500)
 
     try:
+        # Debug - dump some information to the logs
+        logger.info(f"Pages list context - Selected tenant slug: {selected_tenant_slug}")
+        logger.info(f"Pages list context - Tenant object: {tenant_obj}")
+        if tenant_obj:
+            logger.info(f"Pages list context - Tenant ID: {tenant_obj.id}, Name: {tenant_obj.name}")
+        logger.info(f"Pages list context - Number of pages: {len(pages)}")
+        
+        for p in pages:
+            logger.info(f"Page in context: {p.title} ({p.id})")
+        
         # Prepare context for template
         context = {
             "request": request,
@@ -389,7 +399,14 @@ async def pages_list(
             "current_page": page,
             "limit": limit,
             "status_message": status_message,
-            "status_type": status_type
+            "status_type": status_type,
+            "debug_info": {
+                "selected_tenant_slug": selected_tenant_slug,
+                "tenant_id": str(tenant_obj.id) if tenant_obj else None,
+                "tenant_name": tenant_obj.name if tenant_obj else None,
+                "pages_count": len(pages),
+                "page_ids": [str(p.id) for p in pages]
+            }
         }
 
         logger.info(f"Template context prepared with {len(pages)} pages")

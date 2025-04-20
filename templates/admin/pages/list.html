@@ -176,6 +176,19 @@
                     </div>
                 </div>
                 <div class="card-body">
+                    {% if debug_info %}
+                    <div class="alert alert-secondary">
+                        <h5><i class="fas fa-bug me-2"></i>Debug Information:</h5>
+                        <ul>
+                            <li>Selected tenant: {{ debug_info.selected_tenant_slug }}</li>
+                            <li>Tenant ID: {{ debug_info.tenant_id }}</li>
+                            <li>Tenant name: {{ debug_info.tenant_name }}</li>
+                            <li>Pages count: {{ debug_info.pages_count }}</li>
+                            <li>Page IDs: {{ debug_info.page_ids|join(', ') }}</li>
+                        </ul>
+                    </div>
+                    {% endif %}
+                    
                     {% if not tenant %}
                     <div class="alert alert-info">
                         <i class="fas fa-info-circle me-2"></i>
