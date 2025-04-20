@@ -34,4 +34,5 @@ dependencies = [
     "bleach>=6.2.0",
     "beautifulsoup4>=4.13.3",
     "quill>=1.0.0",
+    "anthropic>=0.49.0",
 ]

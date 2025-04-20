@@ -11,10 +11,13 @@ from fastapi import APIRouter, HTTPException, Request, Body, Query, Form
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 
-# Import AI provider with error handling
+# Import our new AI Service
+from pycommerce.services.ai_service import AIService
+
+# Import AI provider with error handling (legacy support)
 try:
     from pycommerce.plugins.ai.providers import get_ai_provider
-    from pycommerce.plugins.ai.config import get_ai_provider_instance, get_ai_settings, is_ai_enabled, update_ai_settings
+    from pycommerce.plugins.ai.config import get_ai_provider_instance, get_ai_settings, is_ai_enabled, update_ai_settings, load_ai_config
 except ImportError as e:
     logger = logging.getLogger(__name__)
     logger.warning(f"AI provider import failed: {str(e)} - using fallback mock provider")
@@ -43,134 +46,111 @@ except ImportError as e:
 
     def update_ai_settings(data):
         return {}
+    
+    def load_ai_config():
+        return {}
 
 
 from pycommerce.models.tenant import TenantManager
 
 # Configure logging
-logging.basicConfig(level=logging.INFO, 
-                   format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
 # Initialize tenant manager
 tenant_manager = TenantManager()
 
-def setup_routes(templates):
-    """Set up the AI content routes."""
-    router = APIRouter()
-
-    @router.post("/admin/api/ai/generate-content")
-    async def generate_content(request: Request):
-        """
-        Generate content using AI based on a prompt.
-        """
-        try:
-            # Check if AI is enabled
-            if not is_ai_enabled():
-                return JSONResponse(
-                    content={"error": "AI functionality is disabled in the system"},
-                    status_code=400
-                )
-
-            data = await request.json()
-            prompt = data.get("prompt", "")
-
-            if not prompt:
-                return JSONResponse({
-                    "success": False,
-                    "message": "Prompt is required"
-                })
-
-            # Get tenant information
-            tenant_id = request.session.get("selected_tenant")
-            if not tenant_id:
-                logger.warning("No tenant selected for content generation")
-                return JSONResponse({
-                    "success": False, 
-                    "message": "No store selected"
-                })
-
-            # Get tenant using TenantManager
-            tenant = tenant_manager.get_by_slug(tenant_id)
-            if not tenant:
-                logger.warning(f"Tenant not found: {tenant_id}")
-                return JSONResponse({
-                    "success": False,
-                    "message": "Store not found"
-                })
-
-            try:
-                # Get AI provider
-                ai_provider = get_ai_provider_instance(tenant_id)
-
-                # Generate content
-                logger.info(f"Generating content for tenant {tenant_id} with prompt: {prompt[:50]}...")
-                content = ai_provider.generate_text(prompt)
-
-                return JSONResponse({
-                    "success": True,
-                    "content": content
-                })
-            except ValueError as e:
-                logger.warning(f"AI provider error: {str(e)}")
-                return JSONResponse({
-                    "success": False,
-                    "message": f"AI service error: {str(e)}"
-                })
-
-        except Exception as e:
-            logger.error(f"Error generating content: {str(e)}")
-            return JSONResponse({
-                "success": False,
-                "message": f"Error generating content: {str(e)}"
-            })
-
-    return router
-"""
-Routes for AI content generation in admin interface.
-"""
-
-import json
-import logging
-from typing import Optional, Dict, Any
-
-from fastapi import APIRouter, HTTPException, Request, Form
-from fastapi.templating import Jinja2Templates
-from fastapi.responses import HTMLResponse, JSONResponse
-
-from pycommerce.plugins.ai.config import load_ai_config, get_ai_provider_instance, get_ai_settings, is_ai_enabled, update_ai_settings
-from pycommerce.models.tenant import TenantManager
-
-logger = logging.getLogger(__name__)
-
-# Create router
-router = APIRouter(prefix="/admin/ai", tags=["admin"])
+# Initialize AI service
+ai_service = AIService()
 
 # Template setup will be passed from main app
 templates = None
 
-# Initialize tenant manager
-tenant_manager = TenantManager()
+# Create API router
+router = APIRouter(tags=["admin"])
 
-@router.post("/generate-content", response_class=JSONResponse)
-async def generate_content(
+@router.post("/admin/api/ai/generate-content")
+async def generate_content_api(request: Request):
+    """
+    Generate content using AI based on a prompt.
+    
+    This endpoint supports the page builder's AI content generation feature
+    for Quill editor integration.
+    """
+    try:
+        # Parse request data
+        data = await request.json()
+        prompt = data.get("prompt", "")
+        style = data.get("style", "informative")
+
+        if not prompt:
+            return JSONResponse(
+                content={
+                    "success": False,
+                    "error": "Prompt is required"
+                },
+                status_code=400
+            )
+
+        # Get tenant information from session if available
+        tenant_id = None
+        if hasattr(request, 'session') and "selected_tenant" in request.session:
+            tenant_slug = request.session.get("selected_tenant")
+            if tenant_slug and tenant_slug != 'all':
+                tenant = tenant_manager.get_by_slug(tenant_slug)
+                if tenant:
+                    tenant_id = str(tenant.id)
+
+        # Generate content using our AI service
+        logger.info(f"Generating content with prompt: {prompt[:50]}... (style: {style})")
+        result = ai_service.generate_content(prompt, style, tenant_id)
+
+        if "error" in result:
+            return JSONResponse(
+                content={
+                    "success": False,
+                    "error": result["error"]
+                },
+                status_code=400
+            )
+
+        return JSONResponse(
+            content={
+                "success": True,
+                "content": result["content"]
+            }
+        )
+
+    except Exception as e:
+        logger.error(f"Error generating content: {str(e)}")
+        return JSONResponse(
+            content={
+                "success": False,
+                "error": f"Error generating content: {str(e)}"
+            },
+            status_code=500
+        )
+
+@router.post("/admin/ai/generate-content", response_class=JSONResponse)
+async def generate_content_form(
     request: Request,
     prompt: str = Form(...),
     context: Optional[str] = Form(None),
     format: Optional[str] = Form("html")
 ):
-    """Generate content using AI."""
+    """Generate content using AI for form-based requests."""
     try:
-        # Check if AI is enabled
+        # Check if AI is enabled in the legacy system
         if not is_ai_enabled():
-            return JSONResponse(
-                status_code=400,
-                content={
-                    "success": False,
-                    "error": "AI functionality is disabled in the system",
-                    "message": "AI functionality is disabled. Please enable AI in the settings."
-                }
-            )
+            # Try using our new AI service instead
+            if not ai_service.openai_client:
+                return JSONResponse(
+                    status_code=400,
+                    content={
+                        "success": False,
+                        "error": "AI functionality is disabled in the system",
+                        "message": "AI functionality is disabled. Please enable AI in the settings."
+                    }
+                )
 
         # Get selected tenant from session
         tenant_id = None
@@ -181,9 +161,35 @@ async def generate_content(
                 if tenant:
                     tenant_id = str(tenant.id)
 
-        # Get AI provider
+        # Build complete prompt
+        generation_prompt = f"{prompt}"
+        if context:
+            generation_prompt = f"Context:\n{context}\n\nPrompt:\n{prompt}"
+
+        # Try using our new AI service first
+        try:
+            style = "informative"  # Default style
+            result = ai_service.generate_content(generation_prompt, style, tenant_id)
+            
+            if "error" not in result and "content" in result:
+                return {
+                    "success": True,
+                    "content": result["content"],
+                    "format": format
+                }
+        except Exception as e:
+            logger.warning(f"New AI service failed, falling back to legacy provider: {str(e)}")
+            
+        # Fall back to legacy AI provider if our service fails
         try:
             ai_provider = get_ai_provider_instance(tenant_id)
+            content = ai_provider.generate_text(generation_prompt)
+            
+            return {
+                "success": True,
+                "content": content,
+                "format": format
+            }
         except ValueError as e:
             logger.warning(f"AI provider not configured properly: {str(e)}")
             return JSONResponse(
@@ -195,18 +201,6 @@ async def generate_content(
                 }
             )
 
-        # Generate content
-        generation_prompt = f"{prompt}"
-        if context:
-            generation_prompt = f"Context:\n{context}\n\nPrompt:\n{prompt}"
-
-        content = ai_provider.generate_text(generation_prompt)
-
-        return {
-            "success": True,
-            "content": content,
-            "format": format
-        }
     except Exception as e:
         logger.error(f"Error generating content: {str(e)}")
         return JSONResponse(
@@ -218,7 +212,7 @@ async def generate_content(
             }
         )
 
-@router.post("/enhance-content", response_class=JSONResponse)
+@router.post("/admin/ai/enhance-content", response_class=JSONResponse)
 async def enhance_content(
     request: Request,
     content: str = Form(...),
@@ -228,7 +222,7 @@ async def enhance_content(
     """Enhance existing content using AI."""
     try:
         # Check if AI is enabled
-        if not is_ai_enabled():
+        if not is_ai_enabled() and not ai_service.openai_client:
             return JSONResponse(
                 status_code=400,
                 content={
@@ -279,7 +273,7 @@ async def enhance_content(
             }
         )
 
-@router.get("/api/ai/settings")
+@router.get("/admin/api/ai/settings")
 async def get_ai_config(request: Request):
     """Get current AI configuration settings."""
     try:
@@ -303,7 +297,7 @@ async def get_ai_config(request: Request):
         )
 
 
-@router.post("/api/ai/settings")
+@router.post("/admin/api/ai/settings")
 async def update_ai_config(request: Request):
     """Update AI configuration settings."""
     try:

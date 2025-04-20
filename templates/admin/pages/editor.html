@@ -337,20 +337,23 @@
           placeholder: 'Enter your content here...',
         });
         textEditor.clipboard.dangerouslyPasteHTML(content || '');
-
-        // Add AI Assist button to toolbar
-        const toolbar = document.querySelector('#textEditor .ql-toolbar');
-        if (toolbar && !toolbar.querySelector('.btn-primary.ai-assist')) {
+        
+        // Add AI assistant button to the toolbar
+        const toolbar = textEditor.root.parentElement.querySelector('.ql-toolbar');
+        if (toolbar && !toolbar.querySelector('.ai-assist-btn')) {
           const aiButton = document.createElement('button');
-          aiButton.className = 'btn btn-primary btn-sm ms-2 ai-assist';
-          aiButton.innerText = 'AI Assist';
-          aiButton.setAttribute('type', 'button');
+          aiButton.className = 'btn btn-primary btn-sm ms-2 ai-assist-btn';
+          aiButton.innerHTML = '<i class="fas fa-robot"></i> AI Assist';
+          aiButton.onclick = function(e) {
+            e.preventDefault();
+            // Show AI modal
+            const aiModal = new bootstrap.Modal(document.getElementById('aiModal'));
+            aiModal.show();
+            
+            // Set the target editor
+            document.getElementById('aiTargetEditor').value = 'textEditor';
+          };
           toolbar.appendChild(aiButton);
-
-          // Add event listener for AI Assist button
-          aiButton.addEventListener('click', function() {
-            alert('AI Assist feature will be implemented here');
-          });
         }
       }
 
@@ -1472,6 +1475,24 @@ function ensureSortableLoaded(callback) {
               },
               placeholder: 'Enter your content here...',
             });
+            
+            // Add AI assistant button to the block content editor toolbar
+            const blockToolbar = blockContentEditor.root.parentElement.querySelector('.ql-toolbar');
+            if (blockToolbar && !blockToolbar.querySelector('.ai-assist-btn')) {
+              const aiBlockButton = document.createElement('button');
+              aiBlockButton.className = 'btn btn-primary btn-sm ms-2 ai-assist-btn';
+              aiBlockButton.innerHTML = '<i class="fas fa-robot"></i> AI Assist';
+              aiBlockButton.onclick = function(e) {
+                e.preventDefault();
+                // Show AI modal
+                const aiModal = new bootstrap.Modal(document.getElementById('aiModal'));
+                aiModal.show();
+                
+                // Set the target editor
+                document.getElementById('aiTargetEditor').value = 'blockContent';
+              };
+              blockToolbar.appendChild(aiBlockButton);
+            }
 
             // Restore previous content
             if (block.content && block.content.html) {
@@ -1692,4 +1713,147 @@ function ensureSortableLoaded(callback) {
     }
   });
 </script>
+<!-- AI Assistant Modal -->
+<div class="modal fade" id="aiModal" tabindex="-1" aria-labelledby="aiModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="aiModalLabel">AI Content Assistant</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="aiTargetEditor" value="">
+        
+        <div class="mb-3">
+          <label for="aiPrompt" class="form-label">What would you like the AI to write?</label>
+          <textarea class="form-control" id="aiPrompt" rows="3" 
+            placeholder="Example: Write a paragraph about our premium product quality"></textarea>
+        </div>
+        
+        <div class="mb-3">
+          <label for="aiStyle" class="form-label">Content style</label>
+          <select class="form-select" id="aiStyle">
+            <option value="informative">Informative</option>
+            <option value="persuasive">Persuasive</option>
+            <option value="casual">Casual</option>
+            <option value="formal">Formal</option>
+            <option value="enthusiastic">Enthusiastic</option>
+          </select>
+        </div>
+        
+        <div id="aiResult" class="d-none">
+          <div class="alert alert-info">
+            <div id="aiContent"></div>
+          </div>
+        </div>
+        
+        <div id="aiLoading" class="d-none text-center">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+          </div>
+          <p class="mt-2">Generating content with AI...</p>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-primary" id="generateAiBtn">Generate</button>
+        <button type="button" class="btn btn-success d-none" id="insertAiBtn">Insert Content</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // AI content generation functionality
+  document.addEventListener('DOMContentLoaded', function() {
+    const generateAiBtn = document.getElementById('generateAiBtn');
+    const insertAiBtn = document.getElementById('insertAiBtn');
+    const aiPrompt = document.getElementById('aiPrompt');
+    const aiStyle = document.getElementById('aiStyle');
+    const aiResult = document.getElementById('aiResult');
+    const aiContent = document.getElementById('aiContent');
+    const aiLoading = document.getElementById('aiLoading');
+    
+    // Generate AI content
+    generateAiBtn.addEventListener('click', function() {
+      const prompt = aiPrompt.value.trim();
+      const style = aiStyle.value;
+      
+      if (!prompt) {
+        alert('Please enter a prompt for the AI');
+        return;
+      }
+      
+      // Show loading indicator
+      aiResult.classList.add('d-none');
+      aiLoading.classList.remove('d-none');
+      generateAiBtn.disabled = true;
+      insertAiBtn.classList.add('d-none');
+      
+      // Make API request to OpenAI
+      fetch('/admin/api/ai/generate-content', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          prompt: prompt,
+          style: style
+        })
+      })
+      .then(response => response.json())
+      .then(data => {
+        // Hide loading indicator
+        aiLoading.classList.add('d-none');
+        generateAiBtn.disabled = false;
+        
+        if (data.content) {
+          // Show result
+          aiContent.innerHTML = data.content;
+          aiResult.classList.remove('d-none');
+          insertAiBtn.classList.remove('d-none');
+        } else {
+          alert('Error generating content: ' + (data.error || 'Unknown error'));
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        aiLoading.classList.add('d-none');
+        generateAiBtn.disabled = false;
+        alert('Error generating content. Please try again.');
+      });
+    });
+    
+    // Insert AI content into editor
+    insertAiBtn.addEventListener('click', function() {
+      const targetEditorId = document.getElementById('aiTargetEditor').value;
+      const content = aiContent.innerHTML;
+      
+      // Find the target editor
+      let targetEditor;
+      if (targetEditorId === 'textEditor') {
+        targetEditor = textEditor;
+      } else if (targetEditorId === 'blockContent') {
+        targetEditor = Quill.find(document.getElementById('blockContent'));
+      }
+      
+      if (targetEditor) {
+        // Insert content at cursor position or at the end
+        const range = targetEditor.getSelection();
+        if (range) {
+          targetEditor.clipboard.dangerouslyPasteHTML(range.index, content);
+        } else {
+          targetEditor.clipboard.dangerouslyPasteHTML(targetEditor.getLength(), content);
+        }
+        
+        // Close modal
+        const modal = bootstrap.Modal.getInstance(document.getElementById('aiModal'));
+        modal.hide();
+      } else {
+        alert('Editor not found. Please try again.');
+      }
+    });
+  });
+</script>
+
 {% endblock dashboard_content %}
