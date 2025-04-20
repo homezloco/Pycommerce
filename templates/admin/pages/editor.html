@@ -517,10 +517,10 @@
                   <div class="section-header">
                     <h5>{{ section_data.section.section_type|title }} Section</h5>
                     <div class="section-controls">
-                      <button class="btn btn-sm btn-outline-secondary edit-section-btn">
+                      <button class="btn btn-sm btn-shopify-secondary edit-section-btn">
                         <i class="fas fa-cog"></i>
                       </button>
-                      <button class="btn btn-sm btn-outline-danger delete-section-btn">
+                      <button class="btn btn-sm btn-shopify-danger delete-section-btn">
                         <i class="fas fa-trash"></i>
                       </button>
                     </div>
@@ -548,10 +548,10 @@
                           {% endif %}
                         </div>
                         <div class="block-controls">
-                          <button class="btn btn-sm btn-outline-secondary edit-block-btn">
+                          <button class="btn btn-sm btn-shopify-secondary edit-block-btn">
                             <i class="fas fa-pen"></i>
                           </button>
-                          <button class="btn btn-sm btn-outline-danger delete-block-btn">
+                          <button class="btn btn-sm btn-shopify-danger delete-block-btn">
                             <i class="fas fa-trash"></i>
                           </button>
                         </div>
@@ -559,7 +559,7 @@
                     {% endfor %}
                   </div>
                   <div class="text-center mt-3">
-                    <button class="btn btn-sm btn-outline-primary add-block-btn" data-section-id="{{ section_data.section.id }}">
+                    <button class="btn btn-sm add-block-btn" data-section-id="{{ section_data.section.id }}">
                       <i class="fas fa-plus me-1"></i> Add Block
                     </button>
                   </div>
@@ -573,13 +573,13 @@
           </div>
 
           <div class="text-center mt-4">
-            <button class="btn btn-outline-primary" id="addSectionBtn">
+            <button class="btn btn-shopify-secondary" id="addSectionBtn">
               <i class="fas fa-plus me-1"></i> Add Section
             </button>
           </div>
           <!-- Make sure we have a save button with the correct ID -->
           <div class="text-center mt-3">
-            <button class="btn btn-primary" id="savePageBtn">
+            <button class="btn btn-shopify-primary" id="savePageBtn">
               <i class="fas fa-save me-1"></i> Save Page
             </button>
           </div>
@@ -1725,7 +1725,7 @@ function ensureSortableLoaded(callback) {
   });
 </script>
 <!-- AI Assistant Modal -->
-<div class="modal fade" id="aiModal" tabindex="-1" aria-labelledby="aiModalLabel" aria-hidden="true">
+<div class="modal fade editor-modal" id="aiModal" tabindex="-1" aria-labelledby="aiModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-lg">
     <div class="modal-content">
       <div class="modal-header">
@@ -1753,13 +1753,15 @@ function ensureSortableLoaded(callback) {
         </div>
         
         <div id="aiResult" class="d-none">
-          <div class="alert alert-info">
-            <div id="aiContent"></div>
+          <div class="card border-0 bg-light">
+            <div class="card-body">
+              <div id="aiContent" class="p-3"></div>
+            </div>
           </div>
         </div>
         
         <div id="aiLoading" class="d-none text-center">
-          <div class="spinner-border text-primary" role="status">
+          <div class="spinner-border" style="color: var(--editor-primary);" role="status">
             <span class="visually-hidden">Loading...</span>
           </div>
           <p class="mt-2">Generating content with AI...</p>
@@ -1767,8 +1769,8 @@ function ensureSortableLoaded(callback) {
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-        <button type="button" class="btn btn-primary" id="generateAiBtn">Generate</button>
-        <button type="button" class="btn btn-success d-none" id="insertAiBtn">Insert Content</button>
+        <button type="button" class="btn btn-shopify-primary" id="generateAiBtn">Generate</button>
+        <button type="button" class="btn btn-shopify-success d-none" id="insertAiBtn">Insert Content</button>
       </div>
     </div>
   </div>
