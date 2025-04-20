@@ -22,6 +22,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Store all Quill editor instances
 const editors = {};
+// Make editors available globally for the AI modal
+window.editors = editors;
 
 function initEditors() {
     // Check if Quill is loaded
@@ -89,22 +91,27 @@ function addAIAssistButton(blockId, quill) {
     // Get the toolbar element
     const toolbar = quill.root.parentElement.querySelector('.ql-toolbar');
     
-    if (toolbar) {
+    if (toolbar && !toolbar.querySelector('.ai-assist-btn')) {
         // Create AI assist button
         const aiButton = document.createElement('button');
-        aiButton.className = 'btn btn-primary btn-sm ms-2';
+        aiButton.className = 'btn btn-primary btn-sm ms-2 ai-assist-btn';
         aiButton.innerHTML = '<i class="fas fa-robot"></i> AI Assist';
         aiButton.onclick = function(e) {
             e.preventDefault();
-            showAIPromptDialog(blockId, function(content) {
-                // Insert content at cursor position
-                const range = quill.getSelection();
-                if (range) {
-                    quill.insertText(range.index, content);
-                } else {
-                    quill.insertText(quill.getLength(), content);
-                }
-            });
+            
+            // Use the global AI modal (from editor.html)
+            const aiModal = document.getElementById('aiModal');
+            if (aiModal) {
+                // Store the editor instance reference for later insertion
+                window.currentQuillEditor = quill;
+                document.getElementById('aiTargetEditor').value = blockId;
+                
+                // Show the AI modal
+                const modal = new bootstrap.Modal(aiModal);
+                modal.show();
+            } else {
+                console.error('AI Modal not found in the page');
+            }
         };
         
         // Add button to toolbar
@@ -112,150 +119,33 @@ function addAIAssistButton(blockId, quill) {
     }
 }
 
+// These functions are now handled by the global AI modal in editor.html
+// Keeping empty function definitions for backward compatibility
 function showAIPromptDialog(blockId, callback) {
-    // Create modal element
-    const modalId = `aiPromptModal-${blockId}`;
+    console.log('Using global AI modal instead of individual dialog');
     
-    // Check if modal already exists
-    let modal = document.getElementById(modalId);
-    
-    if (!modal) {
-        // Create modal
-        const modalHTML = `
-            <div class="modal fade" id="${modalId}" tabindex="-1" aria-labelledby="${modalId}-label" aria-hidden="true">
-                <div class="modal-dialog">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title" id="${modalId}-label">Generate Content with AI</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                        </div>
-                        <div class="modal-body">
-                            <form id="aiPromptForm-${blockId}">
-                                <div class="mb-3">
-                                    <label for="aiPrompt-${blockId}" class="form-label">What would you like the AI to write about?</label>
-                                    <textarea class="form-control" id="aiPrompt-${blockId}" rows="3" placeholder="E.g., Write a paragraph about sustainable products"></textarea>
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label">Content style</label>
-                                    <select class="form-select" id="aiStyle-${blockId}">
-                                        <option value="informative">Informative</option>
-                                        <option value="persuasive">Persuasive</option>
-                                        <option value="casual">Casual</option>
-                                        <option value="formal">Formal</option>
-                                        <option value="enthusiastic">Enthusiastic</option>
-                                    </select>
-                                </div>
-                            </form>
-                            <div id="aiResult-${blockId}" class="d-none">
-                                <div class="alert alert-primary">
-                                    <div id="aiContent-${blockId}"></div>
-                                </div>
-                            </div>
-                            <div id="aiLoading-${blockId}" class="d-none text-center py-3">
-                                <div class="spinner-border text-primary" role="status">
-                                    <span class="visually-hidden">Loading...</span>
-                                </div>
-                                <p class="mt-2">Generating content...</p>
-                            </div>
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                            <button type="button" class="btn btn-primary" id="generateBtn-${blockId}">Generate</button>
-                            <button type="button" class="btn btn-success d-none" id="insertBtn-${blockId}">Insert Content</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `;
+    // Use the global AI modal
+    const aiModal = document.getElementById('aiModal');
+    if (aiModal) {
+        // Store the callback for later use
+        window.aiContentCallback = callback;
+        document.getElementById('aiTargetEditor').value = blockId;
         
-        // Add modal to body
-        document.body.insertAdjacentHTML('beforeend', modalHTML);
-        
-        // Get the new modal
-        modal = document.getElementById(modalId);
-        
-        // Add event listeners
-        document.getElementById(`generateBtn-${blockId}`).addEventListener('click', function() {
-            generateAIContent(blockId);
-        });
-        
-        document.getElementById(`insertBtn-${blockId}`).addEventListener('click', function() {
-            const content = document.getElementById(`aiContent-${blockId}`).innerHTML;
-            callback(content);
-            
-            // Close modal
-            const bsModal = bootstrap.Modal.getInstance(modal);
-            bsModal.hide();
-        });
+        // Show the AI modal
+        const modal = new bootstrap.Modal(aiModal);
+        modal.show();
     }
-    
-    // Reset form
-    document.getElementById(`aiPrompt-${blockId}`).value = '';
-    document.getElementById(`aiResult-${blockId}`).classList.add('d-none');
-    document.getElementById(`aiLoading-${blockId}`).classList.add('d-none');
-    document.getElementById(`generateBtn-${blockId}`).classList.remove('d-none');
-    document.getElementById(`insertBtn-${blockId}`).classList.add('d-none');
-    
-    // Show modal
-    const bsModal = new bootstrap.Modal(modal);
-    bsModal.show();
 }
 
 function generateAIContent(blockId) {
-    // Get prompt and style
-    const prompt = document.getElementById(`aiPrompt-${blockId}`).value;
-    const style = document.getElementById(`aiStyle-${blockId}`).value;
+    console.log('Using global AI content generation function');
     
-    if (!prompt) {
-        alert('Please enter a prompt for the AI');
-        return;
+    // This functionality is now handled by the event listeners in editor.html
+    // Just in case this function is called directly, we'll trigger the generate button
+    const generateBtn = document.getElementById('generateAiBtn');
+    if (generateBtn) {
+        generateBtn.click();
     }
-    
-    // Show loading, hide generate button
-    document.getElementById(`aiLoading-${blockId}`).classList.remove('d-none');
-    document.getElementById(`generateBtn-${blockId}`).classList.add('d-none');
-    document.getElementById(`aiResult-${blockId}`).classList.add('d-none');
-    
-    // Get tenant ID for API call
-    const tenantId = document.getElementById('tenantId')?.value || '';
-    
-    // Call API to generate content
-    fetch('/admin/api/ai/generate-content', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            prompt: prompt,
-            style: style,
-            tenant_id: tenantId
-        })
-    })
-    .then(response => response.json())
-    .then(data => {
-        // Hide loading
-        document.getElementById(`aiLoading-${blockId}`).classList.add('d-none');
-        
-        if (data.success) {
-            // Show result and insert button
-            document.getElementById(`aiContent-${blockId}`).innerHTML = data.content;
-            document.getElementById(`aiResult-${blockId}`).classList.remove('d-none');
-            document.getElementById(`insertBtn-${blockId}`).classList.remove('d-none');
-        } else {
-            // Show error and generate button
-            alert('Error generating content: ' + (data.error || 'Unknown error'));
-            document.getElementById(`generateBtn-${blockId}`).classList.remove('d-none');
-        }
-    })
-    .catch(error => {
-        // Hide loading, show generate button
-        document.getElementById(`aiLoading-${blockId}`).classList.add('d-none');
-        document.getElementById(`generateBtn-${blockId}`).classList.remove('d-none');
-        
-        // Show error
-        alert('Error: ' + error.message);
-        console.error('Error generating AI content:', error);
-    });
 }
 
 function initPageControls() {

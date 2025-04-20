@@ -1791,6 +1791,9 @@ function ensureSortableLoaded(callback) {
       insertAiBtn.classList.add('d-none');
       
       // Make API request to OpenAI
+      // Get tenant ID from hidden field if available
+      const tenantId = document.getElementById('tenantId')?.value || '';
+      
       fetch('/admin/api/ai/generate-content', {
         method: 'POST',
         headers: {
@@ -1798,7 +1801,8 @@ function ensureSortableLoaded(callback) {
         },
         body: JSON.stringify({
           prompt: prompt,
-          style: style
+          style: style,
+          tenant_id: tenantId
         })
       })
       .then(response => response.json())
@@ -1831,10 +1835,19 @@ function ensureSortableLoaded(callback) {
       
       // Find the target editor
       let targetEditor;
-      if (targetEditorId === 'textEditor') {
+      
+      // Check if we have a currentQuillEditor available from page-editor.js
+      if (window.currentQuillEditor) {
+        targetEditor = window.currentQuillEditor;
+      } else if (targetEditorId === 'textEditor') {
         targetEditor = textEditor;
       } else if (targetEditorId === 'blockContent') {
         targetEditor = Quill.find(document.getElementById('blockContent'));
+      } else {
+        // Try to find the editor using editors collection from page-editor.js
+        if (window.editors && window.editors[targetEditorId]) {
+          targetEditor = window.editors[targetEditorId];
+        }
       }
       
       if (targetEditor) {
@@ -1849,6 +1862,9 @@ function ensureSortableLoaded(callback) {
         // Close modal
         const modal = bootstrap.Modal.getInstance(document.getElementById('aiModal'));
         modal.hide();
+        
+        // Reset reference to prevent issues with future insertions
+        window.currentQuillEditor = null;
       } else {
         alert('Editor not found. Please try again.');
       }
