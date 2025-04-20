@@ -176,18 +176,27 @@
                     </div>
                 </div>
                 <div class="card-body">
-                    {% if debug_info %}
                     <div class="alert alert-secondary">
                         <h5><i class="fas fa-bug me-2"></i>Debug Information:</h5>
                         <ul>
-                            <li>Selected tenant: {{ debug_info.selected_tenant_slug }}</li>
-                            <li>Tenant ID: {{ debug_info.tenant_id }}</li>
-                            <li>Tenant name: {{ debug_info.tenant_name }}</li>
-                            <li>Pages count: {{ debug_info.pages_count }}</li>
-                            <li>Page IDs: {{ debug_info.page_ids|join(', ') }}</li>
+                            <li>Selected tenant: {{ selected_tenant }}</li>
+                            <li>Tenant object exists: {{ tenant is not none }}</li>
+                            {% if tenant %}
+                            <li>Tenant ID: {{ tenant.id }}</li>
+                            <li>Tenant name: {{ tenant.name }}</li>
+                            {% endif %}
+                            <li>Pages available: {{ pages is defined }}</li>
+                            <li>Pages count: {{ pages|length if pages else 'None' }}</li>
+                            {% if pages %}
+                            <li>Pages info:</li>
+                            <ul>
+                                {% for page in pages %}
+                                <li>{{ page.title }} ({{ page.id }})</li>
+                                {% endfor %}
+                            </ul>
+                            {% endif %}
                         </ul>
                     </div>
-                    {% endif %}
                     
                     {% if not tenant %}
                     <div class="alert alert-info">
@@ -219,7 +228,17 @@
                                             <span class="badge bg-warning text-dark">Draft</span>
                                             {% endif %}
                                         </td>
-                                        <td>{{ page.updated_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                                        <td>
+                                            {% if page.updated_at %}
+                                                {% if page.updated_at is string %}
+                                                    {{ page.updated_at }}
+                                                {% else %}
+                                                    {{ page.updated_at.strftime('%Y-%m-%d %H:%M') if page.updated_at is not string else page.updated_at }}
+                                                {% endif %}
+                                            {% else %}
+                                                (No date)
+                                            {% endif %}
+                                        </td>
                                         <td>
                                             <div class="btn-group" role="group">
                                                 <a href="/admin/pages/edit/{{ page.id }}" class="btn btn-sm btn-outline-primary">

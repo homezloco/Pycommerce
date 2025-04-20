@@ -332,10 +332,20 @@ async def pages_list(
                     # Get pages for the tenant
                     try:
                         logger.info(f"Listing pages for tenant {tenant_obj.id}")
-                        pages = page_manager.list_by_tenant(str(tenant_obj.id), include_unpublished=True)
-                        logger.info(f"Found {len(pages)} pages for tenant {tenant_obj.id}")
-                        for p in pages:
-                            logger.info(f"  Page: {p.title} (ID: {p.id}, slug: {p.slug})")
+                        try:
+                            pages = page_manager.list_by_tenant(str(tenant_obj.id), include_unpublished=True)
+                            logger.info(f"Found {len(pages)} pages for tenant {tenant_obj.id}")
+                            # Inspect page objects to debug content
+                            for p in pages:
+                                logger.info(f"  Page: {p.title} (ID: {p.id}, slug: {p.slug})")
+                                # Add debug logging for page attributes
+                                page_attrs = {key: value for key, value in vars(p).items() 
+                                              if not key.startswith('_') and key != 'sections'}
+                                logger.info(f"  Page attributes: {page_attrs}")
+                        except Exception as e:
+                            logger.error(f"Error in list_by_tenant: {e}")
+                            logger.exception("Full error details:")
+                            pages = []
 
                         # Ensure pages is a list even if None was returned
                         if pages is None:
