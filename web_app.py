@@ -51,6 +51,8 @@ try:
     from routes.admin.ai_config import setup_routes as setup_ai_config_routes
     from routes.admin.theme_settings import setup_routes as setup_theme_settings_routes
     from routes.admin.returns import setup_routes as setup_returns_routes
+    from routes.admin.debug import setup_routes as setup_debug_routes # Added import for debug routes
+    from routes.admin.ai_content import setup_routes as setup_ai_content_routes
 
     # Include admin routers
     dashboard_router = setup_dashboard_routes(templates)
@@ -92,7 +94,7 @@ try:
             import os
             templates = Jinja2Templates(directory=os.path.join(os.getcwd(), "templates"))
             logger.info("Created new templates object for page builder")
-            
+
         page_builder_router = setup_page_builder_routes(templates)
         app.include_router(page_builder_router)
         logger.info("Page Builder routes initialized successfully with templates")
@@ -122,6 +124,9 @@ try:
 
     returns_router = setup_returns_routes(templates)
     app.include_router(returns_router)
+
+    debug_router = setup_debug_routes(templates) # Initialize debug routes
+    app.include_router(debug_router)
 
     logger.info("Admin routes registered successfully")
 except ImportError as e:
