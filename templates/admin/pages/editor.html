@@ -1481,23 +1481,28 @@ function ensureSortableLoaded(callback) {
               placeholder: 'Enter your content here...',
             });
             
-            // Add AI assistant button to the block content editor toolbar
-            const blockToolbar = blockContentEditor.root.parentElement.querySelector('.ql-toolbar');
-            if (blockToolbar && !blockToolbar.querySelector('.ai-assist-btn')) {
-              const aiBlockButton = document.createElement('button');
-              aiBlockButton.className = 'btn btn-primary btn-sm ms-2 ai-assist-btn';
-              aiBlockButton.innerHTML = '<i class="fas fa-robot"></i> AI Assist';
-              aiBlockButton.onclick = function(e) {
-                e.preventDefault();
-                // Show AI modal
-                const aiModal = new bootstrap.Modal(document.getElementById('aiModal'));
-                aiModal.show();
-                
-                // Set the target editor
-                document.getElementById('aiTargetEditor').value = 'blockContent';
-              };
-              blockToolbar.appendChild(aiBlockButton);
-            }
+            // Add AI assistant button to the block content editor toolbar (with delay to ensure Quill is fully rendered)
+            setTimeout(function() {
+              const blockToolbar = blockContentEditor.root.parentElement.querySelector('.ql-toolbar');
+              if (blockToolbar && !blockToolbar.querySelector('.ai-assist-btn')) {
+                console.log('Adding AI Assist button to block content editor toolbar');
+                const aiBlockButton = document.createElement('button');
+                aiBlockButton.className = 'btn btn-primary btn-sm ms-2 ai-assist-btn';
+                aiBlockButton.innerHTML = '<i class="fas fa-robot"></i> AI Assist';
+                aiBlockButton.onclick = function(e) {
+                  e.preventDefault();
+                  // Show AI modal
+                  const aiModal = new bootstrap.Modal(document.getElementById('aiModal'));
+                  aiModal.show();
+                  
+                  // Set the target editor
+                  document.getElementById('aiTargetEditor').value = 'blockContent';
+                  // Store current editor in global variable for access from other scripts
+                  window.currentQuillEditor = blockContentEditor;
+                };
+                blockToolbar.appendChild(aiBlockButton);
+              }
+            }, 200);
 
             // Restore previous content
             if (block.content && block.content.html) {
@@ -1838,40 +1843,64 @@ function ensureSortableLoaded(callback) {
       const targetEditorId = document.getElementById('aiTargetEditor').value;
       const content = aiContent.innerHTML;
       
+      console.log("Inserting AI content into editor:", targetEditorId);
+      console.log("Current Quill Editor reference:", window.currentQuillEditor ? "Available" : "Not available");
+      
       // Find the target editor
       let targetEditor;
       
-      // Check if we have a currentQuillEditor available from page-editor.js
+      // Check if we have a currentQuillEditor available
       if (window.currentQuillEditor) {
+        console.log("Using window.currentQuillEditor reference");
         targetEditor = window.currentQuillEditor;
-      } else if (targetEditorId === 'textEditor') {
+      } else if (targetEditorId === 'textEditor' && typeof textEditor !== 'undefined') {
+        console.log("Using textEditor reference");
         targetEditor = textEditor;
       } else if (targetEditorId === 'blockContent') {
-        targetEditor = Quill.find(document.getElementById('blockContent'));
+        console.log("Looking for blockContent editor");
+        const blockContentElement = document.getElementById('blockContent');
+        if (blockContentElement) {
+          targetEditor = Quill.find(blockContentElement);
+          console.log("Found blockContent editor:", targetEditor ? "Yes" : "No");
+        }
       } else {
         // Try to find the editor using editors collection from page-editor.js
         if (window.editors && window.editors[targetEditorId]) {
+          console.log("Using editor from window.editors collection");
           targetEditor = window.editors[targetEditorId];
         }
       }
       
       if (targetEditor) {
+        console.log("Target editor found, inserting content");
         // Insert content at cursor position or at the end
-        const range = targetEditor.getSelection();
-        if (range) {
-          targetEditor.clipboard.dangerouslyPasteHTML(range.index, content);
-        } else {
-          targetEditor.clipboard.dangerouslyPasteHTML(targetEditor.getLength(), content);
+        try {
+          const range = targetEditor.getSelection();
+          if (range) {
+            targetEditor.clipboard.dangerouslyPasteHTML(range.index, content);
+          } else {
+            targetEditor.clipboard.dangerouslyPasteHTML(targetEditor.getLength(), content);
+          }
+          console.log("Content inserted successfully");
+          
+          // Close modal
+          const modal = bootstrap.Modal.getInstance(document.getElementById('aiModal'));
+          modal.hide();
+          
+          // Reset state
+          aiPrompt.value = '';
+          aiResult.classList.add('d-none');
+          insertAiBtn.classList.add('d-none');
+          
+          // Reset reference to prevent issues with future insertions
+          window.currentQuillEditor = null;
+        } catch (error) {
+          console.error("Error inserting content:", error);
+          alert('Error inserting content: ' + error.message);
         }
-        
-        // Close modal
-        const modal = bootstrap.Modal.getInstance(document.getElementById('aiModal'));
-        modal.hide();
-        
-        // Reset reference to prevent issues with future insertions
-        window.currentQuillEditor = null;
       } else {
-        alert('Editor not found. Please try again.');
+        console.error("Target editor not found:", targetEditorId);
+        alert('Editor not found. Please try again or refresh the page.');
       }
     });
   });
