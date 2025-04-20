@@ -1300,6 +1300,33 @@ async def create_section(
     finally:
         session.close()
 
+@router.get("/api/pages/sections/{section_id}", response_class=JSONResponse)
+async def get_section(section_id: str):
+    """Get a section by ID."""
+    session = SessionLocal()
+    try:
+        section_manager = PageSectionManager(session)
+        section = section_manager.get(section_id)
+        if not section:
+            raise HTTPException(status_code=404, detail=f"Section with ID {section_id} not found")
+        
+        return {
+            "id": str(section.id),
+            "page_id": str(section.page_id),
+            "section_type": section.section_type,
+            "position": section.position,
+            "settings": section.settings,
+            "created_at": section.created_at.isoformat(),
+            "updated_at": section.updated_at.isoformat()
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting section: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error getting section: {str(e)}")
+    finally:
+        session.close()
+
 @router.put("/api/pages/sections/{section_id}", response_class=JSONResponse)
 async def update_section(
     section_id: str,
