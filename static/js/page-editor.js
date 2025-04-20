@@ -314,21 +314,8 @@ function previewPage() {
 }
 
 function initSectionManager() {
-    // Add section button
-    const addSectionBtn = document.getElementById('addSectionBtn');
-    if (addSectionBtn) {
-        addSectionBtn.addEventListener('click', function() {
-            const sectionTypeSelect = document.getElementById('sectionTypeSelect');
-            if (sectionTypeSelect) {
-                const sectionType = sectionTypeSelect.value;
-                if (sectionType) {
-                    addSection(sectionType);
-                } else {
-                    showNotification('Please select a section type', 'warning');
-                }
-            }
-        });
-    }
+    // Add section button event listener is now handled in editor.html
+    // to open the section type selection modal rather than automatically creating a section
     
     // Section actions (via event delegation)
     document.addEventListener('click', function(e) {
