@@ -338,23 +338,28 @@
         });
         textEditor.clipboard.dangerouslyPasteHTML(content || '');
         
-        // Add AI assistant button to the toolbar
-        const toolbar = textEditor.root.parentElement.querySelector('.ql-toolbar');
-        if (toolbar && !toolbar.querySelector('.ai-assist-btn')) {
-          const aiButton = document.createElement('button');
-          aiButton.className = 'btn btn-primary btn-sm ms-2 ai-assist-btn';
-          aiButton.innerHTML = '<i class="fas fa-robot"></i> AI Assist';
-          aiButton.onclick = function(e) {
-            e.preventDefault();
-            // Show AI modal
-            const aiModal = new bootstrap.Modal(document.getElementById('aiModal'));
-            aiModal.show();
-            
-            // Set the target editor
-            document.getElementById('aiTargetEditor').value = 'textEditor';
-          };
-          toolbar.appendChild(aiButton);
-        }
+        // Add AI assistant button to the toolbar (with delay to ensure Quill is fully rendered)
+        setTimeout(function() {
+          const toolbar = textEditor.root.parentElement.querySelector('.ql-toolbar');
+          if (toolbar && !toolbar.querySelector('.ai-assist-btn')) {
+            console.log('Adding AI Assist button to main editor toolbar');
+            const aiButton = document.createElement('button');
+            aiButton.className = 'btn btn-primary btn-sm ms-2 ai-assist-btn';
+            aiButton.innerHTML = '<i class="fas fa-robot"></i> AI Assist';
+            aiButton.onclick = function(e) {
+              e.preventDefault();
+              // Show AI modal
+              const aiModal = new bootstrap.Modal(document.getElementById('aiModal'));
+              aiModal.show();
+              
+              // Set the target editor
+              document.getElementById('aiTargetEditor').value = 'textEditor';
+              // Store the editor reference for later
+              window.currentQuillEditor = textEditor;
+            };
+            toolbar.appendChild(aiButton);
+          }
+        }, 200);
       }
 
 
