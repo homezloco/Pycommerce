@@ -225,14 +225,8 @@
 
 <script>
   document.addEventListener('DOMContentLoaded', function() {
-    // Handle Add Section button click
-    const addSectionBtn = document.getElementById('addSectionBtn');
-    if (addSectionBtn) {
-      addSectionBtn.addEventListener('click', function() {
-        // Show section type selector or add a default section
-        addNewSection('content');
-      });
-    }
+    // Add Section button is now handled by the modal code below
+    // (This old handler was causing automatic content section creation)
 
     // Handle Save Page button click
     const savePageBtn = document.getElementById('savePageBtn');
