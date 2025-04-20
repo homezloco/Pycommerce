@@ -171,25 +171,40 @@
      */
     function addAIAssistButton(quill, modalId = 'aiAssistModal') {
         try {
-            const toolbar = document.querySelector('.ql-toolbar');
+            // Use the toolbar associated with this specific quill instance
+            const toolbar = quill.container.querySelector('.ql-toolbar');
             if (!toolbar) {
-                console.warn("⚠️ Quill toolbar not found");
+                console.warn("⚠️ Quill toolbar not found for this editor instance");
                 return;
             }
 
-            // Check if button already exists
+            // Check if button already exists in this toolbar
             if (toolbar.querySelector('.ai-assist-btn')) {
+                console.log("⚠️ AI Assist button already exists in this toolbar");
                 return;
+            }
+
+            // Create a container for custom buttons to keep them separate from Quill buttons
+            let customButtonsContainer = toolbar.querySelector('.quill-custom-buttons');
+            if (!customButtonsContainer) {
+                customButtonsContainer = document.createElement('div');
+                customButtonsContainer.className = 'quill-custom-buttons d-flex ms-2';
+                toolbar.appendChild(customButtonsContainer);
             }
 
             const aiButton = document.createElement('button');
-            aiButton.className = 'btn btn-primary btn-sm ms-2 ai-assist-btn';
-            aiButton.innerHTML = '<i class="fas fa-robot"></i> AI Assist';
+            aiButton.className = 'btn btn-primary btn-sm ai-assist-btn';
+            aiButton.innerHTML = '<i class="fas fa-robot"></i> AI';
             aiButton.type = 'button';
+            aiButton.title = 'AI Content Assistant';
+            aiButton.setAttribute('data-quill-id', quill.container.id || 'quill-instance');
 
             aiButton.onclick = function() {
                 const modal = document.getElementById(modalId);
                 if (modal) {
+                    // Store reference to the active editor for later use
+                    window.activeQuillEditor = quill;
+                    
                     // Initialize Bootstrap modal if Bootstrap is available
                     if (typeof bootstrap !== 'undefined') {
                         const modalInstance = new bootstrap.Modal(modal);
@@ -203,7 +218,7 @@
                 }
             };
 
-            toolbar.appendChild(aiButton);
+            customButtonsContainer.appendChild(aiButton);
             console.log("✅ Added AI Assist button to toolbar");
         } catch (error) {
             console.error("❌ Failed to add AI Assist button:", error);
@@ -216,19 +231,38 @@
      */
     function setupMediaSelector(quill) {
         try {
-            const imageButton = document.querySelector('.ql-image');
+            // Find the image button in this specific toolbar
+            const toolbar = quill.container.querySelector('.ql-toolbar');
+            if (!toolbar) {
+                console.warn("⚠️ Quill toolbar not found for this editor instance");
+                return;
+            }
+            
+            const imageButton = toolbar.querySelector('.ql-image');
             if (!imageButton) {
-                console.warn("⚠️ Image button not found in Quill toolbar");
+                console.warn("⚠️ Image button not found in this Quill toolbar");
+                return;
+            }
+
+            // Check if we've already set up this image button
+            if (imageButton.getAttribute('data-pycommerce-media') === 'true') {
+                console.log("⚠️ Media selector already set up for this image button");
                 return;
             }
 
             // Remove existing event listeners by cloning
             const newImageButton = imageButton.cloneNode(true);
             imageButton.parentNode.replaceChild(newImageButton, imageButton);
+            
+            // Mark as set up
+            newImageButton.setAttribute('data-pycommerce-media', 'true');
 
             newImageButton.addEventListener('click', function(e) {
                 e.preventDefault();
                 e.stopPropagation();
+                
+                // Store reference to the active editor for later use
+                window.activeQuillEditor = quill;
 
                 // Use the global openMediaSelector function if available
                 if (typeof window.openMediaSelector === 'function') {

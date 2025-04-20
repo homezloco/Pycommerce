@@ -339,7 +339,32 @@
     
     // Initialize when DOM is ready
     document.addEventListener('DOMContentLoaded', function() {
-        loadEditorScripts();
+        // Check if quill-integration.js is already loaded
+        if (typeof PyCommerceQuill !== 'undefined') {
+            console.log("PyCommerceQuill is already loaded, using existing integration");
+            
+            // Initialize with existing PyCommerceQuill
+            const editorConfig = {{ editor_config|safe }};
+            
+            // Only initialize if there's no Quill editor already
+            if (document.querySelectorAll('.ql-container').length === 0) {
+                PyCommerceQuill.init({
+                    targetSelector: '#content',
+                    formSelector: '#createPageForm',
+                    containerId: 'quill-editor-container',
+                    modalId: 'aiAssistModal',
+                    height: '500px',
+                    options: editorConfig || {},
+                    debug: true
+                });
+            } else {
+                console.log("Quill editor already exists, skipping initialization");
+            }
+        } else {
+            // Load scripts if PyCommerceQuill is not available
+            console.log("PyCommerceQuill not loaded, loading scripts first");
+            loadEditorScripts();
+        }
         
         // Add a manual retry button (hidden by default, shown if initialization fails)
         setTimeout(function() {
@@ -348,21 +373,38 @@
                 
                 const contentArea = document.querySelector('#content');
                 if (contentArea && contentArea.parentNode) {
-                    const retryButton = document.createElement('button');
-                    retryButton.type = 'button';
-                    retryButton.className = 'btn btn-warning mt-2 mb-3';
-                    retryButton.innerHTML = '<i class="fas fa-sync"></i> Retry Editor Initialization';
-                    retryButton.onclick = function() {
-                        this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Initializing...';
-                        loadEditorScripts();
-                        setTimeout(() => {
-                            if (document.querySelectorAll('.ql-container').length > 0) {
-                                this.remove();
+                    // Check if retry button already exists
+                    if (!document.querySelector('.quill-retry-button')) {
+                        const retryButton = document.createElement('button');
+                        retryButton.type = 'button';
+                        retryButton.className = 'btn btn-warning mt-2 mb-3 quill-retry-button';
+                        retryButton.innerHTML = '<i class="fas fa-sync"></i> Retry Editor Initialization';
+                        retryButton.onclick = function() {
+                            this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Initializing...';
+                            // Use PyCommerceQuill if available, otherwise load scripts
+                            if (typeof PyCommerceQuill !== 'undefined') {
+                                const editorConfig = {{ editor_config|safe }};
+                                PyCommerceQuill.init({
+                                    targetSelector: '#content',
+                                    formSelector: '#createPageForm',
+                                    containerId: 'quill-editor-container',
+                                    modalId: 'aiAssistModal',
+                                    height: '500px',
+                                    options: editorConfig || {},
+                                    debug: true
+                                });
                             } else {
-                                this.innerHTML = '<i class="fas fa-sync"></i> Retry Editor Initialization';
+                                loadEditorScripts();
                             }
-                        }, 3000);
-                    };
+                            
+                            setTimeout(() => {
+                                if (document.querySelectorAll('.ql-container').length > 0) {
+                                    this.remove();
+                                } else {
+                                    this.innerHTML = '<i class="fas fa-sync"></i> Retry Editor Initialization';
+                                }
+                            }, 3000);
+                        };
                     
                     contentArea.parentNode.insertBefore(retryButton, contentArea);
                 }
