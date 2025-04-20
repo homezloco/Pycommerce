@@ -1226,7 +1226,7 @@ async def page_preview(
             })
 
         return templates.TemplateResponse(
-            "store/page.html",
+            "storefront/page.html",
             {
                 "request": request,
                 "tenant": tenant,
