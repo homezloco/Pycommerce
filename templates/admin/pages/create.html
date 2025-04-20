@@ -252,7 +252,28 @@
     
     // Initialize with PyCommerceQuill
     function initWithPyCommerce() {
-        const editorConfig = {{ editor_config|safe }};
+        // Use a properly parsed editor config object with defaults if parsing fails
+        let editorConfig = {};
+        try {
+            editorConfig = JSON.parse('{{ editor_config|safe }}');
+        } catch (e) {
+            console.error("Error parsing editor config:", e);
+            // Use default config
+            editorConfig = {
+                theme: 'snow',
+                modules: {
+                    toolbar: [
+                        ['bold', 'italic', 'underline', 'strike'],
+                        [{'header': 1}, {'header': 2}],
+                        [{'list': 'ordered'}, {'list': 'bullet'}],
+                        [{'indent': '-1'}, {'indent': '+1'}],
+                        [{'align': []}],
+                        ['link', 'image'],
+                        ['clean']
+                    ]
+                }
+            };
+        }
         
         if (window.PyCommerceQuill && PyCommerceQuill.init) {
             console.log("Initializing Quill editor with PyCommerceQuill integration");
@@ -344,7 +365,28 @@
             console.log("PyCommerceQuill is already loaded, using existing integration");
             
             // Initialize with existing PyCommerceQuill
-            const editorConfig = {{ editor_config|safe }};
+            // Use a properly parsed editor config object with defaults if parsing fails
+            let editorConfig = {};
+            try {
+                editorConfig = JSON.parse('{{ editor_config|safe }}');
+            } catch (e) {
+                console.error("Error parsing editor config:", e);
+                // Use default config
+                editorConfig = {
+                    theme: 'snow',
+                    modules: {
+                        toolbar: [
+                            ['bold', 'italic', 'underline', 'strike'],
+                            [{'header': 1}, {'header': 2}],
+                            [{'list': 'ordered'}, {'list': 'bullet'}],
+                            [{'indent': '-1'}, {'indent': '+1'}],
+                            [{'align': []}],
+                            ['link', 'image'],
+                            ['clean']
+                        ]
+                    }
+                };
+            }
             
             // Only initialize if there's no Quill editor already
             if (document.querySelectorAll('.ql-container').length === 0) {
@@ -383,7 +425,28 @@
                             this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Initializing...';
                             // Use PyCommerceQuill if available, otherwise load scripts
                             if (typeof PyCommerceQuill !== 'undefined') {
-                                const editorConfig = {{ editor_config|safe }};
+                                // Use a properly parsed editor config object with defaults if parsing fails
+                                let editorConfig = {};
+                                try {
+                                    editorConfig = JSON.parse('{{ editor_config|safe }}');
+                                } catch (e) {
+                                    console.error("Error parsing editor config:", e);
+                                    // Use default config
+                                    editorConfig = {
+                                        theme: 'snow',
+                                        modules: {
+                                            toolbar: [
+                                                ['bold', 'italic', 'underline', 'strike'],
+                                                [{'header': 1}, {'header': 2}],
+                                                [{'list': 'ordered'}, {'list': 'bullet'}],
+                                                [{'indent': '-1'}, {'indent': '+1'}],
+                                                [{'align': []}],
+                                                ['link', 'image'],
+                                                ['clean']
+                                            ]
+                                        }
+                                    };
+                                }
                                 PyCommerceQuill.init({
                                     targetSelector: '#content',
                                     formSelector: '#createPageForm',
