@@ -7,6 +7,27 @@
 document.addEventListener('DOMContentLoaded', function() {
     console.log("Page Builder JS initialized");
     
+    // Check if Sortable.js is loaded, if not, load it
+    if (typeof Sortable === 'undefined') {
+        console.error("Sortable is not defined - attempting to load it");
+        
+        // Load Sortable.js dynamically
+        const script = document.createElement('script');
+        script.src = 'https://cdn.jsdelivr.net/npm/sortablejs@1.14.0/Sortable.min.js';
+        script.onload = function() {
+            console.log("Sortable.js loaded dynamically");
+            
+            // Continue with initialization once loaded
+            initPageBuilder();
+        };
+        document.head.appendChild(script);
+    } else {
+        // Sortable is already loaded, proceed with initialization
+        initPageBuilder();
+    }
+});
+
+function initPageBuilder() {
     // Initialize section management
     initSectionManager();
     
@@ -15,7 +36,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Setup save functionality
     setupSaveHandler();
-});
+}
 
 function initSectionManager() {
     // Get DOM elements
