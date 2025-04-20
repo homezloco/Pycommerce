@@ -690,9 +690,27 @@ function deleteBlock(blockId) {
     });
 }
 
-function initDragDrop() {
-    // If Sortable library is available, use it
+// Function to load Sortable.js and ensure it's available
+function ensureSortableLoaded(callback) {
     if (typeof Sortable !== 'undefined') {
+        console.log("Sortable.js already loaded");
+        if (callback) callback();
+        return;
+    }
+    
+    console.log("Loading Sortable.js dynamically");
+    const script = document.createElement('script');
+    script.src = 'https://cdn.jsdelivr.net/npm/sortablejs@1.14.0/Sortable.min.js';
+    script.onload = function() {
+        console.log("Sortable.js loaded dynamically");
+        if (callback) callback();
+    };
+    document.head.appendChild(script);
+}
+
+function initDragDrop() {
+    // Ensure Sortable library is loaded before using it
+    ensureSortableLoaded(function() {
         // Make sections sortable
         const sectionsContainer = document.getElementById('sectionsContainer');
         if (sectionsContainer) {
@@ -711,7 +729,7 @@ function initDragDrop() {
                 onEnd: updateBlockPositions
             });
         });
-    }
+    });
 }
 
 function updateSectionPositions() {
