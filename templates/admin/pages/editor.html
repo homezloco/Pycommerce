@@ -826,6 +826,97 @@ function ensureSortableLoaded(callback) {
 <script src="/static/js/page-editor.js"></script>
 
 <script>
+  // Define global functions that are called directly from HTML elements
+  function editSection(sectionId, sectionType) {
+    // Fetch current section data
+    fetch(`/admin/api/pages/sections/${sectionId}`)
+      .then(response => response.json())
+      .then(section => {
+        // Populate the form
+        document.getElementById('sectionId').value = section.id;
+        document.getElementById('sectionType').value = section.section_type;
+
+        // Set settings
+        if (section.settings) {
+          document.getElementById('sectionBackground').value = section.settings.background || '#ffffff';
+          document.getElementById('sectionPadding').value = section.settings.padding || 'medium';
+          document.getElementById('sectionWidth').value = section.settings.width || 'normal';
+        }
+
+        // Show the modal
+        const sectionSettingsModal = new bootstrap.Modal(document.getElementById('sectionSettingsModal'));
+        sectionSettingsModal.show();
+      })
+      .catch(error => {
+        console.error('Error fetching section:', error);
+        alert('Failed to load section settings. Please try again.');
+      });
+  }
+  
+  function deleteSection(sectionId) {
+    if (confirm('Are you sure you want to delete this section?')) {
+      fetch(`/admin/api/pages/sections/${sectionId}`, {
+        method: 'DELETE'
+      })
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Error deleting section');
+        }
+        return response.json();
+      })
+      .then(data => {
+        // Remove the section from the DOM
+        const sectionElement = document.querySelector(`[data-section-id="${sectionId}"]`);
+        if (sectionElement) {
+          sectionElement.remove();
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        alert('Error deleting section: ' + error.message);
+      });
+    }
+  }
+  
+  function addNewSection(sectionType) {
+    // API call to create a new section
+    fetch('/admin/api/pages/sections', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        page_id: '{{ page.id }}',
+        section_type: sectionType,
+        position: 0, // Will be adjusted by the backend
+        settings: {
+          padding: 'medium',
+          background: 'white'
+        }
+      })
+    })
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('Error creating section');
+      }
+      return response.json();
+    })
+    .then(data => {
+      // Refresh the page to show the new section
+      window.location.reload();
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      alert('Error creating section: ' + error.message);
+    });
+    
+    // Close the modal if it's open
+    const modal = bootstrap.Modal.getInstance(document.getElementById('addSectionModal'));
+    if (modal) {
+      modal.hide();
+    }
+  }
+
   document.addEventListener('DOMContentLoaded', function() {
     const pageId = '{{ page.id }}';
     let pageData = {

@@ -1425,6 +1425,34 @@ async def create_block(
     finally:
         session.close()
 
+@router.get("/api/pages/blocks/{block_id}", response_class=JSONResponse)
+async def get_block(block_id: str):
+    """Get a block by ID."""
+    session = SessionLocal()
+    try:
+        block_manager = ContentBlockManager(session)
+        block = block_manager.get(block_id)
+        if not block:
+            raise HTTPException(status_code=404, detail=f"Block with ID {block_id} not found")
+        
+        return {
+            "id": str(block.id),
+            "section_id": str(block.section_id),
+            "block_type": block.block_type,
+            "position": block.position,
+            "content": block.content,
+            "settings": block.settings,
+            "created_at": block.created_at.isoformat(),
+            "updated_at": block.updated_at.isoformat()
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting block: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error getting block: {str(e)}")
+    finally:
+        session.close()
+
 @router.put("/api/pages/blocks/{block_id}", response_class=JSONResponse)
 async def update_block(
     block_id: str,
