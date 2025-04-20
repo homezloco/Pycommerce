@@ -50,9 +50,24 @@ def get_managers():
     }
 
 # Debug endpoint
-@router.get("/debug-pages", response_class=JSONResponse)
+@router.get("/debug-pages", response_class=JSONResponse) 
 async def debug_pages(request: Request, tenant: Optional[str] = None):
     """Debug endpoint to check tenant and page data."""
+    
+@router.get("/debug-template", response_class=HTMLResponse)
+async def debug_template(request: Request):
+    """Debug endpoint to test template rendering."""
+    logger.info("Accessing debug-template route")
+    
+    try:
+        # Return a simple HTML template to verify template rendering works
+        return templates.TemplateResponse(
+            "admin/debug.html", 
+            {"request": request, "title": "Template Debug", "message": "If you can see this, template rendering is working"}
+        )
+    except Exception as e:
+        logger.error(f"Error in debug_template: {str(e)}")
+        return HTMLResponse(f"<h1>Template Debug Error</h1><p>{str(e)}</p>", status_code=500)
     managers = get_managers()
     try:
         # Get local manager instances with a session
@@ -413,6 +428,39 @@ async def pages_list(
 
         # Try to render the template
         try:
+            # First check if the template exists
+            import os
+            base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+            template_dir = os.path.join(base_dir, "templates")
+            template_path = os.path.join(template_dir, "admin", "pages", "list.html")
+            
+            if not os.path.exists(template_path):
+                logger.error(f"Template file not found: {template_path}")
+                return HTMLResponse(f"Template file not found: {template_path}", status_code=500)
+                
+            logger.info(f"Template found at path: {template_path}")
+            logger.info(f"Template engine: {templates}")
+            
+            # Create a separate minimal context first as a test
+            basic_context = {
+                "request": request,
+                "selected_tenant": selected_tenant_slug,
+                "tenant": None,
+                "pages": [],
+                "debug_info": {
+                    "template_test": "minimal context test"
+                }
+            }
+            
+            try:
+                logger.info("Attempting to render with minimal context first")
+                minimal_response = templates.TemplateResponse("admin/pages/list.html", basic_context)
+                logger.info("Minimal context rendering succeeded, attempting full context")
+            except Exception as e:
+                logger.error(f"Error rendering template with minimal context: {str(e)}")
+                return HTMLResponse(f"Error rendering with minimal context: {str(e)}", status_code=500)
+            
+            # If minimal context works, try the full context
             return templates.TemplateResponse("admin/pages/list.html", context)
         except Exception as e:
             logger.error(f"Error rendering template: {str(e)}")
