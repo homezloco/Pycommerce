@@ -22,6 +22,9 @@ logger = logging.getLogger(__name__)
 app = Flask(__name__)
 app.secret_key = os.environ.get("FLASK_SECRET_KEY", "pycommerce-secret-key")
 
+# Export Flask app for import elsewhere
+flask_app = app
+
 # Define port for FastAPI service
 FASTAPI_PORT = 8000
 FASTAPI_URL = f"http://127.0.0.1:{FASTAPI_PORT}"

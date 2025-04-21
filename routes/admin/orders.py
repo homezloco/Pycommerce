@@ -22,135 +22,38 @@ router = APIRouter(prefix="/admin", tags=["admin"])
 
 # Import models and managers for orders using the correct implementation
 from pycommerce.models.order import OrderManager, OrderStatus
-from pycommerce.models.order_note import OrderNoteManager, OrderNote
+from pycommerce.models.order_note import OrderNoteManager
 from pycommerce.models.tenant import TenantManager
 from pycommerce.core.db import get_session
+from pycommerce.services.query_optimizer import (
+    get_order_with_items_and_notes,
+    get_orders_summary_for_tenant,
+    get_order_items_with_products,
+    invalidate_order_cache,
+    invalidate_tenant_orders_cache,
+    clear_cache_for_prefix
+)
 
 # Initialize managers
 order_manager = OrderManager()
 order_note_manager = OrderNoteManager()
 tenant_manager = TenantManager()
 
-# Custom functions to avoid SQLAlchemy detached object issues
+# Use the optimized query functions from query_optimizer instead of these legacy functions
 def get_notes_for_order(order_id):
-    """Get notes for an order using a fresh session."""
-    try:
-        # Make sure order_id is a string
-        order_id_str = str(order_id)
-
-        # Create a new session and query the notes
-        with get_session() as session:
-            # Execute the query directly and fetch all results
-            notes_query = session.query(OrderNote).filter(
-                OrderNote.order_id == order_id_str
-            ).order_by(OrderNote.created_at.desc())
-
-            notes = notes_query.all()
-
-            # Safely convert to dictionaries to avoid session issues
-            result = []
-            for note in notes:
-                try:
-                    note_dict = {
-                        "id": str(note.id),
-                        "content": note.content or "",
-                        "created_at": note.created_at,
-                        "is_customer_note": bool(note.is_customer_note)
-                    }
-                    result.append(note_dict)
-                except Exception as note_err:
-                    logger.error(f"Error processing note {getattr(note, 'id', 'unknown')}: {note_err}")
-                    continue
-
-            return result
-    except Exception as e:
-        logger.error(f"Error getting notes for order {order_id}: {e}")
-        import traceback
-        logger.error(f"Traceback: {traceback.format_exc()}")
-        # Always return an empty list on error
-        return []
+    """Get notes for an order using the optimized query service."""
+    order_data = get_order_with_items_and_notes(str(order_id))
+    return order_data.get("notes", [])
 
 def get_order_items(order_id):
-    """Get items for an order using a fresh session to avoid detached object issues."""
-    try:
-        from pycommerce.models.order import OrderItem
-        from pycommerce.models.product import Product
-
-        with get_session() as session:
-            # Get order items with join to products to ensure we get product details
-            items = session.query(OrderItem).filter(
-                OrderItem.order_id == str(order_id)
-            ).all()
-
-            # Convert to dictionaries to avoid session issues
-            result = []
-            for item in items:
-                try:
-                    # Get product details directly from database to avoid relationship issues
-                    from pycommerce.models.db_registry import Product
-                    # Import the correct SQLAlchemy Product model from db_registry
-
-                    # Build a correct SQLAlchemy query
-                    product = session.query(Product).filter(
-                        Product.id == str(item.product_id)
-                    ).first()
-
-                    name = "Unknown Product"
-                    sku = "N/A"
-
-                    if product:
-                        name = product.name
-                        sku = product.sku
-
-                    result.append({
-                        "product_id": str(item.product_id),
-                        "name": name,
-                        "product_name": name,  # Add this field to match template expectation
-                        "sku": sku,
-                        "quantity": item.quantity,
-                        "price": item.price,
-                        "total": item.price * item.quantity,
-                        "product": {
-                            "id": str(item.product_id),
-                            "name": name,
-                            "sku": sku
-                        }
-                    })
-                except Exception as item_err:
-                    logger.error(f"Error processing order item: {item_err}")
-                    # Add a placeholder if we can't get the product
-                    result.append({
-                        "product_id": str(item.product_id),
-                        "name": "Unknown Product",
-                        "product_name": "Unknown Product",  # Add this field to match template expectation
-                        "sku": "N/A",
-                        "quantity": item.quantity,
-                        "price": item.price,
-                        "total": item.price * item.quantity,
-                        "product": None
-                    })
-            return result
-    except Exception as e:
-        logger.error(f"Error getting items for order: {e}")
-        import traceback
-        logger.error(f"Traceback: {traceback.format_exc()}")
-        return []
+    """Get items for an order using the optimized query service."""
+    order_data = get_order_with_items_and_notes(str(order_id))
+    return order_data.get("items", [])
 
 def get_order_items_count(order_id):
-    """Get the count of items for an order using a fresh session."""
-    try:
-        from pycommerce.models.order import OrderItem
-
-        with get_session() as session:
-            count = session.query(OrderItem).filter(
-                OrderItem.order_id == str(order_id)
-            ).count()
-            return count
-    except Exception as e:
-        logger.error(f"Error getting item count for order: {e}")
-        return 0
-
-# We'll no longer monkey patch the OrderNoteManager, instead we'll use our direct functions
+    """Get the count of items for an order using the optimized query service."""
+    order_data = get_order_with_items_and_notes(str(order_id))
+    return len(order_data.get("items", []))
 
 @router.get("/orders", response_class=HTMLResponse)
 async def admin_orders(
@@ -216,60 +119,62 @@ async def admin_orders(
             logger=logger,
             filters=filters
         )
+        
+        # Serialize orders for template
+        orders_data = []
+        for order in orders:
+            # Get items count using our session-safe function
+            items_count = get_order_items_count(str(order.id))
+
+            # Try to extract both customer_name and customer_email safely
+            customer_name = ""
+            customer_email = ""
+            status_value = ""
+
+            # Safe extraction with error handling for better stability
+            try:
+                customer_name = order.customer_name if order.customer_name else ""
+            except:
+                pass
+
+            try:
+                customer_email = order.customer_email if order.customer_email else ""
+            except:
+                pass
+
+            # Handle status whether it's an enum value, string, or int
+            try:
+                if hasattr(order.status, 'value'):
+                    # It's an enum
+                    status_value = order.status.value
+                elif isinstance(order.status, int):
+                    # It's already an int
+                    status_value = order.status
+                else:
+                    # It's a string or something else
+                    status_value = order.status
+            except:
+                # Default to a safe value if all fails
+                status_value = 1  # PENDING
+
+            orders_data.append({
+                "id": str(order.id),
+                "customer_name": customer_name,
+                "customer_email": customer_email,
+                "total": order.total,
+                "status": status_value,
+                "items_count": items_count,
+                "created_at": order.created_at
+            })
     else:
-        # Get orders for specific tenant
-        logger.info(f"Getting orders for tenant: {tenant.name}")
-        orders = order_manager.get_for_tenant(
-            tenant.id,
-            filters=filters if filters else None
+        # Get orders for specific tenant using optimized query
+        logger.info(f"Getting orders for tenant: {tenant.name} using optimized query")
+        
+        # Use the optimized query function that combines multiple queries and uses caching
+        orders_data = get_orders_summary_for_tenant(
+            tenant_id=str(tenant.id),
+            filters=filters
         )
-
-    # Serialize orders for template
-    orders_data = []
-    for order in orders:
-        # Get items count using our session-safe function
-        items_count = get_order_items_count(str(order.id))
-
-        # Try to extract both customer_name and customer_email safely
-        customer_name = ""
-        customer_email = ""
-        status_value = ""
-
-        # Safe extraction with error handling for better stability
-        try:
-            customer_name = order.customer_name if order.customer_name else ""
-        except:
-            pass
-
-        try:
-            customer_email = order.customer_email if order.customer_email else ""
-        except:
-            pass
-
-        # Handle status whether it's an enum value, string, or int
-        try:
-            if hasattr(order.status, 'value'):
-                # It's an enum
-                status_value = order.status.value
-            elif isinstance(order.status, int):
-                # It's already an int
-                status_value = order.status
-            else:
-                # It's a string or something else
-                status_value = order.status
-        except:
-            # Default to a safe value if all fails
-            status_value = 1  # PENDING
-
-        orders_data.append({
-            "id": str(order.id),
-            "customer_name": customer_name,
-            "customer_email": customer_email,
-            "total": order.total,
-            "status": status_value,
-            "items_count": items_count,
-            "created_at": order.created_at
-        })
 
     # Get all possible order statuses for filter dropdown
     status_options = ["PENDING", "PROCESSING", "PAID", "SHIPPED", "DELIVERED", "COMPLETED", "CANCELLED", "REFUNDED"]
@@ -317,7 +222,7 @@ async def admin_order_detail(
     status_message: Optional[str] = None,
     status_type: str = "info"
 ):
-    """Admin page for viewing order details."""
+    """Admin page for viewing order details with optimized data loading."""
     # Add detailed debug logging
     logger.info(f"Starting admin_order_detail for order_id: {order_id}")
 
@@ -348,91 +253,60 @@ async def admin_order_detail(
             status_code=303
         )
 
+    # Get complete order data with items and notes using our optimized query service
+    # This replaces multiple separate database queries with a single optimized query
+    logger.info(f"Getting order data using optimized query service for order: {order_id}")
+    
     # Initialize necessary data with safe defaults
     notes_data = []
     items_data = []
+    complete_order_data = {}
 
     try:
-        # Get order by ID
-        logger.info(f"Getting order by ID: {order_id}")
-        order = None
-        try:
-            # Try with order manager
-            logger.info("Using order manager to get order")
-            order = order_manager.get_by_id(order_id)
-        except Exception as order_err:
-            logger.error(f"Error with order_manager.get_by_id: {str(order_err)}")
-            # Try direct database access as fallback
-            try:
-                with get_session() as session:
-                    from pycommerce.models.order import Order
-                    order = session.query(Order).filter(Order.id == str(order_id)).first()
-            except Exception as db_err:
-                logger.error(f"Error with direct order query: {str(db_err)}")
-
-        # Check if we found an order
-        if not order:
-            logger.warning(f"Order {order_id} not found")
+        # Get complete order data with related entities using optimized query service
+        logger.info(f"Getting complete order data with optimized query for order_id: {order_id}")
+        
+        # This single function call replaces multiple database queries 
+        # and improves performance by using caching and eager loading
+        complete_order_data = get_order_with_items_and_notes(order_id)
+        
+        if not complete_order_data or not complete_order_data.get("order"):
+            logger.warning(f"Order {order_id} not found via optimized query")
             return RedirectResponse(
                 url=f"/admin/orders?status_message=Order+not+found&status_type=error", 
                 status_code=303
             )
-
-        # Verify order belongs to the selected tenant
-        logger.info(f"Comparing order.tenant_id: {order.tenant_id} with tenant.id: {tenant.id}")
-        if str(order.tenant_id) != str(tenant.id):
+            
+        # Get order details
+        order_detail = complete_order_data.get("order", {})
+        
+        # Get order tenant ID and verify it matches the selected tenant
+        order_tenant_id = order_detail.get("tenant_id")
+        if not order_tenant_id or str(order_tenant_id) != str(tenant.id):
             logger.warning(f"Order {order_id} does not belong to tenant {tenant.id}")
             return RedirectResponse(
                 url=f"/admin/orders?status_message=Order+not+found+for+this+store&status_type=error", 
                 status_code=303
             )
-
-        # Get order notes directly with the function - not through the manager
-        logger.info(f"Getting notes for order: {order_id}")
-        try:
-            notes_data = get_notes_for_order(order_id)
-            logger.info(f"Retrieved {len(notes_data) if notes_data else 0} notes")
-        except Exception as notes_err:
-            logger.error(f"Error getting notes: {str(notes_err)}")
-            import traceback
-            logger.error(f"Notes traceback: {traceback.format_exc()}")
-            notes_data = []
-
-        # Get order items directly with the function - not through the manager
-        logger.info(f"Getting items for order: {order_id}")
-        try:
-            items_data = get_order_items(order_id)
-            logger.info(f"Retrieved {len(items_data) if items_data else 0} items")
-        except Exception as items_err:
-            logger.error(f"Error getting items: {str(items_err)}")
-            import traceback
-            logger.error(f"Items traceback: {traceback.format_exc()}")
-            items_data = []
-
-        # Make sure notes_data and items_data are lists, not function references
-        if not isinstance(notes_data, list):
-            logger.warning(f"notes_data is not a list, it's {type(notes_data)}")
-            notes_data = []
-
-        if not isinstance(items_data, list):
-            logger.warning(f"items_data is not a list, it's {type(items_data)}")
-            items_data = []
-
-        # Format order data for template with safe defaults
-        logger.info("Preparing order data for template")
-
-        # Convert the status to a readable string
-        status_value = "pending"
-        if hasattr(order, 'status'):
+        
+        # Get notes and items from the optimized query result
+        # This avoids separate database queries for each related entity
+        notes_data = complete_order_data.get("notes", [])
+        items_data = complete_order_data.get("items", [])
+        
+        logger.info(f"Retrieved {len(notes_data)} notes and {len(items_data)} items in a single optimized query")
+        
+        # Get the order status and convert to a readable string
+        status_raw = order_detail.get("status")
+        status_value = "pending"  # Default value
+        
+        # Normalize the status value
+        if status_raw:
             try:
-                # Get the enum value as a string
-                if hasattr(order.status, 'value'):
-                    status_value = order.status.value.lower()
-                elif hasattr(order.status, 'name'):
-                    status_value = order.status.name.lower()
-                elif isinstance(order.status, int):
-                    # If it's an integer, convert to string
-                    # OrderStatus is already imported at the module level
+                if isinstance(status_raw, str):
+                    status_value = status_raw.lower()
+                elif isinstance(status_raw, int):
+                    # If it's an integer, map to string
                     status_values = {
                         1: "pending",
                         2: "processing",
@@ -443,63 +317,81 @@ async def admin_order_detail(
                         7: "cancelled",
                         8: "refunded"
                     }
-                    status_value = status_values.get(order.status, "pending")
-                else:
-                    # If it's already a string
-                    status_value = str(order.status).lower()
+                    status_value = status_values.get(status_raw, "pending")
             except Exception as status_err:
-                logger.error(f"Error getting status: {status_err}")
-                status_value = "pending"
-
+                logger.error(f"Error processing status: {status_err}")
+                
         logger.info(f"Order status for template: {status_value}")
-
+        
+        # As a fallback for any missing data, try to get the full order object
+        # This should rarely be needed since our optimized query has most data
+        order = None
+        try:
+            order = order_manager.get_by_id(order_id)
+        except Exception:
+            logger.info("Unable to get full order object as fallback, using only optimized data")
+            
+        # Prepare order type string
+        order_type_str = "standard"
+        if order:
+            order_type_str = _get_order_type_string(order)
+        elif "order_type" in order_detail:
+            if order_detail.get("order_type") == 1:
+                order_type_str = "standard"
+            elif order_detail.get("order_type") == 2:
+                order_type_str = "subscription"
+            elif order_detail.get("order_type") == 3:
+                order_type_str = "expedited"
+                
+        # Build the complete order data structure for the template
+        # with safe defaults for any missing values
         order_data = {
-            "id": str(order.id),
-            "order_number": getattr(order, 'order_number', '') or '',
+            "id": order_id,
+            "order_number": order_detail.get("order_number", "") or "",
             # Customer information
-            "customer_name": getattr(order, 'customer_name', '') or '',
-            "customer_email": getattr(order, 'customer_email', '') or '',
-            "customer_phone": getattr(order, 'customer_phone', '') or '',
+            "customer_name": order_detail.get("customer_name", "") or "",
+            "customer_email": order_detail.get("customer_email", "") or "",
+            "customer_phone": order_detail.get("customer_phone", "") or "",
             # Shipping address
             "shipping_address": {
-                "address_line1": getattr(order, 'shipping_address_line1', '') or '',
-                "address_line2": getattr(order, 'shipping_address_line2', '') or '',
-                "city": getattr(order, 'shipping_city', '') or '',
-                "state": getattr(order, 'shipping_state', '') or '',
-                "postal_code": getattr(order, 'shipping_postal_code', '') or '',
-                "country": getattr(order, 'shipping_country', '') or ''
+                "address_line1": order_detail.get("shipping_address_line1", "") or getattr(order, "shipping_address_line1", "") or "",
+                "address_line2": order_detail.get("shipping_address_line2", "") or getattr(order, "shipping_address_line2", "") or "",
+                "city": order_detail.get("shipping_city", "") or getattr(order, "shipping_city", "") or "",
+                "state": order_detail.get("shipping_state", "") or getattr(order, "shipping_state", "") or "",
+                "postal_code": order_detail.get("shipping_postal_code", "") or getattr(order, "shipping_postal_code", "") or "",
+                "country": order_detail.get("shipping_country", "") or getattr(order, "shipping_country", "") or "",
             },
             # Billing address
             "billing_address": {
-                "address_line1": getattr(order, 'billing_address_line1', '') or '',
-                "address_line2": getattr(order, 'billing_address_line2', '') or '',
-                "city": getattr(order, 'billing_city', '') or '',
-                "state": getattr(order, 'billing_state', '') or '',
-                "postal_code": getattr(order, 'billing_postal_code', '') or '',
-                "country": getattr(order, 'billing_country', '') or ''
+                "address_line1": order_detail.get("billing_address_line1", "") or getattr(order, "billing_address_line1", "") or "",
+                "address_line2": order_detail.get("billing_address_line2", "") or getattr(order, "billing_address_line2", "") or "",
+                "city": order_detail.get("billing_city", "") or getattr(order, "billing_city", "") or "",
+                "state": order_detail.get("billing_state", "") or getattr(order, "billing_state", "") or "",
+                "postal_code": order_detail.get("billing_postal_code", "") or getattr(order, "billing_postal_code", "") or "",
+                "country": order_detail.get("billing_country", "") or getattr(order, "billing_country", "") or "",
             },
             # Order financial details
-            "subtotal": getattr(order, 'subtotal', 0.0),
-            "tax": getattr(order, 'tax', 0.0),
-            "shipping_cost": getattr(order, 'shipping_cost', 0.0),
-            "discount": getattr(order, 'discount', 0.0),
-            "total": getattr(order, 'total', 0.0),
+            "subtotal": order_detail.get("subtotal", 0.0),
+            "tax": order_detail.get("tax", 0.0),
+            "shipping_cost": order_detail.get("shipping_cost", 0.0),
+            "discount": order_detail.get("discount", 0.0),
+            "total": order_detail.get("total", 0.0),
             # Order status, type, and payment
-            "status": status_value,  # Normalized status string
-            "order_type": _get_order_type_string(order),  # Get order type as string
-            "payment_method": getattr(order, 'payment_method', '') or '',
-            "payment_id": getattr(order, 'payment_transaction_id', '') or '',
-            "is_paid": getattr(order, 'is_paid', False),
-            "paid_at": getattr(order, 'paid_at', None),
+            "status": status_value,
+            "order_type": order_type_str,
+            "payment_method": order_detail.get("payment_method", "") or getattr(order, "payment_method", "") or "",
+            "payment_id": order_detail.get("payment_transaction_id", "") or getattr(order, "payment_transaction_id", "") or "",
+            "is_paid": order_detail.get("is_paid", False) or getattr(order, "is_paid", False),
+            "paid_at": order_detail.get("paid_at") or getattr(order, "paid_at", None),
             # Shipping information
-            "tracking_number": getattr(order, 'tracking_number', '') or '',
-            "shipping_carrier": getattr(order, 'shipping_carrier', '') or '',
-            "shipped_at": getattr(order, 'shipped_at', None),
-            "delivered_at": getattr(order, 'delivered_at', None),
+            "tracking_number": order_detail.get("tracking_number", "") or getattr(order, "tracking_number", "") or "",
+            "shipping_carrier": order_detail.get("shipping_carrier", "") or getattr(order, "shipping_carrier", "") or "",
+            "shipped_at": order_detail.get("shipped_at") or getattr(order, "shipped_at", None),
+            "delivered_at": order_detail.get("delivered_at") or getattr(order, "delivered_at", None),
             # Timestamps and notes
-            "created_at": getattr(order, 'created_at', datetime.utcnow()),
-            "updated_at": getattr(order, 'updated_at', datetime.utcnow()),
-            "notes": notes_data or []
+            "created_at": order_detail.get("created_at") or getattr(order, "created_at", datetime.utcnow()),
+            "updated_at": order_detail.get("updated_at") or getattr(order, "updated_at", datetime.utcnow()),
+            "notes": notes_data
         }
 
         # Get all possible order statuses for status dropdown as string values
@@ -564,6 +456,11 @@ async def admin_update_order_status(request: Request, order_id: str, status: str
         # Update order status
         success = order_manager.update_status(order_id, order_status)
         if success:
+            # Invalidate cached data for this order to ensure fresh data on next load
+            invalidate_order_cache(order_id)
+            # Also invalidate the tenant's order summary cache
+            invalidate_tenant_orders_cache(str(tenant.id))
+            
             # If status changed to SHIPPED, send shipping notification email
             if order_status == "SHIPPED" and previous_status != "SHIPPED":
                 logger.info(f"Order status changed to SHIPPED, sending shipping notification email")
@@ -877,6 +774,14 @@ async def admin_update_fulfillment(
         )
 
         if success:
+            # Invalidate cached data for this order after updating shipping information
+            invalidate_order_cache(order_id)
+            
+            # Also invalidate tenant's order summary cache
+            selected_tenant_slug = request.session.get("selected_tenant")
+            tenant = tenant_manager.get_by_slug(selected_tenant_slug)
+            if tenant:
+                invalidate_tenant_orders_cache(str(tenant.id))
             return RedirectResponse(
                 url=f"/admin/orders/{order_id}/fulfillment?status_message=Shipping+information+updated+successfully&status_type=success", 
                 status_code=303
@@ -937,6 +842,9 @@ async def admin_add_order_note(
                 success = False
 
         if success:
+            # Invalidate cached data for this order after adding a note
+            invalidate_order_cache(order_id)
+            
             # If it's a customer note, we could send an email to the customer here
             if is_customer_note:
                 # TODO: Send email to customer with note content

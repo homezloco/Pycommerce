@@ -25,9 +25,12 @@ def setup_routes(templates: Jinja2Templates) -> APIRouter:
     router = APIRouter()
     
     # Register the Flask blueprint
-    from flask_adapter import flask_app
-    flask_app.register_blueprint(estimates_bp)
-    
-    logger.info("Estimate routes registered successfully")
+    try:
+        from flask_adapter import flask_app
+        flask_app.register_blueprint(estimates_bp)
+        logger.info("Estimate routes registered successfully")
+    except ImportError as e:
+        logger.warning(f"Could not register Flask blueprint: {str(e)}")
+        # Continue even if Flask registration fails
     
     return router
