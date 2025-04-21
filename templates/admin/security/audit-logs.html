@@ -1,0 +1,589 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Audit Logs - PyCommerce Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-2 mb-3 border-bottom">
+        <h1 class="h2"><i class="bi bi-journal-text me-2"></i>Audit Logs</h1>
+        <div class="btn-toolbar mb-2 mb-md-0">
+            <div class="btn-group me-2">
+                <button type="button" class="btn btn-sm btn-outline-secondary" id="refresh-logs">
+                    <i class="bi bi-arrow-clockwise me-1"></i> Refresh
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-primary" id="export-logs">
+                    <i class="bi bi-download me-1"></i> Export
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-dark">
+                    <h5 class="card-title mb-0">Filter Logs</h5>
+                </div>
+                <div class="card-body">
+                    <form id="filter-logs-form" class="row g-3">
+                        <div class="col-md-2">
+                            <label for="date-range" class="form-label">Date Range</label>
+                            <select class="form-select" id="date-range">
+                                <option value="all">All Time</option>
+                                <option value="today" selected>Today</option>
+                                <option value="yesterday">Yesterday</option>
+                                <option value="last7days">Last 7 Days</option>
+                                <option value="last30days">Last 30 Days</option>
+                                <option value="custom">Custom Range</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="event-type" class="form-label">Event Type</label>
+                            <select class="form-select" id="event-type">
+                                <option value="all" selected>All Events</option>
+                                <option value="login">Login/Logout</option>
+                                <option value="settings">Settings Changes</option>
+                                <option value="role">Role/Permission Changes</option>
+                                <option value="user">User Management</option>
+                                <option value="api">API Access</option>
+                                <option value="security">Security Events</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="user-filter" class="form-label">User</label>
+                            <input type="text" class="form-control" id="user-filter" placeholder="Filter by user">
+                        </div>
+                        <div class="col-md-2">
+                            <label for="status-filter" class="form-label">Status</label>
+                            <select class="form-select" id="status-filter">
+                                <option value="all" selected>All Statuses</option>
+                                <option value="success">Success</option>
+                                <option value="warning">Warning</option>
+                                <option value="danger">Danger</option>
+                                <option value="info">Info</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2 d-flex align-items-end">
+                            <button type="button" class="btn btn-primary w-100" id="apply-filter-btn">
+                                <i class="bi bi-funnel-fill me-1"></i> Apply Filters
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-dark">
+                    <h5 class="card-title mb-0">Audit Log Events</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover" id="audit-logs-table">
+                            <thead>
+                                <tr>
+                                    <th>Time</th>
+                                    <th>Event Type</th>
+                                    <th>User</th>
+                                    <th>IP Address</th>
+                                    <th>Description</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% if security_events %}
+                                    {% for event in security_events %}
+                                    <tr>
+                                        <td>{{ event.timestamp }}</td>
+                                        <td>{{ event.type }}</td>
+                                        <td>{{ event.user }}</td>
+                                        <td>{{ event.ip }}</td>
+                                        <td>{{ event.description }}</td>
+                                        <td>
+                                            {% if event.status == 'success' %}
+                                            <span class="badge bg-success">Success</span>
+                                            {% elif event.status == 'warning' %}
+                                            <span class="badge bg-warning">Warning</span>
+                                            {% elif event.status == 'danger' %}
+                                            <span class="badge bg-danger">Danger</span>
+                                            {% elif event.status == 'info' %}
+                                            <span class="badge bg-info">Info</span>
+                                            {% else %}
+                                            <span class="badge bg-secondary">{{ event.status }}</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-primary view-details-btn" data-event-id="{{ loop.index }}">
+                                                <i class="bi bi-eye"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                {% else %}
+                                    <tr>
+                                        <td>{{ now|default('2025-04-21 20:13:45') }}</td>
+                                        <td>Login</td>
+                                        <td>admin@example.com</td>
+                                        <td>192.168.1.100</td>
+                                        <td>User logged in successfully</td>
+                                        <td><span class="badge bg-success">Success</span></td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-primary view-details-btn" data-event-id="1">
+                                                <i class="bi bi-eye"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>{{ now|default('2025-04-21 19:45:22') }}</td>
+                                        <td>Login Attempt</td>
+                                        <td>user@example.com</td>
+                                        <td>203.0.113.42</td>
+                                        <td>Failed login attempt - wrong password</td>
+                                        <td><span class="badge bg-warning">Warning</span></td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-primary view-details-btn" data-event-id="2">
+                                                <i class="bi bi-eye"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>{{ now|default('2025-04-21 18:32:11') }}</td>
+                                        <td>Settings Change</td>
+                                        <td>admin@example.com</td>
+                                        <td>192.168.1.100</td>
+                                        <td>Security settings updated</td>
+                                        <td><span class="badge bg-info">Info</span></td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-primary view-details-btn" data-event-id="3">
+                                                <i class="bi bi-eye"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>{{ now|default('2025-04-21 15:19:30') }}</td>
+                                        <td>API Access</td>
+                                        <td>api_user@example.com</td>
+                                        <td>198.51.100.75</td>
+                                        <td>API rate limit exceeded</td>
+                                        <td><span class="badge bg-danger">Blocked</span></td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-primary view-details-btn" data-event-id="4">
+                                                <i class="bi bi-eye"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>{{ now|default('2025-04-21 14:05:19') }}</td>
+                                        <td>Permission Change</td>
+                                        <td>admin@example.com</td>
+                                        <td>192.168.1.100</td>
+                                        <td>User role updated to admin</td>
+                                        <td><span class="badge bg-success">Success</span></td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-primary view-details-btn" data-event-id="5">
+                                                <i class="bi bi-eye"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>{{ now|default('2025-04-21 13:22:07') }}</td>
+                                        <td>User Creation</td>
+                                        <td>admin@example.com</td>
+                                        <td>192.168.1.100</td>
+                                        <td>New user account created for user@example.com</td>
+                                        <td><span class="badge bg-success">Success</span></td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-primary view-details-btn" data-event-id="6">
+                                                <i class="bi bi-eye"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>{{ now|default('2025-04-21 11:48:33') }}</td>
+                                        <td>Security Alert</td>
+                                        <td>system</td>
+                                        <td>45.32.198.120</td>
+                                        <td>Multiple failed login attempts detected from same IP</td>
+                                        <td><span class="badge bg-danger">Alert</span></td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-primary view-details-btn" data-event-id="7">
+                                                <i class="bi bi-eye"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>{{ now|default('2025-04-21 09:15:52') }}</td>
+                                        <td>Plugin Enabled</td>
+                                        <td>admin@example.com</td>
+                                        <td>192.168.1.100</td>
+                                        <td>Security plugin enabled: Two-Factor Authentication</td>
+                                        <td><span class="badge bg-info">Info</span></td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-primary view-details-btn" data-event-id="8">
+                                                <i class="bi bi-eye"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>{{ now|default('2025-04-21 08:03:41') }}</td>
+                                        <td>Role Created</td>
+                                        <td>admin@example.com</td>
+                                        <td>192.168.1.100</td>
+                                        <td>New role created: Customer Support</td>
+                                        <td><span class="badge bg-success">Success</span></td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-primary view-details-btn" data-event-id="9">
+                                                <i class="bi bi-eye"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <nav aria-label="Audit log pagination">
+                        <ul class="pagination justify-content-center mb-0">
+                            <li class="page-item disabled">
+                                <a class="page-link" href="#" tabindex="-1" aria-disabled="true">Previous</a>
+                            </li>
+                            <li class="page-item active" aria-current="page">
+                                <a class="page-link" href="#">1</a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="#">2</a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="#">3</a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="#">Next</a>
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Event Details Modal -->
+<div class="modal fade" id="eventDetailsModal" tabindex="-1" aria-labelledby="eventDetailsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="eventDetailsModalLabel">Event Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Event ID</label>
+                            <p id="event-id">AUD-2025-04-21-001</p>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Timestamp</label>
+                            <p id="event-timestamp">2025-04-21 20:13:45</p>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Event Type</label>
+                            <p id="event-type-detail">Login</p>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Status</label>
+                            <p id="event-status"><span class="badge bg-success">Success</span></p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">User</label>
+                            <p id="event-user">admin@example.com</p>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">IP Address</label>
+                            <p id="event-ip">192.168.1.100</p>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">User Agent</label>
+                            <p id="event-user-agent">Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36</p>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Location</label>
+                            <p id="event-location">San Francisco, CA, United States</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Description</label>
+                            <p id="event-description">User logged in successfully</p>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Additional Details</label>
+                            <pre id="event-details" class="border rounded bg-light p-3">
+{
+  "method": "POST",
+  "path": "/admin/login",
+  "parameters": {
+    "email": "admin@example.com",
+    "remember_me": true
+  },
+  "source": "web_interface",
+  "session_id": "sess_2025042120134511",
+  "authentication_type": "password"
+}
+                            </pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize DataTables if available
+        if ($.fn.DataTable) {
+            $('#audit-logs-table').DataTable({
+                pageLength: 10,
+                lengthMenu: [5, 10, 25, 50],
+                language: {
+                    search: "Search logs: "
+                },
+                order: [[0, 'desc']] // Sort by timestamp descending
+            });
+        }
+        
+        // View event details
+        const viewDetailsButtons = document.querySelectorAll('.view-details-btn');
+        if (viewDetailsButtons.length > 0) {
+            viewDetailsButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const eventId = this.getAttribute('data-event-id');
+                    
+                    // In a real application, you would fetch the event details via AJAX
+                    // For this demo, we'll just show the modal with some example data
+                    const modal = new bootstrap.Modal(document.getElementById('eventDetailsModal'));
+                    modal.show();
+                    
+                    // Get row data
+                    const row = this.closest('tr');
+                    const timestamp = row.cells[0].textContent;
+                    const eventType = row.cells[1].textContent;
+                    const user = row.cells[2].textContent;
+                    const ip = row.cells[3].textContent;
+                    const description = row.cells[4].textContent;
+                    const status = row.cells[5].innerHTML;
+                    
+                    // Update modal content
+                    document.getElementById('event-id').textContent = `AUD-${timestamp.replace(/[^0-9]/g, '').substring(0, 8)}-${eventId.padStart(3, '0')}`;
+                    document.getElementById('event-timestamp').textContent = timestamp;
+                    document.getElementById('event-type-detail').textContent = eventType;
+                    document.getElementById('event-status').innerHTML = status;
+                    document.getElementById('event-user').textContent = user;
+                    document.getElementById('event-ip').textContent = ip;
+                    document.getElementById('event-description').textContent = description;
+                    
+                    // Example of different additional details based on event type
+                    let detailsJson = {};
+                    
+                    if (eventType === 'Login') {
+                        detailsJson = {
+                            method: "POST",
+                            path: "/admin/login",
+                            parameters: {
+                                email: user,
+                                remember_me: true
+                            },
+                            source: "web_interface",
+                            session_id: `sess_${timestamp.replace(/[^0-9]/g, '')}`,
+                            authentication_type: "password"
+                        };
+                    } else if (eventType === 'Login Attempt') {
+                        detailsJson = {
+                            method: "POST",
+                            path: "/admin/login",
+                            parameters: {
+                                email: user,
+                                remember_me: false
+                            },
+                            source: "web_interface",
+                            failure_reason: "incorrect_password",
+                            attempt_count: 3
+                        };
+                    } else if (eventType === 'Settings Change') {
+                        detailsJson = {
+                            method: "POST",
+                            path: "/admin/security/save",
+                            parameters: {
+                                password_policy: "enhanced",
+                                mfa_enabled: true,
+                                session_timeout: 30
+                            },
+                            changes: {
+                                from: {
+                                    password_policy: "standard",
+                                    mfa_enabled: false,
+                                    session_timeout: 60
+                                },
+                                to: {
+                                    password_policy: "enhanced",
+                                    mfa_enabled: true,
+                                    session_timeout: 30
+                                }
+                            },
+                            source: "web_interface"
+                        };
+                    } else if (eventType === 'API Access') {
+                        detailsJson = {
+                            method: "GET",
+                            path: "/api/v1/products",
+                            parameters: {
+                                tenant: "tech",
+                                page: 1,
+                                limit: 50
+                            },
+                            api_key_id: "key_2025042115193075",
+                            rate_limit: {
+                                limit: 60,
+                                current: 65,
+                                reset_at: "2025-04-21T15:20:30Z"
+                            },
+                            source: "api"
+                        };
+                    } else if (eventType === 'Permission Change' || eventType === 'Role Created') {
+                        detailsJson = {
+                            method: "POST",
+                            path: "/admin/roles/update",
+                            parameters: {
+                                role_id: 2,
+                                permissions: ["admin.dashboard.view", "products.view", "orders.view"]
+                            },
+                            changes: {
+                                from: {
+                                    permissions: ["admin.dashboard.view", "products.view"]
+                                },
+                                to: {
+                                    permissions: ["admin.dashboard.view", "products.view", "orders.view"]
+                                }
+                            },
+                            source: "web_interface"
+                        };
+                    } else if (eventType === 'User Creation') {
+                        detailsJson = {
+                            method: "POST",
+                            path: "/admin/users/create",
+                            parameters: {
+                                email: "user@example.com",
+                                role_id: 3,
+                                status: "active"
+                            },
+                            source: "web_interface"
+                        };
+                    } else if (eventType === 'Security Alert') {
+                        detailsJson = {
+                            alert_type: "brute_force_attempt",
+                            threshold: 5,
+                            attempts: 7,
+                            timeframe: "10 minutes",
+                            action_taken: "ip_temporarily_blocked",
+                            block_duration: "30 minutes",
+                            source: "security_monitor"
+                        };
+                    } else if (eventType === 'Plugin Enabled') {
+                        detailsJson = {
+                            method: "POST",
+                            path: "/admin/plugins/update",
+                            parameters: {
+                                plugin_id: "two_factor_auth",
+                                status: "enabled",
+                                settings: {
+                                    required_for_admin: true,
+                                    remember_device: true,
+                                    remember_period: "30 days"
+                                }
+                            },
+                            changes: {
+                                from: {
+                                    status: "disabled"
+                                },
+                                to: {
+                                    status: "enabled"
+                                }
+                            },
+                            source: "web_interface"
+                        };
+                    }
+                    
+                    document.getElementById('event-details').textContent = JSON.stringify(detailsJson, null, 2);
+                });
+            });
+        }
+        
+        // Filter logs functionality
+        const applyFilterBtn = document.getElementById('apply-filter-btn');
+        if (applyFilterBtn) {
+            applyFilterBtn.addEventListener('click', function() {
+                // In a real application, you would submit the filter form via AJAX
+                // and refresh the table with the filtered results
+                
+                Toastify({
+                    text: "Filters applied",
+                    duration: 3000,
+                    close: true,
+                    gravity: "top",
+                    position: "right",
+                    backgroundColor: "var(--bs-success)",
+                }).showToast();
+            });
+        }
+        
+        // Refresh logs functionality
+        const refreshLogsBtn = document.getElementById('refresh-logs');
+        if (refreshLogsBtn) {
+            refreshLogsBtn.addEventListener('click', function() {
+                // In a real application, you would refresh the logs via AJAX
+                
+                Toastify({
+                    text: "Logs refreshed",
+                    duration: 3000,
+                    close: true,
+                    gravity: "top",
+                    position: "right",
+                    backgroundColor: "var(--bs-info)",
+                }).showToast();
+            });
+        }
+        
+        // Export logs functionality
+        const exportLogsBtn = document.getElementById('export-logs');
+        if (exportLogsBtn) {
+            exportLogsBtn.addEventListener('click', function() {
+                // In a real application, you would initiate a download of the logs
+                
+                Toastify({
+                    text: "Logs exported",
+                    duration: 3000,
+                    close: true,
+                    gravity: "top",
+                    position: "right",
+                    backgroundColor: "var(--bs-success)",
+                }).showToast();
+            });
+        }
+    });
+</script>
+{% endblock %}
