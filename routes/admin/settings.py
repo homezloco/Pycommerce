@@ -33,18 +33,58 @@ except Exception as e:
 @router.get("/admin/settings", response_class=HTMLResponse)
 async def settings(request: Request):
     """Settings management page."""
-    # Get current settings from environment or config files
-    settings_data = {
-        # Payment settings
-        "stripe_enabled": os.getenv("STRIPE_ENABLED", "true").lower() in ("true", "1", "yes"),
-        "stripe_api_key": os.getenv("STRIPE_API_KEY", ""),
-        "stripe_public_key": os.getenv("STRIPE_PUBLIC_KEY", ""),
-        "stripe_webhook_secret": os.getenv("STRIPE_WEBHOOK_SECRET", ""),
-        "paypal_enabled": os.getenv("PAYPAL_ENABLED", "true").lower() in ("true", "1", "yes"),
-        "paypal_client_id": os.getenv("PAYPAL_CLIENT_ID", ""),
-        "paypal_client_secret": os.getenv("PAYPAL_CLIENT_SECRET", ""),
-        "paypal_sandbox": os.getenv("PAYPAL_SANDBOX", "true").lower() in ("true", "1", "yes"),
-        "development_mode": os.getenv("ENVIRONMENT", "development") == "development",
+    # First try to get settings from the credentials manager for better security
+    try:
+        from pycommerce.services.credentials_manager import credentials_manager
+        
+        # Get Stripe credentials
+        stripe_credentials = credentials_manager.get_credentials("stripe")
+        
+        # Get PayPal credentials
+        paypal_credentials = credentials_manager.get_credentials("paypal")
+        
+        # Override environment variables with credentials from the credentials manager
+        settings_data = {
+            # Payment settings
+            "stripe_enabled": stripe_credentials.get("enabled", False) if stripe_credentials else os.getenv("STRIPE_ENABLED", "true").lower() in ("true", "1", "yes"),
+            "stripe_api_key": stripe_credentials.get("api_key", "") if stripe_credentials else os.getenv("STRIPE_API_KEY", ""),
+            "stripe_public_key": stripe_credentials.get("public_key", "") if stripe_credentials else os.getenv("STRIPE_PUBLIC_KEY", ""),
+            "stripe_webhook_secret": stripe_credentials.get("webhook_secret", "") if stripe_credentials else os.getenv("STRIPE_WEBHOOK_SECRET", ""),
+            "paypal_enabled": paypal_credentials.get("enabled", False) if paypal_credentials else os.getenv("PAYPAL_ENABLED", "true").lower() in ("true", "1", "yes"),
+            "paypal_client_id": paypal_credentials.get("client_id", "") if paypal_credentials else os.getenv("PAYPAL_CLIENT_ID", ""),
+            "paypal_client_secret": paypal_credentials.get("client_secret", "") if paypal_credentials else os.getenv("PAYPAL_CLIENT_SECRET", ""),
+            "paypal_sandbox": paypal_credentials.get("sandbox", True) if paypal_credentials else os.getenv("PAYPAL_SANDBOX", "true").lower() in ("true", "1", "yes"),
+            "development_mode": os.getenv("ENVIRONMENT", "development") == "development",
+        }
+    except ImportError:
+        logger.warning("Credentials manager not available, using environment variables")
+        # Fall back to environment variables if credentials manager is not available
+        settings_data = {
+            # Payment settings
+            "stripe_enabled": os.getenv("STRIPE_ENABLED", "true").lower() in ("true", "1", "yes"),
+            "stripe_api_key": os.getenv("STRIPE_API_KEY", ""),
+            "stripe_public_key": os.getenv("STRIPE_PUBLIC_KEY", ""),
+            "stripe_webhook_secret": os.getenv("STRIPE_WEBHOOK_SECRET", ""),
+            "paypal_enabled": os.getenv("PAYPAL_ENABLED", "true").lower() in ("true", "1", "yes"),
+            "paypal_client_id": os.getenv("PAYPAL_CLIENT_ID", ""),
+            "paypal_client_secret": os.getenv("PAYPAL_CLIENT_SECRET", ""),
+            "paypal_sandbox": os.getenv("PAYPAL_SANDBOX", "true").lower() in ("true", "1", "yes"),
+            "development_mode": os.getenv("ENVIRONMENT", "development") == "development",
+        }
+    except Exception as e:
+        logger.error(f"Error getting credentials: {str(e)}")
+        # Fall back to environment variables if there's an error
+        settings_data = {
+            # Payment settings
+            "stripe_enabled": os.getenv("STRIPE_ENABLED", "true").lower() in ("true", "1", "yes"),
+            "stripe_api_key": os.getenv("STRIPE_API_KEY", ""),
+            "stripe_public_key": os.getenv("STRIPE_PUBLIC_KEY", ""),
+            "stripe_webhook_secret": os.getenv("STRIPE_WEBHOOK_SECRET", ""),
+            "paypal_enabled": os.getenv("PAYPAL_ENABLED", "true").lower() in ("true", "1", "yes"),
+            "paypal_client_id": os.getenv("PAYPAL_CLIENT_ID", ""),
+            "paypal_client_secret": os.getenv("PAYPAL_CLIENT_SECRET", ""),
+            "paypal_sandbox": os.getenv("PAYPAL_SANDBOX", "true").lower() in ("true", "1", "yes"),
+            "development_mode": os.getenv("ENVIRONMENT", "development") == "development",
         
         # Shipping settings
         "standard_shipping_enabled": os.getenv("STANDARD_SHIPPING_ENABLED", "true").lower() in ("true", "1", "yes"),

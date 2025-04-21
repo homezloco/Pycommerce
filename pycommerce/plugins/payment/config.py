@@ -39,79 +39,106 @@ except ImportError as e:
     logger.warning(f"Service imports failed: {str(e)}")
     has_services = False
 
-def _load_settings_from_db():
-    """Load settings from database using synchronous approach."""
+def _load_settings_from_services():
+    """Load settings from credentials manager and database services."""
     global STRIPE_API_KEY, STRIPE_PUBLIC_KEY, STRIPE_WEBHOOK_SECRET, STRIPE_ENABLED
     global PAYPAL_CLIENT_ID, PAYPAL_CLIENT_SECRET, PAYPAL_ENABLED, PAYPAL_SANDBOX
     
-    if not has_settings_service:
-        logger.warning("Settings service not available, using environment variables")
+    if not has_services:
+        logger.warning("Services not available, using environment variables")
         return
-        
+    
     try:
-        session = db_session()
+        # First try to get credentials from credentials manager for better security
         try:
             # Load Stripe settings
-            stripe_api_key_setting = session.query(SystemSetting).filter(
-                SystemSetting.key == "payment.stripe.api_key").first()
-                
-            if stripe_api_key_setting and stripe_api_key_setting.value:
-                STRIPE_API_KEY = stripe_api_key_setting.value
-                
-                # Get other Stripe settings
-                stripe_public_key = session.query(SystemSetting).filter(
-                    SystemSetting.key == "payment.stripe.public_key").first()
-                if stripe_public_key:
-                    STRIPE_PUBLIC_KEY = stripe_public_key.value
-                    
-                stripe_webhook_secret = session.query(SystemSetting).filter(
-                    SystemSetting.key == "payment.stripe.webhook_secret").first()
-                if stripe_webhook_secret:
-                    STRIPE_WEBHOOK_SECRET = stripe_webhook_secret.value
-                    
-                stripe_enabled = session.query(SystemSetting).filter(
-                    SystemSetting.key == "payment.stripe.enabled").first()
-                if stripe_enabled:
-                    STRIPE_ENABLED = stripe_enabled.value.lower() in ("true", "1", "yes")
-                
+            stripe_credentials = credentials_manager.get_credentials("stripe")
+            if stripe_credentials:
+                logger.info("Loading Stripe credentials from credentials manager")
+                STRIPE_API_KEY = stripe_credentials.get("api_key", "")
+                STRIPE_PUBLIC_KEY = stripe_credentials.get("public_key", "")
+                STRIPE_WEBHOOK_SECRET = stripe_credentials.get("webhook_secret", "")
+                STRIPE_ENABLED = stripe_credentials.get("enabled", False)
+            
             # Load PayPal settings
-            paypal_client_id_setting = session.query(SystemSetting).filter(
-                SystemSetting.key == "payment.paypal.client_id").first()
-                
-            if paypal_client_id_setting and paypal_client_id_setting.value:
-                PAYPAL_CLIENT_ID = paypal_client_id_setting.value
-                
-                # Get other PayPal settings
-                paypal_client_secret = session.query(SystemSetting).filter(
-                    SystemSetting.key == "payment.paypal.client_secret").first()
-                if paypal_client_secret:
-                    PAYPAL_CLIENT_SECRET = paypal_client_secret.value
-                    
-                paypal_enabled = session.query(SystemSetting).filter(
-                    SystemSetting.key == "payment.paypal.enabled").first()
-                if paypal_enabled:
-                    PAYPAL_ENABLED = paypal_enabled.value.lower() in ("true", "1", "yes")
-                    
-                paypal_sandbox = session.query(SystemSetting).filter(
-                    SystemSetting.key == "payment.paypal.sandbox").first()
-                if paypal_sandbox:
-                    PAYPAL_SANDBOX = paypal_sandbox.value.lower() in ("true", "1", "yes")
-                    
-            logger.info("Successfully loaded payment settings from database")
+            paypal_credentials = credentials_manager.get_credentials("paypal")
+            if paypal_credentials:
+                logger.info("Loading PayPal credentials from credentials manager")
+                PAYPAL_CLIENT_ID = paypal_credentials.get("client_id", "")
+                PAYPAL_CLIENT_SECRET = paypal_credentials.get("client_secret", "")
+                PAYPAL_ENABLED = paypal_credentials.get("enabled", False)
+                PAYPAL_SANDBOX = paypal_credentials.get("sandbox", True)
         except Exception as e:
-            logger.error(f"Error querying database for settings: {str(e)}")
-        finally:
-            session.close()
+            logger.error(f"Error getting credentials from credentials manager: {str(e)}")
+            
+        # If credentials are still not available, try legacy settings
+        if not (STRIPE_API_KEY and STRIPE_PUBLIC_KEY):
+            logger.info("Falling back to legacy settings service for Stripe")
+            session = db_session()
+            try:
+                # Load Stripe settings
+                stripe_api_key_setting = session.query(SystemSetting).filter(
+                    SystemSetting.key == "payment.stripe.api_key").first()
+                    
+                if stripe_api_key_setting and stripe_api_key_setting.value:
+                    STRIPE_API_KEY = stripe_api_key_setting.value
+                    
+                    # Get other Stripe settings
+                    stripe_public_key = session.query(SystemSetting).filter(
+                        SystemSetting.key == "payment.stripe.public_key").first()
+                    if stripe_public_key:
+                        STRIPE_PUBLIC_KEY = stripe_public_key.value
+                        
+                    stripe_webhook_secret = session.query(SystemSetting).filter(
+                        SystemSetting.key == "payment.stripe.webhook_secret").first()
+                    if stripe_webhook_secret:
+                        STRIPE_WEBHOOK_SECRET = stripe_webhook_secret.value
+                        
+                    stripe_enabled = session.query(SystemSetting).filter(
+                        SystemSetting.key == "payment.stripe.enabled").first()
+                    if stripe_enabled:
+                        STRIPE_ENABLED = stripe_enabled.value.lower() in ("true", "1", "yes")
+                
+                # Only load PayPal settings if they weren't loaded from credentials manager
+                if not PAYPAL_CLIENT_ID:
+                    logger.info("Falling back to legacy settings service for PayPal")
+                    paypal_client_id_setting = session.query(SystemSetting).filter(
+                        SystemSetting.key == "payment.paypal.client_id").first()
+                        
+                    if paypal_client_id_setting and paypal_client_id_setting.value:
+                        PAYPAL_CLIENT_ID = paypal_client_id_setting.value
+                        
+                        # Get other PayPal settings
+                        paypal_client_secret = session.query(SystemSetting).filter(
+                            SystemSetting.key == "payment.paypal.client_secret").first()
+                        if paypal_client_secret:
+                            PAYPAL_CLIENT_SECRET = paypal_client_secret.value
+                            
+                        paypal_enabled = session.query(SystemSetting).filter(
+                            SystemSetting.key == "payment.paypal.enabled").first()
+                        if paypal_enabled:
+                            PAYPAL_ENABLED = paypal_enabled.value.lower() in ("true", "1", "yes")
+                            
+                        paypal_sandbox = session.query(SystemSetting).filter(
+                            SystemSetting.key == "payment.paypal.sandbox").first()
+                        if paypal_sandbox:
+                            PAYPAL_SANDBOX = paypal_sandbox.value.lower() in ("true", "1", "yes")
+                
+                logger.info("Successfully loaded payment settings from database")
+            except Exception as e:
+                logger.error(f"Error querying database for settings: {str(e)}")
+            finally:
+                session.close()
     except Exception as e:
-        logger.error(f"Error initializing database session: {str(e)}")
+        logger.error(f"Error loading settings from services: {str(e)}")
 
-# Try to load settings from the database
+# Try to load settings from the credentials manager and database
 try:
-    _load_settings_from_db()
+    _load_settings_from_services()
 except Exception as e:
-    logger.error(f"Failed to load settings from database: {str(e)}")
+    logger.error(f"Failed to load settings from services: {str(e)}")
 
-# Fall back to environment variables if settings are not in database
+# Fall back to environment variables if settings are not in services
 if not STRIPE_API_KEY:
     STRIPE_API_KEY = os.getenv("STRIPE_API_KEY", "")
     STRIPE_PUBLIC_KEY = os.getenv("STRIPE_PUBLIC_KEY", "")
@@ -154,8 +181,8 @@ async def save_stripe_config(config: Dict[str, Any]) -> bool:
     """
     global STRIPE_API_KEY, STRIPE_PUBLIC_KEY, STRIPE_WEBHOOK_SECRET, STRIPE_ENABLED
     
-    if not has_settings_service:
-        logger.error("Cannot save Stripe config - settings service not available")
+    if not has_services:
+        logger.error("Cannot save Stripe config - services not available")
         return False
         
     try:
@@ -165,15 +192,26 @@ async def save_stripe_config(config: Dict[str, Any]) -> bool:
         STRIPE_WEBHOOK_SECRET = config.get("webhook_secret", STRIPE_WEBHOOK_SECRET)
         STRIPE_ENABLED = config.get("enabled", STRIPE_ENABLED)
         
-        # Save to database
-        await SettingsService.set_setting("payment.stripe.api_key", STRIPE_API_KEY, 
-                                       "Stripe API secret key", "string")
-        await SettingsService.set_setting("payment.stripe.public_key", STRIPE_PUBLIC_KEY, 
-                                       "Stripe publishable key", "string")
-        await SettingsService.set_setting("payment.stripe.webhook_secret", STRIPE_WEBHOOK_SECRET, 
-                                       "Stripe webhook signing secret", "string")
-        await SettingsService.set_setting("payment.stripe.enabled", STRIPE_ENABLED, 
-                                       "Whether Stripe payments are enabled", "boolean")
+        # Save to credentials manager (more secure)
+        saved = credentials_manager.store_credentials("stripe", {
+            "api_key": STRIPE_API_KEY,
+            "public_key": STRIPE_PUBLIC_KEY,
+            "webhook_secret": STRIPE_WEBHOOK_SECRET,
+            "enabled": STRIPE_ENABLED
+        })
+        
+        if not saved:
+            logger.warning("Failed to save Stripe credentials using credentials manager, falling back to settings service")
+            # Also save to legacy settings for backwards compatibility
+            await SettingsService.set_setting("payment.stripe.api_key", STRIPE_API_KEY, 
+                                        "Stripe API secret key", "string")
+            await SettingsService.set_setting("payment.stripe.public_key", STRIPE_PUBLIC_KEY, 
+                                        "Stripe publishable key", "string")
+            await SettingsService.set_setting("payment.stripe.webhook_secret", STRIPE_WEBHOOK_SECRET, 
+                                        "Stripe webhook signing secret", "string")
+            await SettingsService.set_setting("payment.stripe.enabled", STRIPE_ENABLED, 
+                                        "Whether Stripe payments are enabled", "boolean")
+        
         return True
     except Exception as e:
         logger.error(f"Error saving Stripe configuration: {str(e)}")
@@ -195,8 +233,8 @@ async def save_paypal_config(config: Dict[str, Any]) -> bool:
     """
     global PAYPAL_CLIENT_ID, PAYPAL_CLIENT_SECRET, PAYPAL_ENABLED, PAYPAL_SANDBOX
     
-    if not has_settings_service:
-        logger.error("Cannot save PayPal config - settings service not available")
+    if not has_services:
+        logger.error("Cannot save PayPal config - services not available")
         return False
         
     try:
@@ -206,15 +244,26 @@ async def save_paypal_config(config: Dict[str, Any]) -> bool:
         PAYPAL_SANDBOX = config.get("sandbox", PAYPAL_SANDBOX)
         PAYPAL_ENABLED = config.get("enabled", PAYPAL_ENABLED)
         
-        # Save to database
-        await SettingsService.set_setting("payment.paypal.client_id", PAYPAL_CLIENT_ID, 
-                                       "PayPal client ID", "string")
-        await SettingsService.set_setting("payment.paypal.client_secret", PAYPAL_CLIENT_SECRET, 
-                                       "PayPal client secret", "string")
-        await SettingsService.set_setting("payment.paypal.sandbox", PAYPAL_SANDBOX, 
-                                       "Whether to use PayPal sandbox mode", "boolean")
-        await SettingsService.set_setting("payment.paypal.enabled", PAYPAL_ENABLED, 
-                                       "Whether PayPal payments are enabled", "boolean")
+        # Save to credentials manager (more secure)
+        saved = credentials_manager.store_credentials("paypal", {
+            "client_id": PAYPAL_CLIENT_ID,
+            "client_secret": PAYPAL_CLIENT_SECRET,
+            "sandbox": PAYPAL_SANDBOX,
+            "enabled": PAYPAL_ENABLED
+        })
+        
+        if not saved:
+            logger.warning("Failed to save PayPal credentials using credentials manager, falling back to settings service")
+            # Also save to legacy settings for backwards compatibility
+            await SettingsService.set_setting("payment.paypal.client_id", PAYPAL_CLIENT_ID, 
+                                        "PayPal client ID", "string")
+            await SettingsService.set_setting("payment.paypal.client_secret", PAYPAL_CLIENT_SECRET, 
+                                        "PayPal client secret", "string")
+            await SettingsService.set_setting("payment.paypal.sandbox", PAYPAL_SANDBOX, 
+                                        "Whether to use PayPal sandbox mode", "boolean")
+            await SettingsService.set_setting("payment.paypal.enabled", PAYPAL_ENABLED, 
+                                        "Whether PayPal payments are enabled", "boolean")
+        
         return True
     except Exception as e:
         logger.error(f"Error saving PayPal configuration: {str(e)}")

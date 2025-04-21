@@ -145,8 +145,6 @@ class CredentialsManager:
             True if successful, False otherwise
         """
         try:
-            settings_service = SettingsService()
-            
             # Encrypt sensitive fields
             encrypted_credentials = {}
             for key, value in credentials.items():
@@ -161,7 +159,8 @@ class CredentialsManager:
                 settings_key = f"tenant.{tenant_id}.{settings_key}"
             
             # Store in settings service
-            with settings_service.get_session() as session:
+            try:
+                session = db_session()
                 setting = session.query(SystemSetting).filter(
                     SystemSetting.key == settings_key
                 ).first()
@@ -177,8 +176,12 @@ class CredentialsManager:
                     session.add(setting)
                 
                 session.commit()
-            
-            return True
+                session.close()
+                
+                return True
+            except Exception as e:
+                logger.error(f"Error storing credentials in database: {str(e)}")
+                return False
         
         except Exception as e:
             logger.error(f"Error storing credentials for {provider}: {str(e)}")
@@ -196,8 +199,6 @@ class CredentialsManager:
             The decrypted credentials
         """
         try:
-            settings_service = SettingsService()
-            
             # Create key for the settings
             settings_key = f"credentials.{provider}"
             if tenant_id:
@@ -206,7 +207,8 @@ class CredentialsManager:
             # Try to get tenant-specific settings first, fall back to global settings
             encrypted_credentials = None
             
-            with settings_service.get_session() as session:
+            try:
+                session = db_session()
                 setting = session.query(SystemSetting).filter(
                     SystemSetting.key == settings_key
                 ).first()
@@ -222,6 +224,11 @@ class CredentialsManager:
                     
                     if global_setting and global_setting.value:
                         encrypted_credentials = json.loads(global_setting.value)
+                
+                session.close()
+            except Exception as e:
+                logger.error(f"Error retrieving credentials from database: {str(e)}")
+                return {}
             
             if not encrypted_credentials:
                 return {}
