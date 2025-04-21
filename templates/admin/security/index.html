@@ -1,0 +1,445 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Security Settings - PyCommerce Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-2 mb-3 border-bottom">
+        <h1 class="h2"><i class="bi bi-shield-lock me-2"></i>Security Settings</h1>
+        <div class="btn-toolbar mb-2 mb-md-0">
+            <div class="btn-group me-2">
+                <button type="button" class="btn btn-sm btn-outline-primary" id="refresh-security">
+                    <i class="bi bi-arrow-clockwise me-1"></i> Refresh
+                </button>
+                <button type="button" class="btn btn-sm btn-primary" id="save-security-settings">
+                    <i class="bi bi-save me-1"></i> Save Settings
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary bg-gradient text-white shadow-sm">
+                <div class="card-body p-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title mb-1">Security Status</h6>
+                            <h4 class="mb-0">{{ security_status|default('Good') }}</h4>
+                        </div>
+                        <div>
+                            <i class="bi bi-shield-check display-6 opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success bg-gradient text-white shadow-sm">
+                <div class="card-body p-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title mb-1">Active Users</h6>
+                            <h4 class="mb-0">{{ active_users|default('12') }}</h4>
+                        </div>
+                        <div>
+                            <i class="bi bi-people display-6 opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning bg-gradient text-white shadow-sm">
+                <div class="card-body p-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title mb-1">Failed Login Attempts</h6>
+                            <h4 class="mb-0">{{ failed_logins|default('3') }}</h4>
+                        </div>
+                        <div>
+                            <i class="bi bi-shield-exclamation display-6 opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info bg-gradient text-white shadow-sm">
+                <div class="card-body p-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title mb-1">Last Security Scan</h6>
+                            <h4 class="mb-0">{{ last_scan|default('2h ago') }}</h4>
+                        </div>
+                        <div>
+                            <i class="bi bi-clock-history display-6 opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-dark">
+                    <h5 class="card-title mb-0">Authentication Settings</h5>
+                </div>
+                <div class="card-body">
+                    <form id="auth-settings-form">
+                        <div class="mb-3">
+                            <label for="password_policy" class="form-label">Password Policy</label>
+                            <select class="form-select" id="password_policy" name="password_policy">
+                                <option value="standard" {% if security_settings.password_policy == 'standard' %}selected{% endif %}>Standard (min 8 chars, 1 number, 1 uppercase)</option>
+                                <option value="enhanced" {% if security_settings.password_policy == 'enhanced' %}selected{% endif %}>Enhanced (min 10 chars, special chars required)</option>
+                                <option value="strict" {% if security_settings.password_policy == 'strict' %}selected{% endif %}>Strict (min 12 chars, special chars, numbers, mixed case)</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="password_expiry" class="form-label">Password Expiration</label>
+                            <select class="form-select" id="password_expiry" name="password_expiry">
+                                <option value="30" {% if security_settings.password_expiry == '30' %}selected{% endif %}>30 days</option>
+                                <option value="60" {% if security_settings.password_expiry == '60' %}selected{% endif %}>60 days</option>
+                                <option value="90" {% if security_settings.password_expiry == '90' %}selected{% endif %}>90 days</option>
+                                <option value="0" {% if security_settings.password_expiry == '0' %}selected{% endif %}>Never</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="mfa_enabled" name="mfa_enabled" {% if security_settings.mfa_enabled %}checked{% endif %}>
+                                <label class="form-check-label" for="mfa_enabled">Enable Multi-Factor Authentication</label>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="account_lockout" name="account_lockout" {% if security_settings.account_lockout %}checked{% endif %}>
+                                <label class="form-check-label" for="account_lockout">Enable Account Lockout After Failed Attempts</label>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="lockout_threshold" class="form-label">Lockout Threshold (attempts)</label>
+                            <input type="number" class="form-control" id="lockout_threshold" name="lockout_threshold" value="{{ security_settings.lockout_threshold|default('5') }}" min="1" max="10">
+                        </div>
+                        <div class="mb-3">
+                            <label for="session_timeout" class="form-label">Session Timeout (minutes)</label>
+                            <input type="number" class="form-control" id="session_timeout" name="session_timeout" value="{{ security_settings.session_timeout|default('30') }}" min="5" max="480">
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-dark">
+                    <h5 class="card-title mb-0">Access Control Settings</h5>
+                </div>
+                <div class="card-body">
+                    <form id="access-control-form">
+                        <div class="mb-3">
+                            <label for="admin_access" class="form-label">Admin Access Control</label>
+                            <select class="form-select" id="admin_access" name="admin_access">
+                                <option value="ip_restricted" {% if security_settings.admin_access == 'ip_restricted' %}selected{% endif %}>IP Restricted</option>
+                                <option value="open" {% if security_settings.admin_access == 'open' %}selected{% endif %}>Open Access</option>
+                                <option value="vpn_only" {% if security_settings.admin_access == 'vpn_only' %}selected{% endif %}>VPN Only</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="allowed_ips" class="form-label">Allowed IP Addresses (comma separated)</label>
+                            <textarea class="form-control" id="allowed_ips" name="allowed_ips" rows="3">{{ security_settings.allowed_ips|default('') }}</textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label for="api_access" class="form-label">API Access Control</label>
+                            <select class="form-select" id="api_access" name="api_access">
+                                <option value="key_only" {% if security_settings.api_access == 'key_only' %}selected{% endif %}>API Key Only</option>
+                                <option value="oauth" {% if security_settings.api_access == 'oauth' %}selected{% endif %}>OAuth2</option>
+                                <option value="jwt" {% if security_settings.api_access == 'jwt' %}selected{% endif %}>JWT Tokens</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="api_rate_limiting" name="api_rate_limiting" {% if security_settings.api_rate_limiting %}checked{% endif %}>
+                                <label class="form-check-label" for="api_rate_limiting">Enable API Rate Limiting</label>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="rate_limit" class="form-label">Rate Limit (requests per minute)</label>
+                            <input type="number" class="form-control" id="rate_limit" name="rate_limit" value="{{ security_settings.rate_limit|default('60') }}" min="10" max="1000">
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-dark">
+                    <h5 class="card-title mb-0">Security Features</h5>
+                </div>
+                <div class="card-body">
+                    <form id="security-features-form">
+                        <div class="mb-3">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="csrf_protection" name="csrf_protection" {% if security_settings.csrf_protection %}checked{% endif %}>
+                                <label class="form-check-label" for="csrf_protection">CSRF Protection</label>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="xss_protection" name="xss_protection" {% if security_settings.xss_protection %}checked{% endif %}>
+                                <label class="form-check-label" for="xss_protection">XSS Protection</label>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="sql_injection_protection" name="sql_injection_protection" {% if security_settings.sql_injection_protection %}checked{% endif %}>
+                                <label class="form-check-label" for="sql_injection_protection">SQL Injection Protection</label>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="https_only" name="https_only" {% if security_settings.https_only %}checked{% endif %}>
+                                <label class="form-check-label" for="https_only">HTTPS Only</label>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="security_headers" name="security_headers" {% if security_settings.security_headers %}checked{% endif %}>
+                                <label class="form-check-label" for="security_headers">Security Headers (HSTS, etc.)</label>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-dark">
+                    <h5 class="card-title mb-0">Recent Security Events</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Time</th>
+                                    <th>Event Type</th>
+                                    <th>User</th>
+                                    <th>IP Address</th>
+                                    <th>Description</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% if security_events %}
+                                    {% for event in security_events %}
+                                    <tr>
+                                        <td>{{ event.timestamp }}</td>
+                                        <td>{{ event.type }}</td>
+                                        <td>{{ event.user }}</td>
+                                        <td>{{ event.ip }}</td>
+                                        <td>{{ event.description }}</td>
+                                        <td>
+                                            {% if event.status == 'success' %}
+                                            <span class="badge bg-success">Success</span>
+                                            {% elif event.status == 'warning' %}
+                                            <span class="badge bg-warning">Warning</span>
+                                            {% elif event.status == 'danger' %}
+                                            <span class="badge bg-danger">Danger</span>
+                                            {% else %}
+                                            <span class="badge bg-secondary">{{ event.status }}</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                {% else %}
+                                    <tr>
+                                        <td>{{ now|default('2025-04-21 20:13:45') }}</td>
+                                        <td>Login</td>
+                                        <td>admin@example.com</td>
+                                        <td>192.168.1.100</td>
+                                        <td>User logged in successfully</td>
+                                        <td><span class="badge bg-success">Success</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td>{{ now|default('2025-04-21 19:45:22') }}</td>
+                                        <td>Login Attempt</td>
+                                        <td>user@example.com</td>
+                                        <td>203.0.113.42</td>
+                                        <td>Failed login attempt - wrong password</td>
+                                        <td><span class="badge bg-warning">Warning</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td>{{ now|default('2025-04-21 18:32:11') }}</td>
+                                        <td>Settings Change</td>
+                                        <td>admin@example.com</td>
+                                        <td>192.168.1.100</td>
+                                        <td>Security settings updated</td>
+                                        <td><span class="badge bg-info">Info</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td>{{ now|default('2025-04-21 15:19:30') }}</td>
+                                        <td>API Access</td>
+                                        <td>api_user@example.com</td>
+                                        <td>198.51.100.75</td>
+                                        <td>API rate limit exceeded</td>
+                                        <td><span class="badge bg-danger">Blocked</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td>{{ now|default('2025-04-21 14:05:19') }}</td>
+                                        <td>Permission Change</td>
+                                        <td>admin@example.com</td>
+                                        <td>192.168.1.100</td>
+                                        <td>User role updated to admin</td>
+                                        <td><span class="badge bg-success">Success</span></td>
+                                    </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Save all security settings
+        const saveButton = document.getElementById('save-security-settings');
+        if (saveButton) {
+            saveButton.addEventListener('click', function() {
+                // Notify the user
+                Toastify({
+                    text: "Security settings saved successfully",
+                    duration: 3000,
+                    close: true,
+                    gravity: "top",
+                    position: "right",
+                    backgroundColor: "var(--bs-success)",
+                }).showToast();
+                
+                // Combine all forms
+                const authForm = document.getElementById('auth-settings-form');
+                const accessForm = document.getElementById('access-control-form');
+                const featuresForm = document.getElementById('security-features-form');
+                
+                // In a real implementation, you would send this data to the server
+                // const formData = new FormData();
+                // const authData = new FormData(authForm);
+                // const accessData = new FormData(accessForm);
+                // const featuresData = new FormData(featuresForm);
+                
+                // Combine all form data
+                // for (const pair of authData.entries()) {
+                //     formData.append(pair[0], pair[1]);
+                // }
+                // for (const pair of accessData.entries()) {
+                //     formData.append(pair[0], pair[1]);
+                // }
+                // for (const pair of featuresData.entries()) {
+                //     formData.append(pair[0], pair[1]);
+                // }
+                
+                // Example of AJAX request to save settings
+                // fetch('/admin/security/save', {
+                //     method: 'POST',
+                //     body: formData
+                // })
+                // .then(response => response.json())
+                // .then(data => {
+                //     if (data.success) {
+                //         Toastify({
+                //             text: "Security settings saved successfully",
+                //             duration: 3000,
+                //             close: true,
+                //             gravity: "top",
+                //             position: "right",
+                //             backgroundColor: "var(--bs-success)",
+                //         }).showToast();
+                //     } else {
+                //         Toastify({
+                //             text: "Error saving security settings",
+                //             duration: 3000,
+                //             close: true,
+                //             gravity: "top",
+                //             position: "right",
+                //             backgroundColor: "var(--bs-danger)",
+                //         }).showToast();
+                //     }
+                // })
+                // .catch(error => {
+                //     console.error('Error:', error);
+                //     Toastify({
+                //         text: "Error saving security settings",
+                //         duration: 3000,
+                //         close: true,
+                //         gravity: "top",
+                //         position: "right",
+                //         backgroundColor: "var(--bs-danger)",
+                //     }).showToast();
+                // });
+            });
+        }
+        
+        // Refresh security dashboard
+        const refreshButton = document.getElementById('refresh-security');
+        if (refreshButton) {
+            refreshButton.addEventListener('click', function() {
+                // In a real implementation, this would refresh the data
+                Toastify({
+                    text: "Security dashboard refreshed",
+                    duration: 3000,
+                    close: true,
+                    gravity: "top",
+                    position: "right",
+                    backgroundColor: "var(--bs-info)",
+                }).showToast();
+            });
+        }
+        
+        // Toggle dependent fields based on selections
+        const accountLockout = document.getElementById('account_lockout');
+        const lockoutThreshold = document.getElementById('lockout_threshold');
+        
+        if (accountLockout && lockoutThreshold) {
+            accountLockout.addEventListener('change', function() {
+                lockoutThreshold.disabled = !this.checked;
+            });
+            
+            // Initialize state
+            lockoutThreshold.disabled = !accountLockout.checked;
+        }
+        
+        const apiRateLimiting = document.getElementById('api_rate_limiting');
+        const rateLimit = document.getElementById('rate_limit');
+        
+        if (apiRateLimiting && rateLimit) {
+            apiRateLimiting.addEventListener('change', function() {
+                rateLimit.disabled = !this.checked;
+            });
+            
+            // Initialize state
+            rateLimit.disabled = !apiRateLimiting.checked;
+        }
+        
+        // Admin access controls
+        const adminAccess = document.getElementById('admin_access');
+        const allowedIps = document.getElementById('allowed_ips');
+        
+        if (adminAccess && allowedIps) {
+            adminAccess.addEventListener('change', function() {
+                allowedIps.disabled = (this.value !== 'ip_restricted');
+            });
+            
+            // Initialize state
+            allowedIps.disabled = (adminAccess.value !== 'ip_restricted');
+        }
+    });
+</script>
+{% endblock %}

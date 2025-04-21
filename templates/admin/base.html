@@ -390,6 +390,37 @@
                     </ul>
 
                     <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
+                        <span>Security</span>
+                    </h6>
+                    <ul class="nav flex-column mb-2">
+                        <li class="nav-item">
+                            <a class="nav-link {% if active_page == 'security' %}active{% endif %}" href="/admin/security">
+                                <i class="bi bi-shield-lock"></i> Security Settings
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if active_page == 'users' %}active{% endif %}" href="/admin/users">
+                                <i class="bi bi-person-badge"></i> User Management
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if active_page == 'roles' %}active{% endif %}" href="/admin/roles">
+                                <i class="bi bi-person-lock"></i> Role Management
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if active_page == 'permissions' %}active{% endif %}" href="/admin/permissions">
+                                <i class="bi bi-key"></i> Permissions
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if active_page == 'audit-logs' %}active{% endif %}" href="/admin/audit-logs">
+                                <i class="bi bi-journal-text"></i> Audit Logs
+                            </a>
+                        </li>
+                    </ul>
+
+                    <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
                         <span>Settings</span>
                     </h6>
                     <ul class="nav flex-column mb-2">

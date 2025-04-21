@@ -1,0 +1,843 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Permissions Management - PyCommerce Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-2 mb-3 border-bottom">
+        <h1 class="h2"><i class="bi bi-key me-2"></i>Permissions Management</h1>
+        <div class="btn-toolbar mb-2 mb-md-0">
+            <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addPermissionModal">
+                <i class="bi bi-plus-lg me-1"></i> Add Permission
+            </button>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-dark">
+                    <h5 class="card-title mb-0">Permission Categories</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="nav nav-tabs" id="permissionTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="admin-tab" data-bs-toggle="tab" data-bs-target="#admin-permissions" type="button" role="tab" aria-controls="admin-permissions" aria-selected="true">
+                                <i class="bi bi-gear me-1"></i> Admin
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="products-tab" data-bs-toggle="tab" data-bs-target="#products-permissions" type="button" role="tab" aria-controls="products-permissions" aria-selected="false">
+                                <i class="bi bi-box me-1"></i> Products
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="orders-tab" data-bs-toggle="tab" data-bs-target="#orders-permissions" type="button" role="tab" aria-controls="orders-permissions" aria-selected="false">
+                                <i class="bi bi-cart me-1"></i> Orders
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="customers-tab" data-bs-toggle="tab" data-bs-target="#customers-permissions" type="button" role="tab" aria-controls="customers-permissions" aria-selected="false">
+                                <i class="bi bi-people me-1"></i> Customers
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="content-tab" data-bs-toggle="tab" data-bs-target="#content-permissions" type="button" role="tab" aria-controls="content-permissions" aria-selected="false">
+                                <i class="bi bi-file-earmark-text me-1"></i> Content
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="settings-tab" data-bs-toggle="tab" data-bs-target="#settings-permissions" type="button" role="tab" aria-controls="settings-permissions" aria-selected="false">
+                                <i class="bi bi-sliders me-1"></i> Settings
+                            </button>
+                        </li>
+                    </ul>
+                    
+                    <div class="tab-content pt-3" id="permissionTabsContent">
+                        <!-- Admin Permissions -->
+                        <div class="tab-pane fade show active" id="admin-permissions" role="tabpanel" aria-labelledby="admin-tab">
+                            <div class="table-responsive">
+                                <table class="table table-striped table-hover permission-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Permission</th>
+                                            <th>Code</th>
+                                            <th>Description</th>
+                                            <th>Roles</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>Access Admin Dashboard</td>
+                                            <td><code>admin.dashboard.view</code></td>
+                                            <td>Allows viewing the admin dashboard</td>
+                                            <td>
+                                                <span class="badge bg-primary">Admin</span>
+                                                <span class="badge bg-secondary">Staff</span>
+                                                <span class="badge bg-success">Store Manager</span>
+                                                <span class="badge bg-info">Content Editor</span>
+                                            </td>
+                                            <td>
+                                                <div class="btn-group">
+                                                    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editPermissionModal">
+                                                        <i class="bi bi-pencil"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>Manage Admin Settings</td>
+                                            <td><code>admin.settings.manage</code></td>
+                                            <td>Allows managing admin settings</td>
+                                            <td>
+                                                <span class="badge bg-primary">Admin</span>
+                                            </td>
+                                            <td>
+                                                <div class="btn-group">
+                                                    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editPermissionModal">
+                                                        <i class="bi bi-pencil"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>Manage Users</td>
+                                            <td><code>admin.users.manage</code></td>
+                                            <td>Allows creating, editing, and deleting users</td>
+                                            <td>
+                                                <span class="badge bg-primary">Admin</span>
+                                            </td>
+                                            <td>
+                                                <div class="btn-group">
+                                                    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editPermissionModal">
+                                                        <i class="bi bi-pencil"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>Manage Roles</td>
+                                            <td><code>admin.roles.manage</code></td>
+                                            <td>Allows creating, editing, and deleting roles</td>
+                                            <td>
+                                                <span class="badge bg-primary">Admin</span>
+                                            </td>
+                                            <td>
+                                                <div class="btn-group">
+                                                    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editPermissionModal">
+                                                        <i class="bi bi-pencil"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>View System Logs</td>
+                                            <td><code>admin.logs.view</code></td>
+                                            <td>Allows viewing system logs</td>
+                                            <td>
+                                                <span class="badge bg-primary">Admin</span>
+                                                <span class="badge bg-secondary">Staff</span>
+                                            </td>
+                                            <td>
+                                                <div class="btn-group">
+                                                    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editPermissionModal">
+                                                        <i class="bi bi-pencil"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        <!-- Products Permissions -->
+                        <div class="tab-pane fade" id="products-permissions" role="tabpanel" aria-labelledby="products-tab">
+                            <div class="table-responsive">
+                                <table class="table table-striped table-hover permission-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Permission</th>
+                                            <th>Code</th>
+                                            <th>Description</th>
+                                            <th>Roles</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>View Products</td>
+                                            <td><code>products.view</code></td>
+                                            <td>Allows viewing product details</td>
+                                            <td>
+                                                <span class="badge bg-primary">Admin</span>
+                                                <span class="badge bg-secondary">Staff</span>
+                                                <span class="badge bg-success">Store Manager</span>
+                                                <span class="badge bg-info">Content Editor</span>
+                                                <span class="badge bg-warning">Inventory Manager</span>
+                                            </td>
+                                            <td>
+                                                <div class="btn-group">
+                                                    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editPermissionModal">
+                                                        <i class="bi bi-pencil"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>Create Products</td>
+                                            <td><code>products.create</code></td>
+                                            <td>Allows creating new products</td>
+                                            <td>
+                                                <span class="badge bg-primary">Admin</span>
+                                                <span class="badge bg-success">Store Manager</span>
+                                                <span class="badge bg-warning">Inventory Manager</span>
+                                            </td>
+                                            <td>
+                                                <div class="btn-group">
+                                                    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editPermissionModal">
+                                                        <i class="bi bi-pencil"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>Edit Products</td>
+                                            <td><code>products.edit</code></td>
+                                            <td>Allows editing existing products</td>
+                                            <td>
+                                                <span class="badge bg-primary">Admin</span>
+                                                <span class="badge bg-success">Store Manager</span>
+                                                <span class="badge bg-warning">Inventory Manager</span>
+                                            </td>
+                                            <td>
+                                                <div class="btn-group">
+                                                    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editPermissionModal">
+                                                        <i class="bi bi-pencil"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>Delete Products</td>
+                                            <td><code>products.delete</code></td>
+                                            <td>Allows deleting products</td>
+                                            <td>
+                                                <span class="badge bg-primary">Admin</span>
+                                                <span class="badge bg-success">Store Manager</span>
+                                            </td>
+                                            <td>
+                                                <div class="btn-group">
+                                                    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editPermissionModal">
+                                                        <i class="bi bi-pencil"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>Manage Product Inventory</td>
+                                            <td><code>products.inventory.manage</code></td>
+                                            <td>Allows updating product inventory</td>
+                                            <td>
+                                                <span class="badge bg-primary">Admin</span>
+                                                <span class="badge bg-success">Store Manager</span>
+                                                <span class="badge bg-warning">Inventory Manager</span>
+                                            </td>
+                                            <td>
+                                                <div class="btn-group">
+                                                    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editPermissionModal">
+                                                        <i class="bi bi-pencil"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        <!-- Orders Permissions -->
+                        <div class="tab-pane fade" id="orders-permissions" role="tabpanel" aria-labelledby="orders-tab">
+                            <div class="table-responsive">
+                                <table class="table table-striped table-hover permission-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Permission</th>
+                                            <th>Code</th>
+                                            <th>Description</th>
+                                            <th>Roles</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>View Orders</td>
+                                            <td><code>orders.view</code></td>
+                                            <td>Allows viewing order details</td>
+                                            <td>
+                                                <span class="badge bg-primary">Admin</span>
+                                                <span class="badge bg-secondary">Staff</span>
+                                                <span class="badge bg-success">Store Manager</span>
+                                            </td>
+                                            <td>
+                                                <div class="btn-group">
+                                                    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editPermissionModal">
+                                                        <i class="bi bi-pencil"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>Process Orders</td>
+                                            <td><code>orders.process</code></td>
+                                            <td>Allows processing and fulfilling orders</td>
+                                            <td>
+                                                <span class="badge bg-primary">Admin</span>
+                                                <span class="badge bg-secondary">Staff</span>
+                                                <span class="badge bg-success">Store Manager</span>
+                                            </td>
+                                            <td>
+                                                <div class="btn-group">
+                                                    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editPermissionModal">
+                                                        <i class="bi bi-pencil"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>Cancel Orders</td>
+                                            <td><code>orders.cancel</code></td>
+                                            <td>Allows canceling orders</td>
+                                            <td>
+                                                <span class="badge bg-primary">Admin</span>
+                                                <span class="badge bg-success">Store Manager</span>
+                                            </td>
+                                            <td>
+                                                <div class="btn-group">
+                                                    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editPermissionModal">
+                                                        <i class="bi bi-pencil"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>Refund Orders</td>
+                                            <td><code>orders.refund</code></td>
+                                            <td>Allows issuing refunds for orders</td>
+                                            <td>
+                                                <span class="badge bg-primary">Admin</span>
+                                                <span class="badge bg-success">Store Manager</span>
+                                            </td>
+                                            <td>
+                                                <div class="btn-group">
+                                                    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editPermissionModal">
+                                                        <i class="bi bi-pencil"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        <!-- Customers Permissions -->
+                        <div class="tab-pane fade" id="customers-permissions" role="tabpanel" aria-labelledby="customers-tab">
+                            <div class="table-responsive">
+                                <table class="table table-striped table-hover permission-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Permission</th>
+                                            <th>Code</th>
+                                            <th>Description</th>
+                                            <th>Roles</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>View Customers</td>
+                                            <td><code>customers.view</code></td>
+                                            <td>Allows viewing customer details</td>
+                                            <td>
+                                                <span class="badge bg-primary">Admin</span>
+                                                <span class="badge bg-secondary">Staff</span>
+                                                <span class="badge bg-success">Store Manager</span>
+                                            </td>
+                                            <td>
+                                                <div class="btn-group">
+                                                    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editPermissionModal">
+                                                        <i class="bi bi-pencil"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>Edit Customers</td>
+                                            <td><code>customers.edit</code></td>
+                                            <td>Allows editing customer information</td>
+                                            <td>
+                                                <span class="badge bg-primary">Admin</span>
+                                                <span class="badge bg-success">Store Manager</span>
+                                            </td>
+                                            <td>
+                                                <div class="btn-group">
+                                                    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editPermissionModal">
+                                                        <i class="bi bi-pencil"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>Delete Customers</td>
+                                            <td><code>customers.delete</code></td>
+                                            <td>Allows deleting customer accounts</td>
+                                            <td>
+                                                <span class="badge bg-primary">Admin</span>
+                                            </td>
+                                            <td>
+                                                <div class="btn-group">
+                                                    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editPermissionModal">
+                                                        <i class="bi bi-pencil"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        <!-- Content Permissions -->
+                        <div class="tab-pane fade" id="content-permissions" role="tabpanel" aria-labelledby="content-tab">
+                            <div class="table-responsive">
+                                <table class="table table-striped table-hover permission-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Permission</th>
+                                            <th>Code</th>
+                                            <th>Description</th>
+                                            <th>Roles</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>View Pages</td>
+                                            <td><code>content.pages.view</code></td>
+                                            <td>Allows viewing page details</td>
+                                            <td>
+                                                <span class="badge bg-primary">Admin</span>
+                                                <span class="badge bg-secondary">Staff</span>
+                                                <span class="badge bg-info">Content Editor</span>
+                                            </td>
+                                            <td>
+                                                <div class="btn-group">
+                                                    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editPermissionModal">
+                                                        <i class="bi bi-pencil"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>Create Pages</td>
+                                            <td><code>content.pages.create</code></td>
+                                            <td>Allows creating new pages</td>
+                                            <td>
+                                                <span class="badge bg-primary">Admin</span>
+                                                <span class="badge bg-info">Content Editor</span>
+                                            </td>
+                                            <td>
+                                                <div class="btn-group">
+                                                    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editPermissionModal">
+                                                        <i class="bi bi-pencil"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>Edit Pages</td>
+                                            <td><code>content.pages.edit</code></td>
+                                            <td>Allows editing existing pages</td>
+                                            <td>
+                                                <span class="badge bg-primary">Admin</span>
+                                                <span class="badge bg-info">Content Editor</span>
+                                            </td>
+                                            <td>
+                                                <div class="btn-group">
+                                                    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editPermissionModal">
+                                                        <i class="bi bi-pencil"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>Delete Pages</td>
+                                            <td><code>content.pages.delete</code></td>
+                                            <td>Allows deleting pages</td>
+                                            <td>
+                                                <span class="badge bg-primary">Admin</span>
+                                                <span class="badge bg-info">Content Editor</span>
+                                            </td>
+                                            <td>
+                                                <div class="btn-group">
+                                                    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editPermissionModal">
+                                                        <i class="bi bi-pencil"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>Manage Media</td>
+                                            <td><code>content.media.manage</code></td>
+                                            <td>Allows uploading, editing, and deleting media files</td>
+                                            <td>
+                                                <span class="badge bg-primary">Admin</span>
+                                                <span class="badge bg-info">Content Editor</span>
+                                            </td>
+                                            <td>
+                                                <div class="btn-group">
+                                                    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editPermissionModal">
+                                                        <i class="bi bi-pencil"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        <!-- Settings Permissions -->
+                        <div class="tab-pane fade" id="settings-permissions" role="tabpanel" aria-labelledby="settings-tab">
+                            <div class="table-responsive">
+                                <table class="table table-striped table-hover permission-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Permission</th>
+                                            <th>Code</th>
+                                            <th>Description</th>
+                                            <th>Roles</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>View Settings</td>
+                                            <td><code>settings.view</code></td>
+                                            <td>Allows viewing system settings</td>
+                                            <td>
+                                                <span class="badge bg-primary">Admin</span>
+                                                <span class="badge bg-secondary">Staff</span>
+                                                <span class="badge bg-success">Store Manager</span>
+                                            </td>
+                                            <td>
+                                                <div class="btn-group">
+                                                    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editPermissionModal">
+                                                        <i class="bi bi-pencil"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>Manage General Settings</td>
+                                            <td><code>settings.general.manage</code></td>
+                                            <td>Allows editing general store settings</td>
+                                            <td>
+                                                <span class="badge bg-primary">Admin</span>
+                                                <span class="badge bg-success">Store Manager</span>
+                                            </td>
+                                            <td>
+                                                <div class="btn-group">
+                                                    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editPermissionModal">
+                                                        <i class="bi bi-pencil"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>Manage Payment Settings</td>
+                                            <td><code>settings.payment.manage</code></td>
+                                            <td>Allows configuring payment gateway settings</td>
+                                            <td>
+                                                <span class="badge bg-primary">Admin</span>
+                                            </td>
+                                            <td>
+                                                <div class="btn-group">
+                                                    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editPermissionModal">
+                                                        <i class="bi bi-pencil"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>Manage Shipping Settings</td>
+                                            <td><code>settings.shipping.manage</code></td>
+                                            <td>Allows configuring shipping options and rates</td>
+                                            <td>
+                                                <span class="badge bg-primary">Admin</span>
+                                                <span class="badge bg-success">Store Manager</span>
+                                            </td>
+                                            <td>
+                                                <div class="btn-group">
+                                                    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editPermissionModal">
+                                                        <i class="bi bi-pencil"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>Manage Security Settings</td>
+                                            <td><code>settings.security.manage</code></td>
+                                            <td>Allows configuring security settings</td>
+                                            <td>
+                                                <span class="badge bg-primary">Admin</span>
+                                            </td>
+                                            <td>
+                                                <div class="btn-group">
+                                                    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editPermissionModal">
+                                                        <i class="bi bi-pencil"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Permission Modal -->
+<div class="modal fade" id="addPermissionModal" tabindex="-1" aria-labelledby="addPermissionModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addPermissionModalLabel">Add New Permission</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="add-permission-form">
+                    <div class="mb-3">
+                        <label for="permission-name" class="form-label">Permission Name</label>
+                        <input type="text" class="form-control" id="permission-name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="permission-code" class="form-label">Permission Code</label>
+                        <input type="text" class="form-control" id="permission-code" required>
+                        <small class="text-muted">Use dot notation (e.g., admin.dashboard.view)</small>
+                    </div>
+                    <div class="mb-3">
+                        <label for="permission-category" class="form-label">Category</label>
+                        <select class="form-select" id="permission-category" required>
+                            <option value="">-- Select Category --</option>
+                            <option value="admin">Admin</option>
+                            <option value="products">Products</option>
+                            <option value="orders">Orders</option>
+                            <option value="customers">Customers</option>
+                            <option value="content">Content</option>
+                            <option value="settings">Settings</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="permission-description" class="form-label">Description</label>
+                        <textarea class="form-control" id="permission-description" rows="3" required></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Assign to Roles</label>
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" id="role-admin" checked disabled>
+                            <label class="form-check-label" for="role-admin">Admin (always assigned)</label>
+                        </div>
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" id="role-staff">
+                            <label class="form-check-label" for="role-staff">Staff</label>
+                        </div>
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" id="role-store-manager">
+                            <label class="form-check-label" for="role-store-manager">Store Manager</label>
+                        </div>
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" id="role-content-editor">
+                            <label class="form-check-label" for="role-content-editor">Content Editor</label>
+                        </div>
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" id="role-inventory-manager">
+                            <label class="form-check-label" for="role-inventory-manager">Inventory Manager</label>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="save-permission-btn">Save Permission</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Permission Modal -->
+<div class="modal fade" id="editPermissionModal" tabindex="-1" aria-labelledby="editPermissionModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editPermissionModalLabel">Edit Permission</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="edit-permission-form">
+                    <div class="mb-3">
+                        <label for="edit-permission-name" class="form-label">Permission Name</label>
+                        <input type="text" class="form-control" id="edit-permission-name" value="View Products" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit-permission-code" class="form-label">Permission Code</label>
+                        <input type="text" class="form-control" id="edit-permission-code" value="products.view" required readonly>
+                        <small class="text-muted">Permission code cannot be changed</small>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit-permission-category" class="form-label">Category</label>
+                        <select class="form-select" id="edit-permission-category" required>
+                            <option value="">-- Select Category --</option>
+                            <option value="admin">Admin</option>
+                            <option value="products" selected>Products</option>
+                            <option value="orders">Orders</option>
+                            <option value="customers">Customers</option>
+                            <option value="content">Content</option>
+                            <option value="settings">Settings</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit-permission-description" class="form-label">Description</label>
+                        <textarea class="form-control" id="edit-permission-description" rows="3" required>Allows viewing product details</textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Assign to Roles</label>
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" id="edit-role-admin" checked disabled>
+                            <label class="form-check-label" for="edit-role-admin">Admin (always assigned)</label>
+                        </div>
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" id="edit-role-staff" checked>
+                            <label class="form-check-label" for="edit-role-staff">Staff</label>
+                        </div>
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" id="edit-role-store-manager" checked>
+                            <label class="form-check-label" for="edit-role-store-manager">Store Manager</label>
+                        </div>
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" id="edit-role-content-editor" checked>
+                            <label class="form-check-label" for="edit-role-content-editor">Content Editor</label>
+                        </div>
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" id="edit-role-inventory-manager" checked>
+                            <label class="form-check-label" for="edit-role-inventory-manager">Inventory Manager</label>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="update-permission-btn">Update Permission</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize DataTables for permission tables
+        if ($.fn.DataTable) {
+            $('.permission-table').DataTable({
+                pageLength: 10,
+                lengthMenu: [5, 10, 25, 50],
+                language: {
+                    search: "Search permissions: "
+                }
+            });
+        }
+        
+        // Add Permission Functionality
+        const savePermissionBtn = document.getElementById('save-permission-btn');
+        if (savePermissionBtn) {
+            savePermissionBtn.addEventListener('click', function() {
+                const permissionName = document.getElementById('permission-name').value;
+                const permissionCode = document.getElementById('permission-code').value;
+                
+                if (!permissionName || !permissionCode) {
+                    Toastify({
+                        text: "Permission name and code are required",
+                        duration: 3000,
+                        close: true,
+                        gravity: "top",
+                        position: "right",
+                        backgroundColor: "var(--bs-danger)",
+                    }).showToast();
+                    return;
+                }
+                
+                // Success notification
+                Toastify({
+                    text: `Permission "${permissionName}" created successfully`,
+                    duration: 3000,
+                    close: true,
+                    gravity: "top",
+                    position: "right",
+                    backgroundColor: "var(--bs-success)",
+                }).showToast();
+                
+                // Hide modal
+                const modal = bootstrap.Modal.getInstance(document.getElementById('addPermissionModal'));
+                modal.hide();
+                
+                // In a real application, you would submit the form via AJAX
+                // and refresh the table with the new permission
+            });
+        }
+        
+        // Update Permission Functionality
+        const updatePermissionBtn = document.getElementById('update-permission-btn');
+        if (updatePermissionBtn) {
+            updatePermissionBtn.addEventListener('click', function() {
+                const permissionName = document.getElementById('edit-permission-name').value;
+                
+                if (!permissionName) {
+                    Toastify({
+                        text: "Permission name is required",
+                        duration: 3000,
+                        close: true,
+                        gravity: "top",
+                        position: "right",
+                        backgroundColor: "var(--bs-danger)",
+                    }).showToast();
+                    return;
+                }
+                
+                // Success notification
+                Toastify({
+                    text: `Permission "${permissionName}" updated successfully`,
+                    duration: 3000,
+                    close: true,
+                    gravity: "top",
+                    position: "right",
+                    backgroundColor: "var(--bs-success)",
+                }).showToast();
+                
+                // Hide modal
+                const modal = bootstrap.Modal.getInstance(document.getElementById('editPermissionModal'));
+                modal.hide();
+                
+                // In a real application, you would submit the form via AJAX
+                // and refresh the table with the updated permission
+            });
+        }
+    });
+</script>
+{% endblock %}

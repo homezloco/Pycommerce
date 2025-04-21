@@ -1,0 +1,543 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Role Management - PyCommerce Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-2 mb-3 border-bottom">
+        <h1 class="h2"><i class="bi bi-person-lock me-2"></i>Role Management</h1>
+        <div class="btn-toolbar mb-2 mb-md-0">
+            <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addRoleModal">
+                <i class="bi bi-plus-lg me-1"></i> Add Role
+            </button>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-dark">
+                    <h5 class="card-title mb-0">System Roles</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover" id="roles-table">
+                            <thead>
+                                <tr>
+                                    <th>Role Name</th>
+                                    <th>Description</th>
+                                    <th>Users Count</th>
+                                    <th>Permissions</th>
+                                    <th>Created Date</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% if roles %}
+                                    {% for role in roles %}
+                                    <tr>
+                                        <td>{{ role.name }}</td>
+                                        <td>{{ role.description }}</td>
+                                        <td>{{ role.users_count }}</td>
+                                        <td>
+                                            <span class="badge bg-info">{{ role.permissions|length }} permissions</span>
+                                            <button class="btn btn-sm btn-outline-info" data-bs-toggle="modal" data-bs-target="#viewPermissionsModal{{ role.id }}">
+                                                <i class="bi bi-eye-fill"></i>
+                                            </button>
+                                        </td>
+                                        <td>{{ role.created_at }}</td>
+                                        <td>
+                                            <div class="btn-group">
+                                                <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editRoleModal{{ role.id }}">
+                                                    <i class="bi bi-pencil"></i>
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteRoleModal{{ role.id }}">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                {% else %}
+                                    <tr>
+                                        <td>Admin</td>
+                                        <td>Full access to all administrative functions</td>
+                                        <td>3</td>
+                                        <td>
+                                            <span class="badge bg-info">All permissions</span>
+                                            <button class="btn btn-sm btn-outline-info" data-bs-toggle="modal" data-bs-target="#viewPermissionsModalAdmin">
+                                                <i class="bi bi-eye-fill"></i>
+                                            </button>
+                                        </td>
+                                        <td>2025-01-01</td>
+                                        <td>
+                                            <div class="btn-group">
+                                                <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editRoleModalAdmin">
+                                                    <i class="bi bi-pencil"></i>
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-danger" disabled>
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>Staff</td>
+                                        <td>Limited access to admin functions</td>
+                                        <td>5</td>
+                                        <td>
+                                            <span class="badge bg-info">15 permissions</span>
+                                            <button class="btn btn-sm btn-outline-info" data-bs-toggle="modal" data-bs-target="#viewPermissionsModalStaff">
+                                                <i class="bi bi-eye-fill"></i>
+                                            </button>
+                                        </td>
+                                        <td>2025-01-01</td>
+                                        <td>
+                                            <div class="btn-group">
+                                                <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editRoleModalStaff">
+                                                    <i class="bi bi-pencil"></i>
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-danger" disabled>
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>Content Editor</td>
+                                        <td>Access to content management</td>
+                                        <td>7</td>
+                                        <td>
+                                            <span class="badge bg-info">8 permissions</span>
+                                            <button class="btn btn-sm btn-outline-info" data-bs-toggle="modal" data-bs-target="#viewPermissionsModalEditor">
+                                                <i class="bi bi-eye-fill"></i>
+                                            </button>
+                                        </td>
+                                        <td>2025-02-15</td>
+                                        <td>
+                                            <div class="btn-group">
+                                                <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editRoleModalEditor">
+                                                    <i class="bi bi-pencil"></i>
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteRoleModalEditor">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>Store Manager</td>
+                                        <td>Management of store operations</td>
+                                        <td>4</td>
+                                        <td>
+                                            <span class="badge bg-info">12 permissions</span>
+                                            <button class="btn btn-sm btn-outline-info" data-bs-toggle="modal" data-bs-target="#viewPermissionsModalManager">
+                                                <i class="bi bi-eye-fill"></i>
+                                            </button>
+                                        </td>
+                                        <td>2025-03-10</td>
+                                        <td>
+                                            <div class="btn-group">
+                                                <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editRoleModalManager">
+                                                    <i class="bi bi-pencil"></i>
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteRoleModalManager">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>Inventory Manager</td>
+                                        <td>Management of product inventory</td>
+                                        <td>2</td>
+                                        <td>
+                                            <span class="badge bg-info">6 permissions</span>
+                                            <button class="btn btn-sm btn-outline-info" data-bs-toggle="modal" data-bs-target="#viewPermissionsModalInventory">
+                                                <i class="bi bi-eye-fill"></i>
+                                            </button>
+                                        </td>
+                                        <td>2025-03-15</td>
+                                        <td>
+                                            <div class="btn-group">
+                                                <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editRoleModalInventory">
+                                                    <i class="bi bi-pencil"></i>
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteRoleModalInventory">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-dark">
+                    <h5 class="card-title mb-0">Role Assignment</h5>
+                </div>
+                <div class="card-body">
+                    <form id="role-assignment-form" class="mb-3">
+                        <div class="row">
+                            <div class="col-md-5">
+                                <div class="mb-3">
+                                    <label for="user-select" class="form-label">Select User</label>
+                                    <select class="form-select" id="user-select">
+                                        <option value="">-- Select User --</option>
+                                        <option value="1">admin@example.com (Admin)</option>
+                                        <option value="2">manager@example.com (Store Manager)</option>
+                                        <option value="3">editor@example.com (Content Editor)</option>
+                                        <option value="4">staff1@example.com (Staff)</option>
+                                        <option value="5">staff2@example.com (Staff)</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-5">
+                                <div class="mb-3">
+                                    <label for="role-select" class="form-label">Assign Role</label>
+                                    <select class="form-select" id="role-select">
+                                        <option value="">-- Select Role --</option>
+                                        <option value="admin">Admin</option>
+                                        <option value="staff">Staff</option>
+                                        <option value="editor">Content Editor</option>
+                                        <option value="manager">Store Manager</option>
+                                        <option value="inventory">Inventory Manager</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-2 d-flex align-items-end">
+                                <button type="button" class="btn btn-primary w-100" id="assign-role-btn">
+                                    <i class="bi bi-person-check me-1"></i> Assign
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+
+                    <h5>Current User Roles</h5>
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover" id="user-roles-table">
+                            <thead>
+                                <tr>
+                                    <th>User</th>
+                                    <th>Email</th>
+                                    <th>Current Role</th>
+                                    <th>Assigned Date</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Admin User</td>
+                                    <td>admin@example.com</td>
+                                    <td><span class="badge bg-primary">Admin</span></td>
+                                    <td>2025-01-01</td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-danger" disabled>
+                                            <i class="bi bi-trash"></i> Remove
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>John Smith</td>
+                                    <td>manager@example.com</td>
+                                    <td><span class="badge bg-success">Store Manager</span></td>
+                                    <td>2025-03-10</td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-danger">
+                                            <i class="bi bi-trash"></i> Remove
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Jane Doe</td>
+                                    <td>editor@example.com</td>
+                                    <td><span class="badge bg-info">Content Editor</span></td>
+                                    <td>2025-02-15</td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-danger">
+                                            <i class="bi bi-trash"></i> Remove
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Mike Johnson</td>
+                                    <td>staff1@example.com</td>
+                                    <td><span class="badge bg-secondary">Staff</span></td>
+                                    <td>2025-01-15</td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-danger">
+                                            <i class="bi bi-trash"></i> Remove
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Sarah Williams</td>
+                                    <td>staff2@example.com</td>
+                                    <td><span class="badge bg-secondary">Staff</span></td>
+                                    <td>2025-01-20</td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-danger">
+                                            <i class="bi bi-trash"></i> Remove
+                                        </button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Role Modal -->
+<div class="modal fade" id="addRoleModal" tabindex="-1" aria-labelledby="addRoleModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addRoleModalLabel">Add New Role</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="add-role-form">
+                    <div class="mb-3">
+                        <label for="role-name" class="form-label">Role Name</label>
+                        <input type="text" class="form-control" id="role-name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="role-description" class="form-label">Description</label>
+                        <textarea class="form-control" id="role-description" rows="3"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Permissions</label>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" id="perm-view-dashboard">
+                                    <label class="form-check-label" for="perm-view-dashboard">View Dashboard</label>
+                                </div>
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" id="perm-manage-products">
+                                    <label class="form-check-label" for="perm-manage-products">Manage Products</label>
+                                </div>
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" id="perm-manage-orders">
+                                    <label class="form-check-label" for="perm-manage-orders">Manage Orders</label>
+                                </div>
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" id="perm-manage-customers">
+                                    <label class="form-check-label" for="perm-manage-customers">Manage Customers</label>
+                                </div>
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" id="perm-manage-categories">
+                                    <label class="form-check-label" for="perm-manage-categories">Manage Categories</label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" id="perm-manage-pages">
+                                    <label class="form-check-label" for="perm-manage-pages">Manage Pages</label>
+                                </div>
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" id="perm-manage-media">
+                                    <label class="form-check-label" for="perm-manage-media">Manage Media</label>
+                                </div>
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" id="perm-manage-settings">
+                                    <label class="form-check-label" for="perm-manage-settings">Manage Settings</label>
+                                </div>
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" id="perm-manage-users">
+                                    <label class="form-check-label" for="perm-manage-users">Manage Users</label>
+                                </div>
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" id="perm-manage-roles">
+                                    <label class="form-check-label" for="perm-manage-roles">Manage Roles</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="save-role-btn">Save Role</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- View Permissions Modal (Admin) -->
+<div class="modal fade" id="viewPermissionsModalAdmin" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Admin Role Permissions</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="list-group">
+                    <div class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                        View Dashboard
+                        <span class="badge bg-success rounded-pill"><i class="bi bi-check-lg"></i></span>
+                    </div>
+                    <div class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                        Manage Products
+                        <span class="badge bg-success rounded-pill"><i class="bi bi-check-lg"></i></span>
+                    </div>
+                    <div class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                        Manage Orders
+                        <span class="badge bg-success rounded-pill"><i class="bi bi-check-lg"></i></span>
+                    </div>
+                    <div class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                        Manage Customers
+                        <span class="badge bg-success rounded-pill"><i class="bi bi-check-lg"></i></span>
+                    </div>
+                    <div class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                        Manage Categories
+                        <span class="badge bg-success rounded-pill"><i class="bi bi-check-lg"></i></span>
+                    </div>
+                    <div class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                        Manage Pages
+                        <span class="badge bg-success rounded-pill"><i class="bi bi-check-lg"></i></span>
+                    </div>
+                    <div class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                        Manage Media
+                        <span class="badge bg-success rounded-pill"><i class="bi bi-check-lg"></i></span>
+                    </div>
+                    <div class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                        Manage Settings
+                        <span class="badge bg-success rounded-pill"><i class="bi bi-check-lg"></i></span>
+                    </div>
+                    <div class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                        Manage Users
+                        <span class="badge bg-success rounded-pill"><i class="bi bi-check-lg"></i></span>
+                    </div>
+                    <div class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                        Manage Roles
+                        <span class="badge bg-success rounded-pill"><i class="bi bi-check-lg"></i></span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize DataTables
+        if ($.fn.DataTable) {
+            $('#roles-table').DataTable({
+                pageLength: 10,
+                lengthMenu: [5, 10, 25, 50],
+                language: {
+                    search: "Search roles: "
+                }
+            });
+            
+            $('#user-roles-table').DataTable({
+                pageLength: 10,
+                lengthMenu: [5, 10, 25, 50],
+                language: {
+                    search: "Search users: "
+                }
+            });
+        }
+        
+        // Add Role Functionality
+        const saveRoleBtn = document.getElementById('save-role-btn');
+        if (saveRoleBtn) {
+            saveRoleBtn.addEventListener('click', function() {
+                const roleName = document.getElementById('role-name').value;
+                if (!roleName) {
+                    Toastify({
+                        text: "Role name is required",
+                        duration: 3000,
+                        close: true,
+                        gravity: "top",
+                        position: "right",
+                        backgroundColor: "var(--bs-danger)",
+                    }).showToast();
+                    return;
+                }
+                
+                // Success notification
+                Toastify({
+                    text: `Role "${roleName}" created successfully`,
+                    duration: 3000,
+                    close: true,
+                    gravity: "top",
+                    position: "right",
+                    backgroundColor: "var(--bs-success)",
+                }).showToast();
+                
+                // Hide modal
+                const modal = bootstrap.Modal.getInstance(document.getElementById('addRoleModal'));
+                modal.hide();
+                
+                // In a real application, you would submit the form via AJAX
+                // and refresh the table with the new role
+            });
+        }
+        
+        // Assign Role Functionality
+        const assignRoleBtn = document.getElementById('assign-role-btn');
+        if (assignRoleBtn) {
+            assignRoleBtn.addEventListener('click', function() {
+                const userSelect = document.getElementById('user-select');
+                const roleSelect = document.getElementById('role-select');
+                
+                if (!userSelect.value) {
+                    Toastify({
+                        text: "Please select a user",
+                        duration: 3000,
+                        close: true,
+                        gravity: "top",
+                        position: "right",
+                        backgroundColor: "var(--bs-danger)",
+                    }).showToast();
+                    return;
+                }
+                
+                if (!roleSelect.value) {
+                    Toastify({
+                        text: "Please select a role",
+                        duration: 3000,
+                        close: true,
+                        gravity: "top",
+                        position: "right",
+                        backgroundColor: "var(--bs-danger)",
+                    }).showToast();
+                    return;
+                }
+                
+                // Success notification
+                Toastify({
+                    text: `Role "${roleSelect.options[roleSelect.selectedIndex].text}" assigned to ${userSelect.options[userSelect.selectedIndex].text}`,
+                    duration: 3000,
+                    close: true,
+                    gravity: "top",
+                    position: "right",
+                    backgroundColor: "var(--bs-success)",
+                }).showToast();
+                
+                // In a real application, you would submit the form via AJAX
+                // and refresh the table with the updated user roles
+            });
+        }
+    });
+</script>
+{% endblock %}
