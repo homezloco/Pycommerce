@@ -55,6 +55,7 @@ try:
     from routes.admin.debug import setup_routes as setup_debug_routes # Added import for debug routes
     from routes.admin.ai_content import setup_routes as setup_ai_content_routes
     from routes.admin.security import setup_routes as setup_security_routes
+    from routes.admin.estimates_setup import setup_routes as setup_estimates_routes
 
     # Include admin routers
     # First set up auth routes since other admin routes depend on them
@@ -136,6 +137,10 @@ try:
     
     security_router = setup_security_routes(templates) # Initialize security routes
     app.include_router(security_router)
+    
+    # Initialize estimates routes
+    estimates_router = setup_estimates_routes(templates)
+    app.include_router(estimates_router)
 
     logger.info("Admin routes registered successfully")
 except ImportError as e:

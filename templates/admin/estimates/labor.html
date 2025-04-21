@@ -1,0 +1,251 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Manage Labor - {{ estimate.estimate_number }}{% endblock %}
+
+{% block styles %}
+<style>
+    .remove-row {
+        color: #e74a3b;
+        cursor: pointer;
+    }
+    .total-row {
+        background-color: #f8f9fc;
+        font-weight: bold;
+    }
+    .profit-positive {
+        color: #1cc88a;
+    }
+    .profit-negative {
+        color: #e74a3b;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0 text-gray-800">Manage Labor - {{ estimate.estimate_number }}</h1>
+        <div>
+            <a href="{{ url_for('admin_estimates.view_estimate', estimate_id=estimate.id) }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Back to Estimate
+            </a>
+        </div>
+    </div>
+
+    <div class="card shadow mb-4">
+        <div class="card-header py-3 d-flex justify-content-between align-items-center">
+            <h6 class="m-0 font-weight-bold text-primary">Labor Items</h6>
+            <button id="add-labor-row" class="btn btn-primary btn-sm">
+                <i class="fas fa-plus"></i> Add Labor Item
+            </button>
+        </div>
+        <div class="card-body">
+            <form id="labor-form" method="POST" action="{{ url_for('admin_estimates.manage_labor', estimate_id=estimate.id) }}">
+                <div class="table-responsive">
+                    <table id="labor-table" class="table table-bordered" width="100%" cellspacing="0">
+                        <thead>
+                            <tr>
+                                <th style="width: 20%">Name</th>
+                                <th style="width: 35%">Description</th>
+                                <th style="width: 10%">Hours</th>
+                                <th style="width: 15%">Cost Rate</th>
+                                <th style="width: 15%">Billing Rate</th>
+                                <th style="width: 5%">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="labor-body">
+                            {% for labor in estimate.labor_items %}
+                            <tr class="labor-row">
+                                <td>
+                                    <input type="hidden" name="labor_id" value="{{ labor.id }}">
+                                    <input type="text" class="form-control" name="labor_name" value="{{ labor.name }}" required>
+                                </td>
+                                <td>
+                                    <textarea class="form-control" name="labor_description" rows="2">{{ labor.description or '' }}</textarea>
+                                </td>
+                                <td>
+                                    <input type="number" class="form-control hours-input" name="labor_hours" min="0.25" step="0.25" value="{{ labor.hours }}" required>
+                                </td>
+                                <td>
+                                    <div class="input-group">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text">$</span>
+                                        </div>
+                                        <input type="number" class="form-control cost-rate-input" name="labor_cost_price" min="0" step="0.01" value="{{ labor.cost_price }}" required>
+                                        <div class="input-group-append">
+                                            <span class="input-group-text">/hr</span>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="input-group">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text">$</span>
+                                        </div>
+                                        <input type="number" class="form-control billing-rate-input" name="labor_selling_price" min="0" step="0.01" value="{{ labor.selling_price }}" required>
+                                        <div class="input-group-append">
+                                            <span class="input-group-text">/hr</span>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="text-center">
+                                    <i class="fas fa-trash remove-row"></i>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr id="no-labor-row">
+                                <td colspan="6" class="text-center">No labor items added yet. Click "Add Labor Item" to add one.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <td colspan="2" class="text-right font-weight-bold">Total Hours:</td>
+                                <td id="total-hours" class="font-weight-bold">0</td>
+                                <td colspan="3"></td>
+                            </tr>
+                            <tr class="total-row">
+                                <td colspan="3" class="text-right">Totals:</td>
+                                <td id="total-cost">$0.00</td>
+                                <td id="total-price">$0.00</td>
+                                <td></td>
+                            </tr>
+                            <tr class="total-row">
+                                <td colspan="3" class="text-right">Profit:</td>
+                                <td colspan="2" id="total-profit">$0.00</td>
+                                <td></td>
+                            </tr>
+                            <tr class="total-row">
+                                <td colspan="3" class="text-right">Margin:</td>
+                                <td colspan="2" id="profit-margin">0.0%</td>
+                                <td></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+                
+                <div class="text-center mt-4">
+                    <button type="submit" class="btn btn-primary btn-lg">Save Labor Items</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Labor Row Template (hidden) -->
+<template id="labor-row-template">
+    <tr class="labor-row">
+        <td>
+            <input type="hidden" name="labor_id" value="">
+            <input type="text" class="form-control" name="labor_name" value="New Labor" required>
+        </td>
+        <td>
+            <textarea class="form-control" name="labor_description" rows="2"></textarea>
+        </td>
+        <td>
+            <input type="number" class="form-control hours-input" name="labor_hours" min="0.25" step="0.25" value="1" required>
+        </td>
+        <td>
+            <div class="input-group">
+                <div class="input-group-prepend">
+                    <span class="input-group-text">$</span>
+                </div>
+                <input type="number" class="form-control cost-rate-input" name="labor_cost_price" min="0" step="0.01" value="25" required>
+                <div class="input-group-append">
+                    <span class="input-group-text">/hr</span>
+                </div>
+            </div>
+        </td>
+        <td>
+            <div class="input-group">
+                <div class="input-group-prepend">
+                    <span class="input-group-text">$</span>
+                </div>
+                <input type="number" class="form-control billing-rate-input" name="labor_selling_price" min="0" step="0.01" value="75" required>
+                <div class="input-group-append">
+                    <span class="input-group-text">/hr</span>
+                </div>
+            </div>
+        </td>
+        <td class="text-center">
+            <i class="fas fa-trash remove-row"></i>
+        </td>
+    </tr>
+</template>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    $(document).ready(function() {
+        // Add new labor row
+        $('#add-labor-row').on('click', function() {
+            // Remove "no labor" row if it exists
+            $('#no-labor-row').remove();
+            
+            // Clone the template and append to table
+            const template = document.getElementById('labor-row-template');
+            const clone = document.importNode(template.content, true);
+            $('#labor-body').append(clone);
+            
+            calculateTotals();
+        });
+        
+        // Remove labor row
+        $('#labor-table').on('click', '.remove-row', function() {
+            $(this).closest('tr').remove();
+            
+            // If no rows left, add the "no labor" row
+            if ($('#labor-body tr').length === 0) {
+                const noLaborRow = '<tr id="no-labor-row"><td colspan="6" class="text-center">No labor items added yet. Click "Add Labor Item" to add one.</td></tr>';
+                $('#labor-body').append(noLaborRow);
+            }
+            
+            calculateTotals();
+        });
+        
+        // Recalculate on input change
+        $('#labor-table').on('input', '.hours-input, .cost-rate-input, .billing-rate-input', function() {
+            calculateTotals();
+        });
+        
+        // Initial calculation
+        calculateTotals();
+        
+        // Function to calculate totals
+        function calculateTotals() {
+            let totalHours = 0;
+            let totalCost = 0;
+            let totalPrice = 0;
+            
+            $('.labor-row').each(function() {
+                const hours = parseFloat($(this).find('.hours-input').val() || 0);
+                const costRate = parseFloat($(this).find('.cost-rate-input').val() || 0);
+                const billingRate = parseFloat($(this).find('.billing-rate-input').val() || 0);
+                
+                totalHours += hours;
+                totalCost += hours * costRate;
+                totalPrice += hours * billingRate;
+            });
+            
+            const profit = totalPrice - totalCost;
+            const margin = totalPrice > 0 ? (profit / totalPrice) * 100 : 0;
+            
+            $('#total-hours').text(totalHours.toFixed(2));
+            $('#total-cost').text('$' + totalCost.toFixed(2));
+            $('#total-price').text('$' + totalPrice.toFixed(2));
+            
+            // Set profit with color coding
+            $('#total-profit').text('$' + profit.toFixed(2));
+            if (profit > 0) {
+                $('#total-profit').removeClass('profit-negative').addClass('profit-positive');
+            } else if (profit < 0) {
+                $('#total-profit').removeClass('profit-positive').addClass('profit-negative');
+            } else {
+                $('#total-profit').removeClass('profit-positive profit-negative');
+            }
+            
+            $('#profit-margin').text(margin.toFixed(1) + '%');
+        }
+    });
+</script>
+{% endblock %}

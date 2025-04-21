@@ -1,0 +1,240 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Manage Materials - {{ estimate.estimate_number }}{% endblock %}
+
+{% block styles %}
+<style>
+    .remove-row {
+        color: #e74a3b;
+        cursor: pointer;
+    }
+    .total-row {
+        background-color: #f8f9fc;
+        font-weight: bold;
+    }
+    .profit-positive {
+        color: #1cc88a;
+    }
+    .profit-negative {
+        color: #e74a3b;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0 text-gray-800">Manage Materials - {{ estimate.estimate_number }}</h1>
+        <div>
+            <a href="{{ url_for('admin_estimates.view_estimate', estimate_id=estimate.id) }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Back to Estimate
+            </a>
+        </div>
+    </div>
+
+    <div class="card shadow mb-4">
+        <div class="card-header py-3 d-flex justify-content-between align-items-center">
+            <h6 class="m-0 font-weight-bold text-primary">Materials</h6>
+            <button id="add-material-row" class="btn btn-primary btn-sm">
+                <i class="fas fa-plus"></i> Add Material
+            </button>
+        </div>
+        <div class="card-body">
+            <form id="materials-form" method="POST" action="{{ url_for('admin_estimates.manage_materials', estimate_id=estimate.id) }}">
+                <div class="table-responsive">
+                    <table id="materials-table" class="table table-bordered" width="100%" cellspacing="0">
+                        <thead>
+                            <tr>
+                                <th style="width: 20%">Name</th>
+                                <th style="width: 30%">Description</th>
+                                <th style="width: 10%">Quantity</th>
+                                <th style="width: 7%">Unit</th>
+                                <th style="width: 10%">Cost Price</th>
+                                <th style="width: 10%">Sell Price</th>
+                                <th style="width: 8%">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="materials-body">
+                            {% for material in estimate.materials %}
+                            <tr class="material-row">
+                                <td>
+                                    <input type="hidden" name="material_id" value="{{ material.id }}">
+                                    <input type="hidden" name="material_product_id" value="{{ material.product_id or '' }}">
+                                    <input type="text" class="form-control" name="material_name" value="{{ material.name }}" required>
+                                </td>
+                                <td>
+                                    <textarea class="form-control" name="material_description" rows="2">{{ material.description or '' }}</textarea>
+                                </td>
+                                <td>
+                                    <input type="number" class="form-control quantity-input" name="material_quantity" min="0.01" step="0.01" value="{{ material.quantity }}" required>
+                                </td>
+                                <td>
+                                    <input type="text" class="form-control" name="material_unit" value="{{ material.unit or '' }}">
+                                </td>
+                                <td>
+                                    <div class="input-group">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text">$</span>
+                                        </div>
+                                        <input type="number" class="form-control cost-price-input" name="material_cost_price" min="0" step="0.01" value="{{ material.cost_price }}" required>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="input-group">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text">$</span>
+                                        </div>
+                                        <input type="number" class="form-control selling-price-input" name="material_selling_price" min="0" step="0.01" value="{{ material.selling_price }}" required>
+                                    </div>
+                                </td>
+                                <td class="text-center">
+                                    <i class="fas fa-trash remove-row"></i>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr id="no-materials-row">
+                                <td colspan="7" class="text-center">No materials added yet. Click "Add Material" to add one.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                        <tfoot>
+                            <tr class="total-row">
+                                <td colspan="4" class="text-right">Totals:</td>
+                                <td id="total-cost">$0.00</td>
+                                <td id="total-price">$0.00</td>
+                                <td></td>
+                            </tr>
+                            <tr class="total-row">
+                                <td colspan="4" class="text-right">Profit:</td>
+                                <td colspan="2" id="total-profit">$0.00</td>
+                                <td></td>
+                            </tr>
+                            <tr class="total-row">
+                                <td colspan="4" class="text-right">Margin:</td>
+                                <td colspan="2" id="profit-margin">0.0%</td>
+                                <td></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+                
+                <div class="text-center mt-4">
+                    <button type="submit" class="btn btn-primary btn-lg">Save Materials</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Material Row Template (hidden) -->
+<template id="material-row-template">
+    <tr class="material-row">
+        <td>
+            <input type="hidden" name="material_id" value="">
+            <input type="hidden" name="material_product_id" value="">
+            <input type="text" class="form-control" name="material_name" value="New Material" required>
+        </td>
+        <td>
+            <textarea class="form-control" name="material_description" rows="2"></textarea>
+        </td>
+        <td>
+            <input type="number" class="form-control quantity-input" name="material_quantity" min="0.01" step="0.01" value="1" required>
+        </td>
+        <td>
+            <input type="text" class="form-control" name="material_unit" value="piece">
+        </td>
+        <td>
+            <div class="input-group">
+                <div class="input-group-prepend">
+                    <span class="input-group-text">$</span>
+                </div>
+                <input type="number" class="form-control cost-price-input" name="material_cost_price" min="0" step="0.01" value="0" required>
+            </div>
+        </td>
+        <td>
+            <div class="input-group">
+                <div class="input-group-prepend">
+                    <span class="input-group-text">$</span>
+                </div>
+                <input type="number" class="form-control selling-price-input" name="material_selling_price" min="0" step="0.01" value="0" required>
+            </div>
+        </td>
+        <td class="text-center">
+            <i class="fas fa-trash remove-row"></i>
+        </td>
+    </tr>
+</template>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    $(document).ready(function() {
+        // Add new material row
+        $('#add-material-row').on('click', function() {
+            // Remove "no materials" row if it exists
+            $('#no-materials-row').remove();
+            
+            // Clone the template and append to table
+            const template = document.getElementById('material-row-template');
+            const clone = document.importNode(template.content, true);
+            $('#materials-body').append(clone);
+            
+            calculateTotals();
+        });
+        
+        // Remove material row
+        $('#materials-table').on('click', '.remove-row', function() {
+            $(this).closest('tr').remove();
+            
+            // If no rows left, add the "no materials" row
+            if ($('#materials-body tr').length === 0) {
+                const noMaterialsRow = '<tr id="no-materials-row"><td colspan="7" class="text-center">No materials added yet. Click "Add Material" to add one.</td></tr>';
+                $('#materials-body').append(noMaterialsRow);
+            }
+            
+            calculateTotals();
+        });
+        
+        // Recalculate on input change
+        $('#materials-table').on('input', '.quantity-input, .cost-price-input, .selling-price-input', function() {
+            calculateTotals();
+        });
+        
+        // Initial calculation
+        calculateTotals();
+        
+        // Function to calculate totals
+        function calculateTotals() {
+            let totalCost = 0;
+            let totalPrice = 0;
+            
+            $('.material-row').each(function() {
+                const quantity = parseFloat($(this).find('.quantity-input').val() || 0);
+                const costPrice = parseFloat($(this).find('.cost-price-input').val() || 0);
+                const sellingPrice = parseFloat($(this).find('.selling-price-input').val() || 0);
+                
+                totalCost += quantity * costPrice;
+                totalPrice += quantity * sellingPrice;
+            });
+            
+            const profit = totalPrice - totalCost;
+            const margin = totalPrice > 0 ? (profit / totalPrice) * 100 : 0;
+            
+            $('#total-cost').text('$' + totalCost.toFixed(2));
+            $('#total-price').text('$' + totalPrice.toFixed(2));
+            
+            // Set profit with color coding
+            $('#total-profit').text('$' + profit.toFixed(2));
+            if (profit > 0) {
+                $('#total-profit').removeClass('profit-negative').addClass('profit-positive');
+            } else if (profit < 0) {
+                $('#total-profit').removeClass('profit-positive').addClass('profit-negative');
+            } else {
+                $('#total-profit').removeClass('profit-positive profit-negative');
+            }
+            
+            $('#profit-margin').text(margin.toFixed(1) + '%');
+        }
+    });
+</script>
+{% endblock %}

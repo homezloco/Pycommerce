@@ -1,0 +1,151 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Estimates{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0 text-gray-800">Estimates</h1>
+        <a href="{{ url_for('admin_estimates.create_estimate', tenant_id=tenant_id) }}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Create New Estimate
+        </a>
+    </div>
+
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">All Estimates</h6>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered" id="estimatesTable" width="100%" cellspacing="0">
+                    <thead>
+                        <tr>
+                            <th>Estimate #</th>
+                            <th>Customer</th>
+                            <th>Project</th>
+                            <th>Date</th>
+                            <th>Status</th>
+                            <th>Materials Cost</th>
+                            <th>Labor Cost</th>
+                            <th>Total Cost</th>
+                            <th>Sell Price</th>
+                            <th>Profit Margin</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for estimate in estimates %}
+                        <tr>
+                            <td>{{ estimate.estimate_number }}</td>
+                            <td>{{ estimate.customer_name or 'N/A' }}</td>
+                            <td>{{ estimate.project_name or 'N/A' }}</td>
+                            <td>{{ estimate.created_at.strftime('%Y-%m-%d') }}</td>
+                            <td>
+                                <span class="badge badge-pill badge-{{ 'success' if estimate.status == 'APPROVED' else 'warning' if estimate.status == 'DRAFT' else 'info' if estimate.status == 'CONVERTED' else 'secondary' }}">
+                                    {{ estimate.status }}
+                                </span>
+                            </td>
+                            <td>${{ "%.2f"|format(sum(m.cost_price * m.quantity for m in estimate.materials)) }}</td>
+                            <td>${{ "%.2f"|format(sum(l.cost_price * l.hours for l in estimate.labor_items)) }}</td>
+                            <td>${{ "%.2f"|format(estimate.total_cost) }}</td>
+                            <td>${{ "%.2f"|format(estimate.subtotal) }}</td>
+                            <td>{{ "%.1f"|format(estimate.profit_margin) }}%</td>
+                            <td>
+                                <div class="btn-group">
+                                    <a href="{{ url_for('admin_estimates.view_estimate', estimate_id=estimate.id) }}" class="btn btn-sm btn-primary">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a href="{{ url_for('admin_estimates.edit_estimate', estimate_id=estimate.id) }}" class="btn btn-sm btn-info">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    {% if estimate.status != 'CONVERTED' %}
+                                    <button type="button" class="btn btn-sm btn-success convert-btn" data-estimate-id="{{ estimate.id }}">
+                                        <i class="fas fa-exchange-alt"></i> Convert
+                                    </button>
+                                    {% endif %}
+                                    <button type="button" class="btn btn-sm btn-danger delete-btn" data-estimate-id="{{ estimate.id }}">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Convert to Order Modal -->
+<div class="modal fade" id="convertModal" tabindex="-1" role="dialog" aria-labelledby="convertModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="convertModalLabel">Convert Estimate to Order</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to convert this estimate to an order? This action cannot be undone.</p>
+                <p>All materials and labor items will be transferred to the order, including cost and sell prices for profit tracking.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <form id="convertForm" method="POST">
+                    <button type="submit" class="btn btn-success">Convert to Order</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" role="dialog" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteModalLabel">Delete Estimate</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete this estimate? This action cannot be undone.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <form id="deleteForm" method="POST">
+                    <button type="submit" class="btn btn-danger">Delete</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    $(document).ready(function() {
+        // Initialize DataTable
+        $('#estimatesTable').DataTable({
+            order: [[3, 'desc']] // Sort by date desc
+        });
+        
+        // Convert button click
+        $('.convert-btn').on('click', function() {
+            var estimateId = $(this).data('estimate-id');
+            $('#convertForm').attr('action', '{{ url_for("admin_estimates.convert_to_order", estimate_id="ESTIMATE_ID") }}'.replace('ESTIMATE_ID', estimateId));
+            $('#convertModal').modal('show');
+        });
+        
+        // Delete button click
+        $('.delete-btn').on('click', function() {
+            var estimateId = $(this).data('estimate-id');
+            $('#deleteForm').attr('action', '{{ url_for("admin_estimates.delete_estimate", estimate_id="ESTIMATE_ID") }}'.replace('ESTIMATE_ID', estimateId));
+            $('#deleteModal').modal('show');
+        });
+    });
+</script>
+{% endblock %}

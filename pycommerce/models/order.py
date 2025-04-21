@@ -65,6 +65,17 @@ class Order(Base):
     tax = Column(Float, nullable=False, default=0.0)
     shipping_cost = Column(Float, nullable=False, default=0.0)
     discount = Column(Float, nullable=False, default=0.0)
+    
+    # Profit calculation fields
+    total_cost = Column(Float, nullable=False, default=0.0)  # Combined material and labor costs
+    materials_cost = Column(Float, nullable=False, default=0.0)  # Materials cost only
+    labor_cost = Column(Float, nullable=False, default=0.0)  # Labor cost only
+    profit = Column(Float, nullable=False, default=0.0)  # Total profit
+    profit_margin = Column(Float, nullable=False, default=0.0)  # As percentage
+    
+    # Link to original estimate if available
+    estimate_id = Column(String(36), nullable=True)
+    
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     

@@ -8,7 +8,7 @@ import uuid
 import logging
 from datetime import datetime
 
-from sqlalchemy import Column, String, Float, Integer, DateTime, ForeignKey
+from sqlalchemy import Column, String, Float, Integer, DateTime, ForeignKey, Boolean
 from sqlalchemy.orm import relationship
 
 from pycommerce.core.db import Base
@@ -26,6 +26,16 @@ class OrderItem(Base):
     product_id = Column(String(36), ForeignKey("products.id"), nullable=False)
     quantity = Column(Integer, default=1)
     price = Column(Float, nullable=False)  # Price at the time of order
+    
+    # Cost and profit tracking
+    cost_price = Column(Float, nullable=False, default=0.0)  # Cost to business
+    is_material = Column(Boolean, default=True)  # Whether this is a material (vs labor)
+    is_labor = Column(Boolean, default=False)  # Whether this is labor
+    hours = Column(Float, nullable=True)  # Hours if this is a labor item
+    
+    # For labor tracking
+    labor_rate = Column(Float, nullable=True)  # Hourly rate if this is labor
+    
     created_at = Column(DateTime, default=datetime.utcnow)
     
     # Relationships

@@ -1,0 +1,78 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Create Estimate{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0 text-gray-800">Create New Estimate</h1>
+        <a href="{{ url_for('admin_estimates.list_estimates', tenant_id=tenant_id) }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Estimates
+        </a>
+    </div>
+
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Estimate Details</h6>
+        </div>
+        <div class="card-body">
+            <form method="POST" action="{{ url_for('admin_estimates.create_estimate', tenant_id=tenant_id) }}">
+                
+                <div class="row">
+                    <div class="col-lg-6">
+                        <h4 class="h5 mb-3">Customer Information</h4>
+                        
+                        <div class="form-group">
+                            <label for="customer_name">Customer Name</label>
+                            <input type="text" class="form-control" id="customer_name" name="customer_name" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="customer_email">Customer Email</label>
+                            <input type="email" class="form-control" id="customer_email" name="customer_email">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="customer_phone">Customer Phone</label>
+                            <input type="text" class="form-control" id="customer_phone" name="customer_phone">
+                        </div>
+                        
+                        <input type="hidden" name="customer_id" id="customer_id">
+                    </div>
+                    
+                    <div class="col-lg-6">
+                        <h4 class="h5 mb-3">Project Information</h4>
+                        
+                        <div class="form-group">
+                            <label for="project_name">Project Name</label>
+                            <input type="text" class="form-control" id="project_name" name="project_name" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="project_description">Project Description</label>
+                            <textarea class="form-control" id="project_description" name="project_description" rows="4"></textarea>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="tax">Tax Rate (%)</label>
+                            <input type="number" class="form-control" id="tax" name="tax" min="0" max="100" step="0.1" value="0">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="text-center mt-4">
+                    <button type="submit" class="btn btn-primary btn-lg">Create Estimate</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    $(document).ready(function() {
+        // Initialize customer autocomplete if needed
+    });
+</script>
+{% endblock %}

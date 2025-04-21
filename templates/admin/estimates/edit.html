@@ -1,0 +1,90 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Edit Estimate{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0 text-gray-800">Edit Estimate: {{ estimate.estimate_number }}</h1>
+        <div>
+            <a href="{{ url_for('admin_estimates.view_estimate', estimate_id=estimate.id) }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Back to Estimate
+            </a>
+            <a href="{{ url_for('admin_estimates.manage_materials', estimate_id=estimate.id) }}" class="btn btn-info">
+                <i class="fas fa-tools"></i> Edit Materials
+            </a>
+            <a href="{{ url_for('admin_estimates.manage_labor', estimate_id=estimate.id) }}" class="btn btn-info">
+                <i class="fas fa-user-clock"></i> Edit Labor
+            </a>
+        </div>
+    </div>
+
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Estimate Details</h6>
+        </div>
+        <div class="card-body">
+            <form method="POST" action="{{ url_for('admin_estimates.edit_estimate', estimate_id=estimate.id) }}">
+                
+                <div class="row">
+                    <div class="col-lg-6">
+                        <h4 class="h5 mb-3">Customer Information</h4>
+                        
+                        <div class="form-group">
+                            <label for="customer_name">Customer Name</label>
+                            <input type="text" class="form-control" id="customer_name" name="customer_name" value="{{ estimate.customer_name or '' }}" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="customer_email">Customer Email</label>
+                            <input type="email" class="form-control" id="customer_email" name="customer_email" value="{{ estimate.customer_email or '' }}">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="customer_phone">Customer Phone</label>
+                            <input type="text" class="form-control" id="customer_phone" name="customer_phone" value="{{ estimate.customer_phone or '' }}">
+                        </div>
+                    </div>
+                    
+                    <div class="col-lg-6">
+                        <h4 class="h5 mb-3">Project Information</h4>
+                        
+                        <div class="form-group">
+                            <label for="project_name">Project Name</label>
+                            <input type="text" class="form-control" id="project_name" name="project_name" value="{{ estimate.project_name or '' }}" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="project_description">Project Description</label>
+                            <textarea class="form-control" id="project_description" name="project_description" rows="4">{{ estimate.project_description or '' }}</textarea>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="tax">Tax Rate (%)</label>
+                            <input type="number" class="form-control" id="tax" name="tax" min="0" max="100" step="0.1" value="{{ estimate.tax or 0 }}">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="status">Status</label>
+                            <select class="form-control" id="status" name="status">
+                                <option value="DRAFT" {% if estimate.status == 'DRAFT' %}selected{% endif %}>Draft</option>
+                                <option value="APPROVED" {% if estimate.status == 'APPROVED' %}selected{% endif %}>Approved</option>
+                                <option value="SENT" {% if estimate.status == 'SENT' %}selected{% endif %}>Sent</option>
+                                <option value="REJECTED" {% if estimate.status == 'REJECTED' %}selected{% endif %}>Rejected</option>
+                                <option value="EXPIRED" {% if estimate.status == 'EXPIRED' %}selected{% endif %}>Expired</option>
+                                {% if estimate.status == 'CONVERTED' %}
+                                <option value="CONVERTED" selected>Converted</option>
+                                {% endif %}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="text-center mt-4">
+                    <button type="submit" class="btn btn-primary btn-lg">Update Estimate</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

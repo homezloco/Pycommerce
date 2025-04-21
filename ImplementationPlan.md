@@ -4,16 +4,71 @@
 
 PyCommerce is a scalable, multi-tenant ecommerce platform built with Python. It provides a modular architecture with a plugin system that allows for easy extension and customization. The platform is designed to support multiple tenants (ecommerce stores) on a single deployment, making it an ideal solution for SaaS ecommerce providers.
 
+The platform combines modern technologies including FastAPI, Flask, SQLAlchemy, and PostgreSQL to deliver a high-performance, secure, and feature-rich ecommerce solution. It offers both headless API capabilities for custom frontends and built-in responsive templates for rapid deployment.
+
+With its multi-tenant design, PyCommerce enables businesses to host multiple stores on a single infrastructure while maintaining complete data isolation and customization options. Advanced features include AI-powered product recommendations, a drag-and-drop page builder, comprehensive analytics, and secure payment processing with encrypted credential management.
+
 ## Core Features
 
-1. **Multi-Tenant Architecture**: Isolate data and configurations for each tenant
-2. **Plugin System**: Extend functionality with plugins for payments, shipping, etc.
-3. **Product Management**: Comprehensive product catalog with categories and variants
-4. **Cart & Checkout**: Flexible shopping cart and streamlined checkout process
-5. **Order Management**: Complete order lifecycle management
-6. **User Management**: Customer accounts and authentication
-7. **API-First Design**: RESTful API for integration with frontend applications
-8. **Email System**: Template-based email notifications for orders and shipping
+1. **Multi-Tenant Architecture**: 
+   - Complete data isolation between tenants
+   - Tenant-specific themes, domains, and configurations
+   - Shared infrastructure for cost efficiency
+   - Cross-tenant management for platform administrators
+
+2. **Plugin System**: 
+   - Extensible architecture with plugin interfaces
+   - Built-in payment plugins (Stripe, PayPal)
+   - Shipping calculation plugins with tiered options
+   - Custom plugin development framework
+
+3. **Product Management**: 
+   - Comprehensive product catalog with categories and variants
+   - Advanced categorization with hierarchical structure
+   - Inventory tracking and low stock alerts
+   - Media management with image optimization
+
+4. **Cart & Checkout**: 
+   - Flexible shopping cart with session persistence
+   - Multi-step checkout with address management
+   - Multiple payment options with secure processing
+   - Order confirmation and receipt generation
+
+5. **Order Management**: 
+   - Complete order lifecycle management
+   - Order status tracking and updates
+   - Return and refund processing
+   - Order notes for internal communication
+
+6. **User Management**: 
+   - Customer accounts with profile management
+   - Role-based access control for administrators
+   - Secure authentication with JWT tokens
+   - Password reset and account recovery
+
+7. **API-First Design**: 
+   - RESTful API with comprehensive endpoints
+   - OpenAPI/Swagger documentation
+   - Headless commerce capabilities
+   - SDK for common programming languages
+
+8. **Email System**: 
+   - Template-based email notifications
+   - Order confirmations and shipping updates
+   - Transactional email support
+   - Newsletter and marketing campaigns
+
+9. **AI Integration**:
+   - Product recommendations engine
+   - Content generation for product descriptions
+   - Market trend analysis and forecasting
+   - Multi-provider support (OpenAI, Google Gemini, etc.)
+
+10. **Page Builder**:
+    - Drag-and-drop interface for page creation
+    - Content blocks with rich text editing
+    - Template system for consistent design
+    - Custom domain configuration
 
 ## Current Progress (Updated)
 
@@ -210,25 +265,114 @@ PyCommerce is a scalable, multi-tenant ecommerce platform built with Python. It 
 
 ### Backend Technologies
 - **Language**: Python 3.11+
-- **Web Framework**: FastAPI for API, Flask for admin/demo
+  - Modern Python features with type hints
+  - Async capabilities for high performance
+  - Extensive ecosystem of packages
+  
+- **Web Framework**: 
+  - FastAPI for API endpoints (async/await support)
+  - Flask for admin interface and templates
+  - ASGI/WSGI integration for optimal performance
+  
 - **Database**: PostgreSQL
+  - Robust relational database with JSON support
+  - Transaction support for data integrity
+  - Connection pooling for efficient resource usage
+  - Multi-tenant schema approach
+  
 - **ORM**: SQLAlchemy
-- **API Documentation**: OpenAPI/Swagger
-- **Authentication**: JWT tokens
-- **File Storage**: S3-compatible object storage
+  - Comprehensive ORM with relationship mapping
+  - Query optimization and lazy loading
+  - Migration system with Alembic
+  - Model registry pattern for avoiding circular dependencies
+  
+- **API Documentation**: 
+  - OpenAPI/Swagger for auto-generated docs
+  - Interactive API explorer
+  - Serialization with Pydantic models
+  
+- **Authentication**: 
+  - JWT tokens with refresh capability
+  - Role-based access control
+  - Secure credential storage with encryption
+  - Password hashing with bcrypt
+  
+- **File Storage**: 
+  - S3-compatible object storage
+  - Local filesystem fallback
+  - Media optimization and processing
+  - Secure access controls
 
 ### Frontend Technologies
-- **Framework**: React.js or Vue.js
-- **CSS Framework**: Bootstrap
-- **State Management**: Redux or Vuex
-- **API Client**: Axios or Fetch
+- **Templates**: 
+  - Jinja2 for server-side rendering
+  - Responsive design principles
+  - Mobile-first approach
+  
+- **CSS Framework**: 
+  - Bootstrap 5 for responsive layouts
+  - Custom theming capabilities
+  - Dark mode support
+  
+- **JavaScript**: 
+  - Modern ES6+ features
+  - Modular component structure
+  - Progressive enhancement
+  
+- **Rich UI Components**:
+  - Quill.js for WYSIWYG editing
+  - Chart.js for analytics visualizations
+  - Sortable.js for drag-and-drop interfaces
+  
+- **API Integration**:
+  - Fetch API for data retrieval
+  - Async/await pattern for promises
+  - Structured error handling
+
+### Security Architecture
+- **Data Protection**:
+  - Strict tenant isolation
+  - Encrypted credentials storage with Fernet
+  - Input validation and sanitization
+  - CSRF protection for all forms
+  
+- **Authentication**:
+  - Secure password policies
+  - Rate limiting for login attempts
+  - Session management
+  - Account lockout protection
+  
+- **Authorization**:
+  - Granular permission system
+  - Role hierarchies
+  - Feature-based access control
+  - Audit logging for sensitive operations
 
 ### Deployment Strategy
-- **Containerization**: Docker
-- **Orchestration**: Kubernetes
-- **CI/CD**: GitHub Actions
-- **Cloud Provider**: AWS, GCP, or Azure
-- **CDN**: Cloudflare or AWS CloudFront
+- **Containerization**: 
+  - Docker for consistent environments
+  - Multi-stage builds for efficiency
+  - Optimized container images
+  
+- **Orchestration**: 
+  - Kubernetes for container management
+  - Auto-scaling based on load
+  - Health checks and self-healing
+  
+- **CI/CD**: 
+  - GitHub Actions for automated pipelines
+  - Testing integration
+  - Deployment automation
+  
+- **Cloud Provider**: 
+  - AWS, GCP, or Azure support
+  - Cloud-agnostic design principles
+  - Managed database services
+  
+- **CDN**: 
+  - Cloudflare or AWS CloudFront
+  - Asset optimization
+  - Edge caching for performance
 
 ## Database Schema
 
@@ -238,6 +382,109 @@ The database uses a schema-based multi-tenancy approach with the following consi
 - All tables include tenant_id for additional security
 - Foreign key constraints respect tenant boundaries
 - Indexes optimized for tenant-specific queries
+
+### Core Entity Relationships
+
+#### Tenant Model
+- **tenant**: Central entity for multi-tenant architecture
+  - id (UUID): Primary identifier
+  - name: Display name for the tenant
+  - slug: URL-friendly identifier
+  - domain: Optional custom domain
+  - settings: JSON field for tenant-specific configurations
+  - created_at: Timestamp for creation date
+  - active: Boolean flag for tenant status
+
+#### User and Authentication
+- **user**: User accounts across all tenants
+  - id (UUID): Primary identifier
+  - email: Unique email address
+  - password_hash: Securely hashed password
+  - tenant_id: Foreign key to tenant
+  - role: User role (admin, customer, etc.)
+  - active: Account status
+  - created_at: Account creation timestamp
+  - last_login: Last authentication timestamp
+
+#### Product Catalog
+- **product**: Product information
+  - id (UUID): Primary identifier
+  - tenant_id: Foreign key to tenant
+  - name: Product name
+  - description: Product description (text)
+  - price: Decimal price value
+  - sku: Stock keeping unit (unique per tenant)
+  - stock: Available quantity
+  - created_at: Creation timestamp
+  - updated_at: Last update timestamp
+
+- **category**: Product categorization
+  - id (UUID): Primary identifier
+  - tenant_id: Foreign key to tenant
+  - name: Category name
+  - slug: URL-friendly identifier
+  - parent_id: Self-reference for hierarchical structure
+  - description: Category description
+  - created_at: Creation timestamp
+
+- **product_category**: Many-to-many relationship
+  - product_id: Foreign key to product
+  - category_id: Foreign key to category
+
+#### Order Management
+- **order**: Customer orders
+  - id (UUID): Primary identifier
+  - tenant_id: Foreign key to tenant
+  - user_id: Foreign key to user (optional for guest checkout)
+  - status: Order status (pending, processing, shipped, etc.)
+  - total: Order total amount
+  - shipping_address: JSON with shipping information
+  - billing_address: JSON with billing information
+  - created_at: Order placement timestamp
+  - updated_at: Last update timestamp
+  - payment_status: Payment status tracking
+  - shipping_method: Selected shipping method
+  - notes: Internal order notes
+
+- **order_item**: Line items in an order
+  - id (UUID): Primary identifier
+  - order_id: Foreign key to order
+  - product_id: Foreign key to product
+  - quantity: Number of items
+  - price: Price at time of order
+  - name: Product name at time of order (for historical accuracy)
+  - sku: Product SKU at time of order
+
+#### Media Management
+- **media**: Uploaded files and images
+  - id (UUID): Primary identifier
+  - tenant_id: Foreign key to tenant
+  - name: File name
+  - type: File type (image, document, etc.)
+  - path: Storage path
+  - url: Access URL
+  - created_at: Upload timestamp
+  - metadata: JSON with additional information
+  - sharing_level: Controls cross-tenant visibility
+
+#### Content Management
+- **page**: Custom storefront pages
+  - id (UUID): Primary identifier
+  - tenant_id: Foreign key to tenant
+  - title: Page title
+  - slug: URL path
+  - content: JSON structure for page builder content
+  - status: Publication status
+  - created_at: Creation timestamp
+  - updated_at: Last update timestamp
+  - template_id: Optional reference to page template
+
+### Database Optimizations
+- Strategic indexing on frequently queried columns
+- Composite indexes for multi-column filtering
+- Optimized join queries with eager loading
+- Connection pooling for efficient resource utilization
+- Query caching for repetitive operations
 
 ## Scaling Considerations
 

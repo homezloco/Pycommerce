@@ -1,0 +1,344 @@
+{% extends "admin/base.html" %}
+
+{% block title %}View Estimate{% endblock %}
+
+{% block styles %}
+<style>
+    .profit-positive {
+        color: #1cc88a;
+    }
+    .profit-negative {
+        color: #e74a3b;
+    }
+    .section-title {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0 text-gray-800">Estimate: {{ estimate.estimate_number }}</h1>
+        <div>
+            <a href="{{ url_for('admin_estimates.list_estimates', tenant_id=estimate.tenant_id) }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Back to Estimates
+            </a>
+            <a href="{{ url_for('admin_estimates.edit_estimate', estimate_id=estimate.id) }}" class="btn btn-info">
+                <i class="fas fa-edit"></i> Edit
+            </a>
+            {% if estimate.status != 'CONVERTED' %}
+            <button type="button" class="btn btn-success" data-toggle="modal" data-target="#convertModal">
+                <i class="fas fa-exchange-alt"></i> Convert to Order
+            </button>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-4">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Estimate Details</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-6 text-gray-800 font-weight-bold">Estimate #:</div>
+                        <div class="col-6">{{ estimate.estimate_number }}</div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-6 text-gray-800 font-weight-bold">Date:</div>
+                        <div class="col-6">{{ estimate.created_at.strftime('%Y-%m-%d') }}</div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-6 text-gray-800 font-weight-bold">Status:</div>
+                        <div class="col-6">
+                            <span class="badge badge-pill badge-{{ 'success' if estimate.status == 'APPROVED' else 'warning' if estimate.status == 'DRAFT' else 'info' if estimate.status == 'CONVERTED' else 'secondary' }}">
+                                {{ estimate.status }}
+                            </span>
+                        </div>
+                    </div>
+                    {% if estimate.valid_until %}
+                    <div class="row mb-3">
+                        <div class="col-6 text-gray-800 font-weight-bold">Valid Until:</div>
+                        <div class="col-6">{{ estimate.valid_until.strftime('%Y-%m-%d') }}</div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Customer Information</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-6 text-gray-800 font-weight-bold">Name:</div>
+                        <div class="col-6">{{ estimate.customer_name or 'N/A' }}</div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-6 text-gray-800 font-weight-bold">Email:</div>
+                        <div class="col-6">{{ estimate.customer_email or 'N/A' }}</div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-6 text-gray-800 font-weight-bold">Phone:</div>
+                        <div class="col-6">{{ estimate.customer_phone or 'N/A' }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Project Information</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-6 text-gray-800 font-weight-bold">Name:</div>
+                        <div class="col-6">{{ estimate.project_name or 'N/A' }}</div>
+                    </div>
+                    {% if estimate.project_description %}
+                    <div class="row mb-3">
+                        <div class="col-12 text-gray-800 font-weight-bold">Description:</div>
+                        <div class="col-12 mt-2">{{ estimate.project_description }}</div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <div class="section-title">
+                        <h6 class="m-0 font-weight-bold text-primary">Materials</h6>
+                        <a href="{{ url_for('admin_estimates.manage_materials', estimate_id=estimate.id) }}" class="btn btn-sm btn-primary">
+                            <i class="fas fa-edit"></i> Edit Materials
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered" width="100%" cellspacing="0">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Description</th>
+                                    <th>Quantity</th>
+                                    <th>Unit</th>
+                                    <th>Cost Price</th>
+                                    <th>Selling Price</th>
+                                    <th>Total Cost</th>
+                                    <th>Total Price</th>
+                                    <th>Profit</th>
+                                    <th>Margin</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for material in estimate.materials %}
+                                <tr>
+                                    <td>{{ material.name }}</td>
+                                    <td>{{ material.description or '' }}</td>
+                                    <td>{{ material.quantity }}</td>
+                                    <td>{{ material.unit or '' }}</td>
+                                    <td>${{ "%.2f"|format(material.cost_price) }}</td>
+                                    <td>${{ "%.2f"|format(material.selling_price) }}</td>
+                                    <td>${{ "%.2f"|format(material.total_cost) }}</td>
+                                    <td>${{ "%.2f"|format(material.total_price) }}</td>
+                                    <td class="{{ 'profit-positive' if material.profit > 0 else 'profit-negative' if material.profit < 0 else '' }}">
+                                        ${{ "%.2f"|format(material.profit) }}
+                                    </td>
+                                    <td>{{ "%.1f"|format(material.profit_margin) }}%</td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="10" class="text-center">No materials added yet</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                            <tfoot>
+                                <tr class="font-weight-bold">
+                                    <td colspan="6" class="text-right">Totals:</td>
+                                    <td>${{ "%.2f"|format(sum(m.total_cost for m in estimate.materials)) }}</td>
+                                    <td>${{ "%.2f"|format(sum(m.total_price for m in estimate.materials)) }}</td>
+                                    <td class="{{ 'profit-positive' if sum(m.profit for m in estimate.materials) > 0 else 'profit-negative' if sum(m.profit for m in estimate.materials) < 0 else '' }}">
+                                        ${{ "%.2f"|format(sum(m.profit for m in estimate.materials)) }}
+                                    </td>
+                                    <td>
+                                        {% if sum(m.total_price for m in estimate.materials) > 0 %}
+                                            {{ "%.1f"|format((sum(m.profit for m in estimate.materials) / sum(m.total_price for m in estimate.materials)) * 100) }}%
+                                        {% else %}
+                                            0.0%
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <div class="section-title">
+                        <h6 class="m-0 font-weight-bold text-primary">Labor</h6>
+                        <a href="{{ url_for('admin_estimates.manage_labor', estimate_id=estimate.id) }}" class="btn btn-sm btn-primary">
+                            <i class="fas fa-edit"></i> Edit Labor
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered" width="100%" cellspacing="0">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Description</th>
+                                    <th>Hours</th>
+                                    <th>Cost Rate</th>
+                                    <th>Billing Rate</th>
+                                    <th>Total Cost</th>
+                                    <th>Total Price</th>
+                                    <th>Profit</th>
+                                    <th>Margin</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for labor in estimate.labor_items %}
+                                <tr>
+                                    <td>{{ labor.name }}</td>
+                                    <td>{{ labor.description or '' }}</td>
+                                    <td>{{ labor.hours }}</td>
+                                    <td>${{ "%.2f"|format(labor.cost_price) }}/hr</td>
+                                    <td>${{ "%.2f"|format(labor.selling_price) }}/hr</td>
+                                    <td>${{ "%.2f"|format(labor.total_cost) }}</td>
+                                    <td>${{ "%.2f"|format(labor.total_price) }}</td>
+                                    <td class="{{ 'profit-positive' if labor.profit > 0 else 'profit-negative' if labor.profit < 0 else '' }}">
+                                        ${{ "%.2f"|format(labor.profit) }}
+                                    </td>
+                                    <td>{{ "%.1f"|format(labor.profit_margin) }}%</td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="9" class="text-center">No labor items added yet</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                            <tfoot>
+                                <tr class="font-weight-bold">
+                                    <td colspan="5" class="text-right">Totals:</td>
+                                    <td>${{ "%.2f"|format(sum(l.total_cost for l in estimate.labor_items)) }}</td>
+                                    <td>${{ "%.2f"|format(sum(l.total_price for l in estimate.labor_items)) }}</td>
+                                    <td class="{{ 'profit-positive' if sum(l.profit for l in estimate.labor_items) > 0 else 'profit-negative' if sum(l.profit for l in estimate.labor_items) < 0 else '' }}">
+                                        ${{ "%.2f"|format(sum(l.profit for l in estimate.labor_items)) }}
+                                    </td>
+                                    <td>
+                                        {% if sum(l.total_price for l in estimate.labor_items) > 0 %}
+                                            {{ "%.1f"|format((sum(l.profit for l in estimate.labor_items) / sum(l.total_price for l in estimate.labor_items)) * 100) }}%
+                                        {% else %}
+                                            0.0%
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-6 offset-lg-6">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Estimate Summary</h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered" width="100%" cellspacing="0">
+                            <tbody>
+                                <tr>
+                                    <td class="font-weight-bold">Materials Cost:</td>
+                                    <td class="text-right">${{ "%.2f"|format(sum(m.total_cost for m in estimate.materials)) }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="font-weight-bold">Materials Price:</td>
+                                    <td class="text-right">${{ "%.2f"|format(sum(m.total_price for m in estimate.materials)) }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="font-weight-bold">Labor Cost:</td>
+                                    <td class="text-right">${{ "%.2f"|format(sum(l.total_cost for l in estimate.labor_items)) }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="font-weight-bold">Labor Price:</td>
+                                    <td class="text-right">${{ "%.2f"|format(sum(l.total_price for l in estimate.labor_items)) }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="font-weight-bold">Subtotal:</td>
+                                    <td class="text-right">${{ "%.2f"|format(estimate.subtotal) }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="font-weight-bold">Tax ({{ "%.1f"|format(estimate.tax) }}%):</td>
+                                    <td class="text-right">${{ "%.2f"|format(estimate.subtotal * (estimate.tax / 100)) }}</td>
+                                </tr>
+                                <tr class="table-active">
+                                    <td class="font-weight-bold">Total:</td>
+                                    <td class="text-right font-weight-bold">${{ "%.2f"|format(estimate.total) }}</td>
+                                </tr>
+                                <tr class="table-info">
+                                    <td class="font-weight-bold">Total Cost:</td>
+                                    <td class="text-right font-weight-bold">${{ "%.2f"|format(estimate.total_cost) }}</td>
+                                </tr>
+                                <tr class="{{ 'table-success' if estimate.total_profit > 0 else 'table-danger' if estimate.total_profit < 0 else '' }}">
+                                    <td class="font-weight-bold">Profit:</td>
+                                    <td class="text-right font-weight-bold">${{ "%.2f"|format(estimate.total_profit) }}</td>
+                                </tr>
+                                <tr class="{{ 'table-success' if estimate.profit_margin > 0 else 'table-danger' if estimate.profit_margin < 0 else '' }}">
+                                    <td class="font-weight-bold">Profit Margin:</td>
+                                    <td class="text-right font-weight-bold">{{ "%.1f"|format(estimate.profit_margin) }}%</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Convert to Order Modal -->
+<div class="modal fade" id="convertModal" tabindex="-1" role="dialog" aria-labelledby="convertModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="convertModalLabel">Convert Estimate to Order</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to convert this estimate to an order? This action cannot be undone.</p>
+                <p>All materials and labor items will be transferred to the order, including cost and sell prices for profit tracking.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <form action="{{ url_for('admin_estimates.convert_to_order', estimate_id=estimate.id) }}" method="POST">
+                    <button type="submit" class="btn btn-success">Convert to Order</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
