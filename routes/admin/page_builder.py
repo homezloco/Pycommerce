@@ -1724,7 +1724,15 @@ async def admin_create_page(
     try:
         page_manager = PageManager(session)
         template_manager = PageTemplateManager(session)
-
+        tenant_manager = TenantManager()
+        
+        # Get tenant slug from ID for redirect URLs
+        tenant = tenant_manager.get(tenant_id)
+        tenant_slug = tenant.slug if tenant else None
+        
+        # Use tenant slug for redirects instead of ID
+        redirect_tenant_param = tenant_slug or tenant_id
+        
         # Get the selected template or the first available
         if template_id:
             template = template_manager.get(template_id)
@@ -1735,7 +1743,7 @@ async def admin_create_page(
         if not template:
             error = "No page template available. Please create a template first."
             return RedirectResponse(
-                url=f"/admin/pages?tenant={tenant_id}&error={error}",
+                url=f"/admin/pages?tenant={redirect_tenant_param}&error={error}",
                 status_code=303
             )
 
@@ -1780,14 +1788,14 @@ async def admin_create_page(
         page_id = new_page.id
 
         return RedirectResponse(
-            url=f"/admin/pages/editor?id={page_id}&tenant={tenant_id}",
+            url=f"/admin/pages/editor?id={page_id}&tenant={redirect_tenant_param}",
             status_code=303
         )
     except Exception as e:
         session.rollback()
         logger.error(f"Error creating page: {str(e)}")
         return RedirectResponse(
-            url=f"/admin/pages?tenant={tenant_id}&error=Error creating page: {str(e)}",
+            url=f"/admin/pages?tenant={redirect_tenant_param}&error=Error creating page: {str(e)}",
             status_code=303
         )
     finally:

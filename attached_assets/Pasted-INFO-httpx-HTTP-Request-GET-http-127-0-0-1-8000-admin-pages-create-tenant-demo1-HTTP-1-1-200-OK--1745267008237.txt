@@ -1,0 +1,29 @@
+INFO:httpx:HTTP Request: GET http://127.0.0.1:8000/admin/pages/create?tenant=demo1 "HTTP/1.1 200 OK"
+INFO:asgi_wsgi_app:Uvicorn: INFO:     127.0.0.1:50364 - "GET /api/health HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET http://127.0.0.1:8000/api/health "HTTP/1.1 200 OK"
+INFO:asgi_wsgi_app:Uvicorn: ERROR:routes.admin.page_builder:Error creating page: 'PageTemplateManager' object has no attribute 'list'
+INFO:asgi_wsgi_app:Uvicorn: INFO:     127.0.0.1:50372 - "POST /admin/pages/create-with-template HTTP/1.1" 303 See Other
+INFO:httpx:HTTP Request: POST http://127.0.0.1:8000/admin/pages/create-with-template "HTTP/1.1 303 See Other"
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.admin.page_builder:Accessing pages listing route
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.admin.page_builder:Fetching all tenants
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.admin.page_builder:Found 5 tenants: ['Demo Store 1', 'Tech Gadgets', 'Outdoor Adventure', 'Fashion Boutique', 'Demo Store 2']
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.admin.page_builder:Initial selected tenant slug: 0a38d2a1-00fe-47ea-a6d2-f1595048aab0
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.admin.page_builder:Available tenants: ['demo1', 'tech', 'outdoor', 'fashion', 'demo2']
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.admin.page_builder:Stored tenant slug in session: 0a38d2a1-00fe-47ea-a6d2-f1595048aab0
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.admin.page_builder:Getting tenant by slug: 0a38d2a1-00fe-47ea-a6d2-f1595048aab0
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.admin.page_builder:Found tenant: None
+INFO:asgi_wsgi_app:Uvicorn: WARNING:routes.admin.page_builder:No tenant found with slug: 0a38d2a1-00fe-47ea-a6d2-f1595048aab0
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.admin.page_builder:Falling back to first tenant: demo1
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.admin.page_builder:Found 1 pages for fallback tenant 0a38d2a1-00fe-47ea-a6d2-f1595048aab0
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.admin.page_builder:Pages list context - Selected tenant slug: demo1
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.admin.page_builder:Pages list context - Tenant object: <pycommerce.models.tenant.TenantDTO object at 0x7f3d0d174510>
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.admin.page_builder:Pages list context - Tenant ID: 0a38d2a1-00fe-47ea-a6d2-f1595048aab0, Name: Demo Store 1
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.admin.page_builder:Pages list context - Number of pages: 1
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.admin.page_builder:Page in context: Welcome to Demo Store 1 (709b90b0-41e0-497b-8a41-3b357a94a117)
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.admin.page_builder:Template context prepared with 1 pages
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.admin.page_builder:Template found at path: /home/runner/workspace/templates/admin/pages/list.html
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.admin.page_builder:Template engine: <starlette.templating.Jinja2Templates object at 0x7f3d0deca910>
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.admin.page_builder:Attempting to render with minimal context first
+INFO:asgi_wsgi_app:Uvicorn: INFO:routes.admin.page_builder:Minimal context rendering succeeded, attempting full context
+INFO:asgi_wsgi_app:Uvicorn: INFO:     127.0.0.1:50372 - "GET /admin/pages?tenant=0a38d2a1-00fe-47ea-a6d2-f1595048aab0&error=Error%20creating%20page:%20'PageTemplateManager'%20object%20has%20no%20attribute%20'list' HTTP/1.1" 200 OK
+INFO:httpx:HTTP Request: GET http://127.0.0.1:8000/admin/pages?tenant=0a38d2a1-00fe-47ea-a6d2-f1595048aab0&error=Error%20creating%20page:%20'PageTemplateManager'%20object%20has%20no%20attribute%20'list' "HTTP/1.1 200 OK"

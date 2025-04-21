@@ -587,6 +587,29 @@ class PageTemplateManager:
         finally:
             if not self.session:
                 session.close()
+                
+    def list(self, system_only: bool = False) -> List[PageTemplate]:
+        """
+        List all page templates or only system templates.
+        
+        Args:
+            system_only: If True, return only system-provided templates
+            
+        Returns:
+            List of templates
+        """
+        session = self._get_session()
+        try:
+            query = session.query(PageTemplate)
+            if system_only:
+                query = query.filter(PageTemplate.is_system == True)
+            return query.all()
+        except Exception as e:
+            logger.error(f"Error listing templates: {str(e)}")
+            return []
+        finally:
+            if not self.session:
+                session.close()
 
     def get(self, template_id: str) -> Optional[PageTemplate]:
         """

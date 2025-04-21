@@ -23,7 +23,7 @@
       },
       "page_sections": {
         "exists": true,
-        "record_count": 6,
+        "record_count": 12,
         "columns": [
           "id",
           "page_id",
@@ -36,7 +36,7 @@
       },
       "content_blocks": {
         "exists": true,
-        "record_count": 6,
+        "record_count": 13,
         "columns": [
           "id",
           "section_id",
@@ -83,8 +83,8 @@
     },
     "templates/admin/pages/editor.html": {
       "exists": true,
-      "size": 72286,
-      "last_modified": 1745145894.7234933,
+      "size": 79986,
+      "last_modified": 1745161502.5905643,
       "is_empty": false,
       "readable": true,
       "sample": "{% extends \"admin/base_admin.html\" %}\n\n{% block title %}Page Editor - PyCommerce Admin{% endblock %}"
@@ -93,8 +93,8 @@
   "static_files": {
     "static/js/page-editor.js": {
       "exists": true,
-      "size": 26608,
-      "last_modified": 1745145616.9985337,
+      "size": 20815,
+      "last_modified": 1745158809.1698542,
       "is_empty": false,
       "readable": true,
       "sample": "\n/**\n * Page Editor JavaScript\n * Handles the interactive functionality of the visual page editor\n *"
