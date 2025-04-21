@@ -3,12 +3,14 @@
 Payment plugin configuration.
 
 This module provides configuration settings for payment plugins, with support
-for both environment variables and database-stored settings.
+for both environment variables and database-stored settings, using secure
+credential management for sensitive information.
 """
 
 import os
+import json
 import logging
-from typing import Dict, Any
+from typing import Dict, Any, Optional, List
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -27,13 +29,15 @@ PAYPAL_SANDBOX = True
 # Environment we're running in (development, production, etc.)
 ENVIRONMENT = os.environ.get("ENVIRONMENT", "development")
 
-# Try to import settings service for database configuration
+# Try to import settings service and credentials manager
 try:
     from pycommerce.services.settings_service import SettingsService, db_session
     from pycommerce.services.settings_service import SystemSetting
-    has_settings_service = True
-except ImportError:
-    has_settings_service = False
+    from pycommerce.services.credentials_manager import credentials_manager
+    has_services = True
+except ImportError as e:
+    logger.warning(f"Service imports failed: {str(e)}")
+    has_services = False
 
 def _load_settings_from_db():
     """Load settings from database using synchronous approach."""
