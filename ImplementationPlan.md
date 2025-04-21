@@ -39,6 +39,9 @@ With its multi-tenant design, PyCommerce enables businesses to host multiple sto
    - Order status tracking and updates
    - Return and refund processing
    - Order notes for internal communication
+   - Cost and profit tracking with material/labor differentiation
+   - Estimate creation and conversion to orders
+   - Visual profit margin reporting
 
 6. **User Management**: 
    - Customer accounts with profile management
@@ -120,6 +123,10 @@ With its multi-tenant design, PyCommerce enables businesses to host multiple sto
 - ✅ **Debug Interface Fix**: Resolved syntax errors in debug routes by fixing JavaScript template literal conflicts with Python f-strings
 - ✅ **Custom Domain Configuration**: Implemented domain configuration with support for both subdomains and custom domains, including comprehensive DNS setup instructions
 - ✅ **Secure Credentials Management**: Implemented encrypted storage for sensitive credentials with Fernet encryption
+- ✅ **Cost Tracking System**: Implemented comprehensive cost and profit tracking for order items with material and labor cost differentiation
+- ✅ **Estimate Management**: Created estimate creation and management system with the ability to track materials and labor costs separately
+- ✅ **Estimate-to-Order Conversion**: Implemented workflow for converting estimates to orders with full preservation of cost data for profit tracking
+- ✅ **Profit Visualization**: Added color-coded profit metrics display in order and estimate detail views
 
 ### In Progress:
 
@@ -190,12 +197,15 @@ With its multi-tenant design, PyCommerce enables businesses to host multiple sto
    - ⏳ Address validation
    - ⏳ Shipping label generation
 
-3. **Order Fulfillment**
+3. **Order Fulfillment and Cost Management**
    - ✅ Order status updates
    - ✅ Order notes for internal communication
    - ✅ Inventory management
    - ✅ Shipping notifications
    - ✅ Return processing
+   - ✅ Cost and profit tracking for materials and labor
+   - ✅ Estimate management and conversion to orders
+   - ✅ Color-coded profit visualization
 
 ### Phase 4: Tenant Management and Scaling (Partially Completed)
 
@@ -445,6 +455,11 @@ The database uses a schema-based multi-tenancy approach with the following consi
   - payment_status: Payment status tracking
   - shipping_method: Selected shipping method
   - notes: Internal order notes
+  - total_cost: Combined cost of materials and labor
+  - materials_cost: Total cost of materials only
+  - labor_cost: Total cost of labor only
+  - profit: Total profit (total - total_cost)
+  - profit_margin: Percentage of profit relative to total
 
 - **order_item**: Line items in an order
   - id (UUID): Primary identifier
@@ -454,6 +469,26 @@ The database uses a schema-based multi-tenancy approach with the following consi
   - price: Price at time of order
   - name: Product name at time of order (for historical accuracy)
   - sku: Product SKU at time of order
+  - cost_price: Cost of the item (for profit calculation)
+  - is_material: Boolean flag indicating if the item is a material
+  - is_labor: Boolean flag indicating if the item is labor
+  - hours: Number of labor hours if applicable
+  - labor_rate: Hourly rate for labor if applicable
+
+- **estimate**: Project estimates with cost tracking
+  - id (UUID): Primary identifier
+  - tenant_id: Foreign key to tenant
+  - customer_name: Name of the customer
+  - customer_email: Email of the customer
+  - status: Estimate status (draft, sent, approved, etc.)
+  - total: Total amount of the estimate
+  - created_at: Creation timestamp
+  - updated_at: Last update timestamp
+  - notes: Internal notes about the estimate
+  - materials_cost: Total cost of materials
+  - labor_cost: Total cost of labor
+  - profit: Calculated profit
+  - profit_margin: Percentage profit margin
 
 #### Media Management
 - **media**: Uploaded files and images
@@ -597,6 +632,13 @@ For existing ecommerce stores looking to migrate to PyCommerce:
    - ✅ Fixed syntax errors in debug routes by properly escaping JavaScript code in Python f-strings
    - ✅ Resolved conflicts between JavaScript template literals and Python f-string syntax
    - ✅ Improved code organization in debug route templates
+
+8. **Cost Tracking System**
+   - ✅ Enhanced order models with proper cost and profit tracking fields
+   - ✅ Created estimate system with separate material and labor cost tracking
+   - ✅ Developed estimate-to-order conversion workflow to preserve cost data
+   - ✅ Implemented color-coded profit visualization in admin interface
+   - ✅ Added profit margin calculation for business performance metrics
 
 ## Next Steps and Future Roadmap
 
