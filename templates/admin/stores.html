@@ -91,9 +91,23 @@
                         <div class="form-text">Unique identifier for the store URL. Use only lowercase letters, numbers, and hyphens.</div>
                     </div>
                     <div class="mb-3">
-                        <label for="domain" class="form-label">Domain (Optional)</label>
-                        <input type="text" class="form-control" id="domain" name="domain">
-                        <div class="form-text">Custom domain for the store, if any</div>
+                        <label for="domain_type" class="form-label">Domain Type</label>
+                        <select class="form-select" id="domain_type" name="domain_type">
+                            <option value="subdomain" selected>Subdomain (yourstore.pycommerce.com)</option>
+                            <option value="custom">Custom Domain</option>
+                        </select>
+                    </div>
+                    <div class="mb-3" id="custom_domain_group">
+                        <label for="domain" class="form-label">Custom Domain</label>
+                        <input type="text" class="form-control" id="domain" name="domain" placeholder="yourdomain.com">
+                        <div class="form-text">
+                            <p>Enter your custom domain without http:// or https://</p>
+                            <p>You'll need to set up DNS forwarding with your domain registrar:</p>
+                            <ol>
+                                <li>Create a CNAME record pointing to <code>pycommerce.com</code></li>
+                                <li>Wait for DNS propagation (usually 24-48 hours)</li>
+                            </ol>
+                        </div>
                     </div>
                     <div class="mb-3">
                         <label for="description" class="form-label">Description</label>
@@ -155,6 +169,28 @@
             slugInput.addEventListener('input', function() {
                 this.dataset.userModified = 'true';
             });
+        }
+        
+        // Domain type toggle functionality
+        const domainTypeSelect = document.getElementById('domain_type');
+        const customDomainGroup = document.getElementById('custom_domain_group');
+        const domainInput = document.getElementById('domain');
+        
+        if (domainTypeSelect && customDomainGroup) {
+            function toggleDomainInput() {
+                if (domainTypeSelect.value === 'subdomain') {
+                    customDomainGroup.style.display = 'none';
+                    domainInput.value = '';
+                } else {
+                    customDomainGroup.style.display = 'block';
+                }
+            }
+            
+            // Initial state
+            toggleDomainInput();
+            
+            // Event listener for changes
+            domainTypeSelect.addEventListener('change', toggleDomainInput);
         }
     });
     
