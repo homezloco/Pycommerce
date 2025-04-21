@@ -36,7 +36,7 @@
       },
       "content_blocks": {
         "exists": true,
-        "record_count": 13,
+        "record_count": 14,
         "columns": [
           "id",
           "section_id",

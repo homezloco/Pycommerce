@@ -63,6 +63,7 @@ PyCommerce is a scalable, multi-tenant ecommerce platform built with Python. It 
 - ✅ **AI Product Recommendations**: Intelligent product recommendations based on browsing history, related items, and trending products
 - ✅ **Email Template System**: Comprehensive email template system with base templates and specialized templates for notifications and order confirmations
 - ✅ **Debug Interface Fix**: Resolved syntax errors in debug routes by fixing JavaScript template literal conflicts with Python f-strings
+- ✅ **Custom Domain Configuration**: Implemented domain configuration with support for both subdomains and custom domains, including comprehensive DNS setup instructions
 
 ### In Progress:
 
@@ -145,7 +146,7 @@ PyCommerce is a scalable, multi-tenant ecommerce platform built with Python. It 
 
 1. **Tenant Administration**
    - ✅ Tenant creation and management
-   - 🔄 Custom domains
+   - ✅ Custom domains with DNS setup instructions
    - ⏳ Tenant billing and subscription management
    - ⏳ Resource allocation
 
