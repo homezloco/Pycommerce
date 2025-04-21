@@ -9,7 +9,7 @@ from datetime import datetime, timedelta
 import calendar
 from collections import defaultdict
 
-from fastapi import APIRouter, HTTPException, Request, Query
+from fastapi import APIRouter, HTTPException, Request, Query, Depends
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 
 # Template setup will be passed from main app
@@ -116,12 +116,21 @@ def get_sales_data_by_period(tenant_id: str, start_date: datetime, end_date: dat
         "top_products": mock_data["top_products"]
     }
 
+# Import authentication middleware
+try:
+    from routes.admin.auth import get_current_user_middleware, staff_or_admin_required_middleware
+except ImportError:
+    logger.warning("Auth middleware not available - dashboard will not be secure")
+    get_current_user_middleware = None
+    staff_or_admin_required_middleware = None
+
 @router.get("/dashboard", response_class=HTMLResponse)
 async def admin_dashboard(
     request: Request, 
     status_message: Optional[str] = None, 
     status_type: str = "info",
-    time_period: str = "last7days"
+    time_period: str = "last7days",
+    current_user: dict = Depends(staff_or_admin_required_middleware) if staff_or_admin_required_middleware else None
 ):
     """Admin dashboard page."""
     # Get tenants

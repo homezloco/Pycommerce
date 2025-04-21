@@ -33,6 +33,7 @@ except Exception as e:
 
 # Register admin routes
 try:
+    from routes.admin.auth import setup_routes as setup_auth_routes
     from routes.admin.dashboard import setup_routes as setup_dashboard_routes
     from routes.admin.products import setup_routes as setup_products_routes
     from routes.admin.orders import setup_routes as setup_orders_routes
@@ -55,6 +56,10 @@ try:
     from routes.admin.ai_content import setup_routes as setup_ai_content_routes
 
     # Include admin routers
+    # First set up auth routes since other admin routes depend on them
+    auth_router = setup_auth_routes(templates)
+    app.include_router(auth_router)
+    
     dashboard_router = setup_dashboard_routes(templates)
     app.include_router(dashboard_router)
 
