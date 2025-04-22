@@ -101,13 +101,40 @@ async def plugins_page(
     if tenant_obj:
         tenant_plugin_config = getattr(tenant_obj, 'plugin_config', {}) or {}
     
-    # Convert plugins to traditional list format for backwards compatibility with template
+    # Create a list of plugin dictionaries with proper attributes for the template
     plugins = []
-    for plugin_type, plugin_list in filtered_plugins.items():
-        for plugin in plugin_list:
-            plugin_entry = plugin.copy()  # Copy to avoid modifying original
-            plugin_entry['type'] = plugin_type
-            plugins.append(plugin_entry)
+    
+    # Add payment plugins
+    for plugin in payment_plugins:
+        plugin_id = getattr(plugin, 'plugin_id', plugin.__class__.__name__.lower())
+        plugin_name = getattr(plugin, 'name', plugin.__class__.__name__)
+        logger.info(f"Adding payment plugin to template: {plugin_name} [{plugin_id}]")
+        plugins.append({
+            'id': plugin_id,
+            'name': plugin_name,
+            'description': getattr(plugin, 'description', 'Payment processing plugin'),
+            'version': getattr(plugin, 'version', '0.1.0'),
+            'type': 'payment',
+            'enabled': True,
+            'configured': True,
+            'removable': False,
+        })
+    
+    # Add shipping plugins
+    for plugin in shipping_plugins:
+        plugin_id = getattr(plugin, 'plugin_id', plugin.__class__.__name__.lower())
+        plugin_name = getattr(plugin, 'name', plugin.__class__.__name__)
+        logger.info(f"Adding shipping plugin to template: {plugin_name} [{plugin_id}]")
+        plugins.append({
+            'id': plugin_id,
+            'name': plugin_name,
+            'description': getattr(plugin, 'description', 'Shipping calculation plugin'),
+            'version': getattr(plugin, 'version', '0.1.0'),
+            'type': 'shipping',
+            'enabled': True,
+            'configured': True,
+            'removable': False,
+        })
     
     return templates.TemplateResponse(
         "admin/plugins.html",
