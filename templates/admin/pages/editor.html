@@ -239,40 +239,6 @@
       });
     }
 
-    // Function to add a new section
-    function addNewSection(sectionType) {
-      // API call to create a new section
-      fetch('/admin/api/pages/sections', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          page_id: '{{ page.id }}',
-          section_type: sectionType,
-          position: 0, // Will be adjusted by the backend
-          settings: {
-            padding: 'medium',
-            background: 'white'
-          }
-        })
-      })
-      .then(response => {
-        if (!response.ok) {
-          throw new Error('Error creating section');
-        }
-        return response.json();
-      })
-      .then(data => {
-        // Refresh the page to show the new section
-        window.location.reload();
-      })
-      .catch(error => {
-        console.error('Error:', error);
-        alert('Error creating section: ' + error.message);
-      });
-    }
-
     // Function to save the page
     function savePage() {
       // Gather all section and block data
@@ -940,6 +906,66 @@ function ensureSortableLoaded(callback) {
   }
   
   function addNewSection(sectionType) {
+    console.log('Adding new section:', sectionType);
+
+    // Get specific settings based on section type
+    let sectionSettings = {};
+    
+    // Configure default settings based on section type
+    switch(sectionType) {
+      case 'hero':
+        sectionSettings = {
+          padding: 'large',
+          background: 'light',
+          text_color: 'dark',
+          alignment: 'center'
+        };
+        break;
+      case 'products':
+        sectionSettings = {
+          padding: 'medium',
+          background: 'white',
+          columns: 3,
+          show_price: true,
+          products_source: 'all' // Default to showing all products
+        };
+        break;
+      case 'content':
+        sectionSettings = {
+          padding: 'medium',
+          background: 'white',
+          width: 'container'
+        };
+        break;
+      case 'cta':
+        sectionSettings = {
+          padding: 'large',
+          background: 'primary',
+          text_color: 'white',
+          alignment: 'center'
+        };
+        break;
+      case 'features':
+        sectionSettings = {
+          padding: 'medium',
+          background: 'light',
+          columns: 3
+        };
+        break;
+      case 'testimonials':
+        sectionSettings = {
+          padding: 'medium',
+          background: 'light',
+          style: 'cards'
+        };
+        break;
+      default:
+        sectionSettings = {
+          padding: 'medium',
+          background: 'white'
+        };
+    }
+    
     // API call to create a new section
     fetch('/admin/api/pages/sections', {
       method: 'POST',
@@ -950,10 +976,7 @@ function ensureSortableLoaded(callback) {
         page_id: '{{ page.id }}',
         section_type: sectionType,
         position: 0, // Will be adjusted by the backend
-        settings: {
-          padding: 'medium',
-          background: 'white'
-        }
+        settings: sectionSettings
       })
     })
     .then(response => {
@@ -963,6 +986,7 @@ function ensureSortableLoaded(callback) {
       return response.json();
     })
     .then(data => {
+      console.log('Section created successfully:', data);
       // Refresh the page to show the new section
       window.location.reload();
     })
@@ -1020,7 +1044,7 @@ function ensureSortableLoaded(callback) {
     document.querySelectorAll('.section-type-option').forEach(option => {
       option.addEventListener('click', function() {
         const sectionType = this.getAttribute('data-type');
-        createNewSection(sectionType);
+        addNewSection(sectionType);
 
         // Hide the modal
         const modal = bootstrap.Modal.getInstance(document.getElementById('addSectionModal'));
