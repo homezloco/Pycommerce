@@ -1,0 +1,143 @@
+{% extends 'admin/base_admin.html' %}
+
+{% block title %}PyCommerce - Simple Plugins Management{% endblock %}
+
+{% block admin_content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h2">Plugins (Simplified View)</h1>
+    </div>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-header">
+            <h5 class="card-title mb-0">Installed Plugins</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Plugin</th>
+                            <th>Type</th>
+                            <th>Version</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for plugin in plugins %}
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="plugin-icon bg-light rounded p-2 me-3">
+                                        <i class="bi 
+                                        {% if plugin.type == 'payment' %}bi-credit-card
+                                        {% elif plugin.type == 'shipping' %}bi-truck
+                                        {% else %}bi-puzzle
+                                        {% endif %}"></i>
+                                    </div>
+                                    <div>
+                                        <h6 class="mb-0">{{ plugin.name }}</h6>
+                                        <span class="text-muted small">{{ plugin.description }}</span>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>{{ plugin.type|capitalize }}</td>
+                            <td>v{{ plugin.version }}</td>
+                            <td>
+                                {% if plugin.enabled %}
+                                <span class="badge bg-success">Active</span>
+                                {% else %}
+                                <span class="badge bg-danger">Inactive</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="4" class="text-center py-4">
+                                <i class="bi bi-puzzle fs-2 text-muted mb-2"></i>
+                                <p>No plugins available.</p>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                <div class="alert alert-info mt-3">
+                    <i class="bi bi-info-circle me-2"></i>
+                    This is a simplified view showing the registered plugins in the system.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Payment Plugins</h5>
+                </div>
+                <ul class="list-group list-group-flush">
+                    {% for plugin in plugins %}
+                        {% if plugin.type == 'payment' %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <i class="bi bi-credit-card me-2"></i>
+                                {{ plugin.name }}
+                            </div>
+                            <span class="badge bg-success rounded-pill">Active</span>
+                        </li>
+                        {% endif %}
+                    {% else %}
+                        <li class="list-group-item">No payment plugins found</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Shipping Plugins</h5>
+                </div>
+                <ul class="list-group list-group-flush">
+                    {% for plugin in plugins %}
+                        {% if plugin.type == 'shipping' %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <i class="bi bi-truck me-2"></i>
+                                {{ plugin.name }}
+                            </div>
+                            <span class="badge bg-success rounded-pill">Active</span>
+                        </li>
+                        {% endif %}
+                    {% else %}
+                        <li class="list-group-item">No shipping plugins found</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Other Plugins</h5>
+                </div>
+                <ul class="list-group list-group-flush">
+                    {% for plugin in plugins %}
+                        {% if plugin.type != 'payment' and plugin.type != 'shipping' %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <i class="bi bi-puzzle me-2"></i>
+                                {{ plugin.name }}
+                            </div>
+                            <span class="badge bg-success rounded-pill">Active</span>
+                        </li>
+                        {% endif %}
+                    {% else %}
+                        <li class="list-group-item">No other plugins found</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

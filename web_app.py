@@ -40,6 +40,7 @@ try:
     from routes.admin.customers import setup_routes as setup_customers_routes
     from routes.admin.settings import setup_routes as setup_settings_routes
     from routes.admin.plugins import setup_routes as setup_plugins_routes
+    from routes.admin.simple_plugins import setup_routes as setup_simple_plugins_routes
     from routes.admin.tenants import setup_routes as setup_tenants_routes
     from routes.admin.media import setup_routes as setup_media_routes
     from routes.admin.inventory import setup_routes as setup_inventory_routes
@@ -137,6 +138,10 @@ try:
     
     security_router = setup_security_routes(templates) # Initialize security routes
     app.include_router(security_router)
+    
+    # Initialize simple plugins routes
+    simple_plugins_router = setup_simple_plugins_routes(templates)
+    app.include_router(simple_plugins_router)
     
     # Initialize estimates routes
     estimates_router = setup_estimates_routes(templates)
