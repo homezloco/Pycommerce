@@ -238,19 +238,65 @@
                 
                 try {
                     const formData = new FormData(checkoutForm);
+                    
+                    // Log what we're submitting for debugging
+                    console.log('Form data items:', formData.get('items'));
+                    console.log('Form data order_id:', formData.get('order_id'));
+                    
+                    // Send the request
                     const response = await fetch('/stripe-demo/create-checkout-session', {
                         method: 'POST',
                         body: formData
                     });
                     
+                    console.log('Response status:', response.status);
+                    console.log('Response headers:', [...response.headers.entries()]);
+                    
                     if (!response.ok) {
-                        // If response is not 2xx, try to get error details
-                        const errorData = await response.json();
-                        throw new Error(errorData.error || 'Checkout failed. Please try again.');
+                        // Try to get error details, handling both JSON and text responses
+                        let errorMessage;
+                        try {
+                            const contentType = response.headers.get('content-type');
+                            if (contentType && contentType.includes('application/json')) {
+                                const errorData = await response.json();
+                                console.log('Error response data:', errorData);
+                                errorMessage = errorData.error || errorData.detail || JSON.stringify(errorData);
+                            } else {
+                                errorMessage = await response.text();
+                                console.log('Error response text:', errorMessage);
+                            }
+                        } catch (parseError) {
+                            console.error('Error parsing response:', parseError);
+                            errorMessage = `Failed to parse error response: ${parseError.message}`;
+                        }
+                        
+                        throw new Error(errorMessage || `Request failed with status: ${response.status}`);
                     }
                     
-                    // Redirect to the URL returned by the server
-                    window.location.href = response.url;
+                    // For successful responses, check the redirect URL
+                    console.log('Success response URL:', response.url);
+                    
+                    // If the response has a URL, redirect to it
+                    if (response.redirected || response.url) {
+                        window.location.href = response.url;
+                    } else {
+                        // If there's no URL, try to handle the response content
+                        const contentType = response.headers.get('content-type');
+                        if (contentType && contentType.includes('application/json')) {
+                            const data = await response.json();
+                            console.log('Response data:', data);
+                            
+                            if (data.url) {
+                                window.location.href = data.url;
+                            } else {
+                                throw new Error('Response missing redirect URL');
+                            }
+                        } else {
+                            const text = await response.text();
+                            console.log('Response text:', text);
+                            throw new Error('Unexpected response format');
+                        }
+                    }
                     
                 } catch (error) {
                     console.error('Checkout error:', error);

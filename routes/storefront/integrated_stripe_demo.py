@@ -70,7 +70,7 @@ def setup_routes(templates):
         logger.info("Serving integrated Stripe demo page via /demo route")
         return templates.TemplateResponse("stripe_demo.html", {"request": request})
     
-    @router.post("/create-checkout-session")
+    @router.post("/stripe-demo/create-checkout-session")
     async def create_checkout_session(request: Request, items: str = Form(...), order_id: str = Form(...)):
         """
         Create a Stripe checkout session and redirect to the Stripe hosted checkout page.
@@ -84,6 +84,7 @@ def setup_routes(templates):
             RedirectResponse: Redirect to Stripe checkout page
         """
         logger.info(f"Creating Stripe checkout session for order {order_id}")
+        logger.info(f"Received items data: {items}")
         
         # First, make sure Stripe was imported successfully
         if not stripe:
@@ -96,9 +97,17 @@ def setup_routes(templates):
         # Initialize Stripe API key
         try:
             stripe.api_key = os.environ.get('STRIPE_SECRET_KEY')
-            logger.debug(f"Setting Stripe API key: {'Set' if stripe.api_key else 'Missing'}")
+            logger.info(f"Stripe API key status: {'Set' if stripe.api_key else 'Missing'}")
+            # Print only the first few characters of the key for security reasons
+            if stripe.api_key:
+                safe_key_prefix = stripe.api_key[:4] + "..." if len(stripe.api_key) > 4 else "[HIDDEN]"
+                logger.info(f"Using Stripe API key with prefix: {safe_key_prefix}")
         except Exception as key_error:
             logger.error(f"Error setting Stripe API key: {str(key_error)}")
+            return JSONResponse(
+                status_code=500,
+                content={"error": f"Error initializing Stripe: {str(key_error)}"}
+            )
             
         # Check if the API key is set
         if not stripe.api_key:
