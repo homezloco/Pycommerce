@@ -26,7 +26,7 @@ app.secret_key = os.environ.get("FLASK_SECRET_KEY", "pycommerce-secret-key")
 flask_app = app
 
 # Define port for FastAPI service
-FASTAPI_PORT = 8002  # Changed from 8000 to avoid port conflicts
+FASTAPI_PORT = 8004  # Changed from 8002 to avoid port conflicts
 FASTAPI_URL = f"http://127.0.0.1:{FASTAPI_PORT}"
 fastapi_process = None
 
