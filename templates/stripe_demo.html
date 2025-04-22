@@ -224,6 +224,12 @@
             const errorDiv = document.getElementById('api-error');
             const errorMessage = document.getElementById('error-message');
             
+            // Make sure form exists before adding listener
+            if (!checkoutForm) {
+                console.error('Checkout form not found in DOM');
+                return;
+            }
+            
             checkoutForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
                 
@@ -379,6 +385,12 @@
             const checkoutButton = document.getElementById('checkout-button');
             const itemsInput = document.getElementById('items-input');
             
+            // Verify required elements exist
+            if (!cartContainer || !cartCount || !cartTotal || !checkoutButton || !itemsInput) {
+                console.error('Cart UI elements not found in DOM');
+                return;
+            }
+            
             // Calculate total
             total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
             
@@ -388,11 +400,15 @@
             
             // Show/hide empty cart message
             if (cart.length === 0) {
-                emptyCartMessage.style.display = 'block';
+                if (emptyCartMessage) {
+                    emptyCartMessage.style.display = 'block';
+                }
                 cartContainer.innerHTML = '<p class="text-muted text-center" id="empty-cart-message">Your cart is empty</p>';
                 checkoutButton.disabled = true;
             } else {
-                emptyCartMessage.style.display = 'none';
+                if (emptyCartMessage) {
+                    emptyCartMessage.style.display = 'none';
+                }
                 
                 // Generate cart items HTML
                 let cartHTML = '';
