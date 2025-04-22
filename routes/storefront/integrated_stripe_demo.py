@@ -170,9 +170,20 @@ def setup_routes(templates):
             )
         
         try:
+            # Log the raw items input for debugging
+            logger.info(f"Raw items input before parsing: {items}")
+            
+            # Check if items is empty or null
+            if not items or items == "[]":
+                logger.error("Empty cart received")
+                return JSONResponse(
+                    status_code=400,
+                    content={"error": "Your cart is empty. Please add items before checking out."}
+                )
+                
             # Parse the JSON items data
             items_data = json.loads(items)
-            logger.debug(f"Parsed items data: {items_data}")
+            logger.info(f"Successfully parsed items data: {items_data}")
             
             # Create line items for Stripe
             line_items = []
@@ -217,7 +228,11 @@ def setup_routes(templates):
             
             logger.info(f"Stripe checkout session created successfully with ID: {checkout_session.id}")
             
-            # Redirect to the Stripe checkout page
+            # Log the session URL for debugging
+            logger.info(f"Redirecting to Stripe checkout URL: {checkout_session.url}")
+            
+            # Return a direct redirect to the Stripe checkout URL
+            # Use a higher status code (303) to ensure browsers follow the redirect
             return RedirectResponse(url=checkout_session.url, status_code=303)
             
         except Exception as e:
