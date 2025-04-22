@@ -596,4 +596,5 @@ if __name__ == "__main__":
         register_plugin()
     except Exception as e:
         logger.error(f"Error initializing plugins: {str(e)}")
-    uvicorn.run("web_app:app", host="0.0.0.0", port=port, reload=True, log_level="info")
+    # Use port 8003 to avoid conflict with other servers
+    uvicorn.run("web_app:app", host="0.0.0.0", port=8003, reload=True, log_level="info")
