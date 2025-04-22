@@ -251,6 +251,14 @@
                     console.log('Form data items:', formData.get('items'));
                     console.log('Form data order_id:', formData.get('order_id'));
                     
+                    // Updated: Use formData.toString() to make sure data is properly formatted
+                    console.log('Form data complete:', formData);
+                    
+                    // Send the request - NEW: Directly submit the form instead of using fetch
+                    checkoutForm.submit();
+                    return; // Exit here to allow natural form submission
+                    
+                    /* Commenting out old fetch approach - it doesn't handle redirects properly
                     // Send the request
                     const response = await fetch('/stripe-demo/create-checkout-session', {
                         method: 'POST',
@@ -305,6 +313,7 @@
                             throw new Error('Unexpected response format');
                         }
                     }
+                    */
                     
                 } catch (error) {
                     console.error('Checkout error:', error);
