@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PyCommerce API Documentation</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: #2c3e50;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+            margin-bottom: 30px;
+        }
+        h2 {
+            color: #2980b9;
+            margin-top: 30px;
+            margin-bottom: 15px;
+            padding-bottom: 5px;
+            border-bottom: 1px solid #eee;
+        }
+        h3 {
+            color: #16a085;
+            margin-top: 25px;
+        }
+        pre {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+        code {
+            font-family: 'Courier New', Courier, monospace;
+            background-color: #f8f9fa;
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+        .endpoint {
+            margin-bottom: 30px;
+            border: 1px solid #e1e4e8;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+        .endpoint-header {
+            display: flex;
+            align-items: center;
+            padding: 10px 15px;
+            background-color: #f6f8fa;
+            border-bottom: 1px solid #e1e4e8;
+        }
+        .method {
+            font-weight: bold;
+            margin-right: 15px;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .get {
+            background-color: #61affe;
+            color: white;
+        }
+        .post {
+            background-color: #49cc90;
+            color: white;
+        }
+        .put {
+            background-color: #fca130;
+            color: white;
+        }
+        .delete {
+            background-color: #f93e3e;
+            color: white;
+        }
+        .patch {
+            background-color: #50e3c2;
+            color: white;
+        }
+        .endpoint-path {
+            font-family: 'Courier New', Courier, monospace;
+            font-weight: 600;
+        }
+        .endpoint-body {
+            padding: 15px;
+        }
+        .params-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        .params-table th,
+        .params-table td {
+            border: 1px solid #e1e4e8;
+            padding: 8px 12px;
+            text-align: left;
+        }
+        .params-table th {
+            background-color: #f6f8fa;
+        }
+        .response-example {
+            margin-top: 15px;
+        }
+        .nav-tabs {
+            margin-bottom: 15px;
+        }
+        .tab-content {
+            padding: 15px;
+            border: 1px solid #dee2e6;
+            border-top: none;
+            border-radius: 0 0 5px 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>PyCommerce API Documentation</h1>
+            <p class="lead">
+                Welcome to the PyCommerce API documentation. This documentation provides information about the available endpoints
+                and how to interact with the PyCommerce platform programmatically.
+            </p>
+        </header>
+
+        <section id="overview">
+            <h2>Overview</h2>
+            <p>
+                The PyCommerce API is organized around REST principles. It accepts JSON-encoded request bodies, returns JSON-encoded responses,
+                and uses standard HTTP response codes, authentication, and verbs.
+            </p>
+            <p>
+                All API requests must be made over HTTPS. Calls made over plain HTTP will be rejected.
+            </p>
+        </section>
+
+        <section id="authentication">
+            <h2>Authentication</h2>
+            <p>
+                The PyCommerce API uses JWT bearer tokens for authentication. To authenticate an API request, you should provide your
+                API key in the Authorization header.
+            </p>
+            <pre><code>Authorization: Bearer YOUR_JWT_TOKEN</code></pre>
+            <p>
+                You can obtain a JWT token by authenticating through the <code>/api/auth/login</code> endpoint.
+            </p>
+        </section>
+
+        <section id="endpoints">
+            <h2>Endpoints</h2>
+
+            <!-- Health Check Endpoint -->
+            <div class="endpoint">
+                <div class="endpoint-header">
+                    <span class="method get">GET</span>
+                    <span class="endpoint-path">/api/health</span>
+                </div>
+                <div class="endpoint-body">
+                    <p>
+                        Check if the API is operational. This endpoint does not require authentication.
+                    </p>
+                    <h3>Response</h3>
+                    <div class="response-example">
+                        <pre><code>{
+  "status": "ok",
+  "version": "1.0.0",
+  "message": "PyCommerce API is running"
+}</code></pre>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tenants Endpoint -->
+            <div class="endpoint">
+                <div class="endpoint-header">
+                    <span class="method get">GET</span>
+                    <span class="endpoint-path">/api/tenants</span>
+                </div>
+                <div class="endpoint-body">
+                    <p>
+                        Get a list of all tenants in the system.
+                    </p>
+                    <h3>Response</h3>
+                    <div class="response-example">
+                        <pre><code>{
+  "tenants": [
+    {
+      "id": "ea6c4bc0-d5aa-4f5c-b769-c51c812a5037",
+      "name": "Tech Gadgets",
+      "slug": "tech",
+      "domain": "tech.pycommerce.com",
+      "active": true
+    },
+    {
+      "id": "f8a7b6c5-e4d3-4c2b-a1b0-9f8e7d6c5b4a",
+      "name": "Outdoor Adventures",
+      "slug": "outdoor",
+      "domain": "outdoor.pycommerce.com",
+      "active": true
+    }
+  ],
+  "count": 2
+}</code></pre>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Products Endpoint -->
+            <div class="endpoint">
+                <div class="endpoint-header">
+                    <span class="method get">GET</span>
+                    <span class="endpoint-path">/api/products</span>
+                </div>
+                <div class="endpoint-body">
+                    <p>
+                        Get products for a specific tenant with optional filtering.
+                    </p>
+                    <h3>Parameters</h3>
+                    <table class="params-table">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Type</th>
+                                <th>Description</th>
+                                <th>Required</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>tenant</td>
+                                <td>string</td>
+                                <td>The tenant slug (e.g., "tech", "outdoor")</td>
+                                <td>Yes</td>
+                            </tr>
+                            <tr>
+                                <td>category</td>
+                                <td>string</td>
+                                <td>Filter products by category</td>
+                                <td>No</td>
+                            </tr>
+                            <tr>
+                                <td>min_price</td>
+                                <td>number</td>
+                                <td>Filter products by minimum price</td>
+                                <td>No</td>
+                            </tr>
+                            <tr>
+                                <td>max_price</td>
+                                <td>number</td>
+                                <td>Filter products by maximum price</td>
+                                <td>No</td>
+                            </tr>
+                            <tr>
+                                <td>in_stock</td>
+                                <td>boolean</td>
+                                <td>Filter products by stock availability</td>
+                                <td>No</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <h3>Response</h3>
+                    <div class="response-example">
+                        <pre><code>{
+  "products": [
+    {
+      "id": "b5c6d7e8-f9a0-4b1c-8d2e-3f4a5b6c7d8e",
+      "name": "Wireless Headphones",
+      "description": "Premium wireless headphones with noise cancellation",
+      "price": 129.99,
+      "sku": "WH-001",
+      "stock": 25,
+      "categories": ["Electronics", "Audio"]
+    },
+    {
+      "id": "c6d7e8f9-a0b1-4c2d-8e3f-4a5b6c7d8e9f",
+      "name": "Bluetooth Speaker",
+      "description": "Waterproof portable Bluetooth speaker",
+      "price": 79.99,
+      "sku": "BS-002",
+      "stock": 42,
+      "categories": ["Electronics", "Audio"]
+    }
+  ],
+  "tenant": "tech",
+  "count": 2,
+  "filters": {
+    "category": "Audio",
+    "min_price": null,
+    "max_price": null,
+    "in_stock": true
+  }
+}</code></pre>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Orders Endpoints -->
+            <div class="endpoint">
+                <div class="endpoint-header">
+                    <span class="method get">GET</span>
+                    <span class="endpoint-path">/api/orders</span>
+                </div>
+                <div class="endpoint-body">
+                    <p>
+                        Get orders for a specific tenant with optional filtering.
+                    </p>
+                    <h3>Parameters</h3>
+                    <table class="params-table">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Type</th>
+                                <th>Description</th>
+                                <th>Required</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>tenant</td>
+                                <td>string</td>
+                                <td>The tenant slug (e.g., "tech", "outdoor")</td>
+                                <td>Yes</td>
+                            </tr>
+                            <tr>
+                                <td>status</td>
+                                <td>string</td>
+                                <td>Filter orders by status (e.g., "pending", "completed")</td>
+                                <td>No</td>
+                            </tr>
+                            <tr>
+                                <td>customer_id</td>
+                                <td>string</td>
+                                <td>Filter orders by customer ID</td>
+                                <td>No</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <h3>Response</h3>
+                    <div class="response-example">
+                        <pre><code>{
+  "orders": [
+    {
+      "id": "d7e8f9a0-b1c2-4d3e-8f4a-5b6c7d8e9f0a",
+      "customer_name": "Jane Smith",
+      "customer_email": "jane.smith@example.com",
+      "status": "completed",
+      "total": 209.98,
+      "created_at": "2025-03-15T10:30:00Z",
+      "items_count": 2,
+      "shipping_method": "standard"
+    },
+    {
+      "id": "e8f9a0b1-c2d3-4e4f-9a5b-6c7d8e9f0a1b",
+      "customer_name": "John Doe",
+      "customer_email": "john.doe@example.com",
+      "status": "pending",
+      "total": 129.99,
+      "created_at": "2025-03-16T14:45:00Z",
+      "items_count": 1,
+      "shipping_method": "express"
+    }
+  ],
+  "tenant": "tech",
+  "count": 2,
+  "filters": {
+    "status": null,
+    "customer_id": null
+  }
+}</code></pre>
+                    </div>
+                </div>
+            </div>
+
+            <div class="endpoint">
+                <div class="endpoint-header">
+                    <span class="method get">GET</span>
+                    <span class="endpoint-path">/api/orders/{order_id}</span>
+                </div>
+                <div class="endpoint-body">
+                    <p>
+                        Get details of a specific order.
+                    </p>
+                    <h3>Path Parameters</h3>
+                    <table class="params-table">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Type</th>
+                                <th>Description</th>
+                                <th>Required</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>order_id</td>
+                                <td>string</td>
+                                <td>The ID of the order to retrieve</td>
+                                <td>Yes</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <h3>Response</h3>
+                    <div class="response-example">
+                        <pre><code>{
+  "id": "d7e8f9a0-b1c2-4d3e-8f4a-5b6c7d8e9f0a",
+  "customer": {
+    "id": "f9a0b1c2-d3e4-4f5a-9b6c-7d8e9f0a1b2c",
+    "name": "Jane Smith",
+    "email": "jane.smith@example.com",
+    "phone": "+1234567890"
+  },
+  "status": "completed",
+  "total": 209.98,
+  "subtotal": 189.98,
+  "tax": 10.00,
+  "shipping_cost": 10.00,
+  "created_at": "2025-03-15T10:30:00Z",
+  "updated_at": "2025-03-15T14:20:00Z",
+  "shipping_address": {
+    "line1": "123 Main St",
+    "line2": "Apt 4B",
+    "city": "Metropolis",
+    "state": "NY",
+    "postal_code": "10001",
+    "country": "USA"
+  },
+  "billing_address": {
+    "line1": "123 Main St",
+    "line2": "Apt 4B",
+    "city": "Metropolis",
+    "state": "NY",
+    "postal_code": "10001",
+    "country": "USA"
+  },
+  "shipping_method": "standard",
+  "payment_method": "credit_card",
+  "payment_status": "paid",
+  "notes": "Please leave at front door",
+  "items": [
+    {
+      "id": "a0b1c2d3-e4f5-4a6b-9c7d-8e9f0a1b2c3d",
+      "product_id": "b5c6d7e8-f9a0-4b1c-8d2e-3f4a5b6c7d8e",
+      "name": "Wireless Headphones",
+      "quantity": 1,
+      "unit_price": 129.99,
+      "total_price": 129.99
+    },
+    {
+      "id": "b1c2d3e4-f5a6-4b7c-9d8e-9f0a1b2c3d4e",
+      "product_id": "c6d7e8f9-a0b1-4c2d-8e3f-4a5b6c7d8e9f",
+      "name": "Bluetooth Speaker",
+      "quantity": 1,
+      "unit_price": 79.99,
+      "total_price": 79.99
+    }
+  ],
+  "tenant_id": "ea6c4bc0-d5aa-4f5c-b769-c51c812a5037"
+}</code></pre>
+                    </div>
+                </div>
+            </div>
+
+            <div class="endpoint">
+                <div class="endpoint-header">
+                    <span class="method post">POST</span>
+                    <span class="endpoint-path">/api/orders</span>
+                </div>
+                <div class="endpoint-body">
+                    <p>
+                        Create a new order.
+                    </p>
+                    <h3>Request Body</h3>
+                    <div class="response-example">
+                        <pre><code>{
+  "tenant_id": "ea6c4bc0-d5aa-4f5c-b769-c51c812a5037",
+  "customer": {
+    "name": "John Doe",
+    "email": "john.doe@example.com",
+    "phone": "+1987654321"
+  },
+  "shipping_address": {
+    "line1": "456 Park Ave",
+    "line2": "",
+    "city": "Metropolis",
+    "state": "NY",
+    "postal_code": "10002",
+    "country": "USA"
+  },
+  "billing_address": {
+    "line1": "456 Park Ave",
+    "line2": "",
+    "city": "Metropolis",
+    "state": "NY",
+    "postal_code": "10002",
+    "country": "USA"
+  },
+  "items": [
+    {
+      "product_id": "b5c6d7e8-f9a0-4b1c-8d2e-3f4a5b6c7d8e",
+      "quantity": 1
+    }
+  ],
+  "shipping_method": "express",
+  "payment_method": "credit_card",
+  "notes": "Please call before delivery"
+}</code></pre>
+                    </div>
+                    <h3>Response</h3>
+                    <div class="response-example">
+                        <pre><code>{
+  "id": "e8f9a0b1-c2d3-4e4f-9a5b-6c7d8e9f0a1b",
+  "status": "pending",
+  "message": "Order created successfully"
+}</code></pre>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Categories Endpoint -->
+            <div class="endpoint">
+                <div class="endpoint-header">
+                    <span class="method get">GET</span>
+                    <span class="endpoint-path">/api/categories</span>
+                </div>
+                <div class="endpoint-body">
+                    <p>
+                        Get categories for a specific tenant.
+                    </p>
+                    <h3>Parameters</h3>
+                    <table class="params-table">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Type</th>
+                                <th>Description</th>
+                                <th>Required</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>tenant</td>
+                                <td>string</td>
+                                <td>The tenant slug (e.g., "tech", "outdoor")</td>
+                                <td>Yes</td>
+                            </tr>
+                            <tr>
+                                <td>parent_id</td>
+                                <td>string</td>
+                                <td>Filter categories by parent ID for subcategories</td>
+                                <td>No</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <h3>Response</h3>
+                    <div class="response-example">
+                        <pre><code>{
+  "categories": [
+    {
+      "id": "a1b2c3d4-e5f6-4a7b-9c8d-9e0f1a2b3c4d",
+      "name": "Electronics",
+      "description": "Electronic devices and gadgets",
+      "slug": "electronics",
+      "parent_id": null
+    },
+    {
+      "id": "b2c3d4e5-f6a7-4b8c-9d0e-1f2a3b4c5d6e",
+      "name": "Audio",
+      "description": "Audio devices and accessories",
+      "slug": "audio",
+      "parent_id": "a1b2c3d4-e5f6-4a7b-9c8d-9e0f1a2b3c4d"
+    }
+  ],
+  "tenant": "tech",
+  "count": 2
+}</code></pre>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="errors">
+            <h2>Errors</h2>
+            <p>
+                The PyCommerce API uses conventional HTTP response codes to indicate the success or failure of an API request.
+                In general, codes in the 2xx range indicate success, codes in the 4xx range indicate an error that failed given
+                the information provided (e.g., a required parameter was omitted), and codes in the 5xx range indicate an error
+                with the PyCommerce servers.
+            </p>
+            <table class="params-table">
+                <thead>
+                    <tr>
+                        <th>Code</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>200 - OK</td>
+                        <td>Everything worked as expected.</td>
+                    </tr>
+                    <tr>
+                        <td>201 - Created</td>
+                        <td>A new resource was successfully created.</td>
+                    </tr>
+                    <tr>
+                        <td>400 - Bad Request</td>
+                        <td>The request was unacceptable, often due to missing a required parameter.</td>
+                    </tr>
+                    <tr>
+                        <td>401 - Unauthorized</td>
+                        <td>No valid API key provided.</td>
+                    </tr>
+                    <tr>
+                        <td>403 - Forbidden</td>
+                        <td>The API key doesn't have permissions to perform the request.</td>
+                    </tr>
+                    <tr>
+                        <td>404 - Not Found</td>
+                        <td>The requested resource doesn't exist.</td>
+                    </tr>
+                    <tr>
+                        <td>409 - Conflict</td>
+                        <td>The request conflicts with another request.</td>
+                    </tr>
+                    <tr>
+                        <td>429 - Too Many Requests</td>
+                        <td>Too many requests hit the API too quickly.</td>
+                    </tr>
+                    <tr>
+                        <td>500, 502, 503, 504 - Server Errors</td>
+                        <td>Something went wrong on the PyCommerce server.</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Error Response Format</h3>
+            <div class="response-example">
+                <pre><code>{
+  "error": {
+    "code": "resource_not_found",
+    "message": "The requested resource was not found.",
+    "details": "Order with ID '12345' does not exist."
+  }
+}</code></pre>
+            </div>
+        </section>
+
+        <section id="examples">
+            <h2>Examples</h2>
+            <h3>Retrieving Products</h3>
+            <div class="response-example">
+                <pre><code>curl -X GET \
+  'https://api.pycommerce.com/api/products?tenant=tech&category=Audio' \
+  -H 'Authorization: Bearer YOUR_JWT_TOKEN'</code></pre>
+            </div>
+
+            <h3>Creating an Order</h3>
+            <div class="response-example">
+                <pre><code>curl -X POST \
+  'https://api.pycommerce.com/api/orders' \
+  -H 'Authorization: Bearer YOUR_JWT_TOKEN' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "tenant_id": "ea6c4bc0-d5aa-4f5c-b769-c51c812a5037",
+    "customer": {
+      "name": "John Doe",
+      "email": "john.doe@example.com",
+      "phone": "+1987654321"
+    },
+    "shipping_address": {
+      "line1": "456 Park Ave",
+      "city": "Metropolis",
+      "state": "NY",
+      "postal_code": "10002",
+      "country": "USA"
+    },
+    "items": [
+      {
+        "product_id": "b5c6d7e8-f9a0-4b1c-8d2e-3f4a5b6c7d8e",
+        "quantity": 1
+      }
+    ],
+    "shipping_method": "express",
+    "payment_method": "credit_card"
+  }'</code></pre>
+            </div>
+        </section>
+
+        <footer>
+            <p class="text-muted mt-5 pt-3 border-top">
+                &copy; 2025 PyCommerce. All rights reserved.
+            </p>
+        </footer>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

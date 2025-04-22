@@ -1,5 +1,9 @@
 """
-API package initialization.
+PyCommerce API module.
 
-This package contains API routes and utilities for the PyCommerce platform.
+This module contains API components for the PyCommerce platform.
 """
+
+from .docs import setup_api_documentation
+
+__all__ = ['setup_api_documentation']

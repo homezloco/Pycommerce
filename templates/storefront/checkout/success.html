@@ -1,0 +1,35 @@
+{% extends "storefront/layout.html" %}
+
+{% block title %}Payment Successful{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card border-success">
+                <div class="card-header bg-success text-white">
+                    <h4 class="mb-0"><i class="fas fa-check-circle me-2"></i>Payment Successful</h4>
+                </div>
+                <div class="card-body text-center py-5">
+                    <div class="mb-4">
+                        <i class="fas fa-check-circle text-success" style="font-size: 5rem;"></i>
+                    </div>
+                    <h2 class="mb-4">Thank You for Your Order!</h2>
+                    <p class="lead mb-4">Your payment has been processed successfully.</p>
+                    <p class="mb-5">We've sent a confirmation email with your order details. Your order is now being processed.</p>
+                    
+                    <div class="d-grid gap-2 d-sm-flex justify-content-sm-center">
+                        <a href="/" class="btn btn-primary btn-lg px-4 me-sm-3">Continue Shopping</a>
+                        <a href="/account/orders" class="btn btn-outline-secondary btn-lg px-4">View My Orders</a>
+                    </div>
+                </div>
+                <div class="card-footer bg-light">
+                    <div class="small text-muted">
+                        <span>If you have any questions about your order, please contact our <a href="/support">customer support</a>.</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

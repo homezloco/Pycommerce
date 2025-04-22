@@ -189,22 +189,133 @@ except ImportError as e:
 
 # Register API routes
 try:
-    from pycommerce.api.routes import register_api_routes
-    register_api_routes(app)
+    # First attempt to use the old API route registration method
+    try:
+        from pycommerce.api.routes import register_api_routes
+        register_api_routes(app)
+    except ImportError:
+        # Use the new structured API routes
+        from routes.api import api_router
+        app.include_router(api_router)
+    
+    # Setup API documentation
+    try:
+        from pycommerce.api.docs import setup_api_documentation
+        setup_api_documentation(app)
+        logger.info("API documentation setup successfully")
+    except Exception as e:
+        logger.warning(f"Failed to set up API documentation: {str(e)}")
+    
     logger.info("API routes registered successfully")
-except ImportError as e:
+except Exception as e:
     logger.warning(f"Failed to register API routes: {str(e)}")
 
 # Health check endpoint required by the ASGI-WSGI adapter
 @app.get("/api/health")
 async def health_check():
     """Health check endpoint that the proxy uses to determine if the app is running."""
-    return {"status": "ok", "version": "0.1.0", "message": "PyCommerce API is running"}
+    return {"status": "ok", "version": "1.0.0", "message": "PyCommerce API is running"}
+
+# Static API documentation route
+@app.get("/api/docs", response_class=HTMLResponse)
+async def get_api_docs():
+    """Serve the static API documentation page."""
+    try:
+        with open("static/api-docs.html", "r") as f:
+            content = f.read()
+        return HTMLResponse(content=content)
+    except Exception as e:
+        logger.error(f"Error serving API documentation: {str(e)}")
+        return HTMLResponse(
+            content=f"""
+            <html>
+            <head><title>API Documentation Error</title></head>
+            <body>
+                <h1>API Documentation Error</h1>
+                <p>There was an error loading the API documentation.</p>
+                <p>Error: {str(e)}</p>
+                <p><a href="/">Return to Homepage</a></p>
+            </body>
+            </html>
+            """,
+            status_code=500
+        )
+
+# Direct OpenAPI schema endpoint
+@app.get("/api/openapi.json", include_in_schema=False)
+async def get_openapi_schema():
+    """
+    Get the OpenAPI schema for the application.
+    
+    Returns:
+        The OpenAPI schema as JSON
+    """
+    from fastapi.openapi.utils import get_openapi
+    
+    # Generate the OpenAPI schema dynamically
+    openapi_schema = get_openapi(
+        title="PyCommerce API",
+        version="1.0.0",
+        description="The official API for PyCommerce platform",
+        routes=app.routes
+    )
+    
+    # Add additional information
+    openapi_schema["info"]["contact"] = {
+        "name": "PyCommerce Support",
+        "url": "https://pycommerce.example.com/support",
+        "email": "support@pycommerce.example.com",
+    }
+    
+    openapi_schema["info"]["license"] = {
+        "name": "MIT License",
+        "url": "https://opensource.org/licenses/MIT",
+    }
+    
+    # Add server URLs
+    openapi_schema["servers"] = [
+        {"url": "/", "description": "Current environment"}
+    ]
+    
+    # Add security schemes
+    openapi_schema["components"] = openapi_schema.get("components", {})
+    openapi_schema["components"]["securitySchemes"] = {
+        "bearerAuth": {
+            "type": "http",
+            "scheme": "bearer",
+            "bearerFormat": "JWT",
+            "description": "Enter JWT token"
+        }
+    }
+    
+    return openapi_schema
 
 @app.get("/health")
 async def root_health_check():
     """Alternative health check endpoint."""
-    return {"status": "ok", "version": "0.1.0", "message": "PyCommerce API is running"}
+    return {"status": "ok", "version": "1.0.0", "message": "PyCommerce API is running"}
+
+# API documentation routes (redirects)
+@app.get("/api", include_in_schema=False, response_class=HTMLResponse)
+async def api_docs_redirect():
+    """Redirect to API documentation page."""
+    logger.info("Redirecting to API documentation")
+    return RedirectResponse(url="/api/docs")
+
+# ReDoc UI
+@app.get("/api/redoc", include_in_schema=False)
+async def custom_redoc_html(request: Request):
+    """
+    Serve the ReDoc documentation page.
+    
+    Args:
+        request: The request object
+        
+    Returns:
+        The ReDoc HTML page
+    """
+    # Redirect to our static HTML file
+    return RedirectResponse(url="/static/api-docs.html")
 
 # Add root endpoint
 @app.get("/", response_class=HTMLResponse)

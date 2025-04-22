@@ -55,8 +55,11 @@ def create_app():
     app = FastAPI(
         title="PyCommerce",
         description="A modular Python e-commerce platform",
-        version="0.1.0",
+        version="1.0.0",
         debug=True,  # Enable debug mode
+        openapi_url="/api/openapi.json",  # Enable OpenAPI for API documentation
+        docs_url=None,  # Disable default docs path, we'll use our custom path
+        redoc_url=None,  # Disable default redoc path, we'll use our custom path
     )
 
     # Mount static files

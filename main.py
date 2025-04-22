@@ -26,9 +26,290 @@ sys.path.insert(0, os.path.abspath("."))
 # Start the uvicorn server in a separate process
 start_uvicorn_server()
 
-# Create app variable for WSGI server to import
-# This is a WSGI app that proxies requests to the uvicorn server
-app = proxy_to_uvicorn
+# Create the API documentation app
+from flask import Flask, jsonify, redirect, render_template_string, send_from_directory
+from werkzeug.middleware.dispatcher import DispatcherMiddleware
+
+# Create API docs app
+api_docs_app = Flask("api_docs")
+
+# Static file route to directly serve API docs from static file
+@api_docs_app.route('/api/static-docs')
+def serve_static_api_docs():
+    """Serve the static API documentation page."""
+    try:
+        with open("static/api-docs.html", "r") as f:
+            content = f.read()
+        return content
+    except Exception as e:
+        logger.error(f"Error serving API documentation: {str(e)}")
+        return f"""
+        <html>
+        <head><title>API Documentation Error</title></head>
+        <body>
+            <h1>API Documentation Error</h1>
+            <p>There was an error loading the API documentation.</p>
+            <p>Error: {str(e)}</p>
+            <p><a href="/">Return to Homepage</a></p>
+        </body>
+        </html>
+        """
+
+@api_docs_app.route('/api/openapi.json')
+def get_openapi_schema():
+    """Get the OpenAPI schema for the API."""
+    openapi_schema = {
+        "openapi": "3.0.0",
+        "info": {
+            "title": "PyCommerce API",
+            "description": "Official API for the PyCommerce platform",
+            "version": "1.0.0",
+            "contact": {
+                "name": "PyCommerce Support",
+                "url": "https://pycommerce.example.com/support",
+                "email": "support@pycommerce.example.com"
+            },
+            "license": {
+                "name": "MIT License",
+                "url": "https://opensource.org/licenses/MIT"
+            }
+        },
+        "servers": [
+            {
+                "url": "/",
+                "description": "Current environment"
+            }
+        ],
+        "paths": {
+            "/api/health": {
+                "get": {
+                    "summary": "Health Check",
+                    "description": "Returns the health status of the API",
+                    "operationId": "getHealth",
+                    "tags": ["System"],
+                    "responses": {
+                        "200": {
+                            "description": "Success",
+                            "content": {
+                                "application/json": {
+                                    "schema": {
+                                        "type": "object",
+                                        "properties": {
+                                            "status": {"type": "string"},
+                                            "version": {"type": "string"},
+                                            "message": {"type": "string"}
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "/api/tenants": {
+                "get": {
+                    "summary": "List Tenants",
+                    "description": "Returns a list of all tenants",
+                    "operationId": "getTenants",
+                    "tags": ["Tenants"],
+                    "responses": {
+                        "200": {
+                            "description": "List of tenants",
+                            "content": {
+                                "application/json": {
+                                    "schema": {
+                                        "type": "object",
+                                        "properties": {
+                                            "tenants": {
+                                                "type": "array",
+                                                "items": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "id": {"type": "string"},
+                                                        "name": {"type": "string"},
+                                                        "slug": {"type": "string"},
+                                                        "domain": {"type": "string", "nullable": true},
+                                                        "active": {"type": "boolean"}
+                                                    }
+                                                }
+                                            },
+                                            "count": {"type": "integer"}
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "/api/products": {
+                "get": {
+                    "summary": "List Products",
+                    "description": "Returns a list of products for a tenant",
+                    "operationId": "getProducts",
+                    "tags": ["Products"],
+                    "parameters": [
+                        {
+                            "name": "tenant",
+                            "in": "query",
+                            "description": "Tenant slug",
+                            "schema": {"type": "string"}
+                        },
+                        {
+                            "name": "category",
+                            "in": "query",
+                            "description": "Filter by category",
+                            "schema": {"type": "string"}
+                        },
+                        {
+                            "name": "min_price",
+                            "in": "query",
+                            "description": "Minimum price",
+                            "schema": {"type": "number"}
+                        },
+                        {
+                            "name": "max_price",
+                            "in": "query",
+                            "description": "Maximum price",
+                            "schema": {"type": "number"}
+                        }
+                    ],
+                    "responses": {
+                        "200": {
+                            "description": "List of products",
+                            "content": {
+                                "application/json": {
+                                    "schema": {
+                                        "type": "object",
+                                        "properties": {
+                                            "products": {
+                                                "type": "array",
+                                                "items": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "id": {"type": "string"},
+                                                        "name": {"type": "string"},
+                                                        "description": {"type": "string", "nullable": true},
+                                                        "price": {"type": "number"},
+                                                        "sku": {"type": "string"},
+                                                        "stock": {"type": "integer"},
+                                                        "categories": {
+                                                            "type": "array",
+                                                            "items": {"type": "string"}
+                                                        }
+                                                    }
+                                                }
+                                            },
+                                            "tenant": {"type": "string"},
+                                            "count": {"type": "integer"},
+                                            "filters": {"type": "object"}
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "components": {
+            "securitySchemes": {
+                "bearerAuth": {
+                    "type": "http",
+                    "scheme": "bearer",
+                    "bearerFormat": "JWT",
+                    "description": "JWT token authorization"
+                }
+            }
+        }
+    }
+    
+    return jsonify(openapi_schema)
+
+# Swagger UI
+@api_docs_app.route('/api/docs')
+def swagger_ui():
+    """Render Swagger UI for the API documentation."""
+    swagger_html = """
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>PyCommerce API Documentation</title>
+        <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/swagger-ui-dist@4/swagger-ui.css">
+        <style>
+            html { box-sizing: border-box; overflow: -moz-scrollbars-vertical; overflow-y: scroll; }
+            *, *:before, *:after { box-sizing: inherit; }
+            body { margin: 0; background: #fafafa; }
+            .topbar { display: none; }
+        </style>
+    </head>
+    <body>
+        <div id="swagger-ui"></div>
+        <script src="https://cdn.jsdelivr.net/npm/swagger-ui-dist@4/swagger-ui-bundle.js"></script>
+        <script>
+            window.onload = function() {
+                const ui = SwaggerUIBundle({
+                    url: "/api/openapi.json",
+                    dom_id: '#swagger-ui',
+                    deepLinking: true,
+                    presets: [SwaggerUIBundle.presets.apis],
+                    layout: "BaseLayout",
+                    requestInterceptor: (req) => {
+                        // Add additional headers here if needed
+                        return req;
+                    }
+                });
+                window.ui = ui;
+            };
+        </script>
+    </body>
+    </html>
+    """
+    return render_template_string(swagger_html)
+
+# ReDoc UI
+@api_docs_app.route('/api/redoc')
+def redoc_ui():
+    """Render ReDoc UI for the API documentation."""
+    redoc_html = """
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>PyCommerce API Documentation - ReDoc</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link href="https://fonts.googleapis.com/css?family=Montserrat:300,400,700|Roboto:300,400,700" rel="stylesheet">
+        <style>
+            body { margin: 0; padding: 0; }
+        </style>
+    </head>
+    <body>
+        <redoc spec-url="/api/openapi.json"></redoc>
+        <script src="https://cdn.jsdelivr.net/npm/redoc@next/bundles/redoc.standalone.js"></script>
+    </body>
+    </html>
+    """
+    return render_template_string(redoc_html)
+
+# Redirect to API docs
+@api_docs_app.route('/api')
+@api_docs_app.route('/docs')
+def redirect_to_docs():
+    """Redirect to API documentation."""
+    return redirect('/api/docs')
+
+# Create a dispatcher middleware to handle both the API docs and proxy to uvicorn
+app = DispatcherMiddleware(proxy_to_uvicorn, {
+    '/api/docs': api_docs_app.wsgi_app,
+    '/api/static-docs': api_docs_app.wsgi_app,
+    '/api/redoc': api_docs_app.wsgi_app,
+    '/api/openapi.json': api_docs_app.wsgi_app,
+    '/api': api_docs_app.wsgi_app,
+    '/docs': api_docs_app.wsgi_app
+})
+
+# This code was moved to the beginning of the file
 
 if __name__ == "__main__":
     import uvicorn
