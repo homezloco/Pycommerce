@@ -132,12 +132,10 @@ With its multi-tenant design, PyCommerce enables businesses to host multiple sto
 ### In Progress:
 
 - 🔄 **Performance Optimization**: Implement additional caching strategies and optimize database queries
-- 🔄 **API Documentation**: Generate comprehensive API documentation and developer guides
 
 ### To Do:
 
 - ⏳ **Advanced Analytics**: Customer behavior tracking and predictive analytics
-- ⏳ **Documentation**: Complete API documentation and developer guides
 - ⏳ **Tenant Billing**: Implement subscription management for multi-tenant deployment
 
 ## Implementation Phases
