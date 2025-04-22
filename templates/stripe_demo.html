@@ -228,11 +228,13 @@
                 e.preventDefault();
                 
                 // Clear previous errors
-                errorDiv.style.display = 'none';
+                if (errorDiv) {
+                    errorDiv.style.display = 'none';
+                }
                 
                 // Show loading state
                 const checkoutButton = document.getElementById('checkout-button');
-                const originalButtonText = checkoutButton.innerHTML;
+                const originalButtonText = checkoutButton ? checkoutButton.innerHTML : 'Checkout with Stripe';
                 checkoutButton.disabled = true;
                 checkoutButton.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Processing...';
                 
@@ -300,12 +302,16 @@
                     
                 } catch (error) {
                     console.error('Checkout error:', error);
-                    errorDiv.style.display = 'block';
-                    errorMessage.textContent = error.message || 'An unexpected error occurred. Please try again.';
+                    if (errorDiv && errorMessage) {
+                        errorDiv.style.display = 'block';
+                        errorMessage.textContent = error.message || 'An unexpected error occurred. Please try again.';
+                    }
                     
                     // Reset button
-                    checkoutButton.disabled = false;
-                    checkoutButton.innerHTML = originalButtonText;
+                    if (checkoutButton) {
+                        checkoutButton.disabled = false;
+                        checkoutButton.innerHTML = originalButtonText;
+                    }
                 }
             });
         });
