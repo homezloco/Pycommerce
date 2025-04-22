@@ -118,7 +118,11 @@ def setup_routes(templates):
         </html>
         """
         
-        return HTMLResponse(content=html_content)
+        # Create the explanation response
+        explanation_response = HTMLResponse(content=html_content)
+        # Explicitly disable content encoding to prevent browser decoding errors
+        explanation_response.headers["Content-Encoding"] = "identity"
+        return explanation_response
     
     @router.post("/stripe-demo/create-checkout-session")
     async def create_checkout_session(request: Request, items: str = Form(...), order_id: str = Form(...)):
@@ -131,8 +135,9 @@ def setup_routes(templates):
             order_id (str): Order ID to identify this checkout session
             
         Returns:
-            RedirectResponse: Redirect to Stripe checkout page
+            RedirectResponse: Redirect to Stripe checkout page with no compression
         """
+        # Disable compression for this response to prevent ERR_CONTENT_DECODING_FAILED errors
         logger.info(f"Creating Stripe checkout session for order {order_id}")
         logger.info(f"Received items data: {items}")
         logger.info(f"Request base URL: {request.base_url}")
@@ -141,10 +146,12 @@ def setup_routes(templates):
         # First, make sure Stripe was imported successfully
         if not stripe:
             logger.error("Stripe module is not available.")
-            return JSONResponse(
+            response = JSONResponse(
                 status_code=500,
                 content={"error": "Stripe payment processing is not available. Please contact support."}
             )
+            response.headers["Content-Encoding"] = "identity"
+            return response
             
         # Initialize Stripe API key
         try:
@@ -156,18 +163,22 @@ def setup_routes(templates):
                 logger.info(f"Using Stripe API key with prefix: {safe_key_prefix}")
         except Exception as key_error:
             logger.error(f"Error setting Stripe API key: {str(key_error)}")
-            return JSONResponse(
+            response = JSONResponse(
                 status_code=500,
                 content={"error": f"Error initializing Stripe: {str(key_error)}"}
             )
+            response.headers["Content-Encoding"] = "identity"
+            return response
             
         # Check if the API key is set
         if not stripe.api_key:
             logger.error("STRIPE_SECRET_KEY not set. Cannot proceed with checkout.")
-            return JSONResponse(
+            response = JSONResponse(
                 status_code=500,
                 content={"error": "Stripe API key not configured. Please set STRIPE_SECRET_KEY environment variable."}
             )
+            response.headers["Content-Encoding"] = "identity"
+            return response
         
         try:
             # Log the raw items input for debugging
@@ -176,10 +187,12 @@ def setup_routes(templates):
             # Check if items is empty or null
             if not items or items == "[]":
                 logger.error("Empty cart received")
-                return JSONResponse(
+                response = JSONResponse(
                     status_code=400,
                     content={"error": "Your cart is empty. Please add items before checking out."}
                 )
+                response.headers["Content-Encoding"] = "identity"
+                return response
                 
             # Parse the JSON items data
             items_data = json.loads(items)
@@ -233,7 +246,11 @@ def setup_routes(templates):
             
             # Return a direct redirect to the Stripe checkout URL
             # Use a higher status code (303) to ensure browsers follow the redirect
-            return RedirectResponse(url=checkout_session.url, status_code=303)
+            # Create a response with disabled compression to avoid ERR_CONTENT_DECODING_FAILED
+            response = RedirectResponse(url=checkout_session.url, status_code=303)
+            # Explicitly disable content encoding to prevent browser decoding errors
+            response.headers["Content-Encoding"] = "identity"
+            return response
             
         except Exception as e:
             # Capture any kind of error with full details
@@ -244,8 +261,8 @@ def setup_routes(templates):
             logger.error(f"Error creating checkout session: {error_type}: {error_message}")
             logger.error(f"Error traceback: {error_traceback}")
             
-            # Return a user-friendly error response
-            return JSONResponse(
+            # Create a user-friendly error response
+            error_response = JSONResponse(
                 status_code=500,
                 content={
                     "error": "There was an error processing your payment request.",
@@ -253,6 +270,10 @@ def setup_routes(templates):
                     "type": error_type
                 }
             )
+            
+            # Explicitly disable content encoding to avoid browser issues
+            error_response.headers["Content-Encoding"] = "identity"
+            return error_response
     
     @router.get("/stripe-demo/success", response_class=HTMLResponse)
     async def checkout_success(request: Request, session_id: str):
@@ -299,7 +320,11 @@ def setup_routes(templates):
         </html>
         """
         
-        return HTMLResponse(content=success_html)
+        # Create the success response
+        success_response = HTMLResponse(content=success_html)
+        # Explicitly disable content encoding to prevent browser decoding errors
+        success_response.headers["Content-Encoding"] = "identity"
+        return success_response
     
     @router.get("/stripe-demo/cancel", response_class=HTMLResponse)
     async def checkout_cancel(request: Request):
@@ -345,6 +370,10 @@ def setup_routes(templates):
         </html>
         """
         
-        return HTMLResponse(content=cancel_html)
+        # Create the cancel response
+        cancel_response = HTMLResponse(content=cancel_html)
+        # Explicitly disable content encoding to prevent browser decoding errors
+        cancel_response.headers["Content-Encoding"] = "identity"
+        return cancel_response
     
     return router
