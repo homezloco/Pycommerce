@@ -50,16 +50,17 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                {% for plugin in plugins %}
-                                <tr class="plugin-row {% if not plugin.active %}inactive-plugin{% endif %}">
+                                {% for plugin_type, plugins_list in plugins_by_type.items() %}
+                                {% for plugin in plugins_list %}
+                                <tr class="plugin-row {% if not plugin.enabled %}inactive-plugin{% endif %}">
                                     <td>
                                         <div class="d-flex align-items-center">
                                             <div class="plugin-icon bg-light rounded p-2 me-3">
                                                 <i class="bi 
-                                                {% if plugin.type == 'payment' %}bi-credit-card
-                                                {% elif plugin.type == 'shipping' %}bi-truck
-                                                {% elif plugin.type == 'marketing' %}bi-graph-up
-                                                {% elif plugin.type == 'analytics' %}bi-bar-chart
+                                                {% if plugin_type == 'payment' %}bi-credit-card
+                                                {% elif plugin_type == 'shipping' %}bi-truck
+                                                {% elif plugin_type == 'marketing' %}bi-graph-up
+                                                {% elif plugin_type == 'analytics' %}bi-bar-chart
                                                 {% else %}bi-puzzle
                                                 {% endif %}"></i>
                                             </div>
@@ -69,10 +70,10 @@
                                             </div>
                                         </div>
                                     </td>
-                                    <td>{{ plugin.type|capitalize }}</td>
+                                    <td>{{ plugin_type|capitalize }}</td>
                                     <td>v{{ plugin.version }}</td>
                                     <td>
-                                        {% if plugin.active %}
+                                        {% if plugin.enabled %}
                                         <span class="badge bg-success">Active</span>
                                         {% else %}
                                         <span class="badge bg-danger">Inactive</span>
@@ -82,15 +83,16 @@
                                         <div class="btn-group">
                                             <a href="/admin/plugins/configure/{{ plugin.id }}" class="btn btn-sm btn-outline-primary">Configure</a>
                                             <a href="/admin/plugins/toggle/{{ plugin.id }}" class="btn btn-sm btn-outline-warning">
-                                                {% if plugin.active %}Deactivate{% else %}Activate{% endif %}
+                                                {% if plugin.enabled %}Deactivate{% else %}Activate{% endif %}
                                             </a>
-                                            {% if plugin.removable %}
+                                            {% if plugin.removable|default(false) %}
                                             <a href="#" class="btn btn-sm btn-outline-danger" 
                                                onclick="confirmUninstall('{{ plugin.id }}', '{{ plugin.name }}')">Uninstall</a>
                                             {% endif %}
                                         </div>
                                     </td>
                                 </tr>
+                                {% endfor %}
                                 {% else %}
                                 <tr>
                                     <td colspan="5" class="text-center py-4">
