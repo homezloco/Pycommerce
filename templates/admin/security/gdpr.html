@@ -1,0 +1,372 @@
+{% extends "admin/base.html" %}
+
+{% block title %}GDPR & Data Privacy - PyCommerce Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-2 mb-3 border-bottom">
+        <h1 class="h2"><i class="bi bi-shield-lock me-2"></i>GDPR & Data Privacy Settings</h1>
+        <div class="btn-toolbar mb-2 mb-md-0">
+            <div class="btn-group me-2">
+                <a href="/admin/security" class="btn btn-sm btn-outline-secondary">
+                    <i class="bi bi-arrow-left me-1"></i> Back to Security
+                </a>
+                <button type="button" class="btn btn-sm btn-outline-primary" id="refresh-security">
+                    <i class="bi bi-arrow-clockwise me-1"></i> Refresh
+                </button>
+                <button type="button" class="btn btn-sm btn-primary" id="save-gdpr-settings">
+                    <i class="bi bi-save me-1"></i> Save Settings
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary bg-gradient text-white shadow-sm">
+                <div class="card-body p-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title mb-1">GDPR Compliance Status</h6>
+                            <h4 class="mb-0">{{ "Compliant" if security_settings.gdpr_compliance_verified else "Non-Compliant" }}</h4>
+                        </div>
+                        <div>
+                            <i class="bi bi-check-circle display-6 opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success bg-gradient text-white shadow-sm">
+                <div class="card-body p-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title mb-1">Privacy Policy Version</h6>
+                            <h4 class="mb-0">v{{ security_settings.privacy_policy_version|default('1.0') }}</h4>
+                        </div>
+                        <div>
+                            <i class="bi bi-file-text display-6 opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info bg-gradient text-white shadow-sm">
+                <div class="card-body p-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title mb-1">Last Policy Update</h6>
+                            <h4 class="mb-0">{{ security_settings.privacy_policy_last_updated|default('Never') }}</h4>
+                        </div>
+                        <div>
+                            <i class="bi bi-calendar-check display-6 opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning bg-gradient text-white shadow-sm">
+                <div class="card-body p-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title mb-1">Data Export Requests</h6>
+                            <h4 class="mb-0">0 Pending</h4>
+                        </div>
+                        <div>
+                            <i class="bi bi-box-arrow-down display-6 opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-dark">
+                    <h5 class="card-title mb-0">Privacy Policy Management</h5>
+                </div>
+                <div class="card-body">
+                    <form id="privacy-policy-form">
+                        <div class="mb-3">
+                            <label for="privacy_policy_version" class="form-label">Privacy Policy Version</label>
+                            <input type="text" class="form-control" id="privacy_policy_version" name="privacy_policy_version" value="{{ security_settings.privacy_policy_version|default('1.0') }}">
+                        </div>
+                        <div class="mb-3">
+                            <label for="privacy_policy_last_updated" class="form-label">Last Updated Date</label>
+                            <input type="date" class="form-control" id="privacy_policy_last_updated" name="privacy_policy_last_updated" value="{{ security_settings.privacy_policy_last_updated|default('2025-01-01') }}">
+                        </div>
+                        <div class="mb-3">
+                            <label for="privacy_policy_content" class="form-label">Privacy Policy Content</label>
+                            <textarea class="form-control" id="privacy_policy_content" name="privacy_policy_content" rows="10">Your current privacy policy content goes here. This should detail how you collect, process, store, and share customer data, as well as outline their rights under GDPR and other privacy regulations.</textarea>
+                        </div>
+                        <div class="mb-3">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="privacy_policy_auto_show" name="privacy_policy_auto_show" checked>
+                                <label class="form-check-label" for="privacy_policy_auto_show">Automatically show updated policy to returning users</label>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-dark">
+                    <h5 class="card-title mb-0">Cookie Consent Management</h5>
+                </div>
+                <div class="card-body">
+                    <form id="cookie-consent-form">
+                        <div class="mb-3">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="cookie_consent_enabled" name="cookie_consent_enabled" {% if security_settings.cookie_consent_enabled %}checked{% endif %}>
+                                <label class="form-check-label" for="cookie_consent_enabled">Enable Cookie Consent Banner</label>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="cookie_consent_type" class="form-label">Cookie Consent Type</label>
+                            <select class="form-select" id="cookie_consent_type" name="cookie_consent_type">
+                                <option value="opt_in">Opt-in (Explicit Consent Required)</option>
+                                <option value="opt_out">Opt-out (Implicit Consent)</option>
+                                <option value="info_only">Information Only (No Options)</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="cookie_categories" class="form-label">Cookie Categories</label>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="necessary_cookies" name="necessary_cookies" checked disabled>
+                                <label class="form-check-label" for="necessary_cookies">Necessary Cookies (Always Enabled)</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="functional_cookies" name="functional_cookies" checked>
+                                <label class="form-check-label" for="functional_cookies">Functional Cookies</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="analytics_cookies" name="analytics_cookies" checked>
+                                <label class="form-check-label" for="analytics_cookies">Analytics Cookies</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="marketing_cookies" name="marketing_cookies" checked>
+                                <label class="form-check-label" for="marketing_cookies">Marketing Cookies</label>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="cookie_banner_text" class="form-label">Cookie Banner Text</label>
+                            <textarea class="form-control" id="cookie_banner_text" name="cookie_banner_text" rows="3">We use cookies to enhance your experience on our website. By continuing to browse, you agree to our use of cookies. You can change your cookie settings at any time.</textarea>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-dark">
+                    <h5 class="card-title mb-0">Data Retention & Right to be Forgotten</h5>
+                </div>
+                <div class="card-body">
+                    <form id="data-retention-form">
+                        <div class="mb-3">
+                            <label for="data_retention_period" class="form-label">Data Retention Period (Months)</label>
+                            <input type="number" class="form-control" id="data_retention_period" name="data_retention_period" value="{{ security_settings.data_retention_period|default('24') }}" min="1" max="120">
+                            <small class="form-text text-muted">How long customer data is kept after account closure or last activity.</small>
+                        </div>
+                        <div class="mb-3">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="data_export_enabled" name="data_export_enabled" {% if security_settings.data_export_enabled %}checked{% endif %}>
+                                <label class="form-check-label" for="data_export_enabled">Enable Data Export Requests</label>
+                            </div>
+                            <small class="form-text text-muted">Allow customers to request export of all their personal data.</small>
+                        </div>
+                        <div class="mb-3">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="right_to_be_forgotten_enabled" name="right_to_be_forgotten_enabled" {% if security_settings.right_to_be_forgotten_enabled %}checked{% endif %}>
+                                <label class="form-check-label" for="right_to_be_forgotten_enabled">Enable Right to be Forgotten Requests</label>
+                            </div>
+                            <small class="form-text text-muted">Allow customers to request permanent deletion of all their personal data.</small>
+                        </div>
+                        <div class="mb-3">
+                            <label for="retention_exceptions" class="form-label">Retention Exceptions</label>
+                            <textarea class="form-control" id="retention_exceptions" name="retention_exceptions" rows="3">Order history: 7 years (tax purposes)
+Payment data: 5 years (financial regulations)
+Legal disputes: Indefinite until resolved</textarea>
+                            <small class="form-text text-muted">Data that must be retained for legal or regulatory purposes.</small>
+                        </div>
+                        <div class="mb-3">
+                            <label for="data_deletion_workflow" class="form-label">Data Deletion Workflow</label>
+                            <select class="form-select" id="data_deletion_workflow" name="data_deletion_workflow">
+                                <option value="immediate">Immediate Deletion</option>
+                                <option value="approval" selected>Manual Approval Required</option>
+                                <option value="scheduled">Scheduled (30-day delay)</option>
+                            </select>
+                            <small class="form-text text-muted">How data deletion requests are processed.</small>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-dark">
+                    <h5 class="card-title mb-0">Data Breach Notification</h5>
+                </div>
+                <div class="card-body">
+                    <form id="data-breach-form">
+                        <div class="mb-3">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="data_breach_notification" name="data_breach_notification" {% if security_settings.data_breach_notification %}checked{% endif %}>
+                                <label class="form-check-label" for="data_breach_notification">Enable Data Breach Notification</label>
+                            </div>
+                            <small class="form-text text-muted">Automatically notify affected users in the event of a data breach.</small>
+                        </div>
+                        <div class="mb-3">
+                            <label for="notification_method" class="form-label">Notification Method</label>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="notify_email" name="notify_email" checked>
+                                <label class="form-check-label" for="notify_email">Email</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="notify_sms" name="notify_sms">
+                                <label class="form-check-label" for="notify_sms">SMS</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="notify_app" name="notify_app" checked>
+                                <label class="form-check-label" for="notify_app">In-App Notification</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="notify_authorities" name="notify_authorities" checked>
+                                <label class="form-check-label" for="notify_authorities">Notify Relevant Authorities</label>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="data_breach_template" class="form-label">Notification Template</label>
+                            <textarea class="form-control" id="data_breach_template" name="data_breach_template" rows="5">Important Security Notice:
+
+We regret to inform you that we have identified a data breach that may have affected your personal information. The breach occurred on [DATE] and involved [DESCRIPTION].
+
+The following information may have been affected: [AFFECTED_DATA].
+
+We have taken the following steps to address the situation: [ACTIONS].
+
+As a precautionary measure, we recommend you [RECOMMENDATIONS].
+
+Please contact our support team at [CONTACT] if you have any questions or concerns.</textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label for="breach_response_team" class="form-label">Breach Response Team</label>
+                            <input type="text" class="form-control" id="breach_response_team" name="breach_response_team" value="security@example.com, legal@example.com, cto@example.com">
+                            <small class="form-text text-muted">Email addresses to be notified in case of a breach.</small>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-dark">
+                    <h5 class="card-title mb-0">Data Subject Access Requests</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Requested By</th>
+                                    <th>Type</th>
+                                    <th>Date Requested</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>DSAR-2025-001</td>
+                                    <td>john.smith@example.com</td>
+                                    <td>Data Export</td>
+                                    <td>2025-04-15</td>
+                                    <td><span class="badge bg-success">Completed</span></td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-secondary">View Details</button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>DSAR-2025-002</td>
+                                    <td>jane.doe@example.com</td>
+                                    <td>Data Deletion</td>
+                                    <td>2025-04-18</td>
+                                    <td><span class="badge bg-warning">Pending Approval</span></td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-primary">Approve</button>
+                                        <button class="btn btn-sm btn-outline-danger">Deny</button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>DSAR-2025-003</td>
+                                    <td>robert.brown@example.com</td>
+                                    <td>Data Export</td>
+                                    <td>2025-04-20</td>
+                                    <td><span class="badge bg-info">Processing</span></td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-secondary">View Details</button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Handle form submission
+    document.getElementById('save-gdpr-settings').addEventListener('click', function() {
+        const privacyPolicyForm = document.getElementById('privacy-policy-form');
+        const cookieConsentForm = document.getElementById('cookie-consent-form');
+        const dataRetentionForm = document.getElementById('data-retention-form');
+        const dataBreachForm = document.getElementById('data-breach-form');
+        
+        const formData = new FormData();
+        
+        // Collect data from all forms
+        [privacyPolicyForm, cookieConsentForm, dataRetentionForm, dataBreachForm].forEach(form => {
+            Array.from(form.elements).forEach(element => {
+                if (element.name) {
+                    if (element.type === 'checkbox') {
+                        formData.append(element.name, element.checked ? 'on' : '');
+                    } else {
+                        formData.append(element.name, element.value);
+                    }
+                }
+            });
+        });
+        
+        // Submit form data
+        fetch('/admin/security/save', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('GDPR and Privacy settings saved successfully!');
+            } else {
+                alert('Error saving settings: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while saving settings.');
+        });
+    });
+});
+</script>
+{% endblock %}

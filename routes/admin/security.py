@@ -29,22 +29,72 @@ router = APIRouter(prefix="/admin", tags=["admin"])
 
 # Mock security settings data (in a real app, this would come from the database)
 SECURITY_SETTINGS = {
+    # Authentication Settings
     "password_policy": "enhanced",
     "password_expiry": "90",
     "mfa_enabled": True,
     "account_lockout": True,
     "lockout_threshold": 5,
     "session_timeout": 30,
+    
+    # Access Control
     "admin_access": "ip_restricted",
     "allowed_ips": "127.0.0.1, 192.168.1.0/24",
     "api_access": "key_only",
     "api_rate_limiting": True,
     "rate_limit": 60,
+    
+    # Basic Security
     "csrf_protection": True,
     "xss_protection": True,
     "sql_injection_protection": True,
     "https_only": True,
-    "security_headers": True
+    "security_headers": True,
+    
+    # GDPR / Data Privacy
+    "privacy_policy_version": "1.2",
+    "privacy_policy_last_updated": "2025-03-15",
+    "cookie_consent_enabled": True,
+    "data_retention_period": "24", # months
+    "data_export_enabled": True,
+    "right_to_be_forgotten_enabled": True,
+    "data_breach_notification": True,
+    
+    # Fraud Detection
+    "order_screening_enabled": True,
+    "ip_reputation_checking": True,
+    "velocity_checking": True,
+    "device_fingerprinting": True,
+    "address_verification": True,
+    "transaction_threshold_alert": 1000, # alert on transactions over this amount
+    
+    # Payment Security
+    "pci_dss_compliant": True,
+    "payment_tokenization": True,
+    "credit_card_bin_filtering": True,
+    "chargeback_management": True,
+    "payment_fraud_monitoring": True,
+    
+    # Customer Account Security
+    "account_takeover_protection": True,
+    "suspicious_login_alerts": True,
+    "password_breach_detection": True,
+    "new_device_notification": True,
+    "account_activity_notification": True,
+    
+    # Inventory Security
+    "inventory_manipulation_protection": True,
+    "price_tampering_detection": True,
+    "cart_abandonment_monitoring": True,
+    "inventory_alert_threshold": 5, # Alert when stock drops below this level
+    
+    # Security Health Monitoring
+    "automated_security_scanning": True,
+    "vulnerability_assessment_freq": "monthly", # monthly, quarterly, bi-annual, annual
+    "security_score": 85, # percentage
+    "pci_compliance_expiry": "2025-12-31",
+    "gdpr_compliance_verified": True,
+    "last_security_audit": "2025-03-01"
 }
 
 # Mock security events data (in a real app, this would come from the database)
@@ -153,6 +203,102 @@ def setup_routes(template_instance):
                 "active_page": "security",
                 "security_settings": SECURITY_SETTINGS,
                 "security_events": SECURITY_EVENTS,
+                "now": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            }
+        )
+        
+    @router.get("/security/gdpr", response_class=HTMLResponse)
+    async def gdpr_settings(
+        request: Request,
+        current_user: dict = Depends(admin_required_middleware) if admin_required_middleware else None
+    ):
+        """GDPR and data privacy settings page."""
+        return templates.TemplateResponse(
+            "admin/security/gdpr.html",
+            {
+                "request": request,
+                "active_page": "gdpr",
+                "security_settings": SECURITY_SETTINGS,
+                "now": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            }
+        )
+        
+    @router.get("/security/fraud-detection", response_class=HTMLResponse)
+    async def fraud_detection_settings(
+        request: Request,
+        current_user: dict = Depends(admin_required_middleware) if admin_required_middleware else None
+    ):
+        """Fraud detection settings page."""
+        return templates.TemplateResponse(
+            "admin/security/fraud-detection.html",
+            {
+                "request": request,
+                "active_page": "fraud-detection",
+                "security_settings": SECURITY_SETTINGS,
+                "now": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            }
+        )
+        
+    @router.get("/security/payment-security", response_class=HTMLResponse)
+    async def payment_security_settings(
+        request: Request,
+        current_user: dict = Depends(admin_required_middleware) if admin_required_middleware else None
+    ):
+        """Payment security settings page."""
+        return templates.TemplateResponse(
+            "admin/security/payment-security.html",
+            {
+                "request": request,
+                "active_page": "payment-security",
+                "security_settings": SECURITY_SETTINGS,
+                "now": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            }
+        )
+        
+    @router.get("/security/account-security", response_class=HTMLResponse)
+    async def account_security_settings(
+        request: Request,
+        current_user: dict = Depends(admin_required_middleware) if admin_required_middleware else None
+    ):
+        """Account security settings page."""
+        return templates.TemplateResponse(
+            "admin/security/account-security.html",
+            {
+                "request": request,
+                "active_page": "account-security",
+                "security_settings": SECURITY_SETTINGS,
+                "now": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            }
+        )
+        
+    @router.get("/security/inventory-security", response_class=HTMLResponse)
+    async def inventory_security_settings(
+        request: Request,
+        current_user: dict = Depends(admin_required_middleware) if admin_required_middleware else None
+    ):
+        """Inventory security settings page."""
+        return templates.TemplateResponse(
+            "admin/security/inventory-security.html",
+            {
+                "request": request,
+                "active_page": "inventory-security",
+                "security_settings": SECURITY_SETTINGS,
+                "now": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            }
+        )
+        
+    @router.get("/security/health-monitoring", response_class=HTMLResponse)
+    async def security_health_monitoring(
+        request: Request,
+        current_user: dict = Depends(admin_required_middleware) if admin_required_middleware else None
+    ):
+        """Security health monitoring page."""
+        return templates.TemplateResponse(
+            "admin/security/health-monitoring.html",
+            {
+                "request": request,
+                "active_page": "health-monitoring",
+                "security_settings": SECURITY_SETTINGS,
                 "now": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             }
         )

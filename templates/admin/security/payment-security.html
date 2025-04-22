@@ -1,0 +1,412 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Payment Security - PyCommerce Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-2 mb-3 border-bottom">
+        <h1 class="h2"><i class="bi bi-credit-card-lock me-2"></i>Payment Security Settings</h1>
+        <div class="btn-toolbar mb-2 mb-md-0">
+            <div class="btn-group me-2">
+                <a href="/admin/security" class="btn btn-sm btn-outline-secondary">
+                    <i class="bi bi-arrow-left me-1"></i> Back to Security
+                </a>
+                <button type="button" class="btn btn-sm btn-outline-primary" id="refresh-security">
+                    <i class="bi bi-arrow-clockwise me-1"></i> Refresh
+                </button>
+                <button type="button" class="btn btn-sm btn-primary" id="save-payment-settings">
+                    <i class="bi bi-save me-1"></i> Save Settings
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary bg-gradient text-white shadow-sm">
+                <div class="card-body p-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title mb-1">PCI DSS Status</h6>
+                            <h4 class="mb-0">{{ "Compliant" if security_settings.pci_dss_compliant else "Non-Compliant" }}</h4>
+                        </div>
+                        <div>
+                            <i class="bi bi-shield-check display-6 opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success bg-gradient text-white shadow-sm">
+                <div class="card-body p-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title mb-1">Payment Tokenization</h6>
+                            <h4 class="mb-0">{{ "Active" if security_settings.payment_tokenization else "Inactive" }}</h4>
+                        </div>
+                        <div>
+                            <i class="bi bi-key display-6 opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning bg-gradient text-white shadow-sm">
+                <div class="card-body p-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title mb-1">Chargeback Rate</h6>
+                            <h4 class="mb-0">0.8%</h4>
+                        </div>
+                        <div>
+                            <i class="bi bi-graph-down display-6 opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info bg-gradient text-white shadow-sm">
+                <div class="card-body p-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title mb-1">PCI Certification Expiry</h6>
+                            <h4 class="mb-0">{{ security_settings.pci_compliance_expiry|default('Unknown') }}</h4>
+                        </div>
+                        <div>
+                            <i class="bi bi-calendar-event display-6 opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-dark">
+                    <h5 class="card-title mb-0">PCI DSS Compliance</h5>
+                </div>
+                <div class="card-body">
+                    <form id="pci-compliance-form">
+                        <div class="mb-3">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="pci_dss_compliant" name="pci_dss_compliant" {% if security_settings.pci_dss_compliant %}checked{% endif %}>
+                                <label class="form-check-label" for="pci_dss_compliant">PCI DSS Compliant</label>
+                            </div>
+                            <small class="form-text text-muted">Confirms your store meets Payment Card Industry Data Security Standards.</small>
+                        </div>
+                        <div class="mb-3">
+                            <label for="pci_compliance_level" class="form-label">PCI Compliance Level</label>
+                            <select class="form-select" id="pci_compliance_level" name="pci_compliance_level">
+                                <option value="level1">Level 1 (Over 6M transactions/year)</option>
+                                <option value="level2">Level 2 (1M-6M transactions/year)</option>
+                                <option value="level3" selected>Level 3 (20K-1M transactions/year)</option>
+                                <option value="level4">Level 4 (Less than 20K transactions/year)</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="pci_compliance_expiry" class="form-label">PCI Certification Expiry Date</label>
+                            <input type="date" class="form-control" id="pci_compliance_expiry" name="pci_compliance_expiry" value="{{ security_settings.pci_compliance_expiry|default('2025-12-31') }}">
+                        </div>
+                        <div class="mb-3">
+                            <label for="pci_scan_provider" class="form-label">PCI Approved Scanning Vendor</label>
+                            <input type="text" class="form-control" id="pci_scan_provider" name="pci_scan_provider" value="SecurityMetrics">
+                        </div>
+                        <div class="mb-3">
+                            <label for="pci_last_scan_date" class="form-label">Last PCI Vulnerability Scan Date</label>
+                            <input type="date" class="form-control" id="pci_last_scan_date" name="pci_last_scan_date" value="2025-03-15">
+                        </div>
+                        <div class="mb-3">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="quarterly_scans_enabled" name="quarterly_scans_enabled" checked>
+                                <label class="form-check-label" for="quarterly_scans_enabled">Enable Quarterly Security Scans</label>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-dark">
+                    <h5 class="card-title mb-0">Encryption & Tokenization</h5>
+                </div>
+                <div class="card-body">
+                    <form id="encryption-form">
+                        <div class="mb-3">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="payment_tokenization" name="payment_tokenization" {% if security_settings.payment_tokenization %}checked{% endif %}>
+                                <label class="form-check-label" for="payment_tokenization">Enable Payment Tokenization</label>
+                            </div>
+                            <small class="form-text text-muted">Replace sensitive payment data with unique identification tokens.</small>
+                        </div>
+                        <div class="mb-3">
+                            <label for="tokenization_provider" class="form-label">Tokenization Provider</label>
+                            <select class="form-select" id="tokenization_provider" name="tokenization_provider">
+                                <option value="stripe" selected>Stripe</option>
+                                <option value="paypal">PayPal</option>
+                                <option value="braintree">Braintree</option>
+                                <option value="authorize">Authorize.net</option>
+                                <option value="custom">Custom Implementation</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="tls_required" name="tls_required" checked>
+                                <label class="form-check-label" for="tls_required">Require TLS 1.2+ for All Transactions</label>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="encrypt_data_in_transit" name="encrypt_data_in_transit" checked>
+                                <label class="form-check-label" for="encrypt_data_in_transit">Encrypt All Payment Data in Transit</label>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="encrypt_stored_cards" name="encrypt_stored_cards" checked>
+                                <label class="form-check-label" for="encrypt_stored_cards">Encrypt Stored Payment Methods</label>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="key_rotation_frequency" class="form-label">Encryption Key Rotation</label>
+                            <select class="form-select" id="key_rotation_frequency" name="key_rotation_frequency">
+                                <option value="monthly">Monthly</option>
+                                <option value="quarterly" selected>Quarterly</option>
+                                <option value="biannually">Every 6 Months</option>
+                                <option value="annually">Annually</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-dark">
+                    <h5 class="card-title mb-0">Payment Fraud Prevention</h5>
+                </div>
+                <div class="card-body">
+                    <form id="fraud-prevention-form">
+                        <div class="mb-3">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="credit_card_bin_filtering" name="credit_card_bin_filtering" {% if security_settings.credit_card_bin_filtering %}checked{% endif %}>
+                                <label class="form-check-label" for="credit_card_bin_filtering">Enable Credit Card BIN Filtering</label>
+                            </div>
+                            <small class="form-text text-muted">Filter transactions based on Bank Identification Number (first 6 digits of card).</small>
+                        </div>
+                        <div class="mb-3">
+                            <label for="blocked_bin_list" class="form-label">Blocked BIN Ranges</label>
+                            <textarea class="form-control" id="blocked_bin_list" name="blocked_bin_list" rows="3">491730
+401276
+519279</textarea>
+                            <small class="form-text text-muted">Enter each BIN on a new line.</small>
+                        </div>
+                        <div class="mb-3">
+                            <label for="allowed_card_types" class="form-label">Allowed Card Types</label>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="allow_visa" name="allow_visa" checked>
+                                <label class="form-check-label" for="allow_visa">Visa</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="allow_mastercard" name="allow_mastercard" checked>
+                                <label class="form-check-label" for="allow_mastercard">MasterCard</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="allow_amex" name="allow_amex" checked>
+                                <label class="form-check-label" for="allow_amex">American Express</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="allow_discover" name="allow_discover" checked>
+                                <label class="form-check-label" for="allow_discover">Discover</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="allow_prepaid" name="allow_prepaid">
+                                <label class="form-check-label" for="allow_prepaid">Prepaid Cards</label>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="require_postal_code" name="require_postal_code" checked>
+                                <label class="form-check-label" for="require_postal_code">Require Postal Code Verification</label>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="payment_fraud_monitoring" name="payment_fraud_monitoring" {% if security_settings.payment_fraud_monitoring %}checked{% endif %}>
+                                <label class="form-check-label" for="payment_fraud_monitoring">Enable Real-time Fraud Monitoring</label>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-dark">
+                    <h5 class="card-title mb-0">Chargeback Management</h5>
+                </div>
+                <div class="card-body">
+                    <form id="chargeback-form">
+                        <div class="mb-3">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="chargeback_management" name="chargeback_management" {% if security_settings.chargeback_management %}checked{% endif %}>
+                                <label class="form-check-label" for="chargeback_management">Enable Chargeback Management</label>
+                            </div>
+                            <small class="form-text text-muted">Track and respond to customer chargebacks automatically.</small>
+                        </div>
+                        <div class="mb-3">
+                            <label for="chargeback_threshold" class="form-label">Chargeback Warning Threshold (%)</label>
+                            <input type="number" class="form-control" id="chargeback_threshold" name="chargeback_threshold" value="1.0" step="0.1" min="0.1" max="5.0">
+                            <small class="form-text text-muted">Alert when chargeback rate exceeds this percentage.</small>
+                        </div>
+                        <div class="mb-3">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="automated_chargeback_response" name="automated_chargeback_response" checked>
+                                <label class="form-check-label" for="automated_chargeback_response">Enable Automated Chargeback Response</label>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="block_repeat_chargebacks" name="block_repeat_chargebacks" checked>
+                                <label class="form-check-label" for="block_repeat_chargebacks">Block Customers with Multiple Chargebacks</label>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="chargeback_reason_tracking" class="form-label">Track Chargeback Reasons</label>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="track_fraud" name="track_fraud" checked>
+                                <label class="form-check-label" for="track_fraud">Fraud</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="track_product_not_received" name="track_product_not_received" checked>
+                                <label class="form-check-label" for="track_product_not_received">Product Not Received</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="track_product_not_as_described" name="track_product_not_as_described" checked>
+                                <label class="form-check-label" for="track_product_not_as_described">Product Not as Described</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="track_duplicate_transaction" name="track_duplicate_transaction" checked>
+                                <label class="form-check-label" for="track_duplicate_transaction">Duplicate Transaction</label>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-dark">
+                    <h5 class="card-title mb-0">Recent Payment Issues</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Date/Time</th>
+                                    <th>Order ID</th>
+                                    <th>Customer</th>
+                                    <th>Amount</th>
+                                    <th>Issue Type</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>2025-04-21 14:32:17</td>
+                                    <td><a href="#">ORD-12340</a></td>
+                                    <td>client@example.com</td>
+                                    <td>$247.99</td>
+                                    <td>Chargeback - Unauthorized</td>
+                                    <td><span class="badge bg-warning">Dispute Filed</span></td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-secondary">View Evidence</button>
+                                        <button class="btn btn-sm btn-outline-primary">Respond</button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>2025-04-20 09:44:05</td>
+                                    <td><a href="#">ORD-12321</a></td>
+                                    <td>shopper@example.com</td>
+                                    <td>$89.50</td>
+                                    <td>Payment Declined - AVS Failure</td>
+                                    <td><span class="badge bg-danger">Failed</span></td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-secondary">Details</button>
+                                        <button class="btn btn-sm btn-outline-success">Retry</button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>2025-04-19 16:57:23</td>
+                                    <td><a href="#">ORD-12310</a></td>
+                                    <td>customer@example.com</td>
+                                    <td>$534.00</td>
+                                    <td>Refund Request</td>
+                                    <td><span class="badge bg-success">Processed</span></td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-secondary">Details</button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Handle form submission
+    document.getElementById('save-payment-settings').addEventListener('click', function() {
+        const pciComplianceForm = document.getElementById('pci-compliance-form');
+        const encryptionForm = document.getElementById('encryption-form');
+        const fraudPreventionForm = document.getElementById('fraud-prevention-form');
+        const chargebackForm = document.getElementById('chargeback-form');
+        
+        const formData = new FormData();
+        
+        // Collect data from all forms
+        [pciComplianceForm, encryptionForm, fraudPreventionForm, chargebackForm].forEach(form => {
+            Array.from(form.elements).forEach(element => {
+                if (element.name) {
+                    if (element.type === 'checkbox') {
+                        formData.append(element.name, element.checked ? 'on' : '');
+                    } else {
+                        formData.append(element.name, element.value);
+                    }
+                }
+            });
+        });
+        
+        // Submit form data
+        fetch('/admin/security/save', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Payment security settings saved successfully!');
+            } else {
+                alert('Error saving settings: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while saving settings.');
+        });
+    });
+});
+</script>
+{% endblock %}
