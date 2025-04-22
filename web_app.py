@@ -154,6 +154,7 @@ try:
     from routes.storefront.checkout import setup_routes as setup_checkout_routes
     from routes.storefront.pages import setup_routes as setup_pages_routes
     from routes.storefront.stores import setup_routes as setup_storefront_stores_routes
+    from routes.storefront.stripe_checkout import setup_routes as setup_stripe_checkout_routes
 
     # Include storefront routers
     home_router = setup_home_routes(templates)
@@ -173,6 +174,11 @@ try:
 
     storefront_stores_router = setup_storefront_stores_routes(templates)
     app.include_router(storefront_stores_router)
+    
+    # Register Stripe checkout routes
+    from routes.storefront.stripe_checkout import setup_routes as setup_stripe_routes
+    stripe_checkout_router = setup_stripe_routes(app)
+    logger.info("Stripe checkout routes registered successfully")
 
     logger.info("Storefront routes registered successfully")
 except ImportError as e:
