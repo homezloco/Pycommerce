@@ -50,6 +50,7 @@
                                 </tr>
                             </thead>
                             <tbody>
+                                {% if plugins %}
                                 {% for plugin in plugins %}
                                 <tr class="plugin-row {% if not plugin.enabled %}inactive-plugin{% endif %}">
                                     <td>
@@ -91,6 +92,7 @@
                                         </div>
                                     </td>
                                 </tr>
+                                {% endfor %}
                                 {% else %}
                                 <tr>
                                     <td colspan="5" class="text-center py-4">
@@ -101,19 +103,13 @@
                                         </a>
                                     </td>
                                 </tr>
-                                {% endfor %}
+                                {% endif %}
                             </tbody>
                         </table>
                     </div>
                 </div>
             </div>
 
-            <!-- Available Plugins Section Removed - We now only show one plugin table -->
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
         </div>
 
         <div class="col-md-3">
