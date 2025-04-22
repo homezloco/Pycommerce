@@ -1661,19 +1661,39 @@ async def get_products_for_editor(request: Request, tenant: Optional[str] = None
         tenant_manager = AppTenantManager()
         product_manager = AppProductManager(session)
         
-        # Get selected tenant from query or session
+        # Get selected tenant from query or session or try defaults
         selected_tenant_slug = tenant or request.session.get("selected_tenant")
         
-        # If no tenant selected, return empty list
+        # If no tenant selected, try to find a default tenant
         if not selected_tenant_slug:
-            return {"products": [], "count": 0}
+            logger.info("No tenant slug provided, looking for a default tenant")
+            # Try to get the first tenant in the system
+            all_tenants = tenant_manager.get_all()
+            if all_tenants and len(all_tenants) > 0:
+                # Use the first tenant as default
+                selected_tenant_slug = all_tenants[0].slug
+                logger.info(f"Using first available tenant as default: {selected_tenant_slug}")
+            else:
+                logger.warning("No tenants found in the system")
+                return {"products": [], "count": 0, "error": "No tenants available"}
+        
+        logger.info(f"Getting products for tenant slug: {selected_tenant_slug}")
         
         # Get tenant
         tenant_obj = tenant_manager.get_by_slug(selected_tenant_slug)
         if not tenant_obj:
-            return {"products": [], "count": 0, "error": f"Tenant with slug {selected_tenant_slug} not found"}
+            logger.warning(f"Tenant with slug {selected_tenant_slug} not found")
+            # Try to find another tenant
+            all_tenants = tenant_manager.get_all()
+            if all_tenants and len(all_tenants) > 0:
+                # Use the first tenant as fallback
+                tenant_obj = all_tenants[0]
+                logger.info(f"Using fallback tenant: {tenant_obj.slug}")
+            else:
+                return {"products": [], "count": 0, "error": f"Tenant with slug {selected_tenant_slug} not found and no fallback tenants available"}
         
         # Get products for tenant
+        logger.info(f"Getting products for tenant ID: {tenant_obj.id}")
         products = product_manager.list_by_tenant(str(tenant_obj.id))
         
         # Format response
@@ -1691,6 +1711,8 @@ async def get_products_for_editor(request: Request, tenant: Optional[str] = None
             except Exception as e:
                 logger.error(f"Error formatting product: {str(e)}")
                 continue
+        
+        logger.info(f"Found {len(product_list)} products for tenant {tenant_obj.slug}")
         
         return {
             "products": product_list,

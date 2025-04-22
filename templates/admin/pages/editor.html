@@ -797,15 +797,33 @@ function ensureSortableLoaded(callback) {
 <script>
   // Define global functions that are called directly from HTML elements
   function loadProducts(selectedProductId) {
-    // Get the current tenant from the URL or use a default value
+    // Get the current tenant from the URL or directly from the page data
     const urlParams = new URLSearchParams(window.location.search);
     let tenant = urlParams.get('tenant');
     
-    // If tenant is null, empty or undefined, use 'demo1' as fallback
-    // We must use a tenant slug rather than a UUID
+    // Try to get the current tenant from the page data if not in URL
     if (!tenant) {
-      tenant = 'demo1'; // Default tenant slug
-      console.log('Using default tenant slug:', tenant);
+      // Extract tenant slug from page data (if available)
+      const pagePathParts = window.location.pathname.split('/');
+      const pageIdIndex = pagePathParts.indexOf('editor') + 1;
+      
+      if (pageIdIndex > 0 && pageIdIndex < pagePathParts.length) {
+        // Get tenant slug from document
+        const tenantElement = document.querySelector('.tenant-name');
+        if (tenantElement) {
+          // Extract tenant slug from the element text or data attribute
+          const tenantName = tenantElement.textContent.trim();
+          // Convert to slug format (lowercase, hyphens)
+          tenant = tenantName.toLowerCase().replace(/\s+/g, '-');
+        }
+      }
+      
+      // If still no tenant, try to get from session storage or use default
+      if (!tenant) {
+        tenant = sessionStorage.getItem('selected_tenant') || 'demo1';
+      }
+      
+      console.log('Using derived tenant slug:', tenant);
     }
     
     console.log('Loading products for tenant:', tenant);
@@ -832,19 +850,28 @@ function ensureSortableLoaded(callback) {
         defaultOption.textContent = '-- Select a product --';
         productSelect.appendChild(defaultOption);
         
-        // Add product options
-        data.products.forEach(product => {
-          const option = document.createElement('option');
-          option.value = product.id;
-          option.textContent = product.name;
-          if (product.id === selectedProductId) {
-            option.selected = true;
-          }
-          productSelect.appendChild(option);
-        });
-        
-        // Mark as loaded
-        productSelect.setAttribute('data-products-loaded', 'true');
+        // Check if we have products
+        if (data.products && data.products.length > 0) {
+          // Add product options
+          data.products.forEach(product => {
+            const option = document.createElement('option');
+            option.value = product.id;
+            option.textContent = product.name;
+            if (product.id === selectedProductId) {
+              option.selected = true;
+            }
+            productSelect.appendChild(option);
+          });
+          
+          // Mark as loaded
+          productSelect.setAttribute('data-products-loaded', 'true');
+        } else {
+          // No products found
+          const noProductsOption = document.createElement('option');
+          noProductsOption.value = '';
+          noProductsOption.textContent = 'No products available for this tenant';
+          productSelect.appendChild(noProductsOption);
+        }
       })
       .catch(error => {
         console.error('Error fetching products:', error);
