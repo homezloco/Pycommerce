@@ -131,6 +131,7 @@ With its multi-tenant design, PyCommerce enables businesses to host multiple sto
 
 ### In Progress:
 
+- 🔄 **Page Builder Enhancement**: Create four complete templates and set up four functional test stores with fully working page builder functionality
 - 🔄 **Performance Optimization**: Implement additional caching strategies and optimize database queries
 
 ### To Do:
