@@ -231,7 +231,8 @@
             }
             
             checkoutForm.addEventListener('submit', async (e) => {
-                e.preventDefault();
+                // No longer prevent default behavior to allow native form submission
+                // e.preventDefault();
                 
                 // Clear previous errors
                 if (errorDiv) {
@@ -245,16 +246,24 @@
                 checkoutButton.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Processing...';
                 
                 try {
-                    const formData = new FormData(checkoutForm);
+                    // Validate the items before submitting
+                    const itemsInput = document.getElementById('items-input');
+                    if (!itemsInput || !itemsInput.value || itemsInput.value === '[]') {
+                        throw new Error('Your cart is empty. Please add items before checking out.');
+                    }
                     
-                    // Log what we're submitting for debugging
-                    console.log('Form data items:', formData.get('items'));
-                    console.log('Form data order_id:', formData.get('order_id'));
+                    // Log detailed info about what we're submitting for debugging
+                    console.log('Cart items JSON:', itemsInput.value);
+                    console.log('Parsed cart items:', JSON.parse(itemsInput.value));
+                    console.log('Order ID:', document.querySelector('input[name="order_id"]').value);
+                    console.log('Form action:', checkoutForm.action);
+                    console.log('Form method:', checkoutForm.method);
+                    console.log('Form target:', checkoutForm.target);
                     
-                    // Updated: Use formData.toString() to make sure data is properly formatted
-                    console.log('Form data complete:', formData);
+                    // Important: Make sure the form is direct submission without preventDefault
+                    console.log('Submitting form directly to:', checkoutForm.action);
                     
-                    // Send the request - NEW: Directly submit the form instead of using fetch
+                    // Submit the form - will open in new tab due to target="_blank"
                     checkoutForm.submit();
                     return; // Exit here to allow natural form submission
                     
@@ -448,13 +457,21 @@
             cartTotal.textContent = `$${total.toFixed(2)}`;
             
             // Update hidden form input with cart data
-            itemsInput.value = JSON.stringify(cart.map(item => ({
+            const cartData = cart.map(item => ({
                 id: item.id,
                 name: item.name,
                 description: `${item.name} (Qty: ${item.quantity})`,
                 price: item.price,
                 quantity: item.quantity
-            })));
+            }));
+            
+            // Convert to JSON and set the form input value
+            const jsonData = JSON.stringify(cartData);
+            itemsInput.value = jsonData;
+            
+            // Log for debugging
+            console.log('Cart data updated:', cartData);
+            console.log('JSON string for form:', jsonData);
         }
     </script>
 </body>
