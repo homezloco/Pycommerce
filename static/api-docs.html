@@ -176,6 +176,112 @@
                     </div>
                 </div>
             </div>
+            
+            <!-- Stripe Checkout JSON API Endpoint -->
+            <div class="endpoint">
+                <div class="endpoint-header">
+                    <span class="method post">POST</span>
+                    <span class="endpoint-path">/stripe-demo/create-checkout-session-json</span>
+                </div>
+                <div class="endpoint-body">
+                    <p>
+                        Create a Stripe checkout session and return a JSON response with the checkout URL.
+                        This endpoint is designed for client-side JavaScript applications using fetch API
+                        and resolves browser content decoding issues that could occur with form submissions.
+                    </p>
+                    <h3>Request Body</h3>
+                    <table class="params-table">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Type</th>
+                                <th>Description</th>
+                                <th>Required</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>items</td>
+                                <td>array</td>
+                                <td>Array of items to be purchased, including id, name, price, and quantity</td>
+                                <td>Yes</td>
+                            </tr>
+                            <tr>
+                                <td>order_id</td>
+                                <td>string</td>
+                                <td>Unique identifier for the order</td>
+                                <td>Yes</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <h3>Example Request</h3>
+                    <div class="response-example">
+                        <pre><code>{
+  "items": [
+    {
+      "id": "prod_1",
+      "name": "Premium Headphones",
+      "price": 149.99,
+      "quantity": 1
+    },
+    {
+      "id": "prod_2",
+      "name": "Wireless Speaker",
+      "price": 79.99,
+      "quantity": 2
+    }
+  ],
+  "order_id": "order-123-abc"
+}</code></pre>
+                    </div>
+                    <h3>Response</h3>
+                    <div class="response-example">
+                        <pre><code>{
+  "checkout_url": "https://checkout.stripe.com/pay/cs_test_a1b2c3...",
+  "session_id": "cs_test_a1b2c3..."
+}</code></pre>
+                    </div>
+                    <h3>Error Response</h3>
+                    <div class="response-example">
+                        <pre><code>{
+  "error": "Detailed error message describing the issue"
+}</code></pre>
+                    </div>
+                    <h3>Client-Side Implementation Example</h3>
+                    <div class="response-example">
+                        <pre><code>// JavaScript fetch implementation
+async function handleCheckout() {
+  try {
+    const response = await fetch('/stripe-demo/create-checkout-session-json', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify({
+        items: cartItems,
+        order_id: orderId
+      })
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Unknown error');
+    }
+    
+    const data = await response.json();
+    
+    // Redirect to Stripe checkout page in a new tab
+    if (data.checkout_url) {
+      window.open(data.checkout_url, '_blank');
+    }
+  } catch (error) {
+    console.error('Checkout error:', error);
+  }
+}</code></pre>
+                    </div>
+                </div>
+            </div>
 
             <!-- Tenants Endpoint -->
             <div class="endpoint">
