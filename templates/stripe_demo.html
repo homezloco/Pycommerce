@@ -18,75 +18,305 @@
         .price {
             font-size: 1.5rem;
             font-weight: bold;
-            color: #28a745;
+            color: #0d6efd;
         }
-        .checkout-btn {
+        .btn-add {
             width: 100%;
-            padding: 12px;
-            font-size: 1.1rem;
+        }
+        .cart-container {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            width: 300px;
+            z-index: 1000;
+        }
+        .badge-cart {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            font-size: 0.7rem;
+        }
+        @media (max-width: 768px) {
+            .cart-container {
+                position: static;
+                width: 100%;
+                margin-bottom: 1rem;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container py-5">
-        <div class="row mb-4">
-            <div class="col-12">
-                <h1 class="text-center mb-3">Stripe Checkout Demo</h1>
-                <p class="text-center text-muted">This is a standalone demonstration of the Stripe checkout integration using your API key.</p>
-            </div>
-        </div>
+        <h1 class="mb-4 text-center">Stripe Checkout Demo</h1>
+        <p class="lead text-center mb-5">This is a demonstration of Stripe checkout integration with PyCommerce</p>
 
-        <div class="row row-cols-1 row-cols-md-3 g-4 mb-5">
-            <!-- Demo Product 1 -->
-            <div class="col">
-                <div class="card product-card h-100">
-                    <div class="card-body d-flex flex-column">
-                        <div class="text-center mb-3">
-                            <i class="fas fa-laptop text-primary" style="font-size: 4rem;"></i>
+        <div class="row">
+            <div class="col-lg-9">
+                <div class="row">
+                    <!-- Sample Products -->
+                    <div class="col-md-4 mb-4">
+                        <div class="card product-card">
+                            <div class="card-body">
+                                <h5 class="card-title">Premium Headphones</h5>
+                                <p class="card-text">High-quality noise-cancelling headphones with exceptional sound.</p>
+                                <div class="price mb-3">$149.99</div>
+                                <button class="btn btn-primary btn-add" onclick="addToCart('prod_1', 'Premium Headphones', 149.99)">
+                                    <i class="fas fa-cart-plus me-2"></i>Add to Cart
+                                </button>
+                            </div>
                         </div>
-                        <h5 class="card-title">Test Product</h5>
-                        <p class="card-text flex-grow-1">
-                            This is a test product to verify your Stripe integration is working correctly.
-                        </p>
-                        <div class="d-flex justify-content-between align-items-center mb-3">
-                            <span class="price">$1.00</span>
-                            <span class="badge bg-success">Test Item</span>
+                    </div>
+                    <div class="col-md-4 mb-4">
+                        <div class="card product-card">
+                            <div class="card-body">
+                                <h5 class="card-title">Smart Watch</h5>
+                                <p class="card-text">Feature-packed smart watch with health monitoring and notifications.</p>
+                                <div class="price mb-3">$199.99</div>
+                                <button class="btn btn-primary btn-add" onclick="addToCart('prod_2', 'Smart Watch', 199.99)">
+                                    <i class="fas fa-cart-plus me-2"></i>Add to Cart
+                                </button>
+                            </div>
                         </div>
-                        <form action="/create-checkout-session" method="POST">
-                            <input type="hidden" name="items" value='[{"product_id":"test-001", "name":"Test Product", "description":"Test product for Stripe integration", "price":1.00, "quantity":1}]'>
-                            <input type="hidden" name="order_id" value="demo-test-order">
-                            <button type="submit" class="btn btn-primary checkout-btn">
-                                <i class="fab fa-stripe me-2"></i>Checkout with Stripe
-                            </button>
-                        </form>
+                    </div>
+                    <div class="col-md-4 mb-4">
+                        <div class="card product-card">
+                            <div class="card-body">
+                                <h5 class="card-title">Wireless Speaker</h5>
+                                <p class="card-text">Portable Bluetooth speaker with deep bass and 20-hour battery life.</p>
+                                <div class="price mb-3">$79.99</div>
+                                <button class="btn btn-primary btn-add" onclick="addToCart('prod_3', 'Wireless Speaker', 79.99)">
+                                    <i class="fas fa-cart-plus me-2"></i>Add to Cart
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-4">
+                        <div class="card product-card">
+                            <div class="card-body">
+                                <h5 class="card-title">Laptop Stand</h5>
+                                <p class="card-text">Ergonomic laptop stand with adjustable height and cooling function.</p>
+                                <div class="price mb-3">$49.99</div>
+                                <button class="btn btn-primary btn-add" onclick="addToCart('prod_4', 'Laptop Stand', 49.99)">
+                                    <i class="fas fa-cart-plus me-2"></i>Add to Cart
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-4">
+                        <div class="card product-card">
+                            <div class="card-body">
+                                <h5 class="card-title">USB-C Hub</h5>
+                                <p class="card-text">9-in-1 USB-C hub with HDMI, SD card reader, and USB ports.</p>
+                                <div class="price mb-3">$39.99</div>
+                                <button class="btn btn-primary btn-add" onclick="addToCart('prod_5', 'USB-C Hub', 39.99)">
+                                    <i class="fas fa-cart-plus me-2"></i>Add to Cart
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-4">
+                        <div class="card product-card">
+                            <div class="card-body">
+                                <h5 class="card-title">Wireless Charger</h5>
+                                <p class="card-text">Fast wireless charging pad compatible with all Qi-enabled devices.</p>
+                                <div class="price mb-3">$29.99</div>
+                                <button class="btn btn-primary btn-add" onclick="addToCart('prod_6', 'Wireless Charger', 29.99)">
+                                    <i class="fas fa-cart-plus me-2"></i>Add to Cart
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
-
-        <div class="row">
-            <div class="col-12">
-                <div class="card bg-light">
-                    <div class="card-body">
-                        <h4 class="card-title"><i class="fas fa-info-circle text-primary me-2"></i>Test Card Information</h4>
-                        <p class="card-text">
-                            Use the following test card information to complete the checkout:
-                        </p>
-                        <ul>
-                            <li><strong>Card Number:</strong> 4242 4242 4242 4242</li>
-                            <li><strong>Expiration:</strong> Any future date (MM/YY)</li>
-                            <li><strong>CVC:</strong> Any 3 digits</li>
-                            <li><strong>ZIP:</strong> Any 5 digits</li>
-                        </ul>
-                        <p class="card-text">
-                            <small class="text-muted">This is a test mode transaction and won't charge any real cards.</small>
-                        </p>
+            <div class="col-lg-3">
+                <div class="cart-container">
+                    <div class="card">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="mb-0">Your Cart <span class="badge bg-light text-dark badge-cart" id="cart-count">0</span></h5>
+                        </div>
+                        <div class="card-body">
+                            <div id="cart-items">
+                                <p class="text-muted text-center" id="empty-cart-message">Your cart is empty</p>
+                            </div>
+                            <hr>
+                            <div class="d-flex justify-content-between">
+                                <h5>Total:</h5>
+                                <h5 id="cart-total">$0.00</h5>
+                            </div>
+                            <form action="/create-checkout-session" method="POST" id="checkout-form">
+                                <input type="hidden" name="items" id="items-input">
+                                <input type="hidden" name="order_id" value="demo-123">
+                                <button type="submit" class="btn btn-success w-100 mt-3" id="checkout-button" disabled>
+                                    <i class="fab fa-stripe me-2"></i>Checkout with Stripe
+                                </button>
+                            </form>
+                            <button class="btn btn-outline-danger w-100 mt-2" onclick="clearCart()">
+                                <i class="fas fa-trash me-2"></i>Clear Cart
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <div class="container my-5">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h3>How to Test the Checkout</h3>
+            </div>
+            <div class="card-body">
+                <h5>Use these test card details to simulate payments:</h5>
+                <div class="table-responsive">
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <th>Card Number</th>
+                                <th>Expiration</th>
+                                <th>CVC</th>
+                                <th>ZIP</th>
+                                <th>Result</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>4242 4242 4242 4242</code></td>
+                                <td>Any future date</td>
+                                <td>Any 3 digits</td>
+                                <td>Any 5 digits</td>
+                                <td><span class="badge bg-success">Payment succeeds</span></td>
+                            </tr>
+                            <tr>
+                                <td><code>4000 0000 0000 0002</code></td>
+                                <td>Any future date</td>
+                                <td>Any 3 digits</td>
+                                <td>Any 5 digits</td>
+                                <td><span class="badge bg-danger">Card declined</span></td>
+                            </tr>
+                            <tr>
+                                <td><code>4000 0025 0000 3155</code></td>
+                                <td>Any future date</td>
+                                <td>Any 3 digits</td>
+                                <td>Any 5 digits</td>
+                                <td><span class="badge bg-warning text-dark">3D Secure 2 authentication</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="alert alert-info mt-3">
+                    <i class="fas fa-info-circle me-2"></i> This is a test environment. No real payments will be processed.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let cart = [];
+        let total = 0;
+
+        function addToCart(id, name, price) {
+            // Check if product already in cart
+            const existingItemIndex = cart.findIndex(item => item.id === id);
+            
+            if (existingItemIndex !== -1) {
+                // Increment quantity
+                cart[existingItemIndex].quantity += 1;
+            } else {
+                // Add new item
+                cart.push({
+                    id: id,
+                    name: name,
+                    price: price,
+                    quantity: 1
+                });
+            }
+            
+            // Update total and UI
+            updateCart();
+        }
+
+        function removeFromCart(id) {
+            cart = cart.filter(item => item.id !== id);
+            updateCart();
+        }
+
+        function updateQuantity(id, newQuantity) {
+            const itemIndex = cart.findIndex(item => item.id === id);
+            if (itemIndex !== -1) {
+                if (newQuantity <= 0) {
+                    removeFromCart(id);
+                } else {
+                    cart[itemIndex].quantity = newQuantity;
+                    updateCart();
+                }
+            }
+        }
+
+        function clearCart() {
+            cart = [];
+            updateCart();
+        }
+
+        function updateCart() {
+            const cartContainer = document.getElementById('cart-items');
+            const emptyCartMessage = document.getElementById('empty-cart-message');
+            const cartCount = document.getElementById('cart-count');
+            const cartTotal = document.getElementById('cart-total');
+            const checkoutButton = document.getElementById('checkout-button');
+            const itemsInput = document.getElementById('items-input');
+            
+            // Calculate total
+            total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            
+            // Update count badge
+            const itemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
+            cartCount.textContent = itemCount;
+            
+            // Show/hide empty cart message
+            if (cart.length === 0) {
+                emptyCartMessage.style.display = 'block';
+                cartContainer.innerHTML = '<p class="text-muted text-center" id="empty-cart-message">Your cart is empty</p>';
+                checkoutButton.disabled = true;
+            } else {
+                emptyCartMessage.style.display = 'none';
+                
+                // Generate cart items HTML
+                let cartHTML = '';
+                cart.forEach(item => {
+                    cartHTML += `
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <div>
+                                <h6 class="mb-0">${item.name}</h6>
+                                <small class="text-muted">$${item.price.toFixed(2)} each</small>
+                            </div>
+                            <div class="d-flex align-items-center">
+                                <button class="btn btn-sm btn-outline-secondary" onclick="updateQuantity('${item.id}', ${item.quantity - 1})">-</button>
+                                <span class="mx-2">${item.quantity}</span>
+                                <button class="btn btn-sm btn-outline-secondary" onclick="updateQuantity('${item.id}', ${item.quantity + 1})">+</button>
+                                <button class="btn btn-sm btn-outline-danger ms-2" onclick="removeFromCart('${item.id}')">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                cartContainer.innerHTML = cartHTML;
+                checkoutButton.disabled = false;
+            }
+            
+            // Update total
+            cartTotal.textContent = `$${total.toFixed(2)}`;
+            
+            // Update hidden form input with cart data
+            itemsInput.value = JSON.stringify(cart.map(item => ({
+                id: item.id,
+                name: item.name,
+                description: `${item.name} (Qty: ${item.quantity})`,
+                price: item.price,
+                quantity: item.quantity
+            })));
+        }
+    </script>
 </body>
 </html>

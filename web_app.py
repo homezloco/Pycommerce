@@ -155,7 +155,7 @@ try:
     from routes.storefront.pages import setup_routes as setup_pages_routes
     from routes.storefront.stores import setup_routes as setup_storefront_stores_routes
     from routes.storefront.stripe_checkout import setup_routes as setup_stripe_checkout_routes
-    from routes.storefront.stripe_demo import register_routes as register_stripe_demo_routes
+    from routes.storefront.integrated_stripe_demo import setup_routes as setup_integrated_stripe_demo_routes
 
     # Include storefront routers
     home_router = setup_home_routes(templates)
@@ -181,11 +181,11 @@ try:
     stripe_checkout_router = setup_stripe_routes(app)
     logger.info("Stripe checkout routes registered successfully")
     
-    # Register Stripe demo routes
-    from flask import Flask
-    stripe_demo_app = Flask("stripe_demo")
-    register_stripe_demo_routes(stripe_demo_app)
-    logger.info("Stripe demo routes registered successfully")
+    # Register integrated Stripe demo routes
+    from routes.storefront.integrated_stripe_demo import setup_routes as setup_integrated_stripe_demo
+    integrated_stripe_demo_router = setup_integrated_stripe_demo(templates)
+    app.include_router(integrated_stripe_demo_router)
+    logger.info("Integrated Stripe demo routes registered successfully")
 
     logger.info("Storefront routes registered successfully")
 except ImportError as e:
@@ -330,18 +330,7 @@ async def custom_redoc_html(request: Request):
     # Redirect to our static HTML file
     return RedirectResponse(url="/static/api-docs.html")
 
-# Add Stripe demo redirect endpoints
-@app.get("/stripe-demo", response_class=HTMLResponse)
-async def stripe_demo_redirect():
-    """Redirect to the Stripe demo page."""
-    logger.info("Redirecting to Stripe demo on port 5001")
-    return RedirectResponse(url="http://localhost:5001/demo")
-
-@app.get("/demo", response_class=HTMLResponse)
-async def demo_redirect():
-    """Redirect to the Stripe demo page (alternative path)."""
-    logger.info("Redirecting to Stripe demo on port 5001")
-    return RedirectResponse(url="http://localhost:5001/demo")
+# Stripe demo endpoints are now handled by the integrated_stripe_demo module
 
 # Add root endpoint
 @app.get("/", response_class=HTMLResponse)

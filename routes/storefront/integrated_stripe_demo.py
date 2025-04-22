@@ -1,0 +1,230 @@
+"""
+Integrated Stripe Checkout Demo Routes
+
+This module provides routes for a fully integrated Stripe checkout demo
+that doesn't rely on a separate server.
+"""
+import os
+import json
+import stripe
+import logging
+from uuid import uuid4
+from fastapi import APIRouter, Request, Form, Response
+from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
+from fastapi.templating import Jinja2Templates
+
+logger = logging.getLogger(__name__)
+
+# Initialize Stripe
+stripe.api_key = os.environ.get('STRIPE_SECRET_KEY')
+if not stripe.api_key:
+    logger.warning("STRIPE_SECRET_KEY environment variable not set. Checkout will not work.")
+
+def setup_routes(templates):
+    """
+    Setup routes for integrated Stripe demo.
+    
+    Args:
+        templates: Jinja2Templates instance
+        
+    Returns:
+        APIRouter: The router with stripe demo routes
+    """
+    router = APIRouter()
+    
+    @router.get("/stripe-demo", response_class=HTMLResponse)
+    async def stripe_demo(request: Request):
+        """
+        Render the Stripe demo page.
+        
+        Args:
+            request (Request): The incoming request
+            
+        Returns:
+            HTMLResponse: The rendered template
+        """
+        logger.info("Serving integrated Stripe demo page")
+        return templates.TemplateResponse("stripe_demo.html", {"request": request})
+    
+    @router.get("/demo", response_class=HTMLResponse)
+    async def demo_page(request: Request):
+        """
+        Alternative route to the Stripe demo page.
+        
+        Args:
+            request (Request): The incoming request
+            
+        Returns:
+            HTMLResponse: The rendered template
+        """
+        logger.info("Serving integrated Stripe demo page via /demo route")
+        return templates.TemplateResponse("stripe_demo.html", {"request": request})
+    
+    @router.post("/create-checkout-session")
+    async def create_checkout_session(request: Request, items: str = Form(...), order_id: str = Form(...)):
+        """
+        Create a Stripe checkout session and redirect to the Stripe hosted checkout page.
+        
+        Args:
+            request (Request): The incoming request
+            items (str): JSON string containing items in the cart
+            order_id (str): Order ID to identify this checkout session
+            
+        Returns:
+            RedirectResponse: Redirect to Stripe checkout page
+        """
+        logger.info(f"Creating Stripe checkout session for order {order_id}")
+        
+        if not stripe.api_key:
+            logger.error("STRIPE_SECRET_KEY not set. Cannot proceed with checkout.")
+            return JSONResponse(
+                status_code=500,
+                content={"error": "Stripe API key not configured. Please set STRIPE_SECRET_KEY environment variable."}
+            )
+        
+        try:
+            items_data = json.loads(items)
+            
+            # Create line items for Stripe
+            line_items = []
+            for item in items_data:
+                # Convert price to cents for Stripe
+                price_in_cents = int(item["price"] * 100)
+                
+                line_items.append({
+                    "price_data": {
+                        "currency": "usd",
+                        "product_data": {
+                            "name": item["name"],
+                            "description": item.get("description", f"{item['name']} x {item['quantity']}")
+                        },
+                        "unit_amount": price_in_cents,
+                    },
+                    "quantity": item["quantity"],
+                })
+            
+            # Generate a unique ID for this session
+            session_id = str(uuid4())
+            
+            # Get the domain for success/cancel URLs
+            host_url = str(request.base_url).rstrip('/')
+            
+            # Create checkout session
+            checkout_session = stripe.checkout.Session.create(
+                payment_method_types=["card"],
+                line_items=line_items,
+                mode="payment",
+                success_url=f"{host_url}/stripe-demo/success?session_id={session_id}",
+                cancel_url=f"{host_url}/stripe-demo/cancel",
+                metadata={
+                    "order_id": order_id,
+                    "session_id": session_id
+                }
+            )
+            
+            logger.info(f"Stripe checkout session created: {checkout_session.id}")
+            
+            # Redirect to the Stripe checkout page
+            return RedirectResponse(url=checkout_session.url, status_code=303)
+            
+        except Exception as e:
+            logger.error(f"Error creating Stripe checkout session: {str(e)}")
+            return JSONResponse(
+                status_code=500,
+                content={"error": str(e)}
+            )
+    
+    @router.get("/stripe-demo/success", response_class=HTMLResponse)
+    async def checkout_success(request: Request, session_id: str):
+        """
+        Handle successful checkout.
+        
+        Args:
+            request (Request): The incoming request
+            session_id (str): The session ID from the checkout session
+            
+        Returns:
+            HTMLResponse: Success page
+        """
+        logger.info(f"Stripe checkout successful for session {session_id}")
+        
+        success_html = """
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Payment Successful</title>
+            <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+        </head>
+        <body>
+            <div class="container py-5 text-center">
+                <div class="card mx-auto" style="max-width: 600px;">
+                    <div class="card-body">
+                        <div class="mb-4">
+                            <i class="fas fa-check-circle text-success fa-5x"></i>
+                        </div>
+                        <h1 class="mb-4">Payment Successful!</h1>
+                        <p class="lead mb-4">Your payment has been processed successfully. Thank you for your purchase!</p>
+                        <hr>
+                        <div class="d-flex justify-content-between">
+                            <a href="/stripe-demo" class="btn btn-outline-primary">Return to Demo</a>
+                            <a href="/" class="btn btn-primary">Go to Homepage</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </body>
+        </html>
+        """
+        
+        return HTMLResponse(content=success_html)
+    
+    @router.get("/stripe-demo/cancel", response_class=HTMLResponse)
+    async def checkout_cancel(request: Request):
+        """
+        Handle cancelled checkout.
+        
+        Args:
+            request (Request): The incoming request
+            
+        Returns:
+            HTMLResponse: Cancel page
+        """
+        logger.info("Stripe checkout cancelled")
+        
+        cancel_html = """
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Payment Cancelled</title>
+            <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+        </head>
+        <body>
+            <div class="container py-5 text-center">
+                <div class="card mx-auto" style="max-width: 600px;">
+                    <div class="card-body">
+                        <div class="mb-4">
+                            <i class="fas fa-times-circle text-danger fa-5x"></i>
+                        </div>
+                        <h1 class="mb-4">Payment Cancelled</h1>
+                        <p class="lead mb-4">Your payment has been cancelled. No charges were made to your card.</p>
+                        <hr>
+                        <div class="d-flex justify-content-between">
+                            <a href="/stripe-demo" class="btn btn-outline-primary">Return to Demo</a>
+                            <a href="/" class="btn btn-primary">Go to Homepage</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </body>
+        </html>
+        """
+        
+        return HTMLResponse(content=cancel_html)
+    
+    return router
