@@ -127,6 +127,7 @@ With its multi-tenant design, PyCommerce enables businesses to host multiple sto
 - ✅ **Estimate Management**: Created estimate creation and management system with the ability to track materials and labor costs separately
 - ✅ **Estimate-to-Order Conversion**: Implemented workflow for converting estimates to orders with full preservation of cost data for profit tracking
 - ✅ **Profit Visualization**: Added color-coded profit metrics display in order and estimate detail views
+- ✅ **Stripe Checkout API**: Redesigned Stripe checkout flow to use JSON API approach with client-side fetch requests instead of form submission, resolving content decoding issues and providing a more robust checkout experience
 
 ### In Progress:
 
@@ -182,6 +183,9 @@ With its multi-tenant design, PyCommerce enables businesses to host multiple sto
 
 1. **Payment Processing**
    - ✅ Stripe integration
+     - ✅ JSON API endpoint for stable Stripe checkout
+     - ✅ Client-side fetch requests for improved browser compatibility
+     - ✅ Improved error handling with comprehensive error responses
    - ✅ PayPal integration
    - ✅ Support for multiple payment methods
    - ✅ Payment configuration UI and persistence
@@ -335,9 +339,10 @@ With its multi-tenant design, PyCommerce enables businesses to host multiple sto
   - Sortable.js for drag-and-drop interfaces
   
 - **API Integration**:
-  - Fetch API for data retrieval
+  - Fetch API for data retrieval and payment processing
   - Async/await pattern for promises
-  - Structured error handling
+  - Structured error handling with comprehensive error responses
+  - JSON REST API endpoints for client-server communication
 
 ### Security Architecture
 - **Data Protection**:
@@ -590,6 +595,8 @@ For existing ecommerce stores looking to migrate to PyCommerce:
    - ✅ Implemented proper API key configuration
    - ✅ Handling complex payment error cases systematically
    - ✅ Implemented proper credentials management with encryption
+   - ✅ Resolved checkout browser compatibility issues with JSON API approach
+   - ✅ Enhanced error handling with comprehensive error responses in payment flows
 
 2. **System Performance**
    - Multiple plugin initializations occurring
