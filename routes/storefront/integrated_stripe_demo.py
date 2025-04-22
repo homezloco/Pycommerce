@@ -326,6 +326,132 @@ def setup_routes(templates):
         success_response.headers["Content-Encoding"] = "identity"
         return success_response
     
+    @router.post("/stripe-demo/create-checkout-session-json")
+    async def create_checkout_session_json(request: Request):
+        """
+        Create a Stripe checkout session and return JSON response with checkout URL.
+        This endpoint is optimized for fetch API requests from the client
+        and avoids browser content decoding issues.
+        
+        Args:
+            request (Request): The incoming request
+            
+        Returns:
+            JSONResponse: JSON with checkout URL or error information
+        """
+        logger.info("Creating Stripe checkout session with JSON response")
+        
+        # First, make sure Stripe was imported successfully
+        if not stripe:
+            logger.error("Stripe module is not available.")
+            return JSONResponse(
+                status_code=500,
+                content={"error": "Stripe payment processing is not available. Please contact support."}
+            )
+        
+        # Initialize Stripe API key
+        try:
+            stripe.api_key = os.environ.get('STRIPE_SECRET_KEY')
+            if not stripe.api_key:
+                logger.error("STRIPE_SECRET_KEY not set. Cannot proceed with checkout.")
+                return JSONResponse(
+                    status_code=500,
+                    content={"error": "Stripe API key not configured. Please set STRIPE_SECRET_KEY environment variable."}
+                )
+        except Exception as key_error:
+            logger.error(f"Error setting Stripe API key: {str(key_error)}")
+            return JSONResponse(
+                status_code=500,
+                content={"error": f"Error initializing Stripe: {str(key_error)}"}
+            )
+        
+        try:
+            # Parse the JSON request body
+            request_data = await request.json()
+            logger.info(f"Received JSON request data: {request_data}")
+            
+            # Extract items and order_id
+            items_data = request_data.get("items", [])
+            order_id = request_data.get("order_id", f"order-{str(uuid4())}")
+            
+            # Validate items_data
+            if not items_data or len(items_data) == 0:
+                logger.error("Empty cart received")
+                return JSONResponse(
+                    status_code=400,
+                    content={"error": "Your cart is empty. Please add items before checking out."}
+                )
+            
+            # Create line items for Stripe
+            line_items = []
+            for item in items_data:
+                # Convert price to cents for Stripe
+                price_in_cents = int(item["price"] * 100)
+                
+                line_items.append({
+                    "price_data": {
+                        "currency": "usd",
+                        "product_data": {
+                            "name": item["name"],
+                            "description": item.get("description", "")
+                        },
+                        "unit_amount": price_in_cents,
+                    },
+                    "quantity": item["quantity"],
+                })
+            
+            # Generate a unique ID for this session
+            session_id = str(uuid4())
+            
+            # Get the domain for success/cancel URLs
+            host_url = str(request.base_url).rstrip('/')
+            
+            logger.info("Creating Stripe checkout session...")
+            
+            # Try to create the checkout session
+            checkout_session = stripe.checkout.Session.create(
+                payment_method_types=["card"],
+                line_items=line_items,
+                mode="payment",
+                success_url=f"{host_url}/stripe-demo/success?session_id={session_id}",
+                cancel_url=f"{host_url}/stripe-demo/cancel",
+                metadata={
+                    "order_id": order_id,
+                    "session_id": session_id
+                }
+            )
+            
+            logger.info(f"Stripe checkout session created successfully with ID: {checkout_session.id}")
+            logger.info(f"Checkout URL: {checkout_session.url}")
+            
+            # Return JSON with the checkout URL instead of redirecting
+            return JSONResponse(
+                content={
+                    "success": True,
+                    "checkout_url": checkout_session.url,
+                    "session_id": checkout_session.id
+                }
+            )
+            
+        except Exception as e:
+            # Capture any kind of error with full details
+            error_type = type(e).__name__
+            error_message = str(e)
+            error_traceback = traceback.format_exc()
+            
+            logger.error(f"Error creating checkout session: {error_type}: {error_message}")
+            logger.error(f"Error traceback: {error_traceback}")
+            
+            # Create a user-friendly error response
+            return JSONResponse(
+                status_code=500,
+                content={
+                    "error": "There was an error processing your payment request.",
+                    "details": error_message,
+                    "type": error_type
+                }
+            )
+            
     @router.get("/stripe-demo/cancel", response_class=HTMLResponse)
     async def checkout_cancel(request: Request):
         """

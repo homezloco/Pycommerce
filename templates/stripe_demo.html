@@ -147,13 +147,13 @@
                                 <i class="fas fa-exclamation-circle me-2"></i>
                                 <span id="error-message"></span>
                             </div>
-                            <form action="/stripe-demo/create-checkout-session" method="POST" id="checkout-form" target="_blank">
-                                <input type="hidden" name="items" id="items-input">
-                                <input type="hidden" name="order_id" value="demo-123">
-                                <button type="submit" class="btn btn-success w-100 mt-3" id="checkout-button" disabled>
+                            <div id="checkout-container">
+                                <button type="button" class="btn btn-success w-100 mt-3" id="checkout-button" disabled onclick="handleCheckout()">
                                     <i class="fab fa-stripe me-2"></i>Checkout with Stripe
                                 </button>
-                            </form>
+                                <input type="hidden" id="items-input">
+                                <input type="hidden" id="order-id-input" value="demo-123">
+                            </div>
                             <button class="btn btn-outline-danger w-100 mt-2" onclick="clearCart()">
                                 <i class="fas fa-trash me-2"></i>Clear Cart
                             </button>
@@ -218,127 +218,97 @@
         let cart = [];
         let total = 0;
 
-        // Set up the checkout form submission with error handling
-        document.addEventListener('DOMContentLoaded', () => {
-            const checkoutForm = document.getElementById('checkout-form');
+        // Handle checkout with fetch API to avoid browser decoding issues
+        async function handleCheckout() {
             const errorDiv = document.getElementById('api-error');
             const errorMessage = document.getElementById('error-message');
             
-            // Make sure form exists before adding listener
-            if (!checkoutForm) {
-                console.error('Checkout form not found in DOM');
-                return;
+            // Clear previous errors
+            if (errorDiv) {
+                errorDiv.style.display = 'none';
             }
             
-            checkoutForm.addEventListener('submit', async (e) => {
-                // No longer prevent default behavior to allow native form submission
-                // e.preventDefault();
-                
-                // Clear previous errors
-                if (errorDiv) {
-                    errorDiv.style.display = 'none';
+            // Show loading state
+            const checkoutButton = document.getElementById('checkout-button');
+            const originalButtonText = checkoutButton ? checkoutButton.innerHTML : 'Checkout with Stripe';
+            checkoutButton.disabled = true;
+            checkoutButton.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Processing...';
+            
+            try {
+                // Validate the items before submitting
+                const itemsInput = document.getElementById('items-input');
+                if (!itemsInput || !itemsInput.value || itemsInput.value === '[]') {
+                    throw new Error('Your cart is empty. Please add items before checking out.');
                 }
                 
-                // Show loading state
-                const checkoutButton = document.getElementById('checkout-button');
-                const originalButtonText = checkoutButton ? checkoutButton.innerHTML : 'Checkout with Stripe';
-                checkoutButton.disabled = true;
-                checkoutButton.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Processing...';
+                // Get the order ID
+                const orderId = document.getElementById('order-id-input').value;
                 
-                try {
-                    // Validate the items before submitting
-                    const itemsInput = document.getElementById('items-input');
-                    if (!itemsInput || !itemsInput.value || itemsInput.value === '[]') {
-                        throw new Error('Your cart is empty. Please add items before checking out.');
-                    }
+                // Log detailed info about what we're submitting for debugging
+                console.log('Cart items JSON:', itemsInput.value);
+                console.log('Parsed cart items:', JSON.parse(itemsInput.value));
+                console.log('Order ID:', orderId);
+                
+                // Create the request options
+                const options = {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        items: JSON.parse(itemsInput.value),
+                        order_id: orderId
+                    })
+                };
+                
+                console.log('Sending fetch request to: /stripe-demo/create-checkout-session-json');
+                
+                // Use fetch API to get a JSON response with the checkout URL
+                const response = await fetch('/stripe-demo/create-checkout-session-json', options);
+                
+                if (!response.ok) {
+                    // Try to get error details
+                    const contentType = response.headers.get('content-type');
+                    let errorText;
                     
-                    // Log detailed info about what we're submitting for debugging
-                    console.log('Cart items JSON:', itemsInput.value);
-                    console.log('Parsed cart items:', JSON.parse(itemsInput.value));
-                    console.log('Order ID:', document.querySelector('input[name="order_id"]').value);
-                    console.log('Form action:', checkoutForm.action);
-                    console.log('Form method:', checkoutForm.method);
-                    console.log('Form target:', checkoutForm.target);
-                    
-                    // Important: Make sure the form is direct submission without preventDefault
-                    console.log('Submitting form directly to:', checkoutForm.action);
-                    
-                    // Submit the form - will open in new tab due to target="_blank"
-                    checkoutForm.submit();
-                    return; // Exit here to allow natural form submission
-                    
-                    /* Commenting out old fetch approach - it doesn't handle redirects properly
-                    // Send the request
-                    const response = await fetch('/stripe-demo/create-checkout-session', {
-                        method: 'POST',
-                        body: formData
-                    });
-                    
-                    console.log('Response status:', response.status);
-                    console.log('Response headers:', [...response.headers.entries()]);
-                    
-                    if (!response.ok) {
-                        // Try to get error details, handling both JSON and text responses
-                        let errorMessage;
-                        try {
-                            const contentType = response.headers.get('content-type');
-                            if (contentType && contentType.includes('application/json')) {
-                                const errorData = await response.json();
-                                console.log('Error response data:', errorData);
-                                errorMessage = errorData.error || errorData.detail || JSON.stringify(errorData);
-                            } else {
-                                errorMessage = await response.text();
-                                console.log('Error response text:', errorMessage);
-                            }
-                        } catch (parseError) {
-                            console.error('Error parsing response:', parseError);
-                            errorMessage = `Failed to parse error response: ${parseError.message}`;
-                        }
-                        
-                        throw new Error(errorMessage || `Request failed with status: ${response.status}`);
-                    }
-                    
-                    // For successful responses, check the redirect URL
-                    console.log('Success response URL:', response.url);
-                    
-                    // If the response has a URL, redirect to it
-                    if (response.redirected || response.url) {
-                        window.location.href = response.url;
+                    if (contentType && contentType.includes('application/json')) {
+                        const errorData = await response.json();
+                        errorText = errorData.error || 'Unknown error occurred';
                     } else {
-                        // If there's no URL, try to handle the response content
-                        const contentType = response.headers.get('content-type');
-                        if (contentType && contentType.includes('application/json')) {
-                            const data = await response.json();
-                            console.log('Response data:', data);
-                            
-                            if (data.url) {
-                                window.location.href = data.url;
-                            } else {
-                                throw new Error('Response missing redirect URL');
-                            }
-                        } else {
-                            const text = await response.text();
-                            console.log('Response text:', text);
-                            throw new Error('Unexpected response format');
-                        }
-                    }
-                    */
-                    
-                } catch (error) {
-                    console.error('Checkout error:', error);
-                    if (errorDiv && errorMessage) {
-                        errorDiv.style.display = 'block';
-                        errorMessage.textContent = error.message || 'An unexpected error occurred. Please try again.';
+                        errorText = await response.text();
                     }
                     
-                    // Reset button
-                    if (checkoutButton) {
-                        checkoutButton.disabled = false;
-                        checkoutButton.innerHTML = originalButtonText;
-                    }
+                    throw new Error(errorText || `Request failed with status: ${response.status}`);
                 }
-            });
-        });
+                
+                // Parse the response as JSON
+                const data = await response.json();
+                
+                // Check if we got a checkout URL
+                if (data && data.checkout_url) {
+                    console.log('Received checkout URL:', data.checkout_url);
+                    
+                    // Open the checkout URL in a new tab
+                    window.open(data.checkout_url, '_blank');
+                } else {
+                    throw new Error('No checkout URL received from server');
+                }
+                
+            } catch (error) {
+                console.error('Checkout error:', error);
+                if (errorDiv && errorMessage) {
+                    errorDiv.style.display = 'block';
+                    errorMessage.textContent = error.message || 'An unexpected error occurred. Please try again.';
+                }
+                
+                // Reset button
+                if (checkoutButton) {
+                    checkoutButton.disabled = false;
+                    checkoutButton.innerHTML = originalButtonText;
+                }
+            }
+        }
 
         function addToCart(id, name, price) {
             // Check if product already in cart
