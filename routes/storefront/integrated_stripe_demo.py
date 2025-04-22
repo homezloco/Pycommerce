@@ -135,6 +135,8 @@ def setup_routes(templates):
         """
         logger.info(f"Creating Stripe checkout session for order {order_id}")
         logger.info(f"Received items data: {items}")
+        logger.info(f"Request base URL: {request.base_url}")
+        logger.info(f"STRIPE_SECRET_KEY environment variable: {'Exists' if os.environ.get('STRIPE_SECRET_KEY') else 'Missing'}")
         
         # First, make sure Stripe was imported successfully
         if not stripe:
