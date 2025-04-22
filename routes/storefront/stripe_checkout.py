@@ -185,7 +185,7 @@ def setup_routes(app):
     else:
         # Create FastAPI router
         from fastapi import APIRouter, Request, Form, Depends
-        from fastapi.responses import RedirectResponse, JSONResponse
+        from fastapi.responses import RedirectResponse, JSONResponse, HTMLResponse
         from fastapi.templating import Jinja2Templates
         
         router = APIRouter(prefix="/checkout/stripe", tags=["stripe_checkout"])
@@ -323,7 +323,6 @@ def setup_routes(app):
         async def api_payment_success(request: Request):
             """Handle successful payment."""
             # Use the template function to render the success page
-            from fastapi.responses import HTMLResponse
             success_html = """
             <!DOCTYPE html>
             <html lang="en">
@@ -373,7 +372,6 @@ def setup_routes(app):
         async def api_payment_cancel(request: Request):
             """Handle cancelled payment."""
             # Use the template function to render the cancel page
-            from fastapi.responses import HTMLResponse
             cancel_html = """
             <!DOCTYPE html>
             <html lang="en">
@@ -418,6 +416,34 @@ def setup_routes(app):
             </html>
             """
             return HTMLResponse(content=cancel_html)
+        
+        # Add a demo route to showcase the Stripe checkout integration
+        @router.get("/demo", response_class=HTMLResponse)
+        async def stripe_checkout_demo(request: Request):
+            """
+            Display a demo page for Stripe checkout integration.
+            """
+            # We'll use raw HTML here, but in a real app you'd use templates
+            try:
+                with open("templates/storefront/checkout/demo.html", "r") as f:
+                    demo_html = f.read()
+                return HTMLResponse(content=demo_html)
+            except Exception as e:
+                logger.error(f"Error serving Stripe checkout demo page: {e}")
+                return HTMLResponse(
+                    content=f"""
+                    <html>
+                    <head><title>Stripe Demo Error</title></head>
+                    <body>
+                        <h1>Error Loading Demo</h1>
+                        <p>There was an error loading the Stripe checkout demo page.</p>
+                        <p>Error: {str(e)}</p>
+                        <p><a href="/">Return to Homepage</a></p>
+                    </body>
+                    </html>
+                    """,
+                    status_code=500
+                )
         
         # Include the router
         app.include_router(router)

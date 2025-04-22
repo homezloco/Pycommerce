@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stripe Checkout Demo</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .product-card {
+            transition: transform 0.3s;
+            height: 100%;
+        }
+        .product-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+        .price {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #28a745;
+        }
+        .checkout-btn {
+            width: 100%;
+            padding: 12px;
+            font-size: 1.1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container py-5">
+        <div class="row mb-4">
+            <div class="col-12">
+                <h1 class="text-center mb-3">Stripe Checkout Demo</h1>
+                <p class="text-center text-muted">This is a demonstration of the Stripe checkout integration. Select a product below to proceed to checkout.</p>
+            </div>
+        </div>
+
+        <div class="row row-cols-1 row-cols-md-3 g-4 mb-5">
+            <!-- Demo Product 1 -->
+            <div class="col">
+                <div class="card product-card h-100">
+                    <div class="card-body d-flex flex-column">
+                        <div class="text-center mb-3">
+                            <i class="fas fa-laptop text-primary" style="font-size: 4rem;"></i>
+                        </div>
+                        <h5 class="card-title">Premium Laptop</h5>
+                        <p class="card-text flex-grow-1">
+                            High-performance laptop with the latest hardware specifications. Perfect for developers and creative professionals.
+                        </p>
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <span class="price">$1,299.99</span>
+                            <span class="badge bg-success">In Stock</span>
+                        </div>
+                        <form action="/checkout/stripe/create-checkout-session" method="POST">
+                            <input type="hidden" name="items" value='[{"product_id":"laptop-001", "name":"Premium Laptop", "description":"High-performance laptop", "price":1299.99, "quantity":1}]'>
+                            <input type="hidden" name="order_id" value="demo-order-laptop">
+                            <button type="submit" class="btn btn-primary checkout-btn">
+                                <i class="fab fa-stripe me-2"></i>Checkout with Stripe
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Demo Product 2 -->
+            <div class="col">
+                <div class="card product-card h-100">
+                    <div class="card-body d-flex flex-column">
+                        <div class="text-center mb-3">
+                            <i class="fas fa-headphones text-danger" style="font-size: 4rem;"></i>
+                        </div>
+                        <h5 class="card-title">Wireless Headphones</h5>
+                        <p class="card-text flex-grow-1">
+                            Noise-cancelling wireless headphones with premium sound quality and extended battery life.
+                        </p>
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <span class="price">$249.99</span>
+                            <span class="badge bg-success">In Stock</span>
+                        </div>
+                        <form action="/checkout/stripe/create-checkout-session" method="POST">
+                            <input type="hidden" name="items" value='[{"product_id":"headphones-001", "name":"Wireless Headphones", "description":"Noise-cancelling headphones", "price":249.99, "quantity":1}]'>
+                            <input type="hidden" name="order_id" value="demo-order-headphones">
+                            <button type="submit" class="btn btn-primary checkout-btn">
+                                <i class="fab fa-stripe me-2"></i>Checkout with Stripe
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Demo Product 3 -->
+            <div class="col">
+                <div class="card product-card h-100">
+                    <div class="card-body d-flex flex-column">
+                        <div class="text-center mb-3">
+                            <i class="fas fa-watch text-success" style="font-size: 4rem;"></i>
+                        </div>
+                        <h5 class="card-title">Smart Watch</h5>
+                        <p class="card-text flex-grow-1">
+                            Smart watch with health monitoring features, GPS, and waterproof design. Compatible with all major platforms.
+                        </p>
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <span class="price">$199.99</span>
+                            <span class="badge bg-success">In Stock</span>
+                        </div>
+                        <form action="/checkout/stripe/create-checkout-session" method="POST">
+                            <input type="hidden" name="items" value='[{"product_id":"watch-001", "name":"Smart Watch", "description":"Smart watch with health monitoring", "price":199.99, "quantity":1}]'>
+                            <input type="hidden" name="order_id" value="demo-order-watch">
+                            <button type="submit" class="btn btn-primary checkout-btn">
+                                <i class="fab fa-stripe me-2"></i>Checkout with Stripe
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-12">
+                <div class="card bg-light">
+                    <div class="card-body">
+                        <h4 class="card-title"><i class="fas fa-info-circle text-primary me-2"></i>How It Works</h4>
+                        <p class="card-text">
+                            This demo uses our Stripe integration with the following features:
+                        </p>
+                        <ul>
+                            <li>Stripe-hosted checkout page for secure payment processing</li>
+                            <li>Automatic tax calculation based on location</li>
+                            <li>Webhook integration for order status updates</li>
+                            <li>Success and cancellation handling</li>
+                        </ul>
+                        <p class="card-text">
+                            <small class="text-muted">For testing, you can use Stripe test card number: 4242 4242 4242 4242</small>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

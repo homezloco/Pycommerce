@@ -140,7 +140,8 @@ except Exception as e:
 
 # Fall back to environment variables if settings are not in services
 if not STRIPE_API_KEY:
-    STRIPE_API_KEY = os.getenv("STRIPE_API_KEY", "")
+    # Try STRIPE_SECRET_KEY first (standard name), then fall back to STRIPE_API_KEY
+    STRIPE_API_KEY = os.getenv("STRIPE_SECRET_KEY") or os.getenv("STRIPE_API_KEY", "")
     STRIPE_PUBLIC_KEY = os.getenv("STRIPE_PUBLIC_KEY", "")
     STRIPE_WEBHOOK_SECRET = os.getenv("STRIPE_WEBHOOK_SECRET", "")
     STRIPE_ENABLED = os.getenv("STRIPE_ENABLED", "true").lower() in ("true", "1", "yes")
