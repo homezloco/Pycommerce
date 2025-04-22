@@ -1069,25 +1069,46 @@ async def page_editor(
     try:
         # Initialize managers
         page_manager = PageManager(session)
-        tenant_manager = TenantManager()
+        # Use the enhanced tenant manager from SDK
+        from pycommerce.sdk import AppTenantManager
+        tenant_manager = AppTenantManager()
         section_manager = PageSectionManager(session)
         block_manager = ContentBlockManager(session)
 
         # Get the page
         page = page_manager.get(id)
         if not page:
-            raise HTTPException(
-                status_code=404,
-                detail=f"Page with ID {id} not found"
+            logger.error(f"Page with ID {id} not found")
+            return RedirectResponse(
+                url=f"/admin/pages?tenant={tenant or ''}&status_message=Page+not+found&status_type=danger",
+                status_code=status.HTTP_303_SEE_OTHER
             )
 
-        # Get the tenant
-        tenant_obj = tenant_manager.get(str(page.tenant_id))
+        # Get the tenant with enhanced fallback
+        tenant_obj = tenant_manager.get_or_default(str(page.tenant_id))
         if not tenant_obj:
-            raise HTTPException(
-                status_code=404,
-                detail=f"Tenant with ID {page.tenant_id} not found"
-            )
+            logger.error(f"No tenant found for ID {page.tenant_id} and no fallback tenants available")
+            # Get all tenants to check if there are any
+            tenants = tenant_manager.get_all()
+            if tenants and len(tenants) > 0:
+                # Use first available tenant as fallback
+                tenant_obj = tenants[0]
+                logger.info(f"Using fallback tenant: {tenant_obj.slug}")
+                
+                # Update the page with the new tenant
+                try:
+                    logger.warning(f"Attempting to update page {id} with new tenant ID {tenant_obj.id}")
+                    page.tenant_id = tenant_obj.id
+                    session.commit()
+                    logger.info(f"Successfully updated page tenant ID to {tenant_obj.id}")
+                except Exception as e:
+                    logger.error(f"Failed to update page tenant ID: {str(e)}")
+                    session.rollback()
+            else:
+                return RedirectResponse(
+                    url=f"/admin/pages?status_message=No+tenants+available+to+edit+this+page&status_type=danger",
+                    status_code=status.HTTP_303_SEE_OTHER
+                )
 
         # Get all tenants for the sidebar
         tenants = tenant_manager.get_all()
@@ -1142,18 +1163,20 @@ async def page_delete(
     try:
         # Initialize managers
         page_manager = PageManager(session)
-        tenant_manager = TenantManager()
+        from pycommerce.sdk import AppTenantManager
+        tenant_manager = AppTenantManager()
 
         # Get the page
         page = page_manager.get(page_id)
         if not page:
-            raise HTTPException(
-                status_code=404,
-                detail=f"Page with ID {page_id} not found"
+            logger.error(f"Page with ID {page_id} not found")
+            return RedirectResponse(
+                url=f"/admin/pages?status_message=Page+not+found&status_type=danger",
+                status_code=status.HTTP_303_SEE_OTHER
             )
 
-        # Get the tenant for redirect
-        tenant = tenant_manager.get(str(page.tenant_id))
+        # Get the tenant for redirect using enhanced tenant manager
+        tenant = tenant_manager.get_or_default(str(page.tenant_id))
         tenant_slug = tenant.slug if tenant else ""
 
         # Delete the page
@@ -1170,11 +1193,12 @@ async def page_delete(
         try:
             page = page_manager.get(page_id)
             if page:
-                tenant = tenant_manager.get(str(page.tenant_id))
+                # Use enhanced tenant lookup
+                tenant = tenant_manager.get_or_default(str(page.tenant_id))
                 if tenant:
                     tenant_slug = tenant.slug
-        except:
-            pass
+        except Exception as nested_e:
+            logger.error(f"Error during error handling: {str(nested_e)}")
 
         return RedirectResponse(
             url=f"/admin/pages?tenant={tenant_slug}&status_message=Error+deleting+page:+{str(e)}&status_type=danger",
@@ -1193,24 +1217,27 @@ async def page_preview(
     try:
         # Initialize managers
         page_manager = PageManager(session)
-        tenant_manager = TenantManager()
+        from pycommerce.sdk import AppTenantManager
+        tenant_manager = AppTenantManager()
         section_manager = PageSectionManager(session)
         block_manager = ContentBlockManager(session)
 
         # Get the page
         page = page_manager.get(page_id)
         if not page:
-            raise HTTPException(
-                status_code=404,
-                detail=f"Page with ID {page_id} not found"
+            logger.error(f"Page with ID {page_id} not found")
+            return RedirectResponse(
+                url=f"/admin/pages?status_message=Page+not+found&status_type=danger",
+                status_code=status.HTTP_303_SEE_OTHER
             )
 
-        # Get the tenant
-        tenant = tenant_manager.get(str(page.tenant_id))
+        # Get the tenant with enhanced fallback
+        tenant = tenant_manager.get_or_default(str(page.tenant_id))
         if not tenant:
-            raise HTTPException(
-                status_code=404,
-                detail=f"Tenant with ID {page.tenant_id} not found"
+            logger.error(f"No tenant found for ID {page.tenant_id} and no fallback tenants available")
+            return RedirectResponse(
+                url=f"/admin/pages?status_message=No+tenant+found+for+this+page&status_type=danger",
+                status_code=status.HTTP_303_SEE_OTHER
             )
 
         # Get page sections
@@ -1235,6 +1262,12 @@ async def page_preview(
                 "preview_mode": True
             }
         )
+    except Exception as e:
+        logger.error(f"Error previewing page: {str(e)}")
+        return RedirectResponse(
+            url=f"/admin/pages?status_message=Error+previewing+page:+{str(e)}&status_type=danger",
+            status_code=status.HTTP_303_SEE_OTHER
+        )
     finally:
         session.close()
 
@@ -1247,7 +1280,8 @@ async def page_templates_list(
     session = SessionLocal()
     try:
         # Initialize managers
-        tenant_manager = TenantManager()
+        from pycommerce.sdk import AppTenantManager
+        tenant_manager = AppTenantManager()
         template_manager = PageTemplateManager(session)
 
         # Get all tenants for the sidebar
@@ -1255,9 +1289,19 @@ async def page_templates_list(
 
         # Get selected tenant from session
         selected_tenant_slug = request.session.get("selected_tenant")
+        
+        # Ensure we have a valid selected tenant
+        if not selected_tenant_slug and tenants:
+            # Use first tenant as default
+            selected_tenant_slug = tenants[0].slug
+            # Store in session
+            request.session["selected_tenant"] = selected_tenant_slug
+            logger.info(f"No tenant selected, using first available tenant: {selected_tenant_slug}")
 
         # Get templates
         templates_list = template_manager.list_templates()
+        
+        logger.info(f"Found {len(templates_list)} page templates")
 
         return templates.TemplateResponse(
             "admin/pages/templates.html",
@@ -1271,6 +1315,12 @@ async def page_templates_list(
                 "status_type": status_type
             }
         )
+    except Exception as e:
+        logger.error(f"Error listing page templates: {str(e)}")
+        return HTMLResponse(
+            content=f"<h1>Error</h1><p>Error listing page templates: {str(e)}</p>",
+            status_code=500
+        )
     finally:
         session.close()
 
@@ -1283,7 +1333,26 @@ async def create_section(
     session = SessionLocal()
     try:
         section_manager = PageSectionManager(session)
+        
+        # Log the section data for debugging
+        logger.info(f"Creating section with data: {section_data}")
+        
+        # Validate that we have a page_id
+        if 'page_id' not in section_data:
+            logger.error("Missing page_id in section data")
+            raise HTTPException(status_code=400, detail="Missing page_id in section data")
+            
+        # Get the page to verify it exists and get the tenant
+        page_manager = PageManager(session)
+        page = page_manager.get(section_data['page_id'])
+        
+        if not page:
+            logger.error(f"Page with ID {section_data['page_id']} not found")
+            raise HTTPException(status_code=404, detail=f"Page with ID {section_data['page_id']} not found")
+            
+        # Create the section
         section = section_manager.create(section_data)
+        
         return {
             "id": str(section.id),
             "page_id": str(section.page_id),
@@ -1293,6 +1362,9 @@ async def create_section(
             "created_at": section.created_at.isoformat(),
             "updated_at": section.updated_at.isoformat()
         }
+    except HTTPException:
+        session.rollback()
+        raise
     except Exception as e:
         session.rollback()
         logger.error(f"Error creating section: {str(e)}")
