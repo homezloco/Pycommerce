@@ -101,6 +101,14 @@ async def plugins_page(
     if tenant_obj:
         tenant_plugin_config = getattr(tenant_obj, 'plugin_config', {}) or {}
     
+    # Convert plugins to traditional list format for backwards compatibility with template
+    plugins = []
+    for plugin_type, plugin_list in filtered_plugins.items():
+        for plugin in plugin_list:
+            plugin_entry = plugin.copy()  # Copy to avoid modifying original
+            plugin_entry['type'] = plugin_type
+            plugins.append(plugin_entry)
+    
     return templates.TemplateResponse(
         "admin/plugins.html",
         {
@@ -109,6 +117,7 @@ async def plugins_page(
             "tenant": tenant_obj,
             "tenants": tenants,
             "active_page": "plugins",
+            "plugins": plugins,  # Add the flattened plugins list
             "plugins_by_type": filtered_plugins,
             "plugin_types": list(plugins_by_type.keys()),
             "selected_plugin_type": plugin_type,
