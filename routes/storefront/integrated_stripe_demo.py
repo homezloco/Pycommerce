@@ -70,6 +70,56 @@ def setup_routes(templates):
         logger.info("Serving integrated Stripe demo page via /demo route")
         return templates.TemplateResponse("stripe_demo.html", {"request": request})
     
+    @router.get("/stripe-demo/create-checkout-session")
+    async def explain_checkout_session(request: Request):
+        """
+        Display information about the checkout session endpoint.
+        
+        Args:
+            request (Request): The incoming request
+            
+        Returns:
+            HTMLResponse: Information about how to use the endpoint
+        """
+        logger.info("GET request to create-checkout-session - providing usage information")
+        
+        html_content = """
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Checkout Session Information</title>
+            <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+        </head>
+        <body>
+            <div class="container py-5">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h3>Stripe Checkout Session Endpoint</h3>
+                    </div>
+                    <div class="card-body">
+                        <h5 class="card-title">This endpoint requires a POST request</h5>
+                        <p class="card-text">You are accessing this endpoint with a GET request, but it requires a POST request with form data.</p>
+                        
+                        <div class="alert alert-info">
+                            <h6>Required Form Fields:</h6>
+                            <ul>
+                                <li><strong>items</strong>: JSON string containing the cart items</li>
+                                <li><strong>order_id</strong>: A unique identifier for the order</li>
+                            </ul>
+                        </div>
+                        
+                        <p>To use this endpoint correctly, visit the <a href="/stripe-demo">Stripe Demo Page</a>, add products to your cart, and click the "Checkout with Stripe" button.</p>
+                    </div>
+                </div>
+            </div>
+        </body>
+        </html>
+        """
+        
+        return HTMLResponse(content=html_content)
+    
     @router.post("/stripe-demo/create-checkout-session")
     async def create_checkout_session(request: Request, items: str = Form(...), order_id: str = Form(...)):
         """
