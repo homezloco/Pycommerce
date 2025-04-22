@@ -25,7 +25,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Create a ProcessPoolExecutor for handling ASGI requests
-UVICORN_PORT = 8000
+UVICORN_PORT = 8001  # Changed from 8000 to avoid port conflicts
 UVICORN_HOST = "127.0.0.1"
 UVICORN_SERVER = f"http://{UVICORN_HOST}:{UVICORN_PORT}"
 

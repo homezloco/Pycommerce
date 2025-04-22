@@ -26,7 +26,7 @@ app.secret_key = os.environ.get("FLASK_SECRET_KEY", "pycommerce-secret-key")
 flask_app = app
 
 # Define port for FastAPI service
-FASTAPI_PORT = 8000
+FASTAPI_PORT = 8002  # Changed from 8000 to avoid port conflicts
 FASTAPI_URL = f"http://127.0.0.1:{FASTAPI_PORT}"
 fastapi_process = None
 
@@ -38,9 +38,9 @@ def start_fastapi_server():
         fastapi_process = subprocess.Popen([
             sys.executable, 
             "-c", 
-            "import uvicorn; uvicorn.run('main:app', host='127.0.0.1', port=8000)"
+            f"import uvicorn; uvicorn.run('main:app', host='127.0.0.1', port={FASTAPI_PORT})"
         ])
-        logger.info("Started FastAPI server on port 8000")
+        logger.info(f"Started FastAPI server on port {FASTAPI_PORT}")
         return True
     except Exception as e:
         logger.error(f"Failed to start FastAPI server: {e}")
