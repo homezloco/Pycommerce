@@ -281,3 +281,16 @@ class ProductManager:
             logger.info(f"Falling back to in-memory products for tenant: {tenant_id}")
             # Fallback to in-memory implementation
             return list(self._products.values())
+            
+    def list_by_tenant(self, tenant_id: str) -> List[Product]:
+        """
+        List all products for a specific tenant.
+        This is an alias for get_by_tenant for API compatibility.
+
+        Args:
+            tenant_id: The ID of the tenant
+
+        Returns:
+            List of products for the tenant
+        """
+        return self.get_by_tenant(tenant_id)
