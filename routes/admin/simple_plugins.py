@@ -1,29 +1,45 @@
 """
-Simplified admin routes for plugin management.
+Admin routes for simplified plugin management.
 
-This provides a minimal implementation for the plugins page.
+This module provides routes for managing plugins in the admin interface.
 """
 import logging
-from typing import Optional
+from typing import Dict, Optional, List
 
 from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 
-# Initialize logger
+from pycommerce.models.tenant import TenantManager
+from pycommerce.plugins import get_plugin_registry
+
 logger = logging.getLogger(__name__)
 
 # Create router
 router = APIRouter(prefix="/admin", tags=["admin"])
 
-# Templates will be set by the calling application
+# Template setup will be passed from main app
 templates = None
 
-@router.get("/simple-plugins", response_class=HTMLResponse)
-async def simple_plugins_page(request: Request):
-    """Simple plugins page displaying hardcoded plugin data."""
+# Initialize managers
+tenant_manager = TenantManager()
+
+@router.get("/plugins-simple", response_class=HTMLResponse)
+async def plugins_page_simple(
+    request: Request,
+    tenant: Optional[str] = None,
+    plugin_type: Optional[str] = None,
+    status_message: Optional[str] = None,
+    status_type: str = "info"
+):
+    """Admin page for simplified plugin management."""
+    # Get all tenants for the sidebar
+    tenants = tenant_manager.get_all()
     
-    # Create a hardcoded list of plugins
+    # Get tenant from query parameters or session
+    selected_tenant_slug = tenant or request.session.get("selected_tenant")
+    
+    # Create a simplified list of plugins
     plugins = [
         {
             'id': 'stripe_payment',
@@ -32,8 +48,6 @@ async def simple_plugins_page(request: Request):
             'version': '0.1.0',
             'type': 'payment',
             'enabled': True,
-            'configured': True,
-            'removable': False,
         },
         {
             'id': 'paypal_payment',
@@ -42,8 +56,6 @@ async def simple_plugins_page(request: Request):
             'version': '0.1.0',
             'type': 'payment',
             'enabled': True,
-            'configured': True,
-            'removable': False,
         },
         {
             'id': 'standard_shipping',
@@ -52,23 +64,22 @@ async def simple_plugins_page(request: Request):
             'version': '0.1.0',
             'type': 'shipping',
             'enabled': True,
-            'configured': True,
-            'removable': False,
         }
     ]
     
-    # Log the plugin data to help with debugging
-    logger.info(f"Rendering simple plugins page with {len(plugins)} plugins")
-    for plugin in plugins:
-        logger.info(f"Plugin: {plugin['name']} [{plugin['id']}] type={plugin['type']}")
+    logger.info(f"Simple plugins page loaded with {len(plugins)} plugins")
     
     return templates.TemplateResponse(
-        "admin/simple_plugins.html",
+        "admin/plugins_simple.html",
         {
             "request": request,
+            "selected_tenant": selected_tenant_slug,
+            "tenants": tenants,
             "active_page": "plugins",
             "plugins": plugins,
-            "title": "Simple Plugins Page"
+            "plugin_types": ['payment', 'shipping'],
+            "status_message": status_message,
+            "status_type": status_type
         }
     )
 

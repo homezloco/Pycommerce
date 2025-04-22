@@ -135,23 +135,34 @@ async def plugins_page(
     
     logger.info(f"Added {len(plugins)} hardcoded plugins to template")
     
-    return templates.TemplateResponse(
-        "admin/plugins.html",
-        {
-            "request": request,
-            "selected_tenant": selected_tenant_slug,
-            "tenant": tenant_obj,
-            "tenants": tenants,
-            "active_page": "plugins",
-            "plugins": plugins,  # Add the flattened plugins list
-            "plugins_by_type": filtered_plugins,
-            "plugin_types": list(plugins_by_type.keys()),
-            "selected_plugin_type": plugin_type,
-            "plugin_config": tenant_plugin_config,
-            "status_message": status_message,
-            "status_type": status_type
-        }
-    )
+    # Debug the plugins data to help diagnose issues
+    for i, plugin in enumerate(plugins):
+        logger.info(f"Plugin {i+1}: id={plugin['id']}, name={plugin['name']}, type={plugin['type']}")
+    
+    context = {
+        "request": request,
+        "selected_tenant": selected_tenant_slug,
+        "tenant": tenant_obj,
+        "tenants": tenants,
+        "active_page": "plugins",
+        "plugins": plugins,  # Add the flattened plugins list
+        "plugins_by_type": filtered_plugins,
+        "plugin_types": list(plugins_by_type.keys()),
+        "selected_plugin_type": plugin_type,
+        "plugin_config": tenant_plugin_config,
+        "status_message": status_message,
+        "status_type": status_type
+    }
+    
+    logger.info(f"Template context plugins count: {len(context['plugins'])}")
+    
+    try:
+        response = templates.TemplateResponse("admin/plugins.html", context)
+        logger.info("Successfully generated template response")
+        return response
+    except Exception as e:
+        logger.error(f"Error rendering plugins template: {str(e)}")
+        raise
 
 @router.post("/plugins/configure", response_class=RedirectResponse)
 async def configure_plugin(

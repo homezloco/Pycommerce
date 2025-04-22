@@ -81,6 +81,11 @@ try:
 
     plugins_router = setup_plugins_routes(templates)
     app.include_router(plugins_router)
+    
+    # Add the simplified plugins router
+    simple_plugins_router = setup_simple_plugins_routes(templates)
+    app.include_router(simple_plugins_router)
+    logger.info("Simplified plugins routes registered successfully")
 
     tenants_router = setup_tenants_routes(templates)
     app.include_router(tenants_router)
@@ -140,9 +145,7 @@ try:
     security_router = setup_security_routes(templates) # Initialize security routes
     app.include_router(security_router)
     
-    # Initialize simple plugins routes
-    simple_plugins_router = setup_simple_plugins_routes(templates)
-    app.include_router(simple_plugins_router)
+    # Simple plugins routes already registered above
     
     # Direct plugins routes disabled temporarily
     # direct_plugins_router = setup_direct_plugins_routes(templates)

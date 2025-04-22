@@ -1,0 +1,70 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Plugins - PyCommerce Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <h2 class="mb-4">Plugin Management</h2>
+    
+    {% if status_message %}
+    <div class="alert alert-{{ status_type }} alert-dismissible fade show" role="alert">
+        {{ status_message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {% endif %}
+    
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="card-title">Active Plugins</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Plugin</th>
+                            <th>Type</th>
+                            <th>Version</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Simple debugging table -->
+                        {% if plugins %}
+                            {% for plugin in plugins %}
+                                <tr>
+                                    <td>{{ plugin.name }}</td>
+                                    <td>{{ plugin.type }}</td>
+                                    <td>{{ plugin.version }}</td>
+                                    <td>
+                                        {% if plugin.enabled %}
+                                            <span class="badge bg-success">Active</span>
+                                        {% else %}
+                                            <span class="badge bg-danger">Inactive</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td colspan="4" class="text-center">No plugins found</td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <div class="card">
+        <div class="card-header">
+            <h5 class="card-title">Debug Information</h5>
+        </div>
+        <div class="card-body">
+            <h6>Plugin Count: {{ plugins|length }}</h6>
+            <h6>Plugin Types: {{ plugin_types|join(', ') }}</h6>
+            <pre class="bg-light p-3">{{ plugins|tojson(indent=2) }}</pre>
+        </div>
+    </div>
+</div>
+{% endblock %}
