@@ -6,19 +6,29 @@ that doesn't rely on a separate server.
 """
 import os
 import json
-import stripe
 import logging
+import traceback
 from uuid import uuid4
 from fastapi import APIRouter, Request, Form, Response
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 
+# Configure more detailed logging
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
 
-# Initialize Stripe
-stripe.api_key = os.environ.get('STRIPE_SECRET_KEY')
-if not stripe.api_key:
-    logger.warning("STRIPE_SECRET_KEY environment variable not set. Checkout will not work.")
+# We'll import stripe in functions to avoid issues with missing modules
+try:
+    import stripe
+    # Log but don't store the key directly in a variable at the module level
+    STRIPE_SECRET_KEY = os.environ.get('STRIPE_SECRET_KEY')
+    logger.info(f"Stripe module imported successfully. API key is {'present' if STRIPE_SECRET_KEY else 'missing'}")
+    if not STRIPE_SECRET_KEY:
+        logger.warning("STRIPE_SECRET_KEY environment variable not set. Checkout will not work.")
+except ImportError as e:
+    logger.error(f"Failed to import stripe module: {e}")
+    stripe = None
+    STRIPE_SECRET_KEY = None
 
 def setup_routes(templates):
     """
@@ -75,6 +85,22 @@ def setup_routes(templates):
         """
         logger.info(f"Creating Stripe checkout session for order {order_id}")
         
+        # First, make sure Stripe was imported successfully
+        if not stripe:
+            logger.error("Stripe module is not available.")
+            return JSONResponse(
+                status_code=500,
+                content={"error": "Stripe payment processing is not available. Please contact support."}
+            )
+            
+        # Initialize Stripe API key
+        try:
+            stripe.api_key = os.environ.get('STRIPE_SECRET_KEY')
+            logger.debug(f"Setting Stripe API key: {'Set' if stripe.api_key else 'Missing'}")
+        except Exception as key_error:
+            logger.error(f"Error setting Stripe API key: {str(key_error)}")
+            
+        # Check if the API key is set
         if not stripe.api_key:
             logger.error("STRIPE_SECRET_KEY not set. Cannot proceed with checkout.")
             return JSONResponse(
@@ -83,7 +109,9 @@ def setup_routes(templates):
             )
         
         try:
+            # Parse the JSON items data
             items_data = json.loads(items)
+            logger.debug(f"Parsed items data: {items_data}")
             
             # Create line items for Stripe
             line_items = []
@@ -96,7 +124,7 @@ def setup_routes(templates):
                         "currency": "usd",
                         "product_data": {
                             "name": item["name"],
-                            "description": item.get("description", f"{item['name']} x {item['quantity']}")
+                            "description": item.get("description", "")
                         },
                         "unit_amount": price_in_cents,
                     },
@@ -109,7 +137,11 @@ def setup_routes(templates):
             # Get the domain for success/cancel URLs
             host_url = str(request.base_url).rstrip('/')
             
-            # Create checkout session
+            logger.info("Creating Stripe checkout session...")
+            # Set the Stripe API key again just before using it to ensure it's fresh
+            stripe.api_key = os.environ.get('STRIPE_SECRET_KEY')
+            
+            # Try to create the checkout session
             checkout_session = stripe.checkout.Session.create(
                 payment_method_types=["card"],
                 line_items=line_items,
@@ -122,16 +154,28 @@ def setup_routes(templates):
                 }
             )
             
-            logger.info(f"Stripe checkout session created: {checkout_session.id}")
+            logger.info(f"Stripe checkout session created successfully with ID: {checkout_session.id}")
             
             # Redirect to the Stripe checkout page
             return RedirectResponse(url=checkout_session.url, status_code=303)
             
         except Exception as e:
-            logger.error(f"Error creating Stripe checkout session: {str(e)}")
+            # Capture any kind of error with full details
+            error_type = type(e).__name__
+            error_message = str(e)
+            error_traceback = traceback.format_exc()
+            
+            logger.error(f"Error creating checkout session: {error_type}: {error_message}")
+            logger.error(f"Error traceback: {error_traceback}")
+            
+            # Return a user-friendly error response
             return JSONResponse(
                 status_code=500,
-                content={"error": str(e)}
+                content={
+                    "error": "There was an error processing your payment request.",
+                    "details": error_message,
+                    "type": error_type
+                }
             )
     
     @router.get("/stripe-demo/success", response_class=HTMLResponse)

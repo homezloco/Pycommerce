@@ -143,6 +143,10 @@
                                 <h5>Total:</h5>
                                 <h5 id="cart-total">$0.00</h5>
                             </div>
+                            <div id="api-error" class="alert alert-danger mt-2 mb-2" style="display: none;">
+                                <i class="fas fa-exclamation-circle me-2"></i>
+                                <span id="error-message"></span>
+                            </div>
                             <form action="/create-checkout-session" method="POST" id="checkout-form">
                                 <input type="hidden" name="items" id="items-input">
                                 <input type="hidden" name="order_id" value="demo-123">
@@ -214,6 +218,52 @@
         let cart = [];
         let total = 0;
 
+        // Set up the checkout form submission with error handling
+        document.addEventListener('DOMContentLoaded', () => {
+            const checkoutForm = document.getElementById('checkout-form');
+            const errorDiv = document.getElementById('api-error');
+            const errorMessage = document.getElementById('error-message');
+            
+            checkoutForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                
+                // Clear previous errors
+                errorDiv.style.display = 'none';
+                
+                // Show loading state
+                const checkoutButton = document.getElementById('checkout-button');
+                const originalButtonText = checkoutButton.innerHTML;
+                checkoutButton.disabled = true;
+                checkoutButton.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Processing...';
+                
+                try {
+                    const formData = new FormData(checkoutForm);
+                    const response = await fetch('/create-checkout-session', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    if (!response.ok) {
+                        // If response is not 2xx, try to get error details
+                        const errorData = await response.json();
+                        throw new Error(errorData.error || 'Checkout failed. Please try again.');
+                    }
+                    
+                    // Redirect to the URL returned by the server
+                    window.location.href = response.url;
+                    
+                } catch (error) {
+                    console.error('Checkout error:', error);
+                    errorDiv.style.display = 'block';
+                    errorMessage.textContent = error.message || 'An unexpected error occurred. Please try again.';
+                    
+                    // Reset button
+                    checkoutButton.disabled = false;
+                    checkoutButton.innerHTML = originalButtonText;
+                }
+            });
+        });
+
         function addToCart(id, name, price) {
             // Check if product already in cart
             const existingItemIndex = cart.findIndex(item => item.id === id);
@@ -229,6 +279,12 @@
                     price: price,
                     quantity: 1
                 });
+            }
+            
+            // Hide any previous errors when adding to cart
+            const errorDiv = document.getElementById('api-error');
+            if (errorDiv) {
+                errorDiv.style.display = 'none';
             }
             
             // Update total and UI
@@ -255,6 +311,12 @@
         function clearCart() {
             cart = [];
             updateCart();
+            
+            // Hide any errors when clearing cart
+            const errorDiv = document.getElementById('api-error');
+            if (errorDiv) {
+                errorDiv.style.display = 'none';
+            }
         }
 
         function updateCart() {
