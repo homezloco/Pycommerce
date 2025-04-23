@@ -574,6 +574,8 @@
               <option value="testimonials">Testimonials</option>
             </select>
           </div>
+          
+          <!-- General settings for all sections -->
           <div class="mb-3">
             <label for="sectionBackground" class="form-label">Background Color</label>
             <input type="color" class="form-control form-control-color" id="sectionBackground" name="background" value="#ffffff">
@@ -594,6 +596,69 @@
               <option value="wide">Wide</option>
               <option value="full">Full Width</option>
             </select>
+          </div>
+          
+          <!-- Products Grid specific settings -->
+          <div id="productsGridSettings" style="display: none;">
+            <hr>
+            <h5>Product Grid Settings</h5>
+            
+            <div class="mb-3">
+              <label for="productsPerRow" class="form-label">Products Per Row</label>
+              <select class="form-select" id="productsPerRow" name="products_per_row">
+                <option value="2">2</option>
+                <option value="3" selected>3</option>
+                <option value="4">4</option>
+                <option value="5">5</option>
+              </select>
+            </div>
+            
+            <div class="mb-3">
+              <label for="productsLimit" class="form-label">Number of Products to Show</label>
+              <input type="number" class="form-control" id="productsLimit" name="products_limit" min="1" max="50" value="6">
+            </div>
+            
+            <div class="mb-3">
+              <label for="productCategory" class="form-label">Filter by Category</label>
+              <select class="form-select" id="productCategory" name="product_category">
+                <option value="">All Categories</option>
+                <!-- Will be populated dynamically -->
+              </select>
+            </div>
+            
+            <div class="mb-3">
+              <label for="productsSortBy" class="form-label">Sort Products By</label>
+              <select class="form-select" id="productsSortBy" name="products_sort_by">
+                <option value="default">Default</option>
+                <option value="price_asc">Price (Low to High)</option>
+                <option value="price_desc">Price (High to Low)</option>
+                <option value="newest">Newest</option>
+                <option value="name_asc">Name (A-Z)</option>
+              </select>
+            </div>
+            
+            <div class="mb-3">
+              <label for="productsDisplayStyle" class="form-label">Product Display Style</label>
+              <select class="form-select" id="productsDisplayStyle" name="products_display_style">
+                <option value="card" selected>Card</option>
+                <option value="list">List</option>
+                <option value="compact">Compact</option>
+              </select>
+            </div>
+            
+            <div class="form-check mb-3">
+              <input class="form-check-input" type="checkbox" id="showProductPrices" name="show_product_prices" checked>
+              <label class="form-check-label" for="showProductPrices">
+                Show Product Prices
+              </label>
+            </div>
+            
+            <div class="form-check mb-3">
+              <input class="form-check-input" type="checkbox" id="showProductImages" name="show_product_images" checked>
+              <label class="form-check-label" for="showProductImages">
+                Show Product Images
+              </label>
+            </div>
           </div>
         </form>
       </div>
@@ -890,11 +955,63 @@ function ensureSortableLoaded(callback) {
         document.getElementById('sectionId').value = section.id;
         document.getElementById('sectionType').value = section.section_type;
 
-        // Set settings
+        // Set common settings
         if (section.settings) {
           document.getElementById('sectionBackground').value = section.settings.background || '#ffffff';
           document.getElementById('sectionPadding').value = section.settings.padding || 'medium';
           document.getElementById('sectionWidth').value = section.settings.width || 'normal';
+        }
+        
+        // Show/hide section-specific settings based on section type
+        const productsGridSettings = document.getElementById('productsGridSettings');
+        
+        // Initially hide all section-specific settings
+        productsGridSettings.style.display = 'none';
+        
+        // Show section-specific settings
+        if (section.section_type === 'products') {
+          productsGridSettings.style.display = 'block';
+          
+          // Load categories for the product filter dropdown
+          loadCategories();
+          
+          // Set product grid specific settings
+          if (section.settings) {
+            // Set products per row
+            if (document.getElementById('productsPerRow')) {
+              document.getElementById('productsPerRow').value = section.settings.products_per_row || '3';
+            }
+            
+            // Set products limit
+            if (document.getElementById('productsLimit')) {
+              document.getElementById('productsLimit').value = section.settings.products_limit || '6';
+            }
+            
+            // Set product category
+            if (document.getElementById('productCategory')) {
+              document.getElementById('productCategory').value = section.settings.product_category || '';
+            }
+            
+            // Set product sort by
+            if (document.getElementById('productsSortBy')) {
+              document.getElementById('productsSortBy').value = section.settings.products_sort_by || 'default';
+            }
+            
+            // Set product display style
+            if (document.getElementById('productsDisplayStyle')) {
+              document.getElementById('productsDisplayStyle').value = section.settings.products_display_style || 'card';
+            }
+            
+            // Set show product prices
+            if (document.getElementById('showProductPrices')) {
+              document.getElementById('showProductPrices').checked = section.settings.show_product_prices !== false;
+            }
+            
+            // Set show product images
+            if (document.getElementById('showProductImages')) {
+              document.getElementById('showProductImages').checked = section.settings.show_product_images !== false;
+            }
+          }
         }
 
         // Show the modal
@@ -904,6 +1021,50 @@ function ensureSortableLoaded(callback) {
       .catch(error => {
         console.error('Error fetching section:', error);
         alert('Failed to load section settings. Please try again.');
+      });
+  }
+  
+  function loadCategories() {
+    // Get the current tenant from the URL or directly from the page data
+    const urlParams = new URLSearchParams(window.location.search);
+    let tenant = urlParams.get('tenant');
+    
+    // If not in URL, try to get from session storage or use a default tenant
+    if (!tenant) {
+      tenant = sessionStorage.getItem('selected_tenant') || 'tech';
+    }
+    
+    console.log('Loading categories for tenant:', tenant);
+    
+    // Fetch categories from the API
+    fetch(`/admin/api/categories?tenant=${tenant}`)
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Error fetching categories');
+        }
+        return response.json();
+      })
+      .then(data => {
+        // Populate the select dropdown
+        const categorySelect = document.getElementById('productCategory');
+        
+        // Keep the default "All Categories" option
+        const defaultOption = categorySelect.querySelector('option[value=""]');
+        categorySelect.innerHTML = '';
+        categorySelect.appendChild(defaultOption);
+        
+        // Add categories to the dropdown
+        if (data.categories && data.categories.length > 0) {
+          data.categories.forEach(category => {
+            const option = document.createElement('option');
+            option.value = category.id;
+            option.textContent = category.name;
+            categorySelect.appendChild(option);
+          });
+        }
+      })
+      .catch(error => {
+        console.error('Error fetching categories:', error);
       });
   }
   
@@ -951,10 +1112,15 @@ function ensureSortableLoaded(callback) {
       case 'products':
         sectionSettings = {
           padding: 'medium',
-          background: 'white',
-          columns: 3,
-          show_price: true,
-          products_source: 'all' // Default to showing all products
+          background: '#ffffff',
+          width: 'normal',
+          products_per_row: '3',
+          products_limit: '6',
+          product_category: '',
+          products_sort_by: 'default',
+          products_display_style: 'card',
+          show_product_prices: true,
+          show_product_images: true
         };
         break;
       case 'content':
@@ -1168,13 +1334,26 @@ function ensureSortableLoaded(callback) {
     document.getElementById('saveSectionSettingsBtn').addEventListener('click', function() {
       const formData = new FormData(document.getElementById('sectionSettingsForm'));
       const sectionId = formData.get('section_id');
+      const sectionType = document.getElementById('sectionType').value;
 
-      // Convert form data to a settings object
+      // Get basic settings that apply to all section types
       const settings = {
         background: formData.get('background'),
         padding: formData.get('padding'),
         width: formData.get('width')
       };
+
+      // Add section-specific settings
+      if (sectionType === 'products') {
+        // Add product grid settings
+        settings.products_per_row = formData.get('products_per_row');
+        settings.products_limit = formData.get('products_limit');
+        settings.product_category = formData.get('product_category');
+        settings.products_sort_by = formData.get('products_sort_by');
+        settings.products_display_style = formData.get('products_display_style');
+        settings.show_product_prices = formData.get('show_product_prices') === 'on';
+        settings.show_product_images = formData.get('show_product_images') === 'on';
+      }
 
       updateSectionSettings(sectionId, settings);
 

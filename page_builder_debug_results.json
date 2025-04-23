@@ -23,7 +23,7 @@
       },
       "page_sections": {
         "exists": true,
-        "record_count": 105,
+        "record_count": 104,
         "columns": [
           "id",
           "page_id",
@@ -36,7 +36,7 @@
       },
       "content_blocks": {
         "exists": true,
-        "record_count": 75,
+        "record_count": 77,
         "columns": [
           "id",
           "section_id",
@@ -83,8 +83,8 @@
     },
     "templates/admin/pages/editor.html": {
       "exists": true,
-      "size": 81705,
-      "last_modified": 1745355227.839342,
+      "size": 81762,
+      "last_modified": 1745376443.2383358,
       "is_empty": false,
       "readable": true,
       "sample": "{% extends \"admin/base_admin.html\" %}\n\n{% block title %}Page Editor - PyCommerce Admin{% endblock %}"
