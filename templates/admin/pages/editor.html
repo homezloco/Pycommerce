@@ -1043,8 +1043,16 @@ function ensureSortableLoaded(callback) {
     
     console.log('Loading categories for tenant:', tenant);
     
-    // Fetch categories from the API
-    fetch(`/admin/api/categories?tenant=${tenant}`)
+    // Fetch categories from the API - try both endpoints
+    fetch(`/api/categories?tenant=${tenant}`)
+      .then(response => {
+        if (!response.ok) {
+          // If first endpoint fails, try the admin API endpoint
+          console.log('Trying admin categories endpoint...');
+          return fetch(`/admin/api/categories?tenant=${tenant}`);
+        }
+        return response;
+      })
       .then(response => {
         if (!response.ok) {
           throw new Error('Error fetching categories');
@@ -1054,11 +1062,22 @@ function ensureSortableLoaded(callback) {
       .then(data => {
         // Populate the select dropdown
         const categorySelect = document.getElementById('productCategory');
+        if (!categorySelect) {
+          console.error('Could not find productCategory select element');
+          return;
+        }
         
         // Keep the default "All Categories" option
         const defaultOption = categorySelect.querySelector('option[value=""]');
         categorySelect.innerHTML = '';
-        categorySelect.appendChild(defaultOption);
+        if (defaultOption) {
+          categorySelect.appendChild(defaultOption);
+        } else {
+          const newDefaultOption = document.createElement('option');
+          newDefaultOption.value = '';
+          newDefaultOption.textContent = 'All Categories';
+          categorySelect.appendChild(newDefaultOption);
+        }
         
         // Add categories to the dropdown
         if (data.categories && data.categories.length > 0) {
@@ -1068,10 +1087,29 @@ function ensureSortableLoaded(callback) {
             option.textContent = category.name;
             categorySelect.appendChild(option);
           });
+          console.log(`Added ${data.categories.length} categories to dropdown`);
+        } else {
+          console.log('No categories found for tenant', tenant);
         }
       })
       .catch(error => {
         console.error('Error fetching categories:', error);
+        // Still provide some default categories as fallback
+        const categorySelect = document.getElementById('productCategory');
+        if (categorySelect) {
+          const categories = [
+            { id: 'electronics', name: 'Electronics' },
+            { id: 'clothing', name: 'Clothing' },
+            { id: 'accessories', name: 'Accessories' }
+          ];
+          
+          categories.forEach(category => {
+            const option = document.createElement('option');
+            option.value = category.id;
+            option.textContent = category.name;
+            categorySelect.appendChild(option);
+          });
+        }
       });
   }
   
