@@ -66,6 +66,14 @@ try:
 except ImportError as e:
     logger.warning(f"Failed to register user API routes: {str(e)}")
 
+try:
+    # Media endpoints
+    from .media import router as media_router
+    api_router.include_router(media_router)
+    logger.info("Media API routes registered")
+except ImportError as e:
+    logger.warning(f"Failed to register media API routes: {str(e)}")
+
 # Root API endpoint
 @api_router.get("/", include_in_schema=True, tags=["System"])
 async def api_root(request: Request) -> Dict[str, Any]:
@@ -97,6 +105,7 @@ async def api_root(request: Request) -> Dict[str, Any]:
             "products": f"{root_path}/api/products",
             "orders": f"{root_path}/api/orders",
             "categories": f"{root_path}/api/categories",
-            "users": f"{root_path}/api/users"
+            "users": f"{root_path}/api/users",
+            "media": f"{root_path}/api/media"
         }
     }

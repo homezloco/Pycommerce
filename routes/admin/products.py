@@ -79,64 +79,6 @@ async def admin_update_product(
 ):
     """Update a product."""
     try:
-        # Process categories string into list
-        category_list = []
-        if categories:
-            category_list = [cat.strip() for cat in categories.split(",") if cat.strip()]
-        
-        # Get existing product to preserve metadata
-        product_obj = product_manager.get(product_id)
-        metadata = getattr(product_obj, 'metadata', {}) or {}
-        
-        # Update metadata
-        metadata["tenant_id"] = tenant_id
-        if image_url:
-            metadata["image_url"] = image_url
-        
-        # Update product
-        update_data = {
-            "name": name,
-            "sku": sku,
-            "price": price,
-            "stock": stock,
-            "categories": category_list,
-            "description": description,
-            "metadata": metadata
-        }
-        
-        product_manager.update(product_id, **update_data)
-        logger.info(f"Updated product: {name}")
-        
-        # Redirect to products page with success message
-        return RedirectResponse(
-            url="/admin/products?status_message=Product+updated+successfully&status_type=success", 
-            status_code=303
-        )
-    
-    except Exception as e:
-        logger.error(f"Error updating product: {str(e)}")
-        # Redirect with error message
-        error_message = f"Error updating product: {str(e)}"
-        return RedirectResponse(
-            url=f"/admin/products?status_message={error_message}&status_type=danger", 
-            status_code=303
-        )
-
-@router.post("/update/{product_id}", response_class=RedirectResponse)
-async def admin_update_product(
-    request: Request,
-    product_id: str,
-    tenant_id: str = Form(...),
-    name: str = Form(...),
-    sku: str = Form(...),
-    price: float = Form(...),
-    stock: int = Form(0),
-    categories: Optional[str] = Form(""),
-    image_url: Optional[str] = Form(None),
-    description: Optional[str] = Form(None)
-):
-    """Update a product."""
-    try:
         logger.info(f"Attempting to update product ID: {product_id}")
         
         # Find the product in all available tenants

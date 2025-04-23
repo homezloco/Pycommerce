@@ -64,14 +64,55 @@
                             <div class="form-text">Separate multiple categories with commas</div>
                         </div>
                         <div class="mb-3">
-                            <label for="image_url" class="form-label">Image URL (Optional)</label>
-                            <input type="url" class="form-control" id="image_url" name="image_url" 
-                                   value="{{ product.image_url }}">
+                            <label for="image_url" class="form-label">Product Image (Optional)</label>
+                            <div class="input-group">
+                                <input type="url" class="form-control" id="image_url" name="image_url" 
+                                       value="{{ product.image_url }}" placeholder="Enter image URL or select from media library">
+                                <button class="btn btn-outline-secondary" type="button" id="mediaManagerBtn">
+                                    <i class="bi bi-images"></i> Media Library
+                                </button>
+                            </div>
+                            <div class="form-text">Enter a URL or select an image from the media library</div>
                             {% if product.image_url %}
                             <div class="mt-2">
-                                <img src="{{ product.image_url }}" alt="{{ product.name }}" class="img-thumbnail" style="max-height: 100px;">
+                                <img src="{{ product.image_url }}" alt="{{ product.name }}" id="productImagePreview" class="img-thumbnail" style="max-height: 100px;">
+                            </div>
+                            {% else %}
+                            <div class="mt-2">
+                                <img src="" alt="No image selected" id="productImagePreview" class="img-thumbnail d-none" style="max-height: 100px;">
                             </div>
                             {% endif %}
+                        </div>
+                        
+                        <!-- Media Library Modal -->
+                        <div class="modal fade" id="mediaLibraryModal" tabindex="-1" aria-labelledby="mediaLibraryModalLabel" aria-hidden="true">
+                            <div class="modal-dialog modal-lg">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title" id="mediaLibraryModalLabel">Media Library</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <div class="row" id="mediaLibraryContainer">
+                                            <div class="col-12 text-center py-5" id="mediaLoading">
+                                                <div class="spinner-border text-primary" role="status">
+                                                    <span class="visually-hidden">Loading...</span>
+                                                </div>
+                                                <p class="mt-2">Loading media...</p>
+                                            </div>
+                                            <div class="col-12" id="mediaLoadError" style="display: none;">
+                                                <div class="alert alert-danger">
+                                                    Error loading media. Please try again.
+                                                </div>
+                                            </div>
+                                            <div class="row" id="mediaItems"></div>
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                         <div class="mb-3">
                             <label for="description" class="form-label">Description</label>
@@ -91,7 +132,6 @@
 
 {% block scripts %}
 <script>
-    // Initialize the AI modal
     document.addEventListener('DOMContentLoaded', function() {
         // Setup for AI Modal
         const aiModal = document.getElementById('aiModal');
@@ -106,6 +146,101 @@
                     bootstrap.Modal.getInstance(aiModal).hide();
                 });
             });
+        }
+        
+        // Media Library Modal functionality
+        const mediaLibraryModal = document.getElementById('mediaLibraryModal');
+        const mediaLibraryBtn = document.getElementById('mediaManagerBtn');
+        const mediaItems = document.getElementById('mediaItems');
+        const mediaLoading = document.getElementById('mediaLoading');
+        const mediaLoadError = document.getElementById('mediaLoadError');
+        const imageUrlInput = document.getElementById('image_url');
+        const productImagePreview = document.getElementById('productImagePreview');
+        
+        if (mediaLibraryModal && mediaLibraryBtn) {
+            // Create Bootstrap modal instance
+            const mediaModalInstance = new bootstrap.Modal(mediaLibraryModal);
+            
+            // Open modal when button is clicked
+            mediaLibraryBtn.addEventListener('click', function() {
+                loadMediaLibrary();
+                mediaModalInstance.show();
+            });
+            
+            // Update preview when URL changes
+            if (imageUrlInput && productImagePreview) {
+                imageUrlInput.addEventListener('input', function() {
+                    updateImagePreview(this.value);
+                });
+                
+                // Initialize preview
+                updateImagePreview(imageUrlInput.value);
+            }
+        }
+        
+        // Function to update image preview
+        function updateImagePreview(url) {
+            if (url && url.trim() !== '') {
+                productImagePreview.src = url;
+                productImagePreview.classList.remove('d-none');
+            } else {
+                productImagePreview.classList.add('d-none');
+            }
+        }
+        
+        // Function to load media library
+        function loadMediaLibrary() {
+            // Show loading state
+            mediaLoading.style.display = 'block';
+            mediaLoadError.style.display = 'none';
+            mediaItems.innerHTML = '';
+            
+            // Make API request to get media items
+            fetch('/api/media')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    mediaLoading.style.display = 'none';
+                    
+                    // Render media items
+                    if (data && data.items && data.items.length > 0) {
+                        data.items.forEach(item => {
+                            const mediaItem = document.createElement('div');
+                            mediaItem.className = 'col-md-3 mb-3';
+                            mediaItem.innerHTML = `
+                                <div class="card h-100">
+                                    <img src="${item.url}" class="card-img-top" alt="${item.name}" style="height: 100px; object-fit: cover;">
+                                    <div class="card-body">
+                                        <h6 class="card-title text-truncate">${item.name}</h6>
+                                        <button type="button" class="btn btn-sm btn-primary select-media" data-url="${item.url}">Select</button>
+                                    </div>
+                                </div>
+                            `;
+                            mediaItems.appendChild(mediaItem);
+                        });
+                        
+                        // Add event listeners to select buttons
+                        document.querySelectorAll('.select-media').forEach(btn => {
+                            btn.addEventListener('click', function() {
+                                const url = this.getAttribute('data-url');
+                                imageUrlInput.value = url;
+                                updateImagePreview(url);
+                                mediaModalInstance.hide();
+                            });
+                        });
+                    } else {
+                        mediaItems.innerHTML = '<div class="col-12"><div class="alert alert-info">No media found. Upload some images first.</div></div>';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading media:', error);
+                    mediaLoading.style.display = 'none';
+                    mediaLoadError.style.display = 'block';
+                });
         }
     });
 </script>

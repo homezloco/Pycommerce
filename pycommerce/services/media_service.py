@@ -1,504 +1,270 @@
 """
 Media service for PyCommerce.
 
-This module provides utilities for managing media files including uploads and AI-generated images.
+This module provides a service for managing media files in the PyCommerce platform.
 """
-
+import logging
 import os
 import uuid
-import logging
-import mimetypes
-from typing import Optional, Dict, Any, List, Union, BinaryIO
-from datetime import datetime
-from pathlib import Path
+from typing import Dict, List, Optional, Any
 
-import requests
-from PIL import Image, ImageOps
+logger = logging.getLogger(__name__)
 
-from pycommerce.models.media import Media, MediaManager
-from pycommerce.core.config import settings
 
-# Configure logging
-logger = logging.getLogger("pycommerce.services.media")
-
-# Configure base directory for media uploads
-MEDIA_DIR = "static/media"
-GENERATED_MEDIA_DIR = f"{MEDIA_DIR}/generated"
-UPLOADS_DIR = f"{MEDIA_DIR}/uploads"
-
-# Ensure directories exist
-os.makedirs(MEDIA_DIR, exist_ok=True)
-os.makedirs(GENERATED_MEDIA_DIR, exist_ok=True)
-os.makedirs(UPLOADS_DIR, exist_ok=True)
+class MediaItem:
+    """Media item class."""
+    def __init__(
+        self,
+        id: str,
+        name: str,
+        url: str,
+        mime_type: Optional[str] = None,
+        size: Optional[int] = None,
+        tenant_id: Optional[str] = None,
+        sharing_level: Optional[str] = "tenant",
+        created_at: Optional[str] = None,
+        updated_at: Optional[str] = None,
+        metadata: Optional[Dict[str, Any]] = None
+    ):
+        """Initialize a media item."""
+        self.id = id
+        self.name = name
+        self.url = url
+        self.mime_type = mime_type
+        self.size = size
+        self.tenant_id = tenant_id
+        self.sharing_level = sharing_level
+        self.created_at = created_at
+        self.updated_at = updated_at
+        self.metadata = metadata or {}
 
 
 class MediaService:
-    """Service for handling media operations."""
+    """Media service for PyCommerce."""
     
     def __init__(self):
         """Initialize the media service."""
-        self.media_manager = MediaManager()
+        logger.info("Initializing MediaService")
+        self._media_items = []
         
-    def has_openai_api_key(self) -> bool:
-        """Check if the OpenAI API key is available in the environment.
-        
-        Returns:
-            bool: True if the API key is available, False otherwise
-        """
-        try:
-            api_key = os.environ.get("OPENAI_API_KEY")
-            return bool(api_key)
-        except Exception as e:
-            logger.warning(f"Error checking for OpenAI API key: {str(e)}")
-            return False
-        
-    async def upload_file(
-        self,
-        file: BinaryIO,
-        filename: str,
-        tenant_id: Optional[str] = None,
-        alt_text: Optional[str] = None,
-        description: Optional[str] = None,
-        metadata: Optional[Dict[str, Any]] = None,
-        is_public: bool = False
-    ) -> Media:
-        """
-        Upload a file and create a media record.
-        
-        Args:
-            file: The file object to upload
-            filename: The original filename
-            tenant_id: Optional tenant ID
-            alt_text: Optional alt text for the file
-            description: Optional description for the file
-            metadata: Optional metadata for the file
-            
-        Returns:
-            The created media object
-        """
-        try:
-            # Generate a unique filename
-            file_ext = os.path.splitext(filename)[1].lower()
-            unique_filename = f"{uuid.uuid4()}{file_ext}"
-            
-            # Determine file type based on extension
-            mime_type, _ = mimetypes.guess_type(filename)
-            if not mime_type:
-                mime_type = "application/octet-stream"
-                
-            file_type = mime_type.split('/')[0]  # image, video, audio, etc.
-            
-            # Create file path
-            file_path = os.path.join(UPLOADS_DIR, unique_filename)
-            
-            # Save the file
-            with open(file_path, "wb") as f:
-                content = await file.read() if hasattr(file, "read") and callable(file.read) else file
-                f.write(content)
-                
-            # Get file size
-            file_size = os.path.getsize(file_path)
-            
-            # Get dimensions if it's an image
-            width = None
-            height = None
-            if file_type == "image":
-                try:
-                    with Image.open(file_path) as img:
-                        width, height = img.size
-                except Exception as e:
-                    logger.warning(f"Could not determine image dimensions: {str(e)}")
-            
-            # Create the media record with all the fields that now exist in the model
-            media_data = {
-                "tenant_id": uuid.UUID(tenant_id) if tenant_id else None,
-                "filename": os.path.splitext(filename)[0],  # Use filename instead of name
-                "original_filename": filename,
-                "file_path": file_path,
-                "file_type": mime_type,  # Use mime_type since that's what file_type should store
-                "file_size": file_size,
-                "description": description,
-                "meta_data": metadata or {},
-                "is_public": is_public,
-                "is_ai_generated": False,
-                "url": f"/static/media/uploads/{unique_filename}",
-                "thumbnail_url": f"/static/media/uploads/thumbnails/{unique_filename}" if os.path.exists(os.path.join(UPLOADS_DIR, "thumbnails", unique_filename)) else None,
-                "alt_text": alt_text
+        # Add some sample media items
+        self._add_sample_media()
+    
+    def _add_sample_media(self):
+        """Add sample media items for testing."""
+        sample_items = [
+            {
+                "id": str(uuid.uuid4()),
+                "name": "Sample Image 1",
+                "url": "https://via.placeholder.com/600x400/4a90e2/ffffff?text=Product+Image+1",
+                "mime_type": "image/jpeg",
+                "size": 12345,
+                "tenant_id": None,  # Global
+                "sharing_level": "global"
+            },
+            {
+                "id": str(uuid.uuid4()),
+                "name": "Tech Product 1",
+                "url": "https://via.placeholder.com/600x400/e24a90/ffffff?text=Tech+Product",
+                "mime_type": "image/jpeg",
+                "size": 23456,
+                "tenant_id": "tech",  # Tech tenant
+                "sharing_level": "tenant"
+            },
+            {
+                "id": str(uuid.uuid4()),
+                "name": "Outdoor Product 1",
+                "url": "https://via.placeholder.com/600x400/90e24a/ffffff?text=Outdoor+Product",
+                "mime_type": "image/jpeg",
+                "size": 34567,
+                "tenant_id": "outdoor",  # Outdoor tenant
+                "sharing_level": "tenant"
+            },
+            {
+                "id": str(uuid.uuid4()),
+                "name": "Fashion Product 1",
+                "url": "https://via.placeholder.com/600x400/e2904a/ffffff?text=Fashion+Product",
+                "mime_type": "image/jpeg",
+                "size": 45678,
+                "tenant_id": "fashion",  # Fashion tenant
+                "sharing_level": "tenant"
             }
-            
-            media = self.media_manager.create(media_data)
-            logger.info(f"Uploaded file: {filename} -> {file_path}")
-            return media
-        except Exception as e:
-            logger.error(f"Error uploading file: {str(e)}")
-            raise
-            
-    async def generate_image_with_dalle(
-        self,
-        prompt: str,
-        tenant_id: Optional[str] = None,
-        size: str = "1024x1024",
-        quality: str = "standard",
-        alt_text: Optional[str] = None,
-        description: Optional[str] = None,
-        metadata: Optional[Dict[str, Any]] = None,
-        is_public: bool = False
-    ) -> Optional[Media]:
-        """
-        Generate an image using OpenAI's DALL-E and create a media record.
+        ]
         
-        Args:
-            prompt: The text prompt for image generation
-            tenant_id: Optional tenant ID
-            size: Image size (1024x1024, 1024x1792, 1792x1024)
-            quality: Image quality (standard, hd)
-            alt_text: Optional alt text for the image
-            description: Optional description for the image
-            metadata: Optional metadata for the image
-            
-        Returns:
-            The created media object if successful, None otherwise
-        """
-        try:
-            import openai
-            
-            # Check if the API key is available
-            api_key = os.environ.get("OPENAI_API_KEY")
-            if not api_key:
-                logger.error("OpenAI API key not found. Set the OPENAI_API_KEY environment variable.")
-                raise ValueError("OpenAI API key not found")
-                
-            client = openai.OpenAI(api_key=api_key)
-            
-            # Generate the image
-            response = client.images.generate(
-                model="dall-e-3",
-                prompt=prompt,
-                size=size,
-                quality=quality,
-                n=1,
-            )
-            
-            # Get the image URL
-            image_url = response.data[0].url
-            
-            # Download the image
-            image_response = requests.get(image_url, timeout=10)
-            if image_response.status_code != 200:
-                logger.error(f"Failed to download generated image: {image_response.status_code}")
-                return None
-                
-            # Generate a unique filename
-            unique_filename = f"{uuid.uuid4()}.png"
-            file_path = os.path.join(GENERATED_MEDIA_DIR, unique_filename)
-            
-            # Save the image
-            with open(file_path, "wb") as f:
-                f.write(image_response.content)
-                
-            # Get file size
-            file_size = os.path.getsize(file_path)
-            
-            # Get dimensions
-            width = None
-            height = None
-            try:
-                with Image.open(file_path) as img:
-                    width, height = img.size
-            except Exception as e:
-                logger.warning(f"Could not determine image dimensions: {str(e)}")
-            
-            # Prepare base metadata
-            dalle_metadata = {
-                "prompt": prompt,
-                "model": "dall-e-3",
-                "size": size,
-                "quality": quality
-            }
-            
-            # Merge with any custom metadata
-            if metadata:
-                dalle_metadata.update(metadata)
-            
-            # Create the media record with all the fields that now exist in the model
-            media_data = {
-                "tenant_id": uuid.UUID(tenant_id) if tenant_id else None,
-                "filename": f"DALL-E: {prompt[:50]}{'...' if len(prompt) > 50 else ''}.png",
-                "original_filename": f"DALL-E generation.png",
-                "file_path": file_path,
-                "file_type": "image/png",
-                "file_size": file_size,
-                "description": description or prompt,
-                "meta_data": dalle_metadata,
-                "is_public": is_public,
-                "is_ai_generated": True,
-                "url": f"/static/media/generated/{unique_filename}",
-                "thumbnail_url": None,  # We don't create thumbnails yet for AI-generated images
-                "alt_text": alt_text or prompt
-            }
-            
-            media = self.media_manager.create(media_data)
-            logger.info(f"Generated image with DALL-E: {prompt[:50]}{'...' if len(prompt) > 50 else ''}")
-            return media
-        except ImportError:
-            logger.error("OpenAI package not installed. Install it with 'pip install openai'.")
-            raise
-        except Exception as e:
-            logger.error(f"Error generating image with DALL-E: {str(e)}")
-            raise
-            
-    def get_media(self, media_id: str) -> Optional[Media]:
-        """
-        Get a media by ID.
-        
-        Args:
-            media_id: The ID of the media to retrieve
-            
-        Returns:
-            The media object if found, None otherwise
-        """
-        return self.media_manager.get(media_id)
-        
-    def list_media(
+        for item in sample_items:
+            self._media_items.append(MediaItem(**item))
+    
+    def list(
         self,
         tenant_id: Optional[str] = None,
-        file_type: Optional[str] = None,
-        is_ai_generated: Optional[bool] = None,
-        search_term: Optional[str] = None,
-        limit: int = 100,
-        offset: int = 0
-    ) -> List[Media]:
+        filters: Optional[Dict[str, Any]] = None,
+        page: int = 1,
+        limit: int = 100
+    ) -> List[MediaItem]:
         """
-        List media with optional filtering.
+        List media items.
         
         Args:
-            tenant_id: Filter by tenant ID
-            file_type: Filter by file type (image, video, etc.)
-            is_ai_generated: Filter by AI generation status
-            search_term: Search in name and description
-            limit: Maximum number of items to return
-            offset: Offset for pagination
+            tenant_id: Optional tenant ID to filter by
+            filters: Optional filters to apply
+            page: Page number (default: 1)
+            limit: Items per page (default: 100)
             
         Returns:
-            List of media objects matching the criteria
+            List of media items
         """
-        return self.media_manager.list(
+        filters = filters or {}
+        filtered_items = []
+        
+        for item in self._media_items:
+            # Include global items for everyone
+            is_global = item.sharing_level == "global"
+            
+            # Include tenant-specific items if tenant_id matches
+            is_tenant_match = tenant_id and item.tenant_id == tenant_id
+            
+            if is_global or is_tenant_match:
+                match = True
+                
+                # Apply additional filters
+                for k, v in filters.items():
+                    if hasattr(item, k) and getattr(item, k) != v:
+                        match = False
+                        break
+                
+                if match:
+                    filtered_items.append(item)
+        
+        # Apply pagination
+        start_idx = (page - 1) * limit
+        end_idx = start_idx + limit
+        
+        return filtered_items[start_idx:end_idx]
+    
+    def get(self, id: str) -> Optional[MediaItem]:
+        """
+        Get a media item by ID.
+        
+        Args:
+            id: The ID of the media item
+            
+        Returns:
+            The media item or None if not found
+        """
+        for item in self._media_items:
+            if str(item.id) == id:
+                return item
+        
+        return None
+    
+    def create(
+        self,
+        name: str,
+        url: str,
+        mime_type: Optional[str] = None,
+        size: Optional[int] = None,
+        tenant_id: Optional[str] = None,
+        sharing_level: Optional[str] = "tenant",
+        metadata: Optional[Dict[str, Any]] = None
+    ) -> MediaItem:
+        """
+        Create a new media item.
+        
+        Args:
+            name: The name of the media item
+            url: The URL of the media item
+            mime_type: The MIME type of the media item
+            size: The size of the media item in bytes
+            tenant_id: The ID of the tenant the media item belongs to
+            sharing_level: The sharing level of the media item
+            metadata: Additional metadata for the media item
+            
+        Returns:
+            The created media item
+        """
+        item = MediaItem(
+            id=str(uuid.uuid4()),
+            name=name,
+            url=url,
+            mime_type=mime_type,
+            size=size,
             tenant_id=tenant_id,
-            file_type=file_type,
-            is_ai_generated=is_ai_generated,
-            search_term=search_term,
-            limit=limit,
-            offset=offset
+            sharing_level=sharing_level,
+            metadata=metadata
         )
         
-    async def delete_media(self, media_id: str) -> bool:
+        self._media_items.append(item)
+        
+        return item
+    
+    def update(
+        self,
+        id: str,
+        name: Optional[str] = None,
+        url: Optional[str] = None,
+        mime_type: Optional[str] = None,
+        size: Optional[int] = None,
+        tenant_id: Optional[str] = None,
+        sharing_level: Optional[str] = None,
+        metadata: Optional[Dict[str, Any]] = None
+    ) -> Optional[MediaItem]:
         """
-        Delete a media by ID.
+        Update a media item.
         
         Args:
-            media_id: The ID of the media to delete
+            id: The ID of the media item to update
+            name: The new name of the media item
+            url: The new URL of the media item
+            mime_type: The new MIME type of the media item
+            size: The new size of the media item in bytes
+            tenant_id: The new tenant ID of the media item
+            sharing_level: The new sharing level of the media item
+            metadata: The new metadata for the media item
             
         Returns:
-            True if the media was deleted, False otherwise
+            The updated media item or None if not found
         """
-        return self.media_manager.delete(media_id)
+        item = self.get(id)
         
-    def update_media(self, media_id: str, **kwargs) -> Optional[Media]:
-        """
-        Update a media by ID.
-        
-        Args:
-            media_id: The ID of the media to update
-            **kwargs: The fields to update
-            
-        Returns:
-            The updated media object if found, None otherwise
-        """
-        return self.media_manager.update(media_id, **kwargs)
-        
-    async def get_media_content(self, media_id: str) -> tuple[Optional[Media], Optional[bytes]]:
-        """
-        Get a media's content by ID.
-        
-        Args:
-            media_id: The ID of the media to retrieve
-            
-        Returns:
-            Tuple of (Media object, file content as bytes) if found, (None, None) otherwise
-        """
-        try:
-            media = self.media_manager.get(media_id)
-            if not media or not os.path.exists(media.file_path):
-                return None, None
-                
-            with open(media.file_path, "rb") as f:
-                content = f.read()
-                
-            return media, content
-        except Exception as e:
-            logger.error(f"Error getting media content: {str(e)}")
-            return None, None
-            
-    async def generate_image(self, **kwargs) -> Optional[Media]:
-        """
-        Generate an image using OpenAI's DALL-E and create a media record.
-        This is a wrapper around generate_image_with_dalle.
-        
-        Args:
-            **kwargs: Arguments to pass to generate_image_with_dalle
-            
-        Returns:
-            The created media object if successful, None otherwise
-        """
-        try:
-            return await self.generate_image_with_dalle(**kwargs)
-        except Exception as e:
-            logger.error(f"Error generating image: {str(e)}")
+        if not item:
             return None
         
-    def resize_image(self, media_id: str, width: int, height: int) -> Optional[Media]:
+        if name is not None:
+            item.name = name
+        
+        if url is not None:
+            item.url = url
+        
+        if mime_type is not None:
+            item.mime_type = mime_type
+        
+        if size is not None:
+            item.size = size
+        
+        if tenant_id is not None:
+            item.tenant_id = tenant_id
+        
+        if sharing_level is not None:
+            item.sharing_level = sharing_level
+        
+        if metadata is not None:
+            item.metadata = metadata
+        
+        return item
+    
+    def delete(self, id: str) -> bool:
         """
-        Resize an image and create a new media record.
+        Delete a media item.
         
         Args:
-            media_id: The ID of the image to resize
-            width: The new width
-            height: The new height
+            id: The ID of the media item to delete
             
         Returns:
-            The created media object if successful, None otherwise
+            True if the item was deleted, False otherwise
         """
-        try:
-            media = self.media_manager.get(media_id)
-            if not media or media.file_type != "image":
-                return None
-                
-            # Generate a unique filename
-            file_ext = os.path.splitext(media.file_path)[1].lower()
-            unique_filename = f"{uuid.uuid4()}{file_ext}"
-            
-            # Create file path
-            file_path = os.path.join(UPLOADS_DIR, unique_filename)
-            
-            # Resize the image
-            try:
-                with Image.open(media.file_path) as img:
-                    resized_img = img.resize((width, height), Image.LANCZOS)
-                    resized_img.save(file_path)
-            except Exception as e:
-                logger.error(f"Error resizing image: {str(e)}")
-                return None
-                
-            # Get file size
-            file_size = os.path.getsize(file_path)
-            
-            # Create the media record
-            media_data = {
-                "tenant_id": media.tenant_id,
-                "filename": f"{media.filename} (Resized to {width}x{height})",
-                "original_filename": media.original_filename,
-                "file_path": file_path,
-                "file_type": media.file_type,
-                "file_size": file_size,
-                "description": media.description,
-                "meta_data": {
-                    "original_media_id": str(media.id),
-                    "resize_operation": "resize",
-                    **(media.meta_data or {})
-                },
-                "is_ai_generated": media.is_ai_generated,
-                "is_public": media.is_public,
-                "url": f"/static/media/uploads/{unique_filename}",
-                "thumbnail_url": None,
-                "alt_text": media.alt_text
-            }
-            
-            new_media = self.media_manager.create(media_data)
-            logger.info(f"Resized image: {media.id} -> {new_media.id} ({width}x{height})")
-            return new_media
-        except Exception as e:
-            logger.error(f"Error resizing image: {str(e)}")
-            raise
-            
-    def crop_image(
-        self, 
-        media_id: str, 
-        left: int, 
-        top: int, 
-        right: int, 
-        bottom: int
-    ) -> Optional[Media]:
-        """
-        Crop an image and create a new media record.
+        for i, item in enumerate(self._media_items):
+            if str(item.id) == id:
+                del self._media_items[i]
+                return True
         
-        Args:
-            media_id: The ID of the image to crop
-            left: The left coordinate of the crop box
-            top: The top coordinate of the crop box
-            right: The right coordinate of the crop box
-            bottom: The bottom coordinate of the crop box
-            
-        Returns:
-            The created media object if successful, None otherwise
-        """
-        try:
-            media = self.media_manager.get(media_id)
-            if not media or media.file_type != "image":
-                return None
-                
-            # Generate a unique filename
-            file_ext = os.path.splitext(media.file_path)[1].lower()
-            unique_filename = f"{uuid.uuid4()}{file_ext}"
-            
-            # Create file path
-            file_path = os.path.join(UPLOADS_DIR, unique_filename)
-            
-            # Crop the image
-            try:
-                with Image.open(media.file_path) as img:
-                    cropped_img = img.crop((left, top, right, bottom))
-                    cropped_img.save(file_path)
-            except Exception as e:
-                logger.error(f"Error cropping image: {str(e)}")
-                return None
-                
-            # Get file size
-            file_size = os.path.getsize(file_path)
-            
-            # Get dimensions
-            width = right - left
-            height = bottom - top
-            
-            # Create the media record
-            media_data = {
-                "tenant_id": media.tenant_id,
-                "filename": f"{media.filename} (Cropped)",
-                "original_filename": media.original_filename,
-                "file_path": file_path,
-                "file_type": media.file_type,
-                "file_size": file_size,
-                "description": media.description,
-                "meta_data": {
-                    "original_media_id": str(media.id),
-                    "crop_operation": "crop",
-                    "crop_box": {
-                        "left": left,
-                        "top": top,
-                        "right": right,
-                        "bottom": bottom
-                    },
-                    **(media.meta_data or {})
-                },
-                "is_ai_generated": media.is_ai_generated,
-                "is_public": media.is_public,
-                "url": f"/static/media/uploads/{unique_filename}",
-                "thumbnail_url": None,
-                "alt_text": media.alt_text
-            }
-            
-            new_media = self.media_manager.create(media_data)
-            logger.info(f"Cropped image: {media.id} -> {new_media.id}")
-            return new_media
-        except Exception as e:
-            logger.error(f"Error cropping image: {str(e)}")
-            raise
+        return False
