@@ -27,6 +27,8 @@ class MediaItem:
         metadata: Optional[Dict[str, Any]] = None
     ):
         """Initialize a media item."""
+        from datetime import datetime
+
         self.id = id
         self.name = name
         self.url = url
@@ -34,8 +36,13 @@ class MediaItem:
         self.size = size
         self.tenant_id = tenant_id
         self.sharing_level = sharing_level
-        self.created_at = created_at
-        self.updated_at = updated_at
+        
+        # Set timestamps with defaults if not provided
+        current_time = datetime.now().isoformat()
+        self.created_at = created_at or current_time
+        self.updated_at = updated_at or current_time
+        
+        # Ensure metadata is a dictionary
         self.metadata = metadata or {}
 
 
@@ -59,8 +66,11 @@ class MediaService:
                 "url": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI2MDAiIGhlaWdodD0iNDAwIiB2aWV3Qm94PSIwIDAgNjAwIDQwMCI+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0iIzRhOTBlMiIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwsIHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMzYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiNmZmZmZmYiPlByb2R1Y3QgSW1hZ2U8L3RleHQ+PC9zdmc+",
                 "mime_type": "image/svg+xml",
                 "size": 12345,
-                "tenant_id": None,  # Global
-                "sharing_level": "global"
+                "tenant_id": None,
+                "sharing_level": "global",
+                "created_at": "2025-04-23T10:00:00Z",
+                "updated_at": "2025-04-23T10:00:00Z",
+                "metadata": {"sample": True}
             },
             {
                 "id": str(uuid.uuid4()),
@@ -68,8 +78,11 @@ class MediaService:
                 "url": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI2MDAiIGhlaWdodD0iNDAwIiB2aWV3Qm94PSIwIDAgNjAwIDQwMCI+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0iI2UyNGE5MCIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwsIHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMzYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiNmZmZmZmYiPlRlY2ggUHJvZHVjdDwvdGV4dD48L3N2Zz4=",
                 "mime_type": "image/svg+xml",
                 "size": 23456,
-                "tenant_id": "tech",  # Tech tenant
-                "sharing_level": "tenant"
+                "tenant_id": None,
+                "sharing_level": "global",
+                "created_at": "2025-04-23T10:01:00Z",
+                "updated_at": "2025-04-23T10:01:00Z",
+                "metadata": {"sample": True}
             },
             {
                 "id": str(uuid.uuid4()),
@@ -77,8 +90,11 @@ class MediaService:
                 "url": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI2MDAiIGhlaWdodD0iNDAwIiB2aWV3Qm94PSIwIDAgNjAwIDQwMCI+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0iIzkwZTI0YSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwsIHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMzYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiNmZmZmZmYiPk91dGRvb3IgUHJvZHVjdDwvdGV4dD48L3N2Zz4=",
                 "mime_type": "image/svg+xml",
                 "size": 34567,
-                "tenant_id": "outdoor",  # Outdoor tenant
-                "sharing_level": "tenant"
+                "tenant_id": None,
+                "sharing_level": "global",
+                "created_at": "2025-04-23T10:02:00Z",
+                "updated_at": "2025-04-23T10:02:00Z",
+                "metadata": {"sample": True}
             },
             {
                 "id": str(uuid.uuid4()),
@@ -86,13 +102,41 @@ class MediaService:
                 "url": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI2MDAiIGhlaWdodD0iNDAwIiB2aWV3Qm94PSIwIDAgNjAwIDQwMCI+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0iI2UyOTA0YSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwsIHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMzYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiNmZmZmZmYiPkZhc2hpb24gUHJvZHVjdDwvdGV4dD48L3N2Zz4=",
                 "mime_type": "image/svg+xml",
                 "size": 45678,
-                "tenant_id": "fashion",  # Fashion tenant
-                "sharing_level": "tenant"
+                "tenant_id": None,
+                "sharing_level": "global",
+                "created_at": "2025-04-23T10:03:00Z",
+                "updated_at": "2025-04-23T10:03:00Z",
+                "metadata": {"sample": True}
+            },
+            {
+                "id": str(uuid.uuid4()),
+                "name": "SVG Vector Graphic",
+                "url": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI2MDAiIGhlaWdodD0iNDAwIiB2aWV3Qm94PSIwIDAgNjAwIDQwMCI+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0iIzRhZTI5MCIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwsIHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMzYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiNmZmZmZmYiPlNWRyBTYW1wbGU8L3RleHQ+PC9zdmc+",
+                "mime_type": "image/svg+xml",
+                "size": 5678,
+                "tenant_id": None,
+                "sharing_level": "global",
+                "created_at": "2025-04-23T10:04:00Z",
+                "updated_at": "2025-04-23T10:04:00Z",
+                "metadata": {"sample": True}
             }
         ]
         
         for item in sample_items:
-            self._media_items.append(MediaItem(**item))
+            # Create the MediaItem object with expanded attributes
+            media_item = MediaItem(
+                id=item["id"],
+                name=item["name"],
+                url=item["url"],
+                mime_type=item["mime_type"], 
+                size=item["size"],
+                tenant_id=item["tenant_id"],
+                sharing_level=item["sharing_level"],
+                created_at=item["created_at"],
+                updated_at=item["updated_at"],
+                metadata=item["metadata"]
+            )
+            self._media_items.append(media_item)
     
     def list(
         self,
@@ -117,13 +161,21 @@ class MediaService:
         filtered_items = []
         
         for item in self._media_items:
-            # Include global items for everyone
+            # Include global items regardless of tenant
             is_global = item.sharing_level == "global"
             
             # Include tenant-specific items if tenant_id matches
-            is_tenant_match = tenant_id and item.tenant_id == tenant_id
+            is_tenant_match = (
+                # If tenant_id is None, include items with None tenant_id
+                (tenant_id is None and item.tenant_id is None) or
+                # If tenant_id is specified, include items with matching tenant_id
+                (tenant_id is not None and item.tenant_id == tenant_id)
+            )
             
-            if is_global or is_tenant_match:
+            # Special case: sample data with metadata.sample=True is globally accessible
+            is_sample = item.metadata and item.metadata.get("sample", False)
+            
+            if is_global or is_tenant_match or is_sample:
                 match = True
                 
                 # Apply additional filters
