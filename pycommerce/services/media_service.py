@@ -55,36 +55,36 @@ class MediaService:
         sample_items = [
             {
                 "id": str(uuid.uuid4()),
-                "name": "Sample Image 1",
-                "url": "https://via.placeholder.com/600x400/4a90e2/ffffff?text=Product+Image+1",
-                "mime_type": "image/jpeg",
+                "name": "Product Image (Blue)",
+                "url": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI2MDAiIGhlaWdodD0iNDAwIiB2aWV3Qm94PSIwIDAgNjAwIDQwMCI+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0iIzRhOTBlMiIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwsIHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMzYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiNmZmZmZmYiPlByb2R1Y3QgSW1hZ2U8L3RleHQ+PC9zdmc+",
+                "mime_type": "image/svg+xml",
                 "size": 12345,
                 "tenant_id": None,  # Global
                 "sharing_level": "global"
             },
             {
                 "id": str(uuid.uuid4()),
-                "name": "Tech Product 1",
-                "url": "https://via.placeholder.com/600x400/e24a90/ffffff?text=Tech+Product",
-                "mime_type": "image/jpeg",
+                "name": "Tech Product Image",
+                "url": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI2MDAiIGhlaWdodD0iNDAwIiB2aWV3Qm94PSIwIDAgNjAwIDQwMCI+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0iI2UyNGE5MCIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwsIHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMzYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiNmZmZmZmYiPlRlY2ggUHJvZHVjdDwvdGV4dD48L3N2Zz4=",
+                "mime_type": "image/svg+xml",
                 "size": 23456,
                 "tenant_id": "tech",  # Tech tenant
                 "sharing_level": "tenant"
             },
             {
                 "id": str(uuid.uuid4()),
-                "name": "Outdoor Product 1",
-                "url": "https://via.placeholder.com/600x400/90e24a/ffffff?text=Outdoor+Product",
-                "mime_type": "image/jpeg",
+                "name": "Outdoor Product Image",
+                "url": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI2MDAiIGhlaWdodD0iNDAwIiB2aWV3Qm94PSIwIDAgNjAwIDQwMCI+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0iIzkwZTI0YSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwsIHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMzYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiNmZmZmZmYiPk91dGRvb3IgUHJvZHVjdDwvdGV4dD48L3N2Zz4=",
+                "mime_type": "image/svg+xml",
                 "size": 34567,
                 "tenant_id": "outdoor",  # Outdoor tenant
                 "sharing_level": "tenant"
             },
             {
                 "id": str(uuid.uuid4()),
-                "name": "Fashion Product 1",
-                "url": "https://via.placeholder.com/600x400/e2904a/ffffff?text=Fashion+Product",
-                "mime_type": "image/jpeg",
+                "name": "Fashion Product Image",
+                "url": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI2MDAiIGhlaWdodD0iNDAwIiB2aWV3Qm94PSIwIDAgNjAwIDQwMCI+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0iI2UyOTA0YSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwsIHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMzYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiNmZmZmZmYiPkZhc2hpb24gUHJvZHVjdDwvdGV4dD48L3N2Zz4=",
+                "mime_type": "image/svg+xml",
                 "size": 45678,
                 "tenant_id": "fashion",  # Fashion tenant
                 "sharing_level": "tenant"

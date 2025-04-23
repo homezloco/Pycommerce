@@ -136,24 +136,47 @@ def setup_routes(templates_instance: Jinja2Templates) -> APIRouter:
                 else:
                     file_type = 'application/octet-stream'
             
-            # Upload file
-            # Note: In a real implementation, media_service.upload would be called here
-            # For now, we'll return a mock response
+            # Convert the file to a data URL for storage
+            import base64
+            b64_data = base64.b64encode(file_content).decode('utf-8')
+            data_url = f"data:{file_type};base64,{b64_data}"
+            
+            # Create a media item in the service
+            media_item = media_service.create(
+                name=name,
+                url=data_url,
+                mime_type=file_type,
+                size=len(file_content),
+                tenant_id=tenant_id,
+                sharing_level=sharing_level,
+                metadata={"public_access": public_access}
+            )
+            
+            # Get tenant name for response
+            tenant_name = "Global"
+            if tenant_id and tenant_manager:
+                try:
+                    tenant = tenant_manager.get(tenant_id)
+                    if tenant:
+                        tenant_name = tenant.name
+                except Exception as e:
+                    logger.error(f"Error getting tenant: {e}")
             
             response_data = {
                 "success": True,
                 "message": "File uploaded successfully",
                 "file": {
-                    "id": "generated_id",
-                    "name": name,
-                    "size": len(file_content),
-                    "mime_type": file_type,
-                    "url": f"/media/{name.replace(' ', '_')}",
-                    "tenant_id": tenant_id,
-                    "sharing_level": sharing_level,
-                    "public_access": public_access,
-                    "created_at": "2025-04-23T12:00:00Z",
-                    "updated_at": "2025-04-23T12:00:00Z"
+                    "id": str(media_item.id),
+                    "name": media_item.name,
+                    "size": media_item.size,
+                    "mime_type": media_item.mime_type,
+                    "url": media_item.url,
+                    "tenant_id": media_item.tenant_id,
+                    "tenant_name": tenant_name,
+                    "sharing_level": media_item.sharing_level,
+                    "public_access": media_item.metadata.get("public_access", True),
+                    "created_at": media_item.created_at,
+                    "updated_at": media_item.updated_at
                 }
             }
             
@@ -181,103 +204,58 @@ def setup_routes(templates_instance: Jinja2Templates) -> APIRouter:
             if not media_service:
                 raise HTTPException(status_code=503, detail="Media service not available")
                 
-            # Apply filters
+            # Apply filters that the media service understands directly
             filters = {}
-            if tenant_id:
-                filters["tenant_id"] = tenant_id
             if mime_type:
                 filters["mime_type"] = mime_type
             if sharing_level:
                 filters["sharing_level"] = sharing_level
-            if search:
-                filters["search"] = search
-                
-            # Note: In a real implementation, media_service.list would be called here
-            # For now, we'll return mock data
             
-            # Sample media items
-            media_items = [
-                {
-                    "id": "1",
-                    "name": "Sample Image 1",
-                    "url": "https://dummyimage.com/600x400/4a90e2/ffffff&text=Product+Image+1",
-                    "size": 12345,
-                    "mime_type": "image/jpeg",
-                    "tenant_id": None,
-                    "tenant_name": "Global",
-                    "sharing_level": "global",
-                    "created_at": "2025-04-23T10:00:00Z",
-                    "updated_at": "2025-04-23T10:00:00Z"
-                },
-                {
-                    "id": "2",
-                    "name": "Tech Product Image", 
-                    "url": "https://dummyimage.com/600x400/e24a90/ffffff&text=Tech+Product",
-                    "size": 23456,
-                    "mime_type": "image/jpeg",
-                    "tenant_id": "ea6c4bc0-d5aa-4d4f-862c-5d47e7c3f410",
-                    "tenant_name": "Tech Gadgets",
-                    "sharing_level": "tenant",
-                    "created_at": "2025-04-23T10:01:00Z",
-                    "updated_at": "2025-04-23T10:01:00Z"
-                },
-                {
-                    "id": "3",
-                    "name": "Outdoor Product Image",
-                    "url": "https://dummyimage.com/600x400/90e24a/ffffff&text=Outdoor+Product",
-                    "size": 34567,
-                    "mime_type": "image/png",
-                    "tenant_id": "fcb7133c-0ecc-4384-9b6d-695b52ae1496",
-                    "tenant_name": "Outdoor Adventure",
-                    "sharing_level": "tenant",
-                    "created_at": "2025-04-23T10:02:00Z",
-                    "updated_at": "2025-04-23T10:02:00Z"
-                },
-                {
-                    "id": "4",
-                    "name": "Fashion Product Image",
-                    "url": "https://dummyimage.com/600x400/e2904a/ffffff&text=Fashion+Product",
-                    "size": 45678,
-                    "mime_type": "image/gif",
-                    "tenant_id": "9608b670-08e6-4cfe-90aa-9068b9ddc09e",
-                    "tenant_name": "Fashion Boutique",
-                    "sharing_level": "tenant",
-                    "created_at": "2025-04-23T10:03:00Z",
-                    "updated_at": "2025-04-23T10:03:00Z"
-                },
-                {
-                    "id": "5",
-                    "name": "SVG Vector Graphic",
-                    "url": "https://dummyimage.com/600x400/4ae290/ffffff&text=SVG+Sample",
-                    "size": 5678,
-                    "mime_type": "image/svg+xml",
-                    "tenant_id": None,
-                    "tenant_name": "Global",
-                    "sharing_level": "global",
-                    "created_at": "2025-04-23T10:04:00Z",
-                    "updated_at": "2025-04-23T10:04:00Z"
+            # Get media items from the service
+            items = media_service.list(
+                tenant_id=tenant_id,
+                filters=filters,
+                page=page,
+                limit=limit
+            )
+            
+            # Convert MediaItem objects to dictionaries for JSON response
+            items_dict = []
+            for item in items:
+                # Get tenant name from tenant_manager if tenant_id is available
+                tenant_name = "Global"
+                if item.tenant_id and tenant_manager:
+                    try:
+                        tenant = tenant_manager.get(item.tenant_id)
+                        if tenant:
+                            tenant_name = tenant.name
+                    except Exception as e:
+                        logger.error(f"Error getting tenant: {e}")
+                
+                # Convert the MediaItem to a dictionary
+                item_dict = {
+                    "id": str(item.id),
+                    "name": item.name,
+                    "url": item.url,
+                    "size": item.size,
+                    "mime_type": item.mime_type,
+                    "tenant_id": item.tenant_id,
+                    "tenant_name": tenant_name,
+                    "sharing_level": item.sharing_level,
+                    "created_at": item.created_at,
+                    "updated_at": item.updated_at
                 }
-            ]
+                items_dict.append(item_dict)
             
-            # Apply filters to sample data
-            filtered_items = media_items
-            if tenant_id:
-                filtered_items = [i for i in filtered_items if i["tenant_id"] == tenant_id]
-            if mime_type:
-                filtered_items = [i for i in filtered_items if i["mime_type"] == mime_type]
-            if sharing_level:
-                filtered_items = [i for i in filtered_items if i["sharing_level"] == sharing_level]
+            # Apply search filter (in case MediaService doesn't handle it)
             if search:
-                filtered_items = [i for i in filtered_items if search.lower() in i["name"].lower()]
+                items_dict = [i for i in items_dict if search.lower() in i["name"].lower()]
                 
-            # Calculate pagination
-            total_count = len(filtered_items)
-            start_idx = (page - 1) * limit
-            end_idx = start_idx + limit
-            paginated_items = filtered_items[start_idx:end_idx]
+            # Count for pagination
+            total_count = len(media_service._media_items)  # This should be replaced with a proper count method
             
             response_data = {
-                "items": paginated_items,
+                "items": items_dict,
                 "count": total_count,
                 "page": page,
                 "limit": limit,
