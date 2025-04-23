@@ -93,6 +93,29 @@
                                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                     </div>
                                     <div class="modal-body">
+                                        <!-- Upload Section -->
+                                        <div class="mb-4 border-bottom pb-3">
+                                            <h6 class="mb-3">Upload New Image</h6>
+                                            <form id="uploadMediaForm" enctype="multipart/form-data">
+                                                <div class="row g-3 align-items-center">
+                                                    <div class="col-md-5">
+                                                        <input type="file" class="form-control" id="mediaFile" name="file" accept="image/*" required>
+                                                    </div>
+                                                    <div class="col-md-4">
+                                                        <input type="text" class="form-control" id="mediaName" name="name" placeholder="Image name (optional)">
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        <button type="submit" class="btn btn-primary w-100" id="uploadMediaBtn">
+                                                            <i class="bi bi-upload"></i> Upload
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                                <div class="mt-2" id="uploadStatus" style="display: none;"></div>
+                                            </form>
+                                        </div>
+                                        
+                                        <!-- Media Library Section -->
+                                        <h6 class="mb-3">Available Media</h6>
                                         <div class="row" id="mediaLibraryContainer">
                                             <div class="col-12 text-center py-5" id="mediaLoading">
                                                 <div class="spinner-border text-primary" role="status">
@@ -188,66 +211,170 @@
             }
         }
         
+        // Setup upload form
+        const uploadForm = document.getElementById('uploadMediaForm');
+        const uploadStatus = document.getElementById('uploadStatus');
+        
+        if (uploadForm) {
+            uploadForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                // Get form data
+                const formData = new FormData(this);
+                const fileInput = document.getElementById('mediaFile');
+                const nameInput = document.getElementById('mediaName');
+                const uploadBtn = document.getElementById('uploadMediaBtn');
+                
+                // Validate file
+                if (!fileInput.files[0]) {
+                    showUploadStatus('Please select a file to upload.', 'danger');
+                    return;
+                }
+                
+                // If name is not provided, use filename
+                if (!nameInput.value.trim()) {
+                    formData.set('name', fileInput.files[0].name);
+                }
+                
+                // Show loading state
+                uploadBtn.disabled = true;
+                uploadBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Uploading...';
+                showUploadStatus('Uploading image...', 'info');
+                
+                // Handle simulated upload
+                simulateFileUpload(formData, fileInput)
+                    .then(response => {
+                        showUploadStatus('Image uploaded successfully!', 'success');
+                        
+                        // Refresh media library
+                        loadMediaLibrary();
+                        
+                        // Reset form
+                        uploadForm.reset();
+                    })
+                    .catch(error => {
+                        showUploadStatus('Error uploading image: ' + error.message, 'danger');
+                    })
+                    .finally(() => {
+                        // Reset button
+                        uploadBtn.disabled = false;
+                        uploadBtn.innerHTML = '<i class="bi bi-upload"></i> Upload';
+                    });
+            });
+        }
+        
+        // Function to show upload status
+        function showUploadStatus(message, type) {
+            uploadStatus.innerHTML = `<div class="alert alert-${type}">${message}</div>`;
+            uploadStatus.style.display = 'block';
+            
+            // Auto-hide success messages after 5 seconds
+            if (type === 'success') {
+                setTimeout(() => {
+                    uploadStatus.style.display = 'none';
+                }, 5000);
+            }
+        }
+        
+        // Function to simulate file upload
+        function simulateFileUpload(formData, fileInput) {
+            return new Promise((resolve, reject) => {
+                // Create a timeout to simulate network request
+                setTimeout(() => {
+                    // Simulate successful upload with 90% chance
+                    if (Math.random() < 0.9) {
+                        // Use FileReader to preview the image
+                        const reader = new FileReader();
+                        reader.onload = function(e) {
+                            // Add image to our sample data
+                            const newImage = {
+                                id: "upload_" + new Date().getTime(),
+                                name: formData.get('name'),
+                                url: e.target.result, // Use the Data URL
+                                size: fileInput.files[0].size,
+                                mime_type: fileInput.files[0].type,
+                                tenant_id: null,
+                                sharing_level: "global",
+                                created_at: new Date().toISOString(),
+                                updated_at: new Date().toISOString()
+                            };
+                            
+                            // Add to existing sampleMediaData
+                            sampleMediaData.items.unshift(newImage);
+                            sampleMediaData.count += 1;
+                            
+                            resolve({ success: true, image: newImage });
+                        };
+                        
+                        // Read the image as a Data URL
+                        reader.readAsDataURL(fileInput.files[0]);
+                    } else {
+                        // Simulate error
+                        reject(new Error("Server error, please try again."));
+                    }
+                }, 1500); // Simulate 1.5s upload time
+            });
+        }
+        
+        // Sample media data
+        const sampleMediaData = {
+            items: [
+                {
+                    id: "1",
+                    name: "Sample Image 1",
+                    url: "https://via.placeholder.com/600x400/4a90e2/ffffff?text=Product+Image+1",
+                    size: 12345,
+                    mime_type: "image/jpeg",
+                    tenant_id: null,
+                    sharing_level: "global",
+                    created_at: "2025-04-23T10:00:00Z",
+                    updated_at: "2025-04-23T10:00:00Z"
+                },
+                {
+                    id: "2",
+                    name: "Tech Product Image", 
+                    url: "https://via.placeholder.com/600x400/e24a90/ffffff?text=Tech+Product",
+                    size: 23456,
+                    mime_type: "image/jpeg",
+                    tenant_id: "tech",
+                    sharing_level: "tenant",
+                    created_at: "2025-04-23T10:01:00Z",
+                    updated_at: "2025-04-23T10:01:00Z"
+                },
+                {
+                    id: "3",
+                    name: "Outdoor Product Image",
+                    url: "https://via.placeholder.com/600x400/90e24a/ffffff?text=Outdoor+Product",
+                    size: 34567,
+                    mime_type: "image/jpeg",
+                    tenant_id: "outdoor",
+                    sharing_level: "tenant",
+                    created_at: "2025-04-23T10:02:00Z",
+                    updated_at: "2025-04-23T10:02:00Z"
+                },
+                {
+                    id: "4",
+                    name: "Fashion Product Image",
+                    url: "https://via.placeholder.com/600x400/e2904a/ffffff?text=Fashion+Product",
+                    size: 45678,
+                    mime_type: "image/jpeg",
+                    tenant_id: "fashion",
+                    sharing_level: "tenant",
+                    created_at: "2025-04-23T10:03:00Z",
+                    updated_at: "2025-04-23T10:03:00Z"
+                }
+            ],
+            count: 4,
+            page: 1,
+            limit: 100
+        };
+        
         // Function to load media library
         function loadMediaLibrary() {
             // Show loading state
             mediaLoading.style.display = 'block';
             mediaLoadError.style.display = 'none';
             mediaItems.innerHTML = '';
-            
-            // Use hardcoded sample data instead of API
-            // This avoids API server connection issues
-            const sampleMediaData = {
-                items: [
-                    {
-                        id: "1",
-                        name: "Sample Image 1",
-                        url: "https://via.placeholder.com/600x400/4a90e2/ffffff?text=Product+Image+1",
-                        size: 12345,
-                        mime_type: "image/jpeg",
-                        tenant_id: null,
-                        sharing_level: "global",
-                        created_at: "2025-04-23T10:00:00Z",
-                        updated_at: "2025-04-23T10:00:00Z"
-                    },
-                    {
-                        id: "2",
-                        name: "Tech Product Image", 
-                        url: "https://via.placeholder.com/600x400/e24a90/ffffff?text=Tech+Product",
-                        size: 23456,
-                        mime_type: "image/jpeg",
-                        tenant_id: "tech",
-                        sharing_level: "tenant",
-                        created_at: "2025-04-23T10:01:00Z",
-                        updated_at: "2025-04-23T10:01:00Z"
-                    },
-                    {
-                        id: "3",
-                        name: "Outdoor Product Image",
-                        url: "https://via.placeholder.com/600x400/90e24a/ffffff?text=Outdoor+Product",
-                        size: 34567,
-                        mime_type: "image/jpeg",
-                        tenant_id: "outdoor",
-                        sharing_level: "tenant",
-                        created_at: "2025-04-23T10:02:00Z",
-                        updated_at: "2025-04-23T10:02:00Z"
-                    },
-                    {
-                        id: "4",
-                        name: "Fashion Product Image",
-                        url: "https://via.placeholder.com/600x400/e2904a/ffffff?text=Fashion+Product",
-                        size: 45678,
-                        mime_type: "image/jpeg",
-                        tenant_id: "fashion",
-                        sharing_level: "tenant",
-                        created_at: "2025-04-23T10:03:00Z",
-                        updated_at: "2025-04-23T10:03:00Z"
-                    }
-                ],
-                count: 4,
-                page: 1,
-                limit: 100
-            };
             
             // Display sample data
             setTimeout(() => {

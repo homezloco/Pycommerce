@@ -1,0 +1,797 @@
+{% extends 'admin/base_admin.html' %}
+
+{% block title %}PyCommerce - Media Library{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4">
+    <h1 class="mt-4">Media Library</h1>
+    <ol class="breadcrumb mb-4">
+        <li class="breadcrumb-item"><a href="/admin">Dashboard</a></li>
+        <li class="breadcrumb-item active">Media Library</li>
+    </ol>
+    
+    {% if status_message %}
+    <div class="alert alert-{{ status_type }} alert-dismissible fade show" role="alert">
+        {{ status_message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {% endif %}
+    
+    <div class="card mb-4">
+        <div class="card-header">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <i class="fas fa-images me-1"></i>
+                    Media Library
+                </div>
+                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#uploadMediaModal">
+                    <i class="fas fa-upload me-1"></i> Upload New Media
+                </button>
+            </div>
+        </div>
+        <div class="card-body">
+            <!-- Filter Controls -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <label for="tenant-filter" class="form-label">Filter by Store</label>
+                    <select class="form-select" id="tenant-filter">
+                        <option value="">All Stores</option>
+                        {% for tenant in tenants %}
+                        <option value="{{ tenant.id }}">{{ tenant.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="type-filter" class="form-label">Filter by Type</label>
+                    <select class="form-select" id="type-filter">
+                        <option value="">All Types</option>
+                        <option value="image/jpeg">JPEG</option>
+                        <option value="image/png">PNG</option>
+                        <option value="image/svg+xml">SVG</option>
+                        <option value="image/gif">GIF</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="sharing-filter" class="form-label">Filter by Sharing</label>
+                    <select class="form-select" id="sharing-filter">
+                        <option value="">All Sharing Types</option>
+                        <option value="global">Global</option>
+                        <option value="tenant">Tenant-only</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="search-media" class="form-label">Search</label>
+                    <input type="text" class="form-control" id="search-media" placeholder="Search by name">
+                </div>
+            </div>
+            
+            <!-- Media Grid -->
+            <div class="row" id="media-container">
+                <div class="col-12 text-center py-5" id="media-loading">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2">Loading media...</p>
+                </div>
+                <div class="col-12" id="media-error" style="display: none;">
+                    <div class="alert alert-danger">
+                        Error loading media. Please try again.
+                    </div>
+                </div>
+                <div class="row" id="media-items"></div>
+            </div>
+            
+            <!-- Pagination -->
+            <div class="d-flex justify-content-between align-items-center mt-4">
+                <div>
+                    Showing <span id="showing-count">0</span> of <span id="total-count">0</span> items
+                </div>
+                <nav aria-label="Media pagination">
+                    <ul class="pagination" id="media-pagination">
+                        <!-- Pagination will be added here via JavaScript -->
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Upload Media Modal -->
+<div class="modal fade" id="uploadMediaModal" tabindex="-1" aria-labelledby="uploadMediaModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="uploadMediaModalLabel">Upload Media</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="uploadMediaForm" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <label for="media-file" class="form-label">Select File</label>
+                        <input type="file" class="form-control" id="media-file" name="file" accept="image/*" required>
+                        <div class="form-text">Supported formats: JPG, PNG, GIF, SVG</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="media-name" class="form-label">Name</label>
+                        <input type="text" class="form-control" id="media-name" name="name" placeholder="Enter a descriptive name">
+                        <div class="form-text">If left blank, the original filename will be used</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="tenant-id" class="form-label">Store</label>
+                        <select class="form-select" id="tenant-id" name="tenant_id">
+                            <option value="">Global (All Stores)</option>
+                            {% for tenant in tenants %}
+                            <option value="{{ tenant.id }}">{{ tenant.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="sharing-level" class="form-label">Sharing Level</label>
+                        <select class="form-select" id="sharing-level" name="sharing_level">
+                            <option value="global">Global (All Stores)</option>
+                            <option value="tenant">Tenant-only (Selected Store)</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="public-access" name="public_access" checked>
+                            <label class="form-check-label" for="public-access">
+                                Allow public access (for product images)
+                            </label>
+                        </div>
+                    </div>
+                    <div id="upload-preview" class="text-center mb-3" style="display: none;">
+                        <p class="mb-2">Preview:</p>
+                        <img src="" alt="Upload preview" id="preview-image" class="img-thumbnail" style="max-height: 200px;">
+                    </div>
+                    <div id="upload-status" style="display: none;"></div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="upload-btn">Upload</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Media Details Modal -->
+<div class="modal fade" id="mediaDetailsModal" tabindex="-1" aria-labelledby="mediaDetailsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="mediaDetailsModalLabel">Media Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div id="detail-image" class="text-center mb-3">
+                            <img src="" alt="Media details" id="detail-image-preview" class="img-fluid">
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <h5 id="detail-name"></h5>
+                        <table class="table table-sm table-borderless">
+                            <tbody>
+                                <tr>
+                                    <th scope="row">ID:</th>
+                                    <td id="detail-id"></td>
+                                </tr>
+                                <tr>
+                                    <th scope="row">Type:</th>
+                                    <td id="detail-type"></td>
+                                </tr>
+                                <tr>
+                                    <th scope="row">Size:</th>
+                                    <td id="detail-size"></td>
+                                </tr>
+                                <tr>
+                                    <th scope="row">Store:</th>
+                                    <td id="detail-tenant"></td>
+                                </tr>
+                                <tr>
+                                    <th scope="row">Sharing:</th>
+                                    <td id="detail-sharing"></td>
+                                </tr>
+                                <tr>
+                                    <th scope="row">Created:</th>
+                                    <td id="detail-created"></td>
+                                </tr>
+                                <tr>
+                                    <th scope="row">Updated:</th>
+                                    <td id="detail-updated"></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <div class="mb-3">
+                            <label for="detail-url" class="form-label">URL:</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="detail-url" readonly>
+                                <button class="btn btn-outline-secondary" type="button" id="copy-url-btn">
+                                    <i class="fas fa-copy"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-danger" id="delete-media-btn">Delete</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="use-media-btn">Use in Product</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Elements
+        const mediaContainer = document.getElementById('media-container');
+        const mediaItems = document.getElementById('media-items');
+        const mediaLoading = document.getElementById('media-loading');
+        const mediaError = document.getElementById('media-error');
+        const mediaPagination = document.getElementById('media-pagination');
+        const showingCount = document.getElementById('showing-count');
+        const totalCount = document.getElementById('total-count');
+        
+        // Filters
+        const tenantFilter = document.getElementById('tenant-filter');
+        const typeFilter = document.getElementById('type-filter');
+        const sharingFilter = document.getElementById('sharing-filter');
+        const searchInput = document.getElementById('search-media');
+        
+        // Upload elements
+        const uploadForm = document.getElementById('uploadMediaForm');
+        const uploadBtn = document.getElementById('upload-btn');
+        const mediaFile = document.getElementById('media-file');
+        const mediaName = document.getElementById('media-name');
+        const tenantId = document.getElementById('tenant-id');
+        const sharingLevel = document.getElementById('sharing-level');
+        const publicAccess = document.getElementById('public-access');
+        const uploadPreview = document.getElementById('upload-preview');
+        const previewImage = document.getElementById('preview-image');
+        const uploadStatus = document.getElementById('upload-status');
+        
+        // Media details elements
+        const detailName = document.getElementById('detail-name');
+        const detailId = document.getElementById('detail-id');
+        const detailType = document.getElementById('detail-type');
+        const detailSize = document.getElementById('detail-size');
+        const detailTenant = document.getElementById('detail-tenant');
+        const detailSharing = document.getElementById('detail-sharing');
+        const detailCreated = document.getElementById('detail-created');
+        const detailUpdated = document.getElementById('detail-updated');
+        const detailUrl = document.getElementById('detail-url');
+        const detailImagePreview = document.getElementById('detail-image-preview');
+        const copyUrlBtn = document.getElementById('copy-url-btn');
+        const deleteMediaBtn = document.getElementById('delete-media-btn');
+        const useMediaBtn = document.getElementById('use-media-btn');
+        
+        // Current state
+        let currentPage = 1;
+        let totalPages = 1;
+        let pageSize = 12;
+        let currentFilters = {
+            tenant: '',
+            type: '',
+            sharing: '',
+            search: ''
+        };
+        
+        // Modals
+        const uploadModal = new bootstrap.Modal(document.getElementById('uploadMediaModal'));
+        const detailsModal = new bootstrap.Modal(document.getElementById('mediaDetailsModal'));
+        
+        // Sample media data (simulate database)
+        const sampleMediaData = {
+            items: [
+                {
+                    id: "1",
+                    name: "Sample Image 1",
+                    url: "https://via.placeholder.com/600x400/4a90e2/ffffff?text=Product+Image+1",
+                    size: 12345,
+                    mime_type: "image/jpeg",
+                    tenant_id: null,
+                    tenant_name: "Global",
+                    sharing_level: "global",
+                    created_at: "2025-04-23T10:00:00Z",
+                    updated_at: "2025-04-23T10:00:00Z"
+                },
+                {
+                    id: "2",
+                    name: "Tech Product Image", 
+                    url: "https://via.placeholder.com/600x400/e24a90/ffffff?text=Tech+Product",
+                    size: 23456,
+                    mime_type: "image/jpeg",
+                    tenant_id: "ea6c4bc0-d5aa-4d4f-862c-5d47e7c3f410",
+                    tenant_name: "Tech Gadgets",
+                    sharing_level: "tenant",
+                    created_at: "2025-04-23T10:01:00Z",
+                    updated_at: "2025-04-23T10:01:00Z"
+                },
+                {
+                    id: "3",
+                    name: "Outdoor Product Image",
+                    url: "https://via.placeholder.com/600x400/90e24a/ffffff?text=Outdoor+Product",
+                    size: 34567,
+                    mime_type: "image/png",
+                    tenant_id: "fcb7133c-0ecc-4384-9b6d-695b52ae1496",
+                    tenant_name: "Outdoor Adventure",
+                    sharing_level: "tenant",
+                    created_at: "2025-04-23T10:02:00Z",
+                    updated_at: "2025-04-23T10:02:00Z"
+                },
+                {
+                    id: "4",
+                    name: "Fashion Product Image",
+                    url: "https://via.placeholder.com/600x400/e2904a/ffffff?text=Fashion+Product",
+                    size: 45678,
+                    mime_type: "image/gif",
+                    tenant_id: "9608b670-08e6-4cfe-90aa-9068b9ddc09e",
+                    tenant_name: "Fashion Boutique",
+                    sharing_level: "tenant",
+                    created_at: "2025-04-23T10:03:00Z",
+                    updated_at: "2025-04-23T10:03:00Z"
+                },
+                {
+                    id: "5",
+                    name: "SVG Vector Graphic",
+                    url: "https://via.placeholder.com/600x400/4ae290/ffffff?text=SVG+Sample",
+                    size: 5678,
+                    mime_type: "image/svg+xml",
+                    tenant_id: null,
+                    tenant_name: "Global",
+                    sharing_level: "global",
+                    created_at: "2025-04-23T10:04:00Z",
+                    updated_at: "2025-04-23T10:04:00Z"
+                }
+            ],
+            count: 5,
+            page: 1,
+            limit: 100
+        };
+        
+        // Initial load
+        loadMediaItems();
+        
+        // Event listeners for filters
+        tenantFilter.addEventListener('change', applyFilters);
+        typeFilter.addEventListener('change', applyFilters);
+        sharingFilter.addEventListener('change', applyFilters);
+        searchInput.addEventListener('input', debounce(applyFilters, 300));
+        
+        // File upload preview
+        if (mediaFile) {
+            mediaFile.addEventListener('change', function() {
+                if (this.files && this.files[0]) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        previewImage.src = e.target.result;
+                        uploadPreview.style.display = 'block';
+                        
+                        // Auto-fill name if empty
+                        if (!mediaName.value) {
+                            mediaName.value = mediaFile.files[0].name.split('.')[0];
+                        }
+                    };
+                    reader.readAsDataURL(this.files[0]);
+                } else {
+                    uploadPreview.style.display = 'none';
+                }
+            });
+        }
+        
+        // Upload button
+        if (uploadBtn) {
+            uploadBtn.addEventListener('click', function() {
+                if (!uploadForm.checkValidity()) {
+                    uploadForm.reportValidity();
+                    return;
+                }
+                
+                // Get form data
+                const formData = new FormData(uploadForm);
+                
+                // Validate file
+                if (!mediaFile.files[0]) {
+                    showUploadStatus('Please select a file to upload.', 'danger');
+                    return;
+                }
+                
+                // If name is not provided, use filename
+                if (!mediaName.value.trim()) {
+                    formData.set('name', mediaFile.files[0].name.split('.')[0]);
+                }
+                
+                // Show loading state
+                uploadBtn.disabled = true;
+                uploadBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Uploading...';
+                showUploadStatus('Uploading media...', 'info');
+                
+                // Handle simulated upload
+                simulateFileUpload(formData, mediaFile.files[0])
+                    .then(response => {
+                        showUploadStatus('Media uploaded successfully!', 'success');
+                        
+                        // Refresh media library
+                        loadMediaItems();
+                        
+                        // Reset form
+                        uploadForm.reset();
+                        uploadPreview.style.display = 'none';
+                        
+                        // Close modal after delay
+                        setTimeout(() => {
+                            uploadModal.hide();
+                        }, 1500);
+                    })
+                    .catch(error => {
+                        showUploadStatus('Error uploading media: ' + error.message, 'danger');
+                    })
+                    .finally(() => {
+                        // Reset button
+                        uploadBtn.disabled = false;
+                        uploadBtn.innerHTML = 'Upload';
+                    });
+            });
+        }
+        
+        // Copy URL button
+        if (copyUrlBtn) {
+            copyUrlBtn.addEventListener('click', function() {
+                detailUrl.select();
+                document.execCommand('copy');
+                
+                // Show tooltip or feedback
+                copyUrlBtn.innerHTML = '<i class="fas fa-check"></i>';
+                setTimeout(() => {
+                    copyUrlBtn.innerHTML = '<i class="fas fa-copy"></i>';
+                }, 2000);
+            });
+        }
+        
+        // Delete media button
+        if (deleteMediaBtn) {
+            deleteMediaBtn.addEventListener('click', function() {
+                const mediaId = this.getAttribute('data-media-id');
+                if (!mediaId) return;
+                
+                if (confirm('Are you sure you want to delete this media? This action cannot be undone.')) {
+                    // Simulate deletion
+                    const index = sampleMediaData.items.findIndex(item => item.id === mediaId);
+                    if (index !== -1) {
+                        sampleMediaData.items.splice(index, 1);
+                        sampleMediaData.count--;
+                        
+                        // Refresh the list and close modal
+                        loadMediaItems();
+                        detailsModal.hide();
+                    }
+                }
+            });
+        }
+        
+        // Use in product button
+        if (useMediaBtn) {
+            useMediaBtn.addEventListener('click', function() {
+                const mediaUrl = detailUrl.value;
+                
+                // Store in localStorage for retrieval in product edit page
+                localStorage.setItem('selectedMediaUrl', mediaUrl);
+                
+                // Navigate to products page
+                window.location.href = '/admin/products';
+                
+                // Alternatively, close modal and show message
+                /* 
+                detailsModal.hide();
+                alert('URL copied! You can now use this in any product by pasting the URL.');
+                */
+            });
+        }
+        
+        // Function to load media items
+        function loadMediaItems() {
+            // Show loading state
+            mediaLoading.style.display = 'block';
+            mediaError.style.display = 'none';
+            mediaItems.innerHTML = '';
+            
+            // Apply filters to sample data
+            const filteredData = filterSampleData(sampleMediaData.items);
+            
+            // Paginate
+            const paginatedData = paginateData(filteredData, currentPage, pageSize);
+            
+            // Update counts
+            totalCount.textContent = filteredData.length;
+            showingCount.textContent = Math.min(paginatedData.length, pageSize);
+            
+            // Calculate total pages
+            totalPages = Math.ceil(filteredData.length / pageSize);
+            
+            // Display data
+            setTimeout(() => {
+                mediaLoading.style.display = 'none';
+                
+                // Render media items
+                if (paginatedData.length > 0) {
+                    paginatedData.forEach(item => {
+                        const mediaItem = document.createElement('div');
+                        mediaItem.className = 'col-md-3 col-sm-6 mb-4';
+                        mediaItem.innerHTML = `
+                            <div class="card h-100">
+                                <div class="card-img-container" style="height: 150px; overflow: hidden;">
+                                    <img src="${item.url}" class="card-img-top" alt="${item.name}" 
+                                        style="height: 100%; width: 100%; object-fit: cover; cursor: pointer;" 
+                                        data-media-id="${item.id}">
+                                </div>
+                                <div class="card-body">
+                                    <h6 class="card-title text-truncate">${item.name}</h6>
+                                    <p class="card-text text-muted small">
+                                        ${formatFileSize(item.size)} • ${item.mime_type.split('/')[1].toUpperCase()}
+                                    </p>
+                                    <div class="btn-group btn-group-sm w-100">
+                                        <button type="button" class="btn btn-outline-primary view-media" data-media-id="${item.id}">
+                                            <i class="fas fa-eye"></i> View
+                                        </button>
+                                        <button type="button" class="btn btn-outline-success select-media" data-url="${item.url}">
+                                            <i class="fas fa-check"></i> Select
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="card-footer text-muted small bg-transparent">
+                                    ${item.tenant_name} • ${item.sharing_level.charAt(0).toUpperCase() + item.sharing_level.slice(1)}
+                                </div>
+                            </div>
+                        `;
+                        mediaItems.appendChild(mediaItem);
+                    });
+                    
+                    // Add event listeners to view buttons
+                    document.querySelectorAll('.view-media').forEach(btn => {
+                        btn.addEventListener('click', function() {
+                            const mediaId = this.getAttribute('data-media-id');
+                            openMediaDetails(mediaId);
+                        });
+                    });
+                    
+                    // Add event listeners to images for preview
+                    document.querySelectorAll('.card-img-container img').forEach(img => {
+                        img.addEventListener('click', function() {
+                            const mediaId = this.getAttribute('data-media-id');
+                            openMediaDetails(mediaId);
+                        });
+                    });
+                    
+                    // Handle select buttons
+                    document.querySelectorAll('.select-media').forEach(btn => {
+                        btn.addEventListener('click', function() {
+                            const url = this.getAttribute('data-url');
+                            
+                            // Store in localStorage for retrieval in product edit page
+                            localStorage.setItem('selectedMediaUrl', url);
+                            
+                            // Show feedback
+                            alert('Media selected! You can now use this in any product.');
+                        });
+                    });
+                    
+                    // Update pagination
+                    updatePagination();
+                } else {
+                    mediaItems.innerHTML = '<div class="col-12"><div class="alert alert-info">No media found matching your filters. Try adjusting your search criteria or upload new media.</div></div>';
+                    mediaPagination.innerHTML = '';
+                }
+            }, 500); // Simulate network delay
+        }
+        
+        // Function to open media details
+        function openMediaDetails(mediaId) {
+            const media = sampleMediaData.items.find(item => item.id === mediaId);
+            if (!media) return;
+            
+            // Populate details
+            detailName.textContent = media.name;
+            detailId.textContent = media.id;
+            detailType.textContent = `${media.mime_type.split('/')[1].toUpperCase()} (${media.mime_type})`;
+            detailSize.textContent = formatFileSize(media.size);
+            detailTenant.textContent = media.tenant_name;
+            detailSharing.textContent = media.sharing_level.charAt(0).toUpperCase() + media.sharing_level.slice(1);
+            detailCreated.textContent = formatDate(media.created_at);
+            detailUpdated.textContent = formatDate(media.updated_at);
+            detailUrl.value = media.url;
+            detailImagePreview.src = media.url;
+            detailImagePreview.alt = media.name;
+            
+            // Set data attributes for action buttons
+            deleteMediaBtn.setAttribute('data-media-id', media.id);
+            
+            // Show the modal
+            detailsModal.show();
+        }
+        
+        // Function to update pagination
+        function updatePagination() {
+            mediaPagination.innerHTML = '';
+            
+            if (totalPages <= 1) return;
+            
+            // Previous button
+            const prevLi = document.createElement('li');
+            prevLi.className = `page-item ${currentPage === 1 ? 'disabled' : ''}`;
+            prevLi.innerHTML = `<button class="page-link" ${currentPage === 1 ? 'disabled' : ''} data-page="${currentPage - 1}">&laquo;</button>`;
+            mediaPagination.appendChild(prevLi);
+            
+            // Page numbers
+            const maxPages = Math.min(totalPages, 5);
+            let startPage = Math.max(1, currentPage - 2);
+            const endPage = Math.min(startPage + maxPages - 1, totalPages);
+            
+            // Adjust start page if needed
+            if (endPage - startPage < maxPages - 1) {
+                startPage = Math.max(1, endPage - maxPages + 1);
+            }
+            
+            for (let i = startPage; i <= endPage; i++) {
+                const pageLi = document.createElement('li');
+                pageLi.className = `page-item ${i === currentPage ? 'active' : ''}`;
+                pageLi.innerHTML = `<button class="page-link" data-page="${i}">${i}</button>`;
+                mediaPagination.appendChild(pageLi);
+            }
+            
+            // Next button
+            const nextLi = document.createElement('li');
+            nextLi.className = `page-item ${currentPage === totalPages ? 'disabled' : ''}`;
+            nextLi.innerHTML = `<button class="page-link" ${currentPage === totalPages ? 'disabled' : ''} data-page="${currentPage + 1}">&raquo;</button>`;
+            mediaPagination.appendChild(nextLi);
+            
+            // Add event listeners
+            document.querySelectorAll('.page-link').forEach(link => {
+                link.addEventListener('click', function() {
+                    if (this.hasAttribute('disabled')) return;
+                    
+                    const page = parseInt(this.getAttribute('data-page'));
+                    currentPage = page;
+                    loadMediaItems();
+                    
+                    // Scroll to top of container
+                    mediaContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                });
+            });
+        }
+        
+        // Function to filter sample data
+        function filterSampleData(items) {
+            return items.filter(item => {
+                // Tenant filter
+                if (currentFilters.tenant && (!item.tenant_id || item.tenant_id !== currentFilters.tenant)) {
+                    return false;
+                }
+                
+                // Type filter
+                if (currentFilters.type && item.mime_type !== currentFilters.type) {
+                    return false;
+                }
+                
+                // Sharing filter
+                if (currentFilters.sharing && item.sharing_level !== currentFilters.sharing) {
+                    return false;
+                }
+                
+                // Search filter
+                if (currentFilters.search && !item.name.toLowerCase().includes(currentFilters.search.toLowerCase())) {
+                    return false;
+                }
+                
+                return true;
+            });
+        }
+        
+        // Function to apply filters
+        function applyFilters() {
+            currentFilters.tenant = tenantFilter.value;
+            currentFilters.type = typeFilter.value;
+            currentFilters.sharing = sharingFilter.value;
+            currentFilters.search = searchInput.value;
+            
+            // Reset to first page when filters change
+            currentPage = 1;
+            
+            loadMediaItems();
+        }
+        
+        // Function to paginate data
+        function paginateData(items, page, limit) {
+            const startIndex = (page - 1) * limit;
+            const endIndex = startIndex + limit;
+            return items.slice(startIndex, endIndex);
+        }
+        
+        // Function to format file size
+        function formatFileSize(bytes) {
+            if (bytes < 1024) return bytes + ' bytes';
+            if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+            return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+        }
+        
+        // Function to format date
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+        }
+        
+        // Function to show upload status
+        function showUploadStatus(message, type) {
+            uploadStatus.innerHTML = `<div class="alert alert-${type} mt-3">${message}</div>`;
+            uploadStatus.style.display = 'block';
+            
+            // Auto-hide success messages after 5 seconds
+            if (type === 'success') {
+                setTimeout(() => {
+                    uploadStatus.style.display = 'none';
+                }, 5000);
+            }
+        }
+        
+        // Function to simulate file upload
+        function simulateFileUpload(formData, file) {
+            return new Promise((resolve, reject) => {
+                // Create a timeout to simulate network request
+                setTimeout(() => {
+                    // Simulate successful upload with 90% chance
+                    if (Math.random() < 0.9) {
+                        // Use FileReader to preview the image
+                        const reader = new FileReader();
+                        reader.onload = function(e) {
+                            // Add image to our sample data
+                            const newImage = {
+                                id: "upload_" + new Date().getTime(),
+                                name: formData.get('name'),
+                                url: e.target.result,
+                                size: file.size,
+                                mime_type: file.type,
+                                tenant_id: formData.get('tenant_id') || null,
+                                tenant_name: formData.get('tenant_id') ? 
+                                    document.querySelector(`#tenant-id option[value="${formData.get('tenant_id')}"]`)?.textContent || 'Unknown' : 
+                                    'Global',
+                                sharing_level: formData.get('sharing_level') || 'global',
+                                created_at: new Date().toISOString(),
+                                updated_at: new Date().toISOString()
+                            };
+                            
+                            // Add to existing sample data
+                            sampleMediaData.items.unshift(newImage);
+                            sampleMediaData.count += 1;
+                            
+                            resolve({ success: true, image: newImage });
+                        };
+                        
+                        reader.readAsDataURL(file);
+                    } else {
+                        // Simulate error
+                        reject(new Error("Server error, please try again."));
+                    }
+                }, 1500); // Simulate 1.5s upload time
+            });
+        }
+        
+        // Debounce function for search input
+        function debounce(func, wait) {
+            let timeout;
+            return function() {
+                const context = this;
+                const args = arguments;
+                clearTimeout(timeout);
+                timeout = setTimeout(function() {
+                    func.apply(context, args);
+                }, wait);
+            };
+        }
+    });
+</script>
+{% endblock %}
