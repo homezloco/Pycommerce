@@ -122,6 +122,147 @@ async def admin_update_product(
             status_code=303
         )
 
+@router.post("/update/{product_id}", response_class=RedirectResponse)
+async def admin_update_product(
+    request: Request,
+    product_id: str,
+    tenant_id: str = Form(...),
+    name: str = Form(...),
+    sku: str = Form(...),
+    price: float = Form(...),
+    stock: int = Form(0),
+    categories: Optional[str] = Form(""),
+    image_url: Optional[str] = Form(None),
+    description: Optional[str] = Form(None)
+):
+    """Update a product."""
+    try:
+        logger.info(f"Attempting to update product ID: {product_id}")
+        
+        # Find the product in all available tenants
+        product_obj = None
+        old_tenant_id = None
+        
+        # Get tenant object
+        tenant_obj = None
+        try:
+            tenant_obj = tenant_manager.get(tenant_id)
+            if tenant_obj:
+                logger.info(f"Target tenant for update: {tenant_obj.name} (ID: {tenant_id})")
+        except Exception as e:
+            logger.warning(f"Error retrieving tenant with ID {tenant_id}: {str(e)}")
+        
+        # Search each tenant for the product
+        all_tenants = tenant_manager.list()
+        for t in all_tenants:
+            try:
+                logger.info(f"Checking for product in tenant: {t.name} (ID: {t.id})")
+                tenant_products = product_manager.get_by_tenant(str(t.id))
+                for prod in tenant_products:
+                    if str(prod.id) == product_id:
+                        product_obj = prod
+                        old_tenant_id = str(t.id)
+                        logger.info(f"Found product {product_id} in tenant {t.name} (ID: {t.id})")
+                        break
+                if product_obj:
+                    break
+            except Exception as e:
+                logger.warning(f"Error checking tenant {t.name}: {str(e)}")
+        
+        if not product_obj:
+            error_message = f"Product with ID {product_id} not found in any tenant"
+            logger.error(error_message)
+            return RedirectResponse(
+                url=f"/admin/products?status_message={error_message}&status_type=danger",
+                status_code=303
+            )
+        
+        # Parse categories string to list
+        categories_list = []
+        if categories:
+            categories_list = [cat.strip() for cat in categories.split(",") if cat.strip()]
+        
+        # Check if we need to move the product to a different tenant
+        tenant_changed = old_tenant_id != tenant_id
+        if tenant_changed:
+            logger.info(f"Product is being moved from tenant ID {old_tenant_id} to tenant ID {tenant_id}")
+        
+        # Update the product
+        try:
+            logger.info(f"Updating product {product_id} with new values")
+            
+            # Create metadata dictionary with existing values plus new ones
+            metadata = {}
+            if hasattr(product_obj, 'metadata') and product_obj.metadata:
+                metadata = dict(product_obj.metadata)
+            
+            metadata["tenant_id"] = tenant_id
+            if image_url:
+                metadata["image_url"] = image_url
+            
+            product_manager.update(
+                product_id=product_id,
+                name=name,
+                sku=sku,
+                price=price,
+                stock=stock,
+                categories=categories_list,
+                description=description,
+                metadata=metadata
+            )
+            
+            logger.info(f"Product {product_id} updated successfully")
+        except Exception as update_error:
+            logger.error(f"Error in product_manager.update: {str(update_error)}")
+            # If direct update fails, try tenant-specific update method
+            try:
+                logger.info("Trying tenant-specific update method")
+                # Get the product schema used by the API
+                from pycommerce.models.product import Product as ProductSchema
+                
+                # Create a product schema object with updated values
+                updated_product = ProductSchema(
+                    id=product_id,
+                    name=name,
+                    sku=sku,
+                    price=price,
+                    stock=stock,
+                    categories=categories_list,
+                    description=description,
+                    metadata={
+                        "tenant_id": tenant_id,
+                        "image_url": image_url
+                    }
+                )
+                
+                # Try update_for_tenant first with new tenant ID
+                product_manager.update_for_tenant(tenant_id=tenant_id, product=updated_product)
+                logger.info(f"Product {product_id} updated for tenant {tenant_id}")
+            except Exception as tenant_update_error:
+                logger.error(f"Error in tenant-specific update: {str(tenant_update_error)}")
+                raise tenant_update_error
+        
+        # Get the tenant slug for the redirect
+        tenant_slug = ""
+        if tenant_obj:
+            tenant_slug = tenant_obj.slug
+        
+        # If we have a tenant slug, include it in the redirect
+        redirect_url = "/admin/products"
+        if tenant_slug:
+            redirect_url += f"?tenant={tenant_slug}"
+        
+        return RedirectResponse(
+            url=f"{redirect_url}&status_message=Product+updated+successfully&status_type=success",
+            status_code=303
+        )
+    except Exception as e:
+        logger.error(f"Error updating product: {str(e)}")
+        return RedirectResponse(
+            url=f"/admin/products?status_message=Error+updating+product:+{str(e)}&status_type=danger",
+            status_code=303
+        )
+
 @router.get("/{product_id}", response_class=HTMLResponse)
 async def admin_product_edit(
     request: Request,
@@ -132,18 +273,61 @@ async def admin_product_edit(
 ):
     """Edit product page for admin panel."""
     try:
-        # Get product directly
-        product_obj = product_manager.get(product_id)
+        # Debug product_id to make sure it's correct
+        logger.info(f"Attempting to edit product with ID: {product_id}")
+        
+        # Find the product in all available tenants
+        product_obj = None
+        tenant_obj = None
+        
+        # If tenant is provided in the URL, try to get it from that specific tenant
+        if tenant:
+            try:
+                tenant_obj = tenant_manager.get_by_slug(tenant)
+                if tenant_obj:
+                    logger.info(f"Looking for product {product_id} in tenant {tenant} (ID: {tenant_obj.id})")
+                    products = product_manager.get_by_tenant(str(tenant_obj.id))
+                    for prod in products:
+                        if str(prod.id) == product_id:
+                            product_obj = prod
+                            logger.info(f"Found product {product_id} in tenant {tenant}")
+                            break
+            except Exception as tenant_err:
+                logger.warning(f"Error getting tenant {tenant}: {str(tenant_err)}")
+        
+        # If not found yet, search in all tenants
+        if not product_obj:
+            logger.info("Product not found in specified tenant, searching in all tenants")
+            all_tenants = tenant_manager.list()
+            for t in all_tenants:
+                try:
+                    logger.info(f"Checking tenant: {t.name} (ID: {t.id})")
+                    tenant_products = product_manager.get_by_tenant(str(t.id))
+                    for prod in tenant_products:
+                        if str(prod.id) == product_id:
+                            product_obj = prod
+                            tenant_obj = t
+                            logger.info(f"Found product {product_id} in tenant {t.name}")
+                            break
+                    if product_obj:
+                        break
+                except Exception as e:
+                    logger.warning(f"Error checking tenant {t.name}: {str(e)}")
+                    continue
         
         if not product_obj:
-            logger.error(f"Product with ID {product_id} not found")
+            logger.error(f"Product with ID {product_id} not found in any tenant")
             return RedirectResponse(
                 url=f"/admin/products?status_message=Product+not+found&status_type=danger", 
                 status_code=303
             )
         
-        # Get tenant ID from metadata
-        tenant_id = product_obj.metadata.get('tenant_id') if hasattr(product_obj, 'metadata') else None
+        # Get tenant ID from metadata or from the found tenant
+        tenant_id = None
+        if hasattr(product_obj, 'metadata') and product_obj.metadata and 'tenant_id' in product_obj.metadata:
+            tenant_id = product_obj.metadata.get('tenant_id')
+        elif tenant_obj:
+            tenant_id = str(tenant_obj.id)
         
         # Format product for template
         product = {
@@ -154,9 +338,11 @@ async def admin_product_edit(
             "stock": product_obj.stock,
             "categories": product_obj.categories if hasattr(product_obj, 'categories') else [],
             "description": product_obj.description if hasattr(product_obj, 'description') else "",
-            "image_url": product_obj.metadata.get('image_url') if hasattr(product_obj, 'metadata') else None,
+            "image_url": product_obj.metadata.get('image_url') if hasattr(product_obj, 'metadata') and product_obj.metadata else None,
             "tenant_id": tenant_id
         }
+        
+        logger.info(f"Formatted product for template: {product['name']} (ID: {product['id']})")
         
         # Get all tenants for the dropdown
         tenants = []
