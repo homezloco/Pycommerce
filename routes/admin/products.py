@@ -64,6 +64,134 @@ if MediaService:
         logger.error(f"Error initializing MediaService: {e}")
 
 
+@router.post("/update/{product_id}", response_class=RedirectResponse)
+async def admin_update_product(
+    request: Request,
+    product_id: str,
+    tenant_id: str = Form(...),
+    name: str = Form(...),
+    sku: str = Form(...),
+    price: float = Form(...),
+    stock: int = Form(0),
+    categories: Optional[str] = Form(""),
+    image_url: Optional[str] = Form(None),
+    description: Optional[str] = Form(None)
+):
+    """Update a product."""
+    try:
+        # Process categories string into list
+        category_list = []
+        if categories:
+            category_list = [cat.strip() for cat in categories.split(",") if cat.strip()]
+        
+        # Get existing product to preserve metadata
+        product_obj = product_manager.get(product_id)
+        metadata = getattr(product_obj, 'metadata', {}) or {}
+        
+        # Update metadata
+        metadata["tenant_id"] = tenant_id
+        if image_url:
+            metadata["image_url"] = image_url
+        
+        # Update product
+        update_data = {
+            "name": name,
+            "sku": sku,
+            "price": price,
+            "stock": stock,
+            "categories": category_list,
+            "description": description,
+            "metadata": metadata
+        }
+        
+        product_manager.update(product_id, **update_data)
+        logger.info(f"Updated product: {name}")
+        
+        # Redirect to products page with success message
+        return RedirectResponse(
+            url="/admin/products?status_message=Product+updated+successfully&status_type=success", 
+            status_code=303
+        )
+    
+    except Exception as e:
+        logger.error(f"Error updating product: {str(e)}")
+        # Redirect with error message
+        error_message = f"Error updating product: {str(e)}"
+        return RedirectResponse(
+            url=f"/admin/products?status_message={error_message}&status_type=danger", 
+            status_code=303
+        )
+
+@router.get("/{product_id}", response_class=HTMLResponse)
+async def admin_product_edit(
+    request: Request,
+    product_id: str,
+    tenant: Optional[str] = None,
+    status_message: Optional[str] = None,
+    status_type: str = "info"
+):
+    """Edit product page for admin panel."""
+    try:
+        # Get product directly
+        product_obj = product_manager.get(product_id)
+        
+        if not product_obj:
+            logger.error(f"Product with ID {product_id} not found")
+            return RedirectResponse(
+                url=f"/admin/products?status_message=Product+not+found&status_type=danger", 
+                status_code=303
+            )
+        
+        # Get tenant ID from metadata
+        tenant_id = product_obj.metadata.get('tenant_id') if hasattr(product_obj, 'metadata') else None
+        
+        # Format product for template
+        product = {
+            "id": str(product_obj.id),
+            "name": product_obj.name,
+            "sku": product_obj.sku,
+            "price": product_obj.price,
+            "stock": product_obj.stock,
+            "categories": product_obj.categories if hasattr(product_obj, 'categories') else [],
+            "description": product_obj.description if hasattr(product_obj, 'description') else "",
+            "image_url": product_obj.metadata.get('image_url') if hasattr(product_obj, 'metadata') else None,
+            "tenant_id": tenant_id
+        }
+        
+        # Get all tenants for the dropdown
+        tenants = []
+        try:
+            tenants_list = tenant_manager.list() or []
+            tenants = [
+                {
+                    "id": str(t.id),
+                    "name": t.name
+                }
+                for t in tenants_list if t and hasattr(t, 'id')
+            ]
+        except Exception as e:
+            logger.error(f"Error fetching tenants: {str(e)}")
+        
+        return templates.TemplateResponse(
+            "admin/product_edit.html", 
+            {
+                "request": request, 
+                "active_page": "products",
+                "product": product,
+                "tenants": tenants,
+                "cart_item_count": request.session.get("cart_item_count", 0),
+                "status_message": status_message,
+                "status_type": status_type
+            }
+        )
+    except Exception as e:
+        logger.error(f"Error fetching product: {str(e)}")
+        error_message = f"Error fetching product: {str(e)}"
+        return RedirectResponse(
+            url=f"/admin/products?status_message={error_message}&status_type=danger", 
+            status_code=303
+        )
+
 @router.get("", response_class=HTMLResponse)
 async def admin_products(
     request: Request,
