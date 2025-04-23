@@ -1118,7 +1118,7 @@ function ensureSortableLoaded(callback) {
       case 'hero':
         sectionSettings = {
           padding: 'large',
-          background: 'light',
+          background: '#f8f9fa',
           text_color: 'dark',
           alignment: 'center'
         };
@@ -1140,14 +1140,14 @@ function ensureSortableLoaded(callback) {
       case 'content':
         sectionSettings = {
           padding: 'medium',
-          background: 'white',
-          width: 'container'
+          background: '#ffffff',
+          width: 'normal'
         };
         break;
       case 'cta':
         sectionSettings = {
           padding: 'large',
-          background: 'primary',
+          background: '#007bff',
           text_color: 'white',
           alignment: 'center'
         };
@@ -1155,23 +1155,28 @@ function ensureSortableLoaded(callback) {
       case 'features':
         sectionSettings = {
           padding: 'medium',
-          background: 'light',
+          background: '#f8f9fa',
           columns: 3
         };
         break;
       case 'testimonials':
         sectionSettings = {
           padding: 'medium',
-          background: 'light',
+          background: '#f8f9fa',
           style: 'cards'
         };
         break;
       default:
         sectionSettings = {
           padding: 'medium',
-          background: 'white'
+          background: '#ffffff'
         };
     }
+    
+    // Get the page ID from the DOM
+    const pageId = document.querySelector('input[name="page_id"]')?.value || '{{ page.id }}';
+    
+    console.log('Creating section for page ID:', pageId);
     
     // API call to create a new section
     fetch('/admin/api/pages/sections', {
@@ -1180,7 +1185,7 @@ function ensureSortableLoaded(callback) {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        page_id: '{{ page.id }}',
+        page_id: pageId,
         section_type: sectionType,
         position: 0, // Will be adjusted by the backend
         settings: sectionSettings
@@ -1188,7 +1193,9 @@ function ensureSortableLoaded(callback) {
     })
     .then(response => {
       if (!response.ok) {
-        throw new Error('Error creating section');
+        return response.text().then(text => {
+          throw new Error('Error creating section: ' + text);
+        });
       }
       return response.json();
     })
@@ -1198,8 +1205,8 @@ function ensureSortableLoaded(callback) {
       window.location.reload();
     })
     .catch(error => {
-      console.error('Error:', error);
-      alert('Error creating section: ' + error.message);
+      console.error('Error creating section:', error);
+      alert(error.message);
     });
     
     // Close the modal if it's open
