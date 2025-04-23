@@ -6,7 +6,14 @@ This module provides a service for managing media files in the PyCommerce platfo
 import logging
 import os
 import uuid
+import base64
+import requests
+from io import BytesIO
 from typing import Dict, List, Optional, Any
+from datetime import datetime
+
+# Import OpenAI for DALL-E integration
+from openai import OpenAI
 
 logger = logging.getLogger(__name__)
 
@@ -320,3 +327,92 @@ class MediaService:
                 return True
         
         return False
+        
+    def generate_image_with_dalle(
+        self,
+        prompt: str,
+        tenant_id: Optional[str] = None,
+        size: str = "1024x1024", 
+        quality: str = "standard",
+        alt_text: Optional[str] = None,
+        description: Optional[str] = None,
+        metadata: Optional[Dict[str, Any]] = None
+    ) -> Optional[MediaItem]:
+        """
+        Generate an image using DALL-E AI model.
+        
+        Args:
+            prompt: The text prompt to generate the image from
+            tenant_id: Tenant ID the image belongs to
+            size: Size of the image (1024x1024, 1024x1792, 1792x1024)
+            quality: Image quality (standard, hd)
+            alt_text: Alt text for the image
+            description: Description of the image
+            metadata: Additional metadata for the image
+            
+        Returns:
+            MediaItem if successful, None otherwise
+        """
+        logger.info(f"Generating image with DALL-E using prompt: {prompt[:50]}...")
+        
+        try:
+            # Initialize OpenAI client with API key from environment
+            api_key = os.environ.get("OPENAI_API_KEY")
+            if not api_key:
+                logger.error("OpenAI API key not found")
+                return None
+                
+            client = OpenAI(api_key=api_key)
+            
+            # Generate image using DALL-E
+            response = client.images.generate(
+                model="dall-e-3",  # Can be either "dall-e-2" or "dall-e-3"
+                prompt=prompt,
+                size=size,
+                quality=quality,
+                n=1,
+                response_format="b64_json"
+            )
+            
+            # Extract image data
+            if not response.data or not hasattr(response.data[0], "b64_json"):
+                logger.error("No image data in response")
+                return None
+                
+            image_data = response.data[0].b64_json
+            
+            # Create a name for the image based on the prompt
+            name = f"AI Generated: {prompt[:30]}..." if len(prompt) > 30 else f"AI Generated: {prompt}"
+            
+            # Get the current timestamp
+            timestamp = datetime.now().isoformat()
+            
+            # Prepare metadata
+            image_metadata = metadata or {}
+            image_metadata.update({
+                "generated_by": "dalle",
+                "prompt": prompt,
+                "generated_at": timestamp,
+                "ai_generated": True
+            })
+            
+            # Create a data URL for the image
+            url = f"data:image/png;base64,{image_data}"
+            
+            # Create the media item
+            media_item = self.create(
+                name=name,
+                url=url,
+                mime_type="image/png",
+                size=len(image_data),  # Approximate size in bytes
+                tenant_id=tenant_id,
+                sharing_level="tenant" if tenant_id else "global",
+                metadata=image_metadata
+            )
+            
+            logger.info(f"Successfully generated image with DALL-E: {name}")
+            return media_item
+            
+        except Exception as e:
+            logger.error(f"Error generating image with DALL-E: {str(e)}")
+            return None

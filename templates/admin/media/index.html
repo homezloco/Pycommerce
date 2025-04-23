@@ -24,9 +24,14 @@
                     <i class="fas fa-images me-1"></i>
                     Media Library
                 </div>
-                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#uploadMediaModal">
-                    <i class="fas fa-upload me-1"></i> Upload New Media
-                </button>
+                <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#generateImageModal">
+                        <i class="fas fa-magic me-1"></i> Generate with AI
+                    </button>
+                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#uploadMediaModal">
+                        <i class="fas fa-upload me-1"></i> Upload New Media
+                    </button>
+                </div>
             </div>
         </div>
         <div class="card-body">
@@ -151,6 +156,84 @@
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                 <button type="button" class="btn btn-primary" id="upload-btn">Upload</button>
             </div>
+        </div>
+    </div>
+</div>
+
+<!-- Generate Image Modal -->
+<div class="modal fade" id="generateImageModal" tabindex="-1" aria-labelledby="generateImageLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="generateImageLabel">Generate Image with AI</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="/admin/media/generate" method="post">
+                <div class="modal-body">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Enter a detailed description of the image you want to generate using DALL-E AI.
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="prompt" class="form-label">Image Description</label>
+                        <textarea class="form-control" id="prompt" name="prompt" rows="4" required
+                            placeholder="Describe the image you want to generate..."></textarea>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="gen-tenant-id" class="form-label">Store</label>
+                        <select class="form-select" id="gen-tenant-id" name="tenant_id" required>
+                            <option value="">Select Store</option>
+                            {% for tenant in tenants %}
+                            <option value="{{ tenant.id }}">{{ tenant.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="size" class="form-label">Size</label>
+                            <select class="form-select" id="size" name="size">
+                                <option value="1024x1024">Square (1024x1024)</option>
+                                <option value="1024x1792">Portrait (1024x1792)</option>
+                                <option value="1792x1024">Landscape (1792x1024)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="quality" class="form-label">Quality</label>
+                            <select class="form-select" id="quality" name="quality">
+                                <option value="standard">Standard</option>
+                                <option value="hd">HD</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="alt_text" class="form-label">Alt Text (optional)</label>
+                        <input type="text" class="form-control" id="alt_text" name="alt_text" 
+                            placeholder="Alternative text for the image">
+                        <div class="form-text">If left blank, the prompt will be used as alt text</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Description (optional)</label>
+                        <textarea class="form-control" id="description" name="description" rows="2"
+                            placeholder="Additional notes about this image"></textarea>
+                    </div>
+                    
+                    <div id="aiGenerationLoading" class="text-center d-none">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="mt-2">Generating image with AI...<br>This may take a minute.</p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success" id="generateButton">Generate Image</button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
@@ -284,7 +367,13 @@
         
         // Modals
         const uploadModal = new bootstrap.Modal(document.getElementById('uploadMediaModal'));
+        const generateModal = new bootstrap.Modal(document.getElementById('generateImageModal'));
         const detailsModal = new bootstrap.Modal(document.getElementById('mediaDetailsModal'));
+        
+        // AI Image Generation Elements
+        const generateForm = document.querySelector('#generateImageModal form');
+        const generateButton = document.getElementById('generateButton');
+        const aiLoading = document.getElementById('aiGenerationLoading');
         
         // Sample media data (simulate database)
         const sampleMediaData = {
@@ -491,6 +580,18 @@
                 detailsModal.hide();
                 alert('URL copied! You can now use this in any product by pasting the URL.');
                 */
+            });
+        }
+        
+        // AI Image Generation
+        if (generateForm) {
+            generateForm.addEventListener('submit', function() {
+                // Show loading spinner
+                aiLoading.classList.remove('d-none');
+                generateButton.disabled = true;
+                generateButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Generating...';
+                
+                // Form will be submitted normally, this just handles the UI state
             });
         }
         
