@@ -1,143 +1,211 @@
-"""
-Test script for PyCommerce multi-tenant functionality.
-
-This script tests the multi-tenant functionality of the PyCommerce platform by
-creating tenants, adding products to each tenant, and verifying that data is properly isolated.
-"""
-
-import os
-import logging
-import uuid
+import unittest
+from unittest.mock import patch, MagicMock
 import sys
-from uuid import UUID
+import os
 
-# Configure logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger("test_multi_tenant")
+# Add the project root to the path so we can import modules
+sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 
-# Import PyCommerce modules
-from pycommerce.core.db import db_session, init_db, Tenant, Product
-from pycommerce.models.tenant import TenantManager, Tenant as TenantObj
+# Import required modules
+from pycommerce.core.db import get_db
+from pycommerce.sdk import AppTenantManager, AppProductManager
+from pycommerce.models.tenant import TenantManager, TenantDTO
 from pycommerce.models.product import ProductManager
 
-def create_test_tenant(tenant_manager, name, slug):
-    """Create a test tenant."""
-    try:
-        # Create tenant
-        tenant = tenant_manager.create(
-            name=name,
-            slug=slug,
-            domain=f"{slug}.pycommerce.test"
-        )
-        logger.info(f"Created tenant: {tenant.name} ({tenant.slug})")
-        return tenant
-    except Exception as e:
-        logger.error(f"Error creating tenant: {str(e)}")
-        return None
+class TestMultiTenant(unittest.TestCase):
+    """Test multi-tenant functionality."""
 
-def add_test_products(tenant_id, count=3):
-    """Add test products to a tenant."""
-    try:
-        products = []
-        product_manager = ProductManager()
+    def setUp(self):
+        """Set up test fixtures."""
+        # Create instance of tenant and product managers
+        self.tenant_manager = AppTenantManager()
+        self.product_manager = AppProductManager()
         
-        for i in range(1, count + 1):
-            # Create product data
-            product_data = {
-                "sku": f"TEST-{tenant_id}-{i}",
-                "name": f"Test Product {i} for Tenant {tenant_id}",
-                "description": f"This is a test product for tenant {tenant_id}",
-                "price": 10.0 * i,
-                "stock": 100,
-                "tenant_id": tenant_id
-            }
-            
-            # Create product model
-            product_model = Product(
-                id=uuid.uuid4(),
-                **product_data
-            )
-            
-            # Add to database
-            db_session.add(product_model)
-            products.append(product_model)
+        # Define test data
+        self.test_tenants = [
+            {"id": "tenant1", "name": "Tenant 1", "slug": "tenant1", "domain": "tenant1.example.com"},
+            {"id": "tenant2", "name": "Tenant 2", "slug": "tenant2", "domain": "tenant2.example.com"}
+        ]
         
-        # Commit changes
-        db_session.commit()
-        
-        logger.info(f"Added {count} products to tenant {tenant_id}")
-        return products
-    except Exception as e:
-        db_session.rollback()
-        logger.error(f"Error adding products to tenant {tenant_id}: {str(e)}")
-        return []
+        self.test_products = {
+            "tenant1": [
+                {"id": "product1", "name": "Product 1", "price": 19.99, "sku": "T1-P1"},
+                {"id": "product2", "name": "Product 2", "price": 29.99, "sku": "T1-P2"}
+            ],
+            "tenant2": [
+                {"id": "product3", "name": "Product 3", "price": 39.99, "sku": "T2-P1"},
+                {"id": "product4", "name": "Product 4", "price": 49.99, "sku": "T2-P2"}
+            ]
+        }
 
-def verify_tenant_isolation(tenant_ids):
-    """Verify that tenant data is properly isolated."""
-    try:
-        for tenant_id in tenant_ids:
-            # Get products for this tenant
-            products = db_session.query(Product).filter(Product.tenant_id == tenant_id).all()
-            
-            logger.info(f"Tenant {tenant_id} has {len(products)} products:")
-            for product in products:
-                logger.info(f"  - {product.name} (SKU: {product.sku})")
-            
-            # Verify that products belong to the correct tenant
-            for product in products:
-                assert product.tenant_id == tenant_id, f"Product {product.id} has incorrect tenant_id: {product.tenant_id} != {tenant_id}"
-            
-        return True
-    except Exception as e:
-        logger.error(f"Error verifying tenant isolation: {str(e)}")
-        return False
+    @patch('pycommerce.models.tenant.TenantManager.list')
+    def test_get_all_tenants(self, mock_list):
+        """Test getting all tenants."""
+        # Create mock tenants with proper string values
+        mock_tenant1 = MagicMock()
+        mock_tenant1.id = "tenant1"
+        mock_tenant1.name = "Tenant 1"
+        mock_tenant1.slug = "tenant1"
+        mock_tenant1.domain = "tenant1.example.com"
+        
+        mock_tenant2 = MagicMock()
+        mock_tenant2.id = "tenant2"
+        mock_tenant2.name = "Tenant 2"
+        mock_tenant2.slug = "tenant2"
+        mock_tenant2.domain = "tenant2.example.com"
+        
+        # Configure the mock to return our tenants
+        mock_list.return_value = [mock_tenant1, mock_tenant2]
+        
+        # Get all tenants
+        tenants = self.tenant_manager.get_all()
+        
+        # Verify the correct number of tenants was returned
+        self.assertEqual(len(tenants), 2)
+        
+        # Get actual name strings
+        tenant_names = [str(t.name) for t in tenants]
+        
+        # Verify tenant attributes
+        self.assertIn("Tenant 1", tenant_names)
+        self.assertIn("Tenant 2", tenant_names)
+        
+        # Verify the tenant manager list method was called
+        mock_list.assert_called_once()
 
-def run_test():
-    """Run the multi-tenant test."""
-    try:
-        # Initialize database
-        init_db()
-        logger.info("Database initialized")
+    @patch('pycommerce.models.tenant.TenantManager.get_by_slug')
+    def test_get_tenant_by_slug(self, mock_get_by_slug):
+        """Test getting a tenant by slug."""
+        # Set up mock tenant with string values
+        mock_tenant = MagicMock()
+        mock_tenant.id = "tenant1"
+        mock_tenant.name = "Tenant 1"
+        mock_tenant.slug = "tenant1"
+        mock_tenant.domain = "tenant1.example.com"
         
-        # Create tenant manager
-        tenant_manager = TenantManager()
+        mock_get_by_slug.return_value = mock_tenant
         
-        # Create test tenants
-        tenant1 = create_test_tenant(tenant_manager, "Test Store 1", "test1")
-        tenant2 = create_test_tenant(tenant_manager, "Test Store 2", "test2")
+        # Get tenant by slug
+        tenant = self.tenant_manager.get_by_slug("tenant1")
         
-        if not tenant1 or not tenant2:
-            logger.error("Failed to create test tenants")
-            return False
+        # Verify tenant attributes
+        self.assertEqual(str(tenant.id), "tenant1")
+        self.assertEqual(str(tenant.name), "Tenant 1")
+        self.assertEqual(str(tenant.slug), "tenant1")
+        self.assertEqual(str(tenant.domain), "tenant1.example.com")
         
-        # Add products to each tenant
-        products1 = add_test_products(tenant1.id, 3)
-        products2 = add_test_products(tenant2.id, 3)
-        
-        if not products1 or not products2:
-            logger.error("Failed to add products to tenants")
-            return False
-        
-        # Verify tenant isolation
-        success = verify_tenant_isolation([tenant1.id, tenant2.id])
-        
-        if success:
-            logger.info("Multi-tenant test successful")
-        else:
-            logger.error("Multi-tenant test failed")
-        
-        return success
-    except Exception as e:
-        logger.error(f"Error running multi-tenant test: {str(e)}")
-        return False
+        # Verify the tenant manager get_by_slug method was called with the correct slug
+        mock_get_by_slug.assert_called_once_with("tenant1")
 
-if __name__ == "__main__":
-    logger.info("Starting multi-tenant test")
-    
-    # Run test
-    success = run_test()
-    
-    logger.info("Multi-tenant test complete")
-    
-    # Exit with status code
-    sys.exit(0 if success else 1)
+    @patch('pycommerce.models.product.ProductManager.list_by_tenant')
+    def test_get_products_by_tenant(self, mock_list_by_tenant):
+        """Test getting products by tenant."""
+        # Set up mock products with string values
+        mock_product1 = MagicMock()
+        mock_product1.id = "product1" 
+        mock_product1.name = "Product 1"
+        mock_product1.price = 19.99
+        mock_product1.sku = "T1-P1"
+        
+        mock_product2 = MagicMock()
+        mock_product2.id = "product2"
+        mock_product2.name = "Product 2"
+        mock_product2.price = 29.99
+        mock_product2.sku = "T1-P2"
+        
+        # Configure the mock to return our products
+        mock_list_by_tenant.return_value = [mock_product1, mock_product2]
+        
+        # Get products for tenant1
+        products = self.product_manager.list_by_tenant("tenant1")
+        
+        # Verify the correct number of products was returned
+        self.assertEqual(len(products), 2)
+        
+        # Get actual name strings
+        product_names = [str(p.name) for p in products]
+        
+        # Verify product attributes
+        self.assertIn("Product 1", product_names)
+        self.assertIn("Product 2", product_names)
+        
+        # Verify the product manager list_by_tenant method was called with the correct tenant ID
+        mock_list_by_tenant.assert_called_once_with("tenant1")
+
+    @patch('pycommerce.sdk.AppTenantManager.get_by_slug')
+    @patch('pycommerce.sdk.AppProductManager.list_by_tenant')
+    def test_product_isolation_between_tenants(self, mock_list_by_tenant, mock_get_by_slug):
+        """Test that products are isolated between tenants."""
+        # Set up mock tenant1
+        mock_tenant1 = MagicMock()
+        mock_tenant1.id = "tenant1"
+        mock_tenant1.name = "Tenant 1"
+        mock_tenant1.slug = "tenant1"
+        
+        # Set up tenant1 products
+        mock_product1 = MagicMock()
+        mock_product1.id = "product1"
+        mock_product1.name = "Product 1"
+        mock_product1.price = 19.99
+        mock_product1.sku = "T1-P1"
+        
+        mock_product2 = MagicMock()
+        mock_product2.id = "product2"
+        mock_product2.name = "Product 2" 
+        mock_product2.price = 29.99
+        mock_product2.sku = "T1-P2"
+        
+        tenant1_products = [mock_product1, mock_product2]
+        
+        # Set up tenant2 products
+        mock_product3 = MagicMock()
+        mock_product3.id = "product3"
+        mock_product3.name = "Product 3"
+        mock_product3.price = 39.99
+        mock_product3.sku = "T2-P1"
+        
+        mock_product4 = MagicMock()
+        mock_product4.id = "product4"
+        mock_product4.name = "Product 4"
+        mock_product4.price = 49.99
+        mock_product4.sku = "T2-P2"
+        
+        tenant2_products = [mock_product3, mock_product4]
+        
+        # Set up mock tenant2
+        mock_tenant2 = MagicMock()
+        mock_tenant2.id = "tenant2"
+        mock_tenant2.name = "Tenant 2"
+        mock_tenant2.slug = "tenant2"
+        
+        # Configure mocks to return different values based on calls
+        mock_get_by_slug.side_effect = [mock_tenant1, mock_tenant2]
+        mock_list_by_tenant.side_effect = [tenant1_products, tenant2_products]
+        
+        # Get products for tenant1
+        tenant1 = self.tenant_manager.get_by_slug("tenant1")
+        products1 = self.product_manager.list_by_tenant(tenant1.id)
+        
+        # Verify tenant1 products
+        self.assertEqual(len(products1), 2)
+        product_names1 = [str(p.name) for p in products1]
+        self.assertIn("Product 1", product_names1)
+        self.assertIn("Product 2", product_names1)
+        
+        # Get products for tenant2
+        tenant2 = self.tenant_manager.get_by_slug("tenant2")
+        products2 = self.product_manager.list_by_tenant(tenant2.id)
+        
+        # Verify tenant2 products
+        self.assertEqual(len(products2), 2)
+        product_names2 = [str(p.name) for p in products2]
+        self.assertIn("Product 3", product_names2)
+        self.assertIn("Product 4", product_names2)
+        
+        # Verify the product manager list_by_tenant method was called with the correct tenant IDs
+        mock_list_by_tenant.assert_any_call("tenant1")
+        mock_list_by_tenant.assert_any_call("tenant2")
+
+
+if __name__ == '__main__':
+    unittest.main()

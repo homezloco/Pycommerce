@@ -7,7 +7,7 @@
     "tables": {
       "pages": {
         "exists": true,
-        "record_count": 5,
+        "record_count": 27,
         "columns": [
           "id",
           "tenant_id",
@@ -23,7 +23,7 @@
       },
       "page_sections": {
         "exists": true,
-        "record_count": 12,
+        "record_count": 105,
         "columns": [
           "id",
           "page_id",
@@ -36,7 +36,7 @@
       },
       "content_blocks": {
         "exists": true,
-        "record_count": 14,
+        "record_count": 75,
         "columns": [
           "id",
           "section_id",
@@ -50,7 +50,7 @@
       },
       "page_templates": {
         "exists": true,
-        "record_count": 1,
+        "record_count": 5,
         "columns": [
           "id",
           "name",
@@ -83,8 +83,8 @@
     },
     "templates/admin/pages/editor.html": {
       "exists": true,
-      "size": 79986,
-      "last_modified": 1745161502.5905643,
+      "size": 81705,
+      "last_modified": 1745355227.839342,
       "is_empty": false,
       "readable": true,
       "sample": "{% extends \"admin/base_admin.html\" %}\n\n{% block title %}Page Editor - PyCommerce Admin{% endblock %}"
