@@ -200,7 +200,7 @@ def setup_routes(templates_instance: Jinja2Templates) -> APIRouter:
                 {
                     "id": "1",
                     "name": "Sample Image 1",
-                    "url": "https://via.placeholder.com/600x400/4a90e2/ffffff?text=Product+Image+1",
+                    "url": "https://dummyimage.com/600x400/4a90e2/ffffff&text=Product+Image+1",
                     "size": 12345,
                     "mime_type": "image/jpeg",
                     "tenant_id": None,
@@ -212,7 +212,7 @@ def setup_routes(templates_instance: Jinja2Templates) -> APIRouter:
                 {
                     "id": "2",
                     "name": "Tech Product Image", 
-                    "url": "https://via.placeholder.com/600x400/e24a90/ffffff?text=Tech+Product",
+                    "url": "https://dummyimage.com/600x400/e24a90/ffffff&text=Tech+Product",
                     "size": 23456,
                     "mime_type": "image/jpeg",
                     "tenant_id": "ea6c4bc0-d5aa-4d4f-862c-5d47e7c3f410",
@@ -224,7 +224,7 @@ def setup_routes(templates_instance: Jinja2Templates) -> APIRouter:
                 {
                     "id": "3",
                     "name": "Outdoor Product Image",
-                    "url": "https://via.placeholder.com/600x400/90e24a/ffffff?text=Outdoor+Product",
+                    "url": "https://dummyimage.com/600x400/90e24a/ffffff&text=Outdoor+Product",
                     "size": 34567,
                     "mime_type": "image/png",
                     "tenant_id": "fcb7133c-0ecc-4384-9b6d-695b52ae1496",
@@ -236,7 +236,7 @@ def setup_routes(templates_instance: Jinja2Templates) -> APIRouter:
                 {
                     "id": "4",
                     "name": "Fashion Product Image",
-                    "url": "https://via.placeholder.com/600x400/e2904a/ffffff?text=Fashion+Product",
+                    "url": "https://dummyimage.com/600x400/e2904a/ffffff&text=Fashion+Product",
                     "size": 45678,
                     "mime_type": "image/gif",
                     "tenant_id": "9608b670-08e6-4cfe-90aa-9068b9ddc09e",
@@ -248,7 +248,7 @@ def setup_routes(templates_instance: Jinja2Templates) -> APIRouter:
                 {
                     "id": "5",
                     "name": "SVG Vector Graphic",
-                    "url": "https://via.placeholder.com/600x400/4ae290/ffffff?text=SVG+Sample",
+                    "url": "https://dummyimage.com/600x400/4ae290/ffffff&text=SVG+Sample",
                     "size": 5678,
                     "mime_type": "image/svg+xml",
                     "tenant_id": None,
