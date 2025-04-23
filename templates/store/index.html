@@ -119,6 +119,18 @@
         {% for product in products %}
         <div class="col">
             <div class="card product-card shadow-sm h-100">
+                {% if product.images and product.images|length > 0 %}
+                <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 180px;">
+                    <img src="{{ product.images[0] }}" class="img-fluid" alt="{{ product.name }}" style="max-height: 100%; max-width: 100%; object-fit: contain;">
+                </div>
+                {% else %}
+                <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 180px;">
+                    <div class="text-center text-muted">
+                        <i class="bi bi-image fs-1"></i>
+                        <p>No image</p>
+                    </div>
+                </div>
+                {% endif %}
                 <div class="card-body">
                     <h5 class="card-title">{{ product.name }}</h5>
                     <p class="card-text">{{ product.description }}</p>

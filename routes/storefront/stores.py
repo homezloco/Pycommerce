@@ -212,7 +212,8 @@ async def store(
                     "price": p.price if p and hasattr(p, 'price') else 0.0,
                     "sku": p.sku if p and hasattr(p, 'sku') else None,
                     "stock": p.stock if p and hasattr(p, 'stock') else 0,
-                    "categories": p.categories if p and hasattr(p, 'categories') else []
+                    "categories": p.categories if p and hasattr(p, 'categories') else [],
+                    "images": p.images if p and hasattr(p, 'images') else []
                 }
                 for p in tenant_products if p
             ]
