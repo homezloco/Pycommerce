@@ -818,9 +818,9 @@ function ensureSortableLoaded(callback) {
         }
       }
       
-      // If still no tenant, try to get from session storage or use default
+      // If still no tenant, try to get from session storage or use one of the tenants with products
       if (!tenant) {
-        tenant = sessionStorage.getItem('selected_tenant') || 'demo1';
+        tenant = sessionStorage.getItem('selected_tenant') || 'tech'; // Use 'tech' which has products
       }
       
       console.log('Using derived tenant slug:', tenant);
