@@ -276,7 +276,11 @@
                             const url = this.getAttribute('data-url');
                             imageUrlInput.value = url;
                             updateImagePreview(url);
-                            mediaModalInstance.hide();
+                            // Use the Bootstrap modal API to find and hide the modal
+                            const modal = bootstrap.Modal.getInstance(mediaLibraryModal);
+                            if (modal) {
+                                modal.hide();
+                            }
                         });
                     });
                 } else {
