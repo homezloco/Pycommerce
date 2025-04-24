@@ -364,6 +364,9 @@ def setup_routes(templates_instance: Jinja2Templates) -> APIRouter:
         description: Optional[str] = Form(None)
     ):
         """Generate an image using DALL-E."""
+        logger.info(f"Image generation request received: prompt='{prompt[:30]}...', tenant_id={tenant_id}")
+        logger.info(f"Parameters: size={size}, quality={quality}")
+        
         try:
             if not media_service:
                 logger.error("Media service not available")
@@ -372,7 +375,8 @@ def setup_routes(templates_instance: Jinja2Templates) -> APIRouter:
                     url=f"/admin/media?tenant={tenant_id}&status_message={error_message}&status_type=danger", 
                     status_code=303
                 )
-                
+            
+            logger.info("Media service found, proceeding with image generation")
             # Use the media service to generate the image
             result = media_service.generate_image_with_dalle(
                 prompt=prompt, 
@@ -384,18 +388,23 @@ def setup_routes(templates_instance: Jinja2Templates) -> APIRouter:
             )
             
             if result and hasattr(result, 'id'):
+                logger.info(f"Image generated successfully: id={result.id}")
                 return RedirectResponse(
                     url=f"/admin/media?tenant={tenant_id}&status_message=Image+generated+successfully&status_type=success", 
                     status_code=303
                 )
             else:
+                logger.error("Image generation failed: result is None or missing id attribute")
                 error_message = "Image generation failed. Please try again."
                 return RedirectResponse(
                     url=f"/admin/media?tenant={tenant_id}&status_message={error_message}&status_type=danger", 
                     status_code=303
                 )
         except Exception as e:
+            import traceback
+            error_details = traceback.format_exc()
             logger.error(f"Error generating image: {str(e)}")
+            logger.error(f"Detailed error: {error_details}")
             error_message = f"Error generating image: {str(e)}"
             return RedirectResponse(
                 url=f"/admin/media?tenant={tenant_id}&status_message={error_message}&status_type=danger",

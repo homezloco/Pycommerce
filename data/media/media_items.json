@@ -1,0 +1,72 @@
+[
+  {
+    "id": "402b702a-beb6-4e93-87ac-53f57caca77d",
+    "name": "Product Image (Blue)",
+    "url": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI2MDAiIGhlaWdodD0iNDAwIiB2aWV3Qm94PSIwIDAgNjAwIDQwMCI+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0iIzRhOTBlMiIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwsIHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMzYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiNmZmZmZmYiPlByb2R1Y3QgSW1hZ2U8L3RleHQ+PC9zdmc+",
+    "mime_type": "image/svg+xml",
+    "size": 12345,
+    "tenant_id": null,
+    "sharing_level": "global",
+    "created_at": "2025-04-23T10:00:00Z",
+    "updated_at": "2025-04-23T10:00:00Z",
+    "metadata": {
+      "sample": true
+    }
+  },
+  {
+    "id": "ac869d75-0f04-45d2-8080-93b08ac6287a",
+    "name": "Tech Product Image",
+    "url": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI2MDAiIGhlaWdodD0iNDAwIiB2aWV3Qm94PSIwIDAgNjAwIDQwMCI+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0iI2UyNGE5MCIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwsIHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMzYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiNmZmZmZmYiPlRlY2ggUHJvZHVjdDwvdGV4dD48L3N2Zz4=",
+    "mime_type": "image/svg+xml",
+    "size": 23456,
+    "tenant_id": null,
+    "sharing_level": "global",
+    "created_at": "2025-04-23T10:01:00Z",
+    "updated_at": "2025-04-23T10:01:00Z",
+    "metadata": {
+      "sample": true
+    }
+  },
+  {
+    "id": "854e03f0-419a-4b1b-9201-c52355c0a2b2",
+    "name": "Outdoor Product Image",
+    "url": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI2MDAiIGhlaWdodD0iNDAwIiB2aWV3Qm94PSIwIDAgNjAwIDQwMCI+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0iIzkwZTI0YSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwsIHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMzYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiNmZmZmZmYiPk91dGRvb3IgUHJvZHVjdDwvdGV4dD48L3N2Zz4=",
+    "mime_type": "image/svg+xml",
+    "size": 34567,
+    "tenant_id": null,
+    "sharing_level": "global",
+    "created_at": "2025-04-23T10:02:00Z",
+    "updated_at": "2025-04-23T10:02:00Z",
+    "metadata": {
+      "sample": true
+    }
+  },
+  {
+    "id": "00ba24b4-8ff4-4643-b1d9-a2d37e005b64",
+    "name": "Fashion Product Image",
+    "url": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI2MDAiIGhlaWdodD0iNDAwIiB2aWV3Qm94PSIwIDAgNjAwIDQwMCI+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0iI2UyOTA0YSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwsIHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMzYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiNmZmZmZmYiPkZhc2hpb24gUHJvZHVjdDwvdGV4dD48L3N2Zz4=",
+    "mime_type": "image/svg+xml",
+    "size": 45678,
+    "tenant_id": null,
+    "sharing_level": "global",
+    "created_at": "2025-04-23T10:03:00Z",
+    "updated_at": "2025-04-23T10:03:00Z",
+    "metadata": {
+      "sample": true
+    }
+  },
+  {
+    "id": "0f69a4e7-8d08-44b3-bc74-a04d80fb2dee",
+    "name": "SVG Vector Graphic",
+    "url": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI2MDAiIGhlaWdodD0iNDAwIiB2aWV3Qm94PSIwIDAgNjAwIDQwMCI+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0iIzRhZTI5MCIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwsIHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMzYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiNmZmZmZmYiPlNWRyBTYW1wbGU8L3RleHQ+PC9zdmc+",
+    "mime_type": "image/svg+xml",
+    "size": 5678,
+    "tenant_id": null,
+    "sharing_level": "global",
+    "created_at": "2025-04-23T10:04:00Z",
+    "updated_at": "2025-04-23T10:04:00Z",
+    "metadata": {
+      "sample": true
+    }
+  }
+]
