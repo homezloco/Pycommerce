@@ -375,74 +375,7 @@
         const generateButton = document.getElementById('generateButton');
         const aiLoading = document.getElementById('aiGenerationLoading');
         
-        // Sample media data (simulate database)
-        const sampleMediaData = {
-            items: [
-                {
-                    id: "1",
-                    name: "Sample Image 1",
-                    url: "https://via.placeholder.com/600x400/4a90e2/ffffff?text=Product+Image+1",
-                    size: 12345,
-                    mime_type: "image/jpeg",
-                    tenant_id: null,
-                    tenant_name: "Global",
-                    sharing_level: "global",
-                    created_at: "2025-04-23T10:00:00Z",
-                    updated_at: "2025-04-23T10:00:00Z"
-                },
-                {
-                    id: "2",
-                    name: "Tech Product Image", 
-                    url: "https://via.placeholder.com/600x400/e24a90/ffffff?text=Tech+Product",
-                    size: 23456,
-                    mime_type: "image/jpeg",
-                    tenant_id: "ea6c4bc0-d5aa-4d4f-862c-5d47e7c3f410",
-                    tenant_name: "Tech Gadgets",
-                    sharing_level: "tenant",
-                    created_at: "2025-04-23T10:01:00Z",
-                    updated_at: "2025-04-23T10:01:00Z"
-                },
-                {
-                    id: "3",
-                    name: "Outdoor Product Image",
-                    url: "https://via.placeholder.com/600x400/90e24a/ffffff?text=Outdoor+Product",
-                    size: 34567,
-                    mime_type: "image/png",
-                    tenant_id: "fcb7133c-0ecc-4384-9b6d-695b52ae1496",
-                    tenant_name: "Outdoor Adventure",
-                    sharing_level: "tenant",
-                    created_at: "2025-04-23T10:02:00Z",
-                    updated_at: "2025-04-23T10:02:00Z"
-                },
-                {
-                    id: "4",
-                    name: "Fashion Product Image",
-                    url: "https://via.placeholder.com/600x400/e2904a/ffffff?text=Fashion+Product",
-                    size: 45678,
-                    mime_type: "image/gif",
-                    tenant_id: "9608b670-08e6-4cfe-90aa-9068b9ddc09e",
-                    tenant_name: "Fashion Boutique",
-                    sharing_level: "tenant",
-                    created_at: "2025-04-23T10:03:00Z",
-                    updated_at: "2025-04-23T10:03:00Z"
-                },
-                {
-                    id: "5",
-                    name: "SVG Vector Graphic",
-                    url: "https://via.placeholder.com/600x400/4ae290/ffffff?text=SVG+Sample",
-                    size: 5678,
-                    mime_type: "image/svg+xml",
-                    tenant_id: null,
-                    tenant_name: "Global",
-                    sharing_level: "global",
-                    created_at: "2025-04-23T10:04:00Z",
-                    updated_at: "2025-04-23T10:04:00Z"
-                }
-            ],
-            count: 5,
-            page: 1,
-            limit: 100
-        };
+        // Media data will be fetched from the API
         
         // Initial load
         loadMediaItems();
@@ -501,31 +434,41 @@
                 uploadBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Uploading...';
                 showUploadStatus('Uploading media...', 'info');
                 
-                // Handle simulated upload
-                simulateFileUpload(formData, mediaFile.files[0])
-                    .then(response => {
-                        showUploadStatus('Media uploaded successfully!', 'success');
-                        
-                        // Refresh media library
-                        loadMediaItems();
-                        
-                        // Reset form
-                        uploadForm.reset();
-                        uploadPreview.style.display = 'none';
-                        
-                        // Close modal after delay
-                        setTimeout(() => {
-                            uploadModal.hide();
-                        }, 1500);
-                    })
-                    .catch(error => {
-                        showUploadStatus('Error uploading media: ' + error.message, 'danger');
-                    })
-                    .finally(() => {
-                        // Reset button
-                        uploadBtn.disabled = false;
-                        uploadBtn.innerHTML = 'Upload';
-                    });
+                // Upload via API
+                fetch('/admin/api/media/upload', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Failed to upload media');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    showUploadStatus('Media uploaded successfully!', 'success');
+                    
+                    // Refresh media library
+                    loadMediaItems();
+                    
+                    // Reset form
+                    uploadForm.reset();
+                    uploadPreview.style.display = 'none';
+                    
+                    // Close modal after delay
+                    setTimeout(() => {
+                        uploadModal.hide();
+                    }, 1500);
+                })
+                .catch(error => {
+                    console.error('Error uploading media:', error);
+                    showUploadStatus('Error uploading media: ' + error.message, 'danger');
+                })
+                .finally(() => {
+                    // Reset button
+                    uploadBtn.disabled = false;
+                    uploadBtn.innerHTML = 'Upload';
+                });
             });
         }
         
@@ -550,16 +493,36 @@
                 if (!mediaId) return;
                 
                 if (confirm('Are you sure you want to delete this media? This action cannot be undone.')) {
-                    // Simulate deletion
-                    const index = sampleMediaData.items.findIndex(item => item.id === mediaId);
-                    if (index !== -1) {
-                        sampleMediaData.items.splice(index, 1);
-                        sampleMediaData.count--;
+                    // Show loading state
+                    deleteMediaBtn.disabled = true;
+                    deleteMediaBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Deleting...';
+                    
+                    // Delete via API
+                    fetch(`/admin/api/media/${mediaId}`, {
+                        method: 'DELETE'
+                    })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Failed to delete media');
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        // Success message
+                        alert('Media deleted successfully');
                         
                         // Refresh the list and close modal
                         loadMediaItems();
                         detailsModal.hide();
-                    }
+                    })
+                    .catch(error => {
+                        console.error('Error deleting media:', error);
+                        alert('Error deleting media: ' + error.message);
+                        
+                        // Reset button
+                        deleteMediaBtn.disabled = false;
+                        deleteMediaBtn.innerHTML = 'Delete';
+                    });
                 }
             });
         }
@@ -602,26 +565,43 @@
             mediaError.style.display = 'none';
             mediaItems.innerHTML = '';
             
-            // Apply filters to sample data
-            const filteredData = filterSampleData(sampleMediaData.items);
+            // Build API URL with filters
+            let apiUrl = '/admin/api/media?page=' + currentPage + '&limit=' + pageSize;
+            if (currentFilters.tenant) {
+                apiUrl += '&tenant_id=' + encodeURIComponent(currentFilters.tenant);
+            }
+            if (currentFilters.type) {
+                apiUrl += '&mime_type=' + encodeURIComponent(currentFilters.type);
+            }
+            if (currentFilters.sharing) {
+                apiUrl += '&sharing_level=' + encodeURIComponent(currentFilters.sharing);
+            }
+            if (currentFilters.search) {
+                apiUrl += '&search=' + encodeURIComponent(currentFilters.search);
+            }
             
-            // Paginate
-            const paginatedData = paginateData(filteredData, currentPage, pageSize);
-            
-            // Update counts
-            totalCount.textContent = filteredData.length;
-            showingCount.textContent = Math.min(paginatedData.length, pageSize);
-            
-            // Calculate total pages
-            totalPages = Math.ceil(filteredData.length / pageSize);
-            
-            // Display data
-            setTimeout(() => {
-                mediaLoading.style.display = 'none';
-                
-                // Render media items
-                if (paginatedData.length > 0) {
-                    paginatedData.forEach(item => {
+            // Fetch data from API
+            fetch(apiUrl)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Failed to load media items');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    // Update counts
+                    totalCount.textContent = data.count || 0;
+                    showingCount.textContent = data.items ? data.items.length : 0;
+                    
+                    // Calculate total pages
+                    totalPages = data.pages || 1;
+                    
+                    // Hide loading indicator
+                    mediaLoading.style.display = 'none';
+                    
+                    // Render media items
+                    if (data.items && data.items.length > 0) {
+                        data.items.forEach(item => {
                         const mediaItem = document.createElement('div');
                         mediaItem.className = 'col-md-3 col-sm-6 mb-4';
                         mediaItem.innerHTML = `
@@ -688,32 +668,55 @@
                     mediaItems.innerHTML = '<div class="col-12"><div class="alert alert-info">No media found matching your filters. Try adjusting your search criteria or upload new media.</div></div>';
                     mediaPagination.innerHTML = '';
                 }
-            }, 500); // Simulate network delay
         }
         
         // Function to open media details
         function openMediaDetails(mediaId) {
-            const media = sampleMediaData.items.find(item => item.id === mediaId);
-            if (!media) return;
+            // Show a loading spinner in the modal
+            detailName.textContent = 'Loading...';
+            detailId.textContent = '';
+            detailType.textContent = '';
+            detailSize.textContent = '';
+            detailTenant.textContent = '';
+            detailSharing.textContent = '';
+            detailCreated.textContent = '';
+            detailUpdated.textContent = '';
+            detailUrl.value = '';
+            detailImagePreview.src = '';
+            detailImagePreview.alt = 'Loading...';
             
-            // Populate details
-            detailName.textContent = media.name;
-            detailId.textContent = media.id;
-            detailType.textContent = `${media.mime_type.split('/')[1].toUpperCase()} (${media.mime_type})`;
-            detailSize.textContent = formatFileSize(media.size);
-            detailTenant.textContent = media.tenant_name;
-            detailSharing.textContent = media.sharing_level.charAt(0).toUpperCase() + media.sharing_level.slice(1);
-            detailCreated.textContent = formatDate(media.created_at);
-            detailUpdated.textContent = formatDate(media.updated_at);
-            detailUrl.value = media.url;
-            detailImagePreview.src = media.url;
-            detailImagePreview.alt = media.name;
-            
-            // Set data attributes for action buttons
-            deleteMediaBtn.setAttribute('data-media-id', media.id);
-            
-            // Show the modal
+            // Show the modal while fetching data
             detailsModal.show();
+            
+            // Fetch the media item details from the API
+            fetch(`/admin/api/media/${mediaId}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Failed to load media details');
+                    }
+                    return response.json();
+                })
+                .then(media => {
+                    // Populate details
+                    detailName.textContent = media.name;
+                    detailId.textContent = media.id;
+                    detailType.textContent = `${media.mime_type.split('/')[1].toUpperCase()} (${media.mime_type})`;
+                    detailSize.textContent = formatFileSize(media.size);
+                    detailTenant.textContent = media.tenant_name;
+                    detailSharing.textContent = media.sharing_level.charAt(0).toUpperCase() + media.sharing_level.slice(1);
+                    detailCreated.textContent = formatDate(media.created_at);
+                    detailUpdated.textContent = formatDate(media.updated_at);
+                    detailUrl.value = media.url;
+                    detailImagePreview.src = media.url;
+                    detailImagePreview.alt = media.name;
+                    
+                    // Set data attributes for action buttons
+                    deleteMediaBtn.setAttribute('data-media-id', media.id);
+                })
+                .catch(error => {
+                    console.error('Error fetching media details:', error);
+                    detailName.textContent = 'Error loading media details';
+                });
         }
         
         // Function to update pagination
@@ -766,32 +769,7 @@
             });
         }
         
-        // Function to filter sample data
-        function filterSampleData(items) {
-            return items.filter(item => {
-                // Tenant filter
-                if (currentFilters.tenant && (!item.tenant_id || item.tenant_id !== currentFilters.tenant)) {
-                    return false;
-                }
-                
-                // Type filter
-                if (currentFilters.type && item.mime_type !== currentFilters.type) {
-                    return false;
-                }
-                
-                // Sharing filter
-                if (currentFilters.sharing && item.sharing_level !== currentFilters.sharing) {
-                    return false;
-                }
-                
-                // Search filter
-                if (currentFilters.search && !item.name.toLowerCase().includes(currentFilters.search.toLowerCase())) {
-                    return false;
-                }
-                
-                return true;
-            });
-        }
+        // Filtering is now handled by the API backend
         
         // Function to apply filters
         function applyFilters() {
@@ -839,47 +817,7 @@
             }
         }
         
-        // Function to simulate file upload
-        function simulateFileUpload(formData, file) {
-            return new Promise((resolve, reject) => {
-                // Create a timeout to simulate network request
-                setTimeout(() => {
-                    // Simulate successful upload with 90% chance
-                    if (Math.random() < 0.9) {
-                        // Use FileReader to preview the image
-                        const reader = new FileReader();
-                        reader.onload = function(e) {
-                            // Add image to our sample data
-                            const newImage = {
-                                id: "upload_" + new Date().getTime(),
-                                name: formData.get('name'),
-                                url: e.target.result,
-                                size: file.size,
-                                mime_type: file.type,
-                                tenant_id: formData.get('tenant_id') || null,
-                                tenant_name: formData.get('tenant_id') ? 
-                                    document.querySelector(`#tenant-id option[value="${formData.get('tenant_id')}"]`)?.textContent || 'Unknown' : 
-                                    'Global',
-                                sharing_level: formData.get('sharing_level') || 'global',
-                                created_at: new Date().toISOString(),
-                                updated_at: new Date().toISOString()
-                            };
-                            
-                            // Add to existing sample data
-                            sampleMediaData.items.unshift(newImage);
-                            sampleMediaData.count += 1;
-                            
-                            resolve({ success: true, image: newImage });
-                        };
-                        
-                        reader.readAsDataURL(file);
-                    } else {
-                        // Simulate error
-                        reject(new Error("Server error, please try again."));
-                    }
-                }, 1500); // Simulate 1.5s upload time
-            });
-        }
+        // No longer needed - using real API
         
         // Debounce function for search input
         function debounce(func, wait) {
