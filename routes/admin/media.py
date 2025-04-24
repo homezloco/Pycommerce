@@ -243,7 +243,9 @@ def setup_routes(templates_instance: Jinja2Templates) -> APIRouter:
                     "tenant_name": tenant_name,
                     "sharing_level": item.sharing_level,
                     "created_at": item.created_at,
-                    "updated_at": item.updated_at
+                    "updated_at": item.updated_at,
+                    "metadata": item.metadata or {},
+                    "public_access": item.metadata.get("public_access", True) if item.metadata else True
                 }
                 items_dict.append(item_dict)
             
@@ -315,7 +317,9 @@ def setup_routes(templates_instance: Jinja2Templates) -> APIRouter:
                 "tenant_name": tenant_name,
                 "sharing_level": media_item.sharing_level,
                 "created_at": media_item.created_at,
-                "updated_at": media_item.updated_at
+                "updated_at": media_item.updated_at,
+                "metadata": media_item.metadata or {},
+                "public_access": media_item.metadata.get("public_access", True) if media_item.metadata else True
             }
             
             return JSONResponse(content=item_dict)
