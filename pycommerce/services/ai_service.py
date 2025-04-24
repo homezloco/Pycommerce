@@ -6,7 +6,10 @@ This module provides utilities for AI-powered content generation and other AI fe
 
 import os
 import logging
-from typing import Dict, Any, Optional
+import requests
+import tempfile
+import base64
+from typing import Dict, Any, Optional, Tuple, Union, BinaryIO
 
 from openai import OpenAI
 
@@ -90,3 +93,116 @@ class AIService:
                 "error": f"Failed to generate content: {str(e)}",
                 "success": False
             }
+    
+    def generate_image(
+        self, 
+        prompt: str, 
+        size: str = "1024x1024", 
+        quality: str = "standard", 
+        model: str = "dall-e-3"
+    ) -> Dict[str, Any]:
+        """
+        Generate an image using DALL-E.
+        
+        Args:
+            prompt: The text prompt to generate the image from
+            size: Size of the image (1024x1024, 1024x1792, 1792x1024)
+            quality: Image quality (standard, hd)
+            model: DALL-E model version (dall-e-2, dall-e-3)
+            
+        Returns:
+            Dictionary with image URL or error message
+        """
+        if not self.openai_client:
+            logger.error("OpenAI client not initialized")
+            return {
+                "error": "AI service not configured. Contact the administrator.",
+                "success": False
+            }
+        
+        try:
+            logger.info(f"Generating image with DALL-E using prompt: {prompt[:50]}...")
+            logger.info(f"Parameters: size={size}, quality={quality}, model={model}")
+            
+            # Make the API call to generate the image
+            response = self.openai_client.images.generate(
+                model=model,
+                prompt=prompt,
+                size=size,
+                quality=quality,
+                n=1,
+            )
+            
+            # Extract the image URL from the response
+            image_url = response.data[0].url
+            
+            if not image_url:
+                logger.error("No image URL returned from OpenAI")
+                return {
+                    "error": "Failed to generate image: No URL returned",
+                    "success": False
+                }
+            
+            logger.info("Successfully generated image with DALL-E")
+            
+            # Download the image as binary data
+            image_data, mime_type, size_bytes = self._download_image(image_url)
+            
+            if not image_data:
+                return {
+                    "error": "Failed to download generated image",
+                    "success": False
+                }
+            
+            # Convert to base64 for easy embedding
+            image_base64 = base64.b64encode(image_data).decode('utf-8')
+            
+            return {
+                "url": image_url,
+                "data": image_data,
+                "base64": image_base64,
+                "mime_type": mime_type,
+                "size": size_bytes,
+                "success": True
+            }
+            
+        except Exception as e:
+            import traceback
+            logger.error(f"Error generating image with DALL-E: {str(e)}")
+            logger.error(traceback.format_exc())
+            return {
+                "error": f"Failed to generate image: {str(e)}",
+                "success": False
+            }
+    
+    def _download_image(self, url: str) -> Tuple[Optional[bytes], Optional[str], Optional[int]]:
+        """
+        Download an image from a URL.
+        
+        Args:
+            url: URL of the image to download
+            
+        Returns:
+            Tuple of (image_data, mime_type, size_in_bytes) or (None, None, None) if failed
+        """
+        try:
+            response = requests.get(url, stream=True, timeout=30)
+            response.raise_for_status()
+            
+            # Get the mime type from the Content-Type header
+            mime_type = response.headers.get('Content-Type', 'image/jpeg')
+            
+            # Get the content length
+            content_length = int(response.headers.get('Content-Length', 0))
+            
+            # Read the image data
+            image_data = response.content
+            
+            # Calculate the size if content_length is not available
+            size_bytes = content_length or len(image_data)
+            
+            return image_data, mime_type, size_bytes
+            
+        except Exception as e:
+            logger.error(f"Error downloading image: {str(e)}")
+            return None, None, None

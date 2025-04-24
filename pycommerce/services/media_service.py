@@ -428,7 +428,8 @@ class MediaService:
         quality: str = "standard",
         alt_text: Optional[str] = None,
         description: Optional[str] = None,
-        metadata: Optional[Dict[str, Any]] = None
+        metadata: Optional[Dict[str, Any]] = None,
+        model: str = "dall-e-3"
     ) -> Optional[MediaItem]:
         """
         Generate an image using DALL-E AI model.
@@ -441,78 +442,82 @@ class MediaService:
             alt_text: Alt text for the image
             description: Description of the image
             metadata: Additional metadata for the image
+            model: DALL-E model version (dall-e-2, dall-e-3)
             
         Returns:
             MediaItem if successful, None otherwise
         """
-        # Create a current timestamp for the SVG generation
+        # Create a current timestamp for generation timestamp
         timestamp = datetime.now().isoformat()
         
         try:
-            # Initialize OpenAI client with API key from environment
-            api_key = os.environ.get("OPENAI_API_KEY")
+            # Import AIService
+            from pycommerce.services.ai_service import AIService
+            
+            # Initialize AI service
+            ai_service = AIService()
+            
+            # Log the image generation attempt
             logger.info(f"Generating image with DALL-E using prompt: {prompt[:50]}...")
-            logger.info(f"Parameters: tenant_id={tenant_id}, size={size}, quality={quality}")
+            logger.info(f"Parameters: tenant_id={tenant_id}, size={size}, quality={quality}, model={model}")
             
-            if not api_key:
-                logger.error("OpenAI API key not found")
-                raise ValueError("OpenAI API key not found in environment variables")
+            # Use AI service to generate image
+            result = ai_service.generate_image(
+                prompt=prompt,
+                size=size,
+                quality=quality,
+                model=model
+            )
             
-            # Since we've identified an issue with the OpenAI integration, we'll create a placeholder SVG
-            # while the root issue is being addressed in a comprehensive fix
-            logger.info("Creating placeholder image while troubleshooting OpenAI integration")
+            if not result.get('success'):
+                error_message = result.get('error', 'Unknown error')
+                logger.error(f"Error from AI service: {error_message}")
+                return self._create_fallback_image(prompt, tenant_id, metadata)
             
-            # Create a simple SVG image
-            svg = f"""<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
-                <rect width="100%" height="100%" fill="#f9f9f9"/>
-                <rect x="12" y="12" width="1000" height="1000" fill="#ffffff" stroke="#e0e0e0" stroke-width="1"/>
-                <text x="50%" y="40%" font-family="Arial, sans-serif" font-size="32" text-anchor="middle" fill="#555555">
-                    Image based on prompt:
-                </text>
-                <text x="50%" y="48%" font-family="Arial, sans-serif" font-size="28" text-anchor="middle" fill="#333333" font-style="italic">
-                    "{prompt[:80]}{' ...' if len(prompt) > 80 else ''}"
-                </text>
-                <text x="50%" y="58%" font-family="Arial, sans-serif" font-size="24" text-anchor="middle" fill="#666666">
-                    Generated: {timestamp[:19].replace('T', ' ')}
-                </text>
-                <text x="50%" y="70%" font-family="Arial, sans-serif" font-size="18" text-anchor="middle" fill="#999999">
-                    AI image generation feature is currently being optimized
-                </text>
-                <text x="50%" y="75%" font-family="Arial, sans-serif" font-size="16" text-anchor="middle" fill="#999999">
-                    Please check back soon for full DALL-E integration
-                </text>
-            </svg>"""
+            # Get image details from result
+            image_url = result.get('url')
+            image_data = result.get('data')
+            image_base64 = result.get('base64')
+            mime_type = result.get('mime_type', 'image/jpeg')
+            size_bytes = result.get('size', 0)
             
-            # Convert SVG to base64
-            svg_base64 = base64.b64encode(svg.encode('utf-8')).decode('utf-8')
-            url = f"data:image/svg+xml;base64,{svg_base64}"
+            if not image_url and not image_base64:
+                logger.error("No image URL or base64 data returned")
+                return self._create_fallback_image(prompt, tenant_id, metadata)
             
             # Create a meaningful name
-            name = f"Image: {prompt[:30]}..." if len(prompt) > 30 else f"Image: {prompt}"
+            name = f"DALL-E: {prompt[:30]}..." if len(prompt) > 30 else f"DALL-E: {prompt}"
             
             # Prepare metadata
             image_metadata = metadata or {}
             image_metadata.update({
                 "prompt": prompt,
                 "generated_at": timestamp,
-                "temporary_placeholder": True,
+                "generated_by": "dalle",
+                "model": model,
                 "size": size,
-                "quality": quality
+                "quality": quality,
+                "ai_generated": True
             })
             
+            # Create data URL if we have binary data but no URL
+            url = image_url
+            if not url and image_base64:
+                url = f"data:{mime_type};base64,{image_base64}"
+            
             # Create the media item
-            logger.info(f"Creating placeholder SVG image: {name}")
+            logger.info(f"Creating AI-generated image: {name}")
             media_item = self.create(
                 name=name,
                 url=url,
-                mime_type="image/svg+xml",
-                size=len(svg),
+                mime_type=mime_type,
+                size=size_bytes,
                 tenant_id=tenant_id,
                 sharing_level="tenant" if tenant_id else "global",
                 metadata=image_metadata
             )
             
-            logger.info(f"Successfully created placeholder image: {name}")
+            logger.info(f"Successfully created AI-generated image: {name}")
             return media_item
             
         except Exception as e:
