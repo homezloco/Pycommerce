@@ -364,22 +364,45 @@ class MediaService:
                 
             client = OpenAI(api_key=api_key)
             
-            # Generate image using DALL-E
+            # Ensure size is one of the valid options
+            valid_sizes = ["1024x1024", "1024x1792", "1792x1024"]
+            if size not in valid_sizes:
+                size = "1024x1024"  # Default to square if invalid
+                logger.warning(f"Invalid size provided, defaulting to {size}")
+            
+            # Ensure quality is valid
+            valid_qualities = ["standard", "hd"]
+            if quality not in valid_qualities:
+                quality = "standard"  # Default to standard if invalid
+                logger.warning(f"Invalid quality provided, defaulting to {quality}")
+            
+            # Generate image using DALL-E-2 which is more stable for this application
+            # The newest OpenAI model is "gpt-4o" which was released after your knowledge cutoff.
+            # do not change this unless explicitly requested by the user
             response = client.images.generate(
-                model="dall-e-3",  # Can be either "dall-e-2" or "dall-e-3"
+                model="dall-e-2",  # Using DALL-E 2 which is more reliable for simple generations
                 prompt=prompt,
                 size=size,
-                quality=quality,
                 n=1,
-                response_format="b64_json"
+                response_format="url"  # Get URL instead of base64 to avoid response size issues
             )
             
-            # Extract image data
-            if not response.data or not hasattr(response.data[0], "b64_json"):
-                logger.error("No image data in response")
+            # Check if we have a response URL
+            if not response.data or not hasattr(response.data[0], "url"):
+                logger.error("No image URL in response")
                 return None
                 
-            image_data = response.data[0].b64_json
+            # Get the URL from the response
+            image_url = response.data[0].url
+            
+            # Fetch the image content
+            image_response = requests.get(image_url)
+            if image_response.status_code != 200:
+                logger.error(f"Failed to fetch image from URL: {image_response.status_code}")
+                return None
+                
+            # Convert image to base64
+            image_data = base64.b64encode(image_response.content).decode('utf-8')
             
             # Create a name for the image based on the prompt
             name = f"AI Generated: {prompt[:30]}..." if len(prompt) > 30 else f"AI Generated: {prompt}"
@@ -391,6 +414,7 @@ class MediaService:
             image_metadata = metadata or {}
             image_metadata.update({
                 "generated_by": "dalle",
+                "model": "dall-e-2",
                 "prompt": prompt,
                 "generated_at": timestamp,
                 "ai_generated": True
@@ -414,5 +438,54 @@ class MediaService:
             return media_item
             
         except Exception as e:
+            import traceback
+            error_details = traceback.format_exc()
             logger.error(f"Error generating image with DALL-E: {str(e)}")
-            return None
+            logger.error(f"Detailed error: {error_details}")
+            
+            # Fallback to a placeholder image in case of error
+            return self._create_fallback_image(prompt, tenant_id, metadata)
+    
+    def _create_fallback_image(self, prompt: str, tenant_id: Optional[str] = None, metadata: Optional[Dict[str, Any]] = None) -> MediaItem:
+        """Create a fallback SVG image when DALL-E generation fails."""
+        name = f"AI Image (Failed): {prompt[:30]}..." if len(prompt) > 30 else f"AI Image (Failed): {prompt}"
+        
+        # Create a simple SVG image with the prompt text
+        svg = f"""<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+            <rect width="100%" height="100%" fill="#f0f0f0"/>
+            <text x="50%" y="50%" font-family="Arial, sans-serif" font-size="36" text-anchor="middle" fill="#666666">
+                Image generation failed
+            </text>
+            <text x="50%" y="58%" font-family="Arial, sans-serif" font-size="24" text-anchor="middle" fill="#999999">
+                Prompt: {prompt[:50]}...
+            </text>
+        </svg>"""
+        
+        # Convert SVG to base64
+        svg_base64 = base64.b64encode(svg.encode('utf-8')).decode('utf-8')
+        url = f"data:image/svg+xml;base64,{svg_base64}"
+        
+        # Current timestamp
+        timestamp = datetime.now().isoformat()
+        
+        # Prepare metadata
+        fallback_metadata = metadata or {}
+        fallback_metadata.update({
+            "generated_by": "dalle",
+            "status": "failed",
+            "prompt": prompt,
+            "generated_at": timestamp,
+            "ai_generated": False,
+            "is_fallback": True
+        })
+        
+        # Create media item
+        return self.create(
+            name=name,
+            url=url,
+            mime_type="image/svg+xml",
+            size=len(svg),
+            tenant_id=tenant_id,
+            sharing_level="tenant" if tenant_id else "global",
+            metadata=fallback_metadata
+        )
