@@ -626,7 +626,7 @@
                                     </div>
                                 </div>
                                 <div class="card-footer text-muted small bg-transparent">
-                                    ${item.tenant_name} • ${item.sharing_level.charAt(0).toUpperCase() + item.sharing_level.slice(1)}
+                                    ${item.tenant_name || 'Global'} • ${item.sharing_level ? (item.sharing_level.charAt(0).toUpperCase() + item.sharing_level.slice(1)) : 'Global'}
                                 </div>
                             </div>
                         `;
@@ -698,17 +698,21 @@
                 })
                 .then(media => {
                     // Populate details
-                    detailName.textContent = media.name;
-                    detailId.textContent = media.id;
-                    detailType.textContent = `${media.mime_type.split('/')[1].toUpperCase()} (${media.mime_type})`;
-                    detailSize.textContent = formatFileSize(media.size);
-                    detailTenant.textContent = media.tenant_name;
-                    detailSharing.textContent = media.sharing_level.charAt(0).toUpperCase() + media.sharing_level.slice(1);
-                    detailCreated.textContent = formatDate(media.created_at);
-                    detailUpdated.textContent = formatDate(media.updated_at);
-                    detailUrl.value = media.url;
-                    detailImagePreview.src = media.url;
-                    detailImagePreview.alt = media.name;
+                    detailName.textContent = media.name || 'Untitled';
+                    detailId.textContent = media.id || '';
+                    detailType.textContent = media.mime_type ? 
+                      `${media.mime_type.split('/')[1].toUpperCase()} (${media.mime_type})` : 
+                      'Unknown';
+                    detailSize.textContent = media.size ? formatFileSize(media.size) : 'Unknown';
+                    detailTenant.textContent = media.tenant_name || 'Global';
+                    detailSharing.textContent = media.sharing_level ? 
+                      (media.sharing_level.charAt(0).toUpperCase() + media.sharing_level.slice(1)) : 
+                      'Global';
+                    detailCreated.textContent = media.created_at ? formatDate(media.created_at) : 'Unknown';
+                    detailUpdated.textContent = media.updated_at ? formatDate(media.updated_at) : 'Unknown';
+                    detailUrl.value = media.url || '';
+                    detailImagePreview.src = media.url || '';
+                    detailImagePreview.alt = media.name || 'Media preview';
                     
                     // Set data attributes for action buttons
                     deleteMediaBtn.setAttribute('data-media-id', media.id);
@@ -800,8 +804,15 @@
         
         // Function to format date
         function formatDate(dateString) {
-            const date = new Date(dateString);
-            return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+            if (!dateString) return 'Unknown';
+            try {
+                const date = new Date(dateString);
+                if (isNaN(date.getTime())) return 'Invalid date';
+                return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+            } catch (error) {
+                console.error('Error formatting date:', error);
+                return 'Invalid date';
+            }
         }
         
         // Function to show upload status

@@ -271,6 +271,62 @@ def setup_routes(templates_instance: Jinja2Templates) -> APIRouter:
                 content={"success": False, "message": f"Error fetching media: {str(e)}"}
             )
             
+    @router.get("/admin/api/media/{media_id}")
+    async def admin_get_media_by_id(
+        request: Request,
+        media_id: str
+    ):
+        """Get a specific media file by ID."""
+        try:
+            if not media_service:
+                raise HTTPException(status_code=503, detail="Media service not available")
+                
+            # Get the media item by ID
+            media_item = None
+            for item in media_service._media_items:
+                if str(item.id) == media_id:
+                    media_item = item
+                    break
+                    
+            if not media_item:
+                return JSONResponse(
+                    status_code=404,
+                    content={"success": False, "message": f"Media item not found with ID: {media_id}"}
+                )
+                
+            # Get tenant name from tenant_manager if tenant_id is available
+            tenant_name = "Global"
+            if media_item.tenant_id and tenant_manager:
+                try:
+                    tenant = tenant_manager.get(media_item.tenant_id)
+                    if tenant:
+                        tenant_name = tenant.name
+                except Exception as e:
+                    logger.error(f"Error getting tenant: {e}")
+            
+            # Convert the MediaItem to a dictionary
+            item_dict = {
+                "id": str(media_item.id),
+                "name": media_item.name,
+                "url": media_item.url,
+                "size": media_item.size,
+                "mime_type": media_item.mime_type,
+                "tenant_id": media_item.tenant_id,
+                "tenant_name": tenant_name,
+                "sharing_level": media_item.sharing_level,
+                "created_at": media_item.created_at,
+                "updated_at": media_item.updated_at
+            }
+            
+            return JSONResponse(content=item_dict)
+            
+        except Exception as e:
+            logger.error(f"Error fetching media item: {e}")
+            return JSONResponse(
+                status_code=500,
+                content={"success": False, "message": f"Error fetching media item: {str(e)}"}
+            )
+            
     @router.delete("/admin/api/media/{media_id}")
     async def admin_delete_media(
         request: Request,
