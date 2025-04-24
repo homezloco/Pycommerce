@@ -669,6 +669,12 @@
                     mediaItems.innerHTML = '<div class="col-12"><div class="alert alert-info">No media found matching your filters. Try adjusting your search criteria or upload new media.</div></div>';
                     mediaPagination.innerHTML = '';
                 }
+                })
+                .catch(error => {
+                    console.error('Error loading media items:', error);
+                    mediaLoading.style.display = 'none';
+                    mediaItems.innerHTML = '<div class="col-12"><div class="alert alert-danger">Error loading media: ' + error.message + '</div></div>';
+                });
         }
         
         // Function to open media details
