@@ -604,29 +604,39 @@
                         data.items.forEach(item => {
                             const mediaItem = document.createElement('div');
                             mediaItem.className = 'col-md-3 col-sm-6 mb-4';
+                            // Safely handle any properties that might be undefined
+                            const itemName = item.name || 'Untitled';
+                            const itemUrl = item.url || '';
+                            const itemId = item.id || '';
+                            const itemSize = item.size ? formatFileSize(item.size) : 'Unknown size';
+                            const itemMimeType = item.mime_type ? item.mime_type.split('/')[1].toUpperCase() : 'FILE';
+                            const itemTenantName = item.tenant_name || 'Global';
+                            const itemSharingLevel = item.sharing_level ? 
+                                (item.sharing_level.charAt(0).toUpperCase() + item.sharing_level.slice(1)) : 'Global';
+                            
                             mediaItem.innerHTML = `
                                 <div class="card h-100">
                                     <div class="card-img-container" style="height: 150px; overflow: hidden;">
-                                        <img src="${item.url}" class="card-img-top" alt="${item.name}"
+                                        <img src="${itemUrl}" class="card-img-top" alt="${itemName}"
                                             style="height: 100%; width: 100%; object-fit: cover; cursor: pointer;" 
-                                            data-media-id="${item.id}">
+                                            data-media-id="${itemId}">
                                     </div>
                                     <div class="card-body">
-                                        <h6 class="card-title text-truncate">${item.name || 'Untitled'}</h6>
+                                        <h6 class="card-title text-truncate">${itemName}</h6>
                                         <p class="card-text text-muted small">
-                                            ${item.size ? formatFileSize(item.size) : 'Unknown size'} • ${item.mime_type ? item.mime_type.split('/')[1].toUpperCase() : 'FILE'}
+                                            ${itemSize} • ${itemMimeType}
                                         </p>
                                         <div class="btn-group btn-group-sm w-100">
-                                            <button type="button" class="btn btn-outline-primary view-media" data-media-id="${item.id}">
+                                            <button type="button" class="btn btn-outline-primary view-media" data-media-id="${itemId}">
                                                 <i class="fas fa-eye"></i> View
                                             </button>
-                                            <button type="button" class="btn btn-outline-success select-media" data-url="${item.url}">
+                                            <button type="button" class="btn btn-outline-success select-media" data-url="${itemUrl}">
                                                 <i class="fas fa-check"></i> Select
                                             </button>
                                         </div>
                                     </div>
                                     <div class="card-footer text-muted small bg-transparent">
-                                        ${item.tenant_name || 'Global'} • ${item.sharing_level ? (item.sharing_level.charAt(0).toUpperCase() + item.sharing_level.slice(1)) : 'Global'}
+                                        ${itemTenantName} • ${itemSharingLevel}
                                     </div>
                                 </div>
                             `;
@@ -679,6 +689,11 @@
         
         // Function to open media details
         function openMediaDetails(mediaId) {
+            if (!mediaId) {
+                console.error('Invalid media ID');
+                return;
+            }
+            
             // Show a loading spinner in the modal
             detailName.textContent = 'Loading...';
             detailId.textContent = '';
@@ -692,42 +707,73 @@
             detailImagePreview.src = '';
             detailImagePreview.alt = 'Loading...';
             
-            // Show the modal while fetching data
-            detailsModal.show();
-            
-            // Fetch the media item details from the API
-            fetch(`/admin/api/media/${mediaId}`)
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Failed to load media details');
-                    }
-                    return response.json();
-                })
-                .then(media => {
-                    // Populate details
-                    detailName.textContent = media.name || 'Untitled';
-                    detailId.textContent = media.id || '';
-                    detailType.textContent = media.mime_type ? 
-                      `${media.mime_type.split('/')[1].toUpperCase()} (${media.mime_type})` : 
-                      'Unknown';
-                    detailSize.textContent = media.size ? formatFileSize(media.size) : 'Unknown';
-                    detailTenant.textContent = media.tenant_name || 'Global';
-                    detailSharing.textContent = media.sharing_level ? 
-                      (media.sharing_level.charAt(0).toUpperCase() + media.sharing_level.slice(1)) : 
-                      'Global';
-                    detailCreated.textContent = media.created_at ? formatDate(media.created_at) : 'Unknown';
-                    detailUpdated.textContent = media.updated_at ? formatDate(media.updated_at) : 'Unknown';
-                    detailUrl.value = media.url || '';
-                    detailImagePreview.src = media.url || '';
-                    detailImagePreview.alt = media.name || 'Media preview';
-                    
-                    // Set data attributes for action buttons
-                    deleteMediaBtn.setAttribute('data-media-id', media.id);
-                })
-                .catch(error => {
-                    console.error('Error fetching media details:', error);
-                    detailName.textContent = 'Error loading media details';
-                });
+            try {
+                // Show the modal while fetching data
+                detailsModal.show();
+                
+                // Fetch the media item details from the API
+                fetch(`/admin/api/media/${mediaId}`)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Failed to load media details');
+                        }
+                        return response.json();
+                    })
+                    .then(media => {
+                        // Make sure we have valid media data
+                        if (!media) {
+                            throw new Error('No media data received');
+                        }
+                        
+                        // Populate details with safe access to properties
+                        detailName.textContent = media.name || 'Untitled';
+                        detailId.textContent = media.id || '';
+                        
+                        // Safely handle mime type
+                        let typeText = 'Unknown';
+                        if (media.mime_type) {
+                            try {
+                                const typeParts = media.mime_type.split('/');
+                                typeText = typeParts.length > 1 
+                                    ? `${typeParts[1].toUpperCase()} (${media.mime_type})` 
+                                    : media.mime_type;
+                            } catch (e) {
+                                console.error('Error parsing mime type:', e);
+                                typeText = media.mime_type;
+                            }
+                        }
+                        detailType.textContent = typeText;
+                        
+                        // Other fields with safe access
+                        detailSize.textContent = media.size ? formatFileSize(media.size) : 'Unknown';
+                        detailTenant.textContent = media.tenant_name || 'Global';
+                        
+                        let sharingText = 'Global';
+                        if (media.sharing_level && typeof media.sharing_level === 'string') {
+                            sharingText = media.sharing_level.charAt(0).toUpperCase() + 
+                                         media.sharing_level.slice(1);
+                        }
+                        detailSharing.textContent = sharingText;
+                        
+                        detailCreated.textContent = media.created_at ? formatDate(media.created_at) : 'Unknown';
+                        detailUpdated.textContent = media.updated_at ? formatDate(media.updated_at) : 'Unknown';
+                        detailUrl.value = media.url || '';
+                        detailImagePreview.src = media.url || '';
+                        detailImagePreview.alt = media.name || 'Media preview';
+                        
+                        // Set data attributes for action buttons
+                        if (media.id) {
+                            deleteMediaBtn.setAttribute('data-media-id', media.id);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error fetching media details:', error);
+                        detailName.textContent = 'Error loading media details';
+                    });
+            } catch (error) {
+                console.error('Error in openMediaDetails:', error);
+                detailName.textContent = 'Error processing media details';
+            }
         }
         
         // Function to update pagination
