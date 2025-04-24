@@ -105,8 +105,21 @@ class TenantManager:
             List of all tenants
         """
         try:
-            tenant_models = self.session.query(Tenant).all()
-            return [TenantDTO.from_model(model) for model in tenant_models]
+            # Always create a fresh session to ensure we get the latest data
+            # and avoid SSL connection closed unexpectedly errors
+            with db_session() as fresh_session:
+                try:
+                    tenant_models = fresh_session.query(Tenant).all()
+                    return [TenantDTO.from_model(model) for model in tenant_models]
+                except Exception as e:
+                    logger.error(f"Error in fresh session listing tenants: {str(e)}")
+                    # Try one more time with special connection parameters
+                    fresh_session.get_bind().dialect.dbapi.connect(
+                        fresh_session.get_bind().url.render_as_string(hide_password=False),
+                        connect_args={"sslmode": "prefer"}
+                    )
+                    tenant_models = fresh_session.query(Tenant).all()
+                    return [TenantDTO.from_model(model) for model in tenant_models]
         except Exception as e:
             logger.error(f"Error listing tenants: {str(e)}")
             return []

@@ -21,12 +21,17 @@ app = Flask(__name__)
 app.secret_key = os.environ.get("SESSION_SECRET", "pycommerce-dev-key")
 
 # Configure database
-app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL")
+database_url = os.environ.get("DATABASE_URL")
+app.config["SQLALCHEMY_DATABASE_URI"] = database_url
 app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
     "pool_recycle": 300,
     "pool_pre_ping": True,
+    "connect_args": {"sslmode": "prefer"}  # Use SSL mode prefer for more reliable connections
 }
 db.init_app(app)
+
+# Log database connection status
+logger.info("Initializing database connection with sslmode=prefer")
 
 # Initialize database
 with app.app_context():
