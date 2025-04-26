@@ -1,13 +1,15 @@
 """
 Product API routes for PyCommerce SDK.
 
-This module defines the FastAPI routes for product operations.
+This module defines the FastAPI routes for product operations with comprehensive
+documentation, proper validation, and optimized response handling.
 """
 
 import logging
-from typing import List, Optional, Dict, Any
+from typing import List, Optional, Dict, Any, Union
 from uuid import UUID
-from fastapi import APIRouter, HTTPException, Query, Depends, Request
+from fastapi import APIRouter, HTTPException, Query, Depends, Request, Path, Body, status
+from fastapi.responses import JSONResponse
 
 from pycommerce.models.product import Product, ProductManager
 # Import enhanced query optimizer functions
@@ -125,32 +127,40 @@ async def get_tenant_id(request: Request) -> str:
     return "default"
 
 
-@router.get("", response_model=List[Product])
+@router.get("", response_model=List[Product], tags=["Products"], 
+         summary="List products",
+         responses={
+             200: {"description": "List of products", "model": List[Product]},
+             400: {"description": "Bad request"},
+             401: {"description": "Unauthorized"},
+             500: {"description": "Internal server error"}
+         })
 async def list_products(
     request: Request,
-    category: Optional[str] = None,
-    min_price: Optional[float] = None,
-    max_price: Optional[float] = None,
-    in_stock: Optional[bool] = None,
-    limit: int = Query(100, description="Maximum number of products to return"),
-    offset: int = Query(0, description="Pagination offset"),
+    category: Optional[str] = Query(None, description="Filter products by category name"),
+    min_price: Optional[float] = Query(None, description="Filter products with price greater than or equal to this value", ge=0),
+    max_price: Optional[float] = Query(None, description="Filter products with price less than or equal to this value", ge=0),
+    in_stock: Optional[bool] = Query(None, description="Filter by products that are in stock (true) or out of stock (false)"),
+    limit: int = Query(100, description="Maximum number of products to return", ge=1, le=1000),
+    offset: int = Query(0, description="Pagination offset", ge=0),
     tenant_id: str = Depends(get_tenant_id)
 ):
     """
     List products with optional filtering.
     
-    Args:
-        request: The FastAPI request object
-        category: Filter by category
-        min_price: Filter by minimum price
-        max_price: Filter by maximum price
-        in_stock: Filter by stock availability
-        limit: Maximum number of products to return (for pagination)
-        offset: Pagination offset
-        tenant_id: The tenant ID
-        
-    Returns:
-        List of products matching the filters
+    Retrieves a list of products for the specified tenant with optional filtering
+    by category, price range, and stock availability. The results are paginated
+    using the limit and offset parameters.
+    
+    - **category**: Filter products by category name (optional)
+    - **min_price**: Filter products with price greater than or equal to this value (optional)
+    - **max_price**: Filter products with price less than or equal to this value (optional)
+    - **in_stock**: Filter by products that are in stock (true) or out of stock (false) (optional)
+    - **limit**: Maximum number of products to return (default: 100)
+    - **offset**: Pagination offset (default: 0)
+    - **tenant_id**: The tenant ID (derived from header, subdomain, or URL)
+    
+    Returns a list of products matching the filter criteria.
     """
     try:
         # Use enhanced query optimizer if available
@@ -185,20 +195,33 @@ async def list_products(
         )
 
 
-@router.get("/search", response_model=List[Product])
+@router.get("/search", response_model=List[Product], tags=["Products"], 
+         summary="Search products",
+         responses={
+             200: {"description": "List of products matching search query", "model": List[Product]},
+             400: {"description": "Bad request"},
+             401: {"description": "Unauthorized"},
+             500: {"description": "Internal server error"}
+         })
 async def search_products(
-    q: str = Query(..., min_length=1),
+    q: str = Query(..., min_length=1, description="Search query for product name, description, or SKU"),
+    limit: int = Query(100, description="Maximum number of products to return", ge=1, le=1000),
+    offset: int = Query(0, description="Pagination offset", ge=0),
     tenant_id: str = Depends(get_tenant_id)
 ):
     """
-    Search for products.
+    Search for products by name, description, or SKU.
     
-    Args:
-        q: The search query
-        tenant_id: The tenant ID
-        
-    Returns:
-        List of products matching the search query
+    Performs a text search across product attributes (name, description, and SKU)
+    and returns matching products for the specified tenant. The search is case-insensitive
+    and matches partial text.
+    
+    - **q**: Search query string (required, minimum length 1)
+    - **limit**: Maximum number of products to return (default: 100)
+    - **offset**: Pagination offset (default: 0)
+    - **tenant_id**: The tenant ID (derived from header, subdomain, or URL)
+    
+    Returns a list of products matching the search query.
     """
     try:
         product_manager = get_product_manager(tenant_id)
@@ -212,23 +235,29 @@ async def search_products(
         )
 
 
-@router.get("/{product_id}", response_model=Product)
+@router.get("/{product_id}", response_model=Product, tags=["Products"], 
+         summary="Get product by ID",
+         responses={
+             200: {"description": "Product details", "model": Product},
+             404: {"description": "Product not found"},
+             500: {"description": "Internal server error"}
+         })
 async def get_product(
-    product_id: str,
+    product_id: str = Path(..., description="Unique identifier of the product to retrieve"),
     tenant_id: str = Depends(get_tenant_id)
 ):
     """
-    Get a product by ID.
+    Get detailed information about a specific product by its ID.
     
-    Args:
-        product_id: The ID of the product to get
-        tenant_id: The tenant ID
-        
-    Returns:
-        The product
-        
-    Raises:
-        HTTPException: If the product is not found
+    Retrieves comprehensive product information including name, description,
+    price, stock status, and category assignments. The product must belong to
+    the specified tenant.
+    
+    - **product_id**: Unique identifier of the product (required)
+    - **tenant_id**: The tenant ID (derived from header, subdomain, or URL)
+    
+    Returns the product details if found, or a 404 error if the product does not exist
+    or does not belong to the specified tenant.
     """
     try:
         # Use enhanced query optimizer if available
@@ -257,23 +286,41 @@ async def get_product(
         )
 
 
-@router.post("", response_model=Product)
+@router.post("", response_model=Product, tags=["Products"], 
+         summary="Create new product",
+         status_code=201,
+         responses={
+             201: {"description": "Product created successfully", "model": Product},
+             400: {"description": "Invalid product data"},
+             401: {"description": "Unauthorized"},
+             500: {"description": "Internal server error"}
+         })
 async def create_product(
-    product_data: dict,
+    product_data: dict = Body(..., description="Product data including name, price, description, etc."),
     tenant_id: str = Depends(get_tenant_id)
 ):
     """
-    Create a new product.
+    Create a new product in the specified tenant's catalog.
     
-    Args:
-        product_data: Dictionary containing product data
-        tenant_id: The tenant ID
-        
-    Returns:
-        The created product
-        
-    Raises:
-        HTTPException: If product creation fails
+    Creates a new product with the provided data and associates it with
+    the specified tenant. The product data should include essential fields
+    like name, price, and SKU, as well as optional fields like description,
+    stock level, and category assignments.
+    
+    - **product_data**: Product data object (required) with the following fields:
+      - **name**: Product name (required)
+      - **price**: Product price (required)
+      - **sku**: Stock keeping unit (required, must be unique per tenant)
+      - **description**: Product description (optional)
+      - **stock**: Quantity in stock (optional, defaults to 0)
+      - **categories**: List of category IDs (optional)
+      - **cost_price**: Cost price for profit calculation (optional)
+      - **is_material**: Whether this is a material item (optional)
+      - **is_labor**: Whether this represents labor (optional)
+    - **tenant_id**: The tenant ID (derived from header, subdomain, or URL)
+    
+    Returns the created product with its assigned ID and creation timestamp.
+    Returns a 400 error if the product data is invalid or the SKU is already in use.
     """
     try:
         product_manager = get_product_manager(tenant_id)
@@ -301,25 +348,43 @@ async def create_product(
         )
 
 
-@router.put("/{product_id}", response_model=Product)
+@router.put("/{product_id}", response_model=Product, tags=["Products"], 
+         summary="Update existing product",
+         responses={
+             200: {"description": "Product updated successfully", "model": Product},
+             400: {"description": "Invalid product data"},
+             401: {"description": "Unauthorized"},
+             404: {"description": "Product not found"},
+             500: {"description": "Internal server error"}
+         })
 async def update_product(
-    product_id: str,
-    product_data: dict,
+    product_id: str = Path(..., description="Unique identifier of the product to update"),
+    product_data: dict = Body(..., description="Updated product data fields"),
     tenant_id: str = Depends(get_tenant_id)
 ):
     """
-    Update a product.
+    Update an existing product with new values.
     
-    Args:
-        product_id: The ID of the product to update
-        product_data: Dictionary containing updated product data
-        tenant_id: The tenant ID
-        
-    Returns:
-        The updated product
-        
-    Raises:
-        HTTPException: If the product is not found or update fails
+    Updates the specified product with the provided data. Only the fields
+    included in the request body will be updated; other fields will remain
+    unchanged. The product must belong to the specified tenant.
+    
+    - **product_id**: Unique identifier of the product to update (required)
+    - **product_data**: Updated product data (required), which may include:
+      - **name**: Product name
+      - **price**: Product price
+      - **sku**: Stock keeping unit (must be unique per tenant)
+      - **description**: Product description
+      - **stock**: Quantity in stock
+      - **categories**: List of category IDs
+      - **cost_price**: Cost price for profit calculation
+      - **is_material**: Whether this is a material item
+      - **is_labor**: Whether this represents labor
+    - **tenant_id**: The tenant ID (derived from header, subdomain, or URL)
+    
+    Returns the updated product with all current values.
+    Returns a 404 error if the product does not exist or does not belong to the tenant.
+    Returns a 400 error if the updated data is invalid or the SKU conflicts with another product.
     """
     try:
         product_manager = get_product_manager(tenant_id)
@@ -348,23 +413,30 @@ async def update_product(
         )
 
 
-@router.delete("/{product_id}")
+@router.delete("/{product_id}", tags=["Products"], 
+         summary="Delete product",
+         responses={
+             200: {"description": "Product deleted successfully", "content": {"application/json": {"example": {"message": "Product deleted successfully"}}}},
+             401: {"description": "Unauthorized"},
+             404: {"description": "Product not found"},
+             500: {"description": "Internal server error"}
+         })
 async def delete_product(
-    product_id: str,
+    product_id: str = Path(..., description="Unique identifier of the product to delete"),
     tenant_id: str = Depends(get_tenant_id)
 ):
     """
-    Delete a product.
+    Permanently delete a product from the catalog.
     
-    Args:
-        product_id: The ID of the product to delete
-        tenant_id: The tenant ID
-        
-    Returns:
-        Success message
-        
-    Raises:
-        HTTPException: If the product is not found
+    Deletes the specified product from the tenant's catalog. This operation cannot
+    be undone, and all associated data will be permanently removed. The product
+    must belong to the specified tenant.
+    
+    - **product_id**: Unique identifier of the product to delete (required)
+    - **tenant_id**: The tenant ID (derived from header, subdomain, or URL)
+    
+    Returns a success message if the product was deleted successfully.
+    Returns a 404 error if the product does not exist or does not belong to the tenant.
     """
     try:
         product_manager = get_product_manager(tenant_id)
