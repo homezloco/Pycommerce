@@ -1,38 +1,25 @@
 #!/usr/bin/env python3
-"""Script to create advanced pages for all tenants using the new templates.
+"""Script to create advanced pages for all remaining tenants.
 
-This script creates blog, FAQ, services, and portfolio pages for all tenants
-using the advanced templates created by the add_advanced_templates.py script.
-It ensures each tenant has a full set of pages based on the available templates.
+This script creates blog, FAQ, services, and portfolio pages for all tenants 
+that don't already have these pages, using the advanced templates.
 """
 
 import logging
 import sys
+import uuid
 from typing import Dict, Any, List, Optional
 
 from pycommerce.core.db import SessionLocal
-from pycommerce.models.tenant import Tenant
 from pycommerce.models.page_builder import (
-    Page, PageTemplate, PageManager, PageSection, PageSectionManager, 
-    ContentBlock, ContentBlockManager, PageTemplateManager
+    PageManager, PageTemplateManager, PageSectionManager, ContentBlockManager, 
+    Page, PageTemplate
 )
 from pycommerce.sdk import AppTenantManager
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
-
-def get_tenant_by_slug(tenant_manager: AppTenantManager, slug: str) -> Optional[Dict[str, Any]]:
-    """Get a tenant by its slug."""
-    tenant = tenant_manager.get_by_slug(slug)
-    if tenant:
-        return {
-            "id": str(tenant.id),
-            "name": tenant.name,
-            "slug": tenant.slug
-        }
-    return None
 
 
 def create_page_from_template(
@@ -96,7 +83,7 @@ def create_page_from_template(
 
 
 def create_tenant_pages(
-    tenant: Dict[str, Any],
+    tenant_dict: Dict[str, Any],
     templates: Dict[str, PageTemplate],
     page_manager: PageManager,
     section_manager: PageSectionManager,
@@ -104,11 +91,12 @@ def create_tenant_pages(
 ) -> List[Page]:
     """Create a set of pages for a specific tenant using the advanced templates."""
     created_pages = []
+    tenant_id = tenant_dict["id"]
     
     # Blog page
     if "Blog Page" in templates:
         page = create_page_from_template(
-            tenant_id=tenant["id"],
+            tenant_id=tenant_id,
             title="Blog",
             slug="blog",
             template=templates["Blog Page"],
@@ -122,7 +110,7 @@ def create_tenant_pages(
     # FAQ page
     if "FAQ Page" in templates:
         page = create_page_from_template(
-            tenant_id=tenant["id"],
+            tenant_id=tenant_id,
             title="Frequently Asked Questions",
             slug="faq",
             template=templates["FAQ Page"],
@@ -136,7 +124,7 @@ def create_tenant_pages(
     # Services page
     if "Services Page" in templates:
         page = create_page_from_template(
-            tenant_id=tenant["id"],
+            tenant_id=tenant_id,
             title="Our Services",
             slug="services",
             template=templates["Services Page"],
@@ -150,7 +138,7 @@ def create_tenant_pages(
     # Portfolio page
     if "Portfolio Page" in templates:
         page = create_page_from_template(
-            tenant_id=tenant["id"],
+            tenant_id=tenant_id,
             title="Portfolio",
             slug="portfolio",
             template=templates["Portfolio Page"],
@@ -161,12 +149,12 @@ def create_tenant_pages(
         if page:
             created_pages.append(page)
     
-    logger.info(f"Created {len(created_pages)} pages for tenant '{tenant['name']}'")
+    logger.info(f"Created {len(created_pages)} pages for tenant '{tenant_dict['name']}'")
     return created_pages
 
 
-def create_advanced_pages_for_all_tenants():
-    """Create advanced pages for all tenants."""
+def create_all_remaining_tenant_pages():
+    """Create advanced pages for all tenants other than demo1."""
     session = SessionLocal()
     try:
         # Initialize managers
@@ -202,13 +190,15 @@ def create_advanced_pages_for_all_tenants():
         # Convert tenant objects to dictionaries for consistent handling
         tenant_dicts = []
         for tenant in tenants:
-            tenant_dicts.append({
-                "id": str(tenant.id),
-                "name": tenant.name,
-                "slug": tenant.slug
-            })
+            # Skip demo1 since we've already created pages for it
+            if tenant.slug != "demo1":
+                tenant_dicts.append({
+                    "id": str(tenant.id),
+                    "name": tenant.name,
+                    "slug": tenant.slug
+                })
         
-        logger.info(f"Found {len(tenant_dicts)} tenants")
+        logger.info(f"Found {len(tenant_dicts)} tenants to process")
         
         total_pages_created = 0
         
@@ -216,7 +206,7 @@ def create_advanced_pages_for_all_tenants():
         for tenant_dict in tenant_dicts:
             logger.info(f"Creating advanced pages for tenant: {tenant_dict['name']} (ID: {tenant_dict['id']})")
             pages = create_tenant_pages(
-                tenant=tenant_dict,
+                tenant_dict=tenant_dict,
                 templates=templates_by_name,
                 page_manager=page_manager,
                 section_manager=section_manager,
@@ -234,7 +224,7 @@ def create_advanced_pages_for_all_tenants():
 
 
 if __name__ == "__main__":
-    logger.info("Creating advanced pages for all tenants...")
-    create_advanced_pages_for_all_tenants()
+    logger.info("Creating advanced pages for remaining tenants...")
+    create_all_remaining_tenant_pages()
     logger.info("Finished creating advanced pages")
     sys.exit(0)
