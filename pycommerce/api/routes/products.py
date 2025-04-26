@@ -278,7 +278,14 @@ async def create_product(
     try:
         product_manager = get_product_manager(tenant_id)
         product = product_manager.create(product_data)
-        logger.info(f"Created product: {product.id} for tenant {tenant_id}")
+        product_id = str(product.id)
+        logger.info(f"Created product: {product_id} for tenant {tenant_id}")
+        
+        # Invalidate cache if using enhanced query optimizer
+        if ENHANCED_OPTIMIZER_AVAILABLE:
+            invalidate_product_cache(tenant_id=tenant_id)
+            logger.info(f"Invalidated product cache for tenant {tenant_id}")
+            
         return product
     except ValueError as e:
         logger.error(f"Validation error creating product for tenant {tenant_id}: {str(e)}")
@@ -318,6 +325,14 @@ async def update_product(
         product_manager = get_product_manager(tenant_id)
         product = product_manager.update(product_id, product_data)
         logger.info(f"Updated product: {product.id} for tenant {tenant_id}")
+        
+        # Invalidate cache if using enhanced query optimizer
+        if ENHANCED_OPTIMIZER_AVAILABLE:
+            # Invalidate both tenant-wide cache and specific product cache
+            invalidate_product_cache(tenant_id=tenant_id)
+            invalidate_product_cache(product_id=product_id)
+            logger.info(f"Invalidated cache for product {product_id} and tenant {tenant_id}")
+            
         return product
     except ValueError as e:
         logger.error(f"Validation error updating product {product_id} for tenant {tenant_id}: {str(e)}")
@@ -355,6 +370,14 @@ async def delete_product(
         product_manager = get_product_manager(tenant_id)
         product_manager.delete(product_id)
         logger.info(f"Deleted product: {product_id} for tenant {tenant_id}")
+        
+        # Invalidate cache if using enhanced query optimizer
+        if ENHANCED_OPTIMIZER_AVAILABLE:
+            # Invalidate both tenant-wide cache and specific product cache
+            invalidate_product_cache(tenant_id=tenant_id)
+            invalidate_product_cache(product_id=product_id)
+            logger.info(f"Invalidated cache for product {product_id} and tenant {tenant_id}")
+            
         return {"message": "Product deleted successfully"}
     except Exception as e:
         logger.error(f"Error deleting product {product_id} for tenant {tenant_id}: {str(e)}")
