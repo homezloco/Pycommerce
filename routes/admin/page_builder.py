@@ -1067,6 +1067,10 @@ async def page_editor(
     """Admin page editor."""
     session = SessionLocal()
     try:
+        # Start timing for performance monitoring
+        import time
+        start_time = time.time()
+        
         # Initialize managers
         page_manager = PageManager(session)
         # Use the enhanced tenant manager from SDK
@@ -1075,8 +1079,27 @@ async def page_editor(
         section_manager = PageSectionManager(session)
         block_manager = ContentBlockManager(session)
 
-        # Get the page
-        page = page_manager.get(id)
+        # Try to get the page using the enhanced query optimizer for better performance
+        page = None
+        page_data = None
+        
+        try:
+            # Import the optimized query function
+            from pycommerce.services.enhanced_query_optimizer import get_page_with_full_content
+            logger.info(f"Using enhanced query optimizer for page editor - page ID: {id}")
+            
+            # Get page with optimized query that includes all sections and blocks
+            page_data = get_page_with_full_content(id)
+            
+            if page_data:
+                page = page_manager.get(id)  # Still need the ORM object for some operations
+                logger.info(f"Page loaded with enhanced optimizer: {page_data.get('title', 'Unknown')}")
+            
+        except (ImportError, Exception) as e:
+            # Fall back to standard page manager if enhanced optimizer is not available
+            logger.info(f"Enhanced query optimizer not available for page editor, using standard page manager: {str(e)}")
+            page = page_manager.get(id)
+        
         if not page:
             logger.error(f"Page with ID {id} not found")
             return RedirectResponse(
@@ -1215,6 +1238,10 @@ async def page_preview(
     """Preview a page."""
     session = SessionLocal()
     try:
+        # Start timing for performance monitoring
+        import time
+        start_time = time.time()
+        
         # Initialize managers
         page_manager = PageManager(session)
         from pycommerce.sdk import AppTenantManager
@@ -1222,15 +1249,41 @@ async def page_preview(
         section_manager = PageSectionManager(session)
         block_manager = ContentBlockManager(session)
 
-        # Get the page
-        page = page_manager.get(page_id)
+        # Try to get the page and its content using the enhanced query optimizer
+        page = None
+        page_data = None
+        sections_with_blocks = []
+        
+        try:
+            # Import the optimized query function
+            from pycommerce.services.enhanced_query_optimizer import get_page_with_full_content
+            logger.info(f"Using enhanced query optimizer for page preview - page ID: {page_id}")
+            
+            # Get page with optimized query that includes all sections and blocks
+            page_data = get_page_with_full_content(page_id)
+            
+            if page_data:
+                # Still need the ORM object for some operations
+                page = page_manager.get(page_id)
+                
+                # Sections and blocks are already in the page_data from the optimized query
+                if 'sections' in page_data and page_data['sections']:
+                    sections_with_blocks = page_data['sections']
+                    logger.info(f"Page preview loaded with enhanced optimizer: {len(sections_with_blocks)} sections")
+            
+        except (ImportError, Exception) as e:
+            # Fall back to standard managers if enhanced optimizer is not available
+            logger.info(f"Enhanced query optimizer not available for page preview, using standard managers: {str(e)}")
+            page = page_manager.get(page_id)
+            
+        # If we didn't get data from the optimizer, or need to fall back
         if not page:
             logger.error(f"Page with ID {page_id} not found")
             return RedirectResponse(
                 url=f"/admin/pages?status_message=Page+not+found&status_type=danger",
                 status_code=status.HTTP_303_SEE_OTHER
             )
-
+            
         # Get the tenant with enhanced fallback
         tenant = tenant_manager.get_or_default(str(page.tenant_id))
         if not tenant:
@@ -1240,17 +1293,24 @@ async def page_preview(
                 status_code=status.HTTP_303_SEE_OTHER
             )
 
-        # Get page sections
-        sections = section_manager.list_by_page(page_id)
+        # If we didn't get sections from the optimizer, fetch them using standard approach
+        if not sections_with_blocks:
+            # Get page sections
+            sections = section_manager.list_by_page(page_id)
 
-        # Get blocks for each section
-        sections_with_blocks = []
-        for section in sections:
-            blocks = block_manager.list_by_section(str(section.id))
-            sections_with_blocks.append({
-                "section": section,
-                "blocks": blocks
-            })
+            # Get blocks for each section
+            sections_with_blocks = []
+            for section in sections:
+                blocks = block_manager.list_by_section(str(section.id))
+                sections_with_blocks.append({
+                    "section": section,
+                    "blocks": blocks
+                })
+            
+        # Log performance metrics for monitoring
+        execution_time = time.time() - start_time
+        if execution_time > 0.1:
+            logger.info(f"Page preview execution time: {execution_time:.4f}s")
 
         return templates.TemplateResponse(
             "storefront/page.html",
@@ -1279,6 +1339,10 @@ async def page_templates_list(
     """Admin page listing all page templates."""
     session = SessionLocal()
     try:
+        # Start timing for performance monitoring
+        import time
+        start_time = time.time()
+        
         # Initialize managers
         from pycommerce.sdk import AppTenantManager
         tenant_manager = AppTenantManager()
@@ -1298,10 +1362,29 @@ async def page_templates_list(
             request.session["selected_tenant"] = selected_tenant_slug
             logger.info(f"No tenant selected, using first available tenant: {selected_tenant_slug}")
 
-        # Get templates
-        templates_list = template_manager.list_templates()
+        # Try to use enhanced query optimizer for templates
+        templates_list = []
+        try:
+            # Import the optimized query function
+            from pycommerce.services.enhanced_query_optimizer import get_all_page_templates
+            logger.info("Using enhanced query optimizer for page templates listing")
+            
+            # Get templates with optimized query
+            templates_list = get_all_page_templates()
+            
+            logger.info(f"Templates loaded with enhanced optimizer: {len(templates_list)}")
+            
+        except (ImportError, Exception) as e:
+            # Fall back to standard template manager if enhanced optimizer is not available
+            logger.info(f"Enhanced query optimizer not available for templates, using standard manager: {str(e)}")
+            templates_list = template_manager.list_templates()
         
         logger.info(f"Found {len(templates_list)} page templates")
+        
+        # Log performance metrics for monitoring
+        execution_time = time.time() - start_time
+        if execution_time > 0.1:
+            logger.info(f"Template listing execution time: {execution_time:.4f}s")
 
         return templates.TemplateResponse(
             "admin/pages/templates.html",
@@ -1611,6 +1694,10 @@ async def api_list_pages(
     """List pages via API."""
     session = SessionLocal()
     try:
+        # Start timing for performance monitoring
+        import time
+        start_time = time.time()
+        
         # Get local manager instances - don't pass session to TenantManager
         tenant_manager = TenantManager()
         page_manager = PageManager(session)
@@ -1626,34 +1713,59 @@ async def api_list_pages(
 
         # Get tenant and pages
         tenant_obj = None
-        pages = []
+        pages_data = []
+        
         if selected_tenant_slug:
             try:
                 tenant_obj = tenant_manager.get_by_slug(selected_tenant_slug)
+                
                 if tenant_obj:
-                    pages = page_manager.list_by_tenant(str(tenant_obj.id), include_unpublished=True)
+                    # Try using the enhanced query optimizer for better performance
+                    try:
+                        # Import the optimized query function
+                        from pycommerce.services.enhanced_query_optimizer import get_pages_by_tenant
+                        logger.info("Using enhanced query optimizer for API page listing")
+                        
+                        # Get pages with optimized query that includes section count
+                        pages_data = get_pages_by_tenant(str(tenant_obj.id), include_unpublished=True)
+                        
+                        # Format dates as ISO strings for JSON serialization
+                        for page in pages_data:
+                            if "created_at" in page and page["created_at"]:
+                                page["created_at"] = page["created_at"].isoformat()
+                            if "updated_at" in page and page["updated_at"]:
+                                page["updated_at"] = page["updated_at"].isoformat()
+                                
+                    except (ImportError, Exception) as e:
+                        # Fall back to standard page manager if enhanced optimizer is not available
+                        logger.info(f"Enhanced query optimizer not available, using standard page manager: {str(e)}")
+                        pages = page_manager.list_by_tenant(str(tenant_obj.id), include_unpublished=True)
+                        
+                        # Format response - safely handle any potential errors
+                        for p in pages:
+                            try:
+                                page_data = {
+                                    "id": str(p.id),
+                                    "title": p.title,
+                                    "slug": p.slug,
+                                    "is_published": p.is_published if hasattr(p, 'is_published') else False,
+                                    "created_at": p.created_at.isoformat() if hasattr(p, 'created_at') and p.created_at else None,
+                                    "updated_at": p.updated_at.isoformat() if hasattr(p, 'updated_at') and p.updated_at else None,
+                                    "section_count": 0  # Default since we don't have this in the standard query
+                                }
+                                pages_data.append(page_data)
+                            except Exception as e:
+                                logger.error(f"Error formatting page data: {str(e)}")
+                                continue
             except Exception as e:
                 logger.error(f"Error getting pages for tenant {selected_tenant_slug}: {str(e)}")
                 # Return an empty list rather than failing
-                pages = []
 
-        # Format response - safely handle any potential errors
-        pages_data = []
-        for p in pages:
-            try:
-                page_data = {
-                    "id": str(p.id),
-                    "title": p.title,
-                    "slug": p.slug,
-                    "is_published": p.is_published if hasattr(p, 'is_published') else False,
-                    "created_at": p.created_at.isoformat() if hasattr(p, 'created_at') and p.created_at else None,
-                    "updated_at": p.updated_at.isoformat() if hasattr(p, 'updated_at') and p.updated_at else None
-                }
-                pages_data.append(page_data)
-            except Exception as e:
-                logger.error(f"Error formatting page data: {str(e)}")
-                continue
-
+        # Log performance for monitoring
+        execution_time = time.time() - start_time
+        if execution_time > 0.1:  # Log slower operations
+            logger.info(f"API list_pages execution time: {execution_time:.4f}s")
+            
         return {
             "pages": pages_data,
             "total": len(pages_data),
