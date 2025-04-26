@@ -33,13 +33,31 @@ def get_async_database_url(url):
         return url.replace('postgresql://', 'postgresql+asyncpg://')
     return url
 
-# Regular engine for Flask
+# Regular engine for Flask with connection pooling
 from sqlalchemy import create_engine
-engine = create_engine(DATABASE_URL)
+from sqlalchemy.pool import QueuePool
 
-# Async engine for FastAPI
+# Configure connection pooling for better performance
+engine = create_engine(
+    DATABASE_URL,
+    poolclass=QueuePool,
+    pool_size=10,  # Number of connections to keep open
+    max_overflow=20,  # Max extra connections when pool is fully used
+    pool_timeout=30,  # Seconds to wait before giving up on getting a connection
+    pool_recycle=1800,  # Recycle connections after 30 minutes
+    pool_pre_ping=True  # Verify connections before using them
+)
+
+# Async engine for FastAPI with optimized pool settings
 ASYNC_DATABASE_URL = get_async_database_url(DATABASE_URL)
-async_engine = create_async_engine(ASYNC_DATABASE_URL)
+async_engine = create_async_engine(
+    ASYNC_DATABASE_URL,
+    pool_size=10,
+    max_overflow=20, 
+    pool_timeout=30,
+    pool_recycle=1800,
+    pool_pre_ping=True
+)
 async_session_maker = sessionmaker(async_engine, class_=AsyncSession, expire_on_commit=False)
 
 # Function to get database session for FastAPI
