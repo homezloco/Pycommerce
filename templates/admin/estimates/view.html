@@ -29,6 +29,9 @@
             <a href="{{ url_for('admin_estimates.edit_estimate', estimate_id=estimate.id) }}" class="btn btn-info">
                 <i class="fas fa-edit"></i> Edit
             </a>
+            <a href="{{ url_for('admin_estimates.export_estimate_pdf', estimate_id=estimate.id) }}" class="btn btn-primary" target="_blank">
+                <i class="fas fa-file-pdf"></i> Export PDF
+            </a>
             {% if estimate.status != 'CONVERTED' %}
             <button type="button" class="btn btn-success" data-toggle="modal" data-target="#convertModal">
                 <i class="fas fa-exchange-alt"></i> Convert to Order

@@ -2,15 +2,18 @@
 Admin routes for estimates.
 
 This module provides admin routes for managing estimates, including creating,
-viewing, editing, and converting estimates to orders.
+viewing, editing, converting estimates to orders, and exporting estimates as PDFs.
 """
 
 import logging
 import uuid
+import os
 from datetime import datetime
 from typing import Dict, Any, Optional, List
+from io import BytesIO
 
-from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, current_app
+from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, current_app, send_file, make_response
+from weasyprint import HTML, CSS
 
 from pycommerce.models.order import OrderManager
 from pycommerce.services.estimate_service import EstimateService
@@ -302,6 +305,31 @@ def add_material():
         })
     else:
         return jsonify({'success': False, 'error': 'Failed to add material'}), 500
+
+
+@estimates_bp.route('/admin/estimates/<estimate_id>/export-pdf', methods=['GET'])
+def export_estimate_pdf(estimate_id):
+    """Export an estimate as a PDF file."""
+    estimate = estimate_service.get_by_id(estimate_id)
+    if not estimate:
+        flash('Estimate not found', 'error')
+        return redirect(url_for('admin.dashboard'))
+    
+    # Render the estimate template to HTML
+    html_content = render_template(
+        'admin/estimates/pdf_template.html',
+        estimate=estimate
+    )
+    
+    # Use WeasyPrint to convert HTML to PDF
+    pdf = HTML(string=html_content).write_pdf()
+    
+    # Create a response with the PDF
+    response = make_response(pdf)
+    response.headers['Content-Type'] = 'application/pdf'
+    response.headers['Content-Disposition'] = f'attachment; filename=estimate_{estimate.estimate_number}.pdf'
+    
+    return response
 
 
 @estimates_bp.route('/admin/estimates/add-labor', methods=['POST'])

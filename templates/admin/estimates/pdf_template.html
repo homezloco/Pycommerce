@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Estimate {{ estimate.estimate_number }}</title>
+    <style>
+        @page {
+            margin: 2cm;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            color: #333;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 10px;
+        }
+        .header h1 {
+            color: #4e73df;
+            margin-bottom: 5px;
+        }
+        .info-section {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 30px;
+        }
+        .info-box {
+            width: 30%;
+        }
+        .info-box h2 {
+            font-size: 16px;
+            color: #4e73df;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 5px;
+            margin-bottom: 10px;
+        }
+        .info-item {
+            margin-bottom: 5px;
+        }
+        .info-label {
+            font-weight: bold;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        table th, table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        table th {
+            background-color: #f8f9fc;
+            color: #4e73df;
+            font-weight: bold;
+        }
+        table tfoot {
+            font-weight: bold;
+        }
+        .section-header {
+            color: #4e73df;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 5px;
+            margin: 20px 0 10px 0;
+        }
+        .summary-table {
+            width: 50%;
+            margin-left: auto;
+        }
+        .total-row {
+            background-color: #eaecf4;
+            font-weight: bold;
+        }
+        .project-description {
+            margin-bottom: 20px;
+            padding: 10px;
+            background-color: #f8f9fc;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .profit-positive {
+            color: #1cc88a;
+        }
+        .profit-negative {
+            color: #e74a3b;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Estimate {{ estimate.estimate_number }}</h1>
+        <p>{{ estimate.created_at.strftime('%B %d, %Y') }}</p>
+    </div>
+    
+    <div class="info-section">
+        <div class="info-box">
+            <h2>Estimate Information</h2>
+            <div class="info-item">
+                <span class="info-label">Status:</span> {{ estimate.status }}
+            </div>
+            {% if estimate.valid_until %}
+            <div class="info-item">
+                <span class="info-label">Valid Until:</span> {{ estimate.valid_until.strftime('%B %d, %Y') }}
+            </div>
+            {% endif %}
+        </div>
+        
+        <div class="info-box">
+            <h2>Customer Information</h2>
+            <div class="info-item">
+                <span class="info-label">Name:</span> {{ estimate.customer_name or 'N/A' }}
+            </div>
+            <div class="info-item">
+                <span class="info-label">Email:</span> {{ estimate.customer_email or 'N/A' }}
+            </div>
+            <div class="info-item">
+                <span class="info-label">Phone:</span> {{ estimate.customer_phone or 'N/A' }}
+            </div>
+        </div>
+        
+        <div class="info-box">
+            <h2>Project Information</h2>
+            <div class="info-item">
+                <span class="info-label">Name:</span> {{ estimate.project_name or 'N/A' }}
+            </div>
+        </div>
+    </div>
+    
+    {% if estimate.project_description %}
+    <div class="project-description">
+        <h2>Project Description</h2>
+        <p>{{ estimate.project_description }}</p>
+    </div>
+    {% endif %}
+    
+    <h2 class="section-header">Materials</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Description</th>
+                <th>Quantity</th>
+                <th>Unit</th>
+                <th>Unit Price</th>
+                <th>Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for material in estimate.materials %}
+            <tr>
+                <td>{{ material.name }}</td>
+                <td>{{ material.description or '' }}</td>
+                <td>{{ material.quantity }}</td>
+                <td>{{ material.unit or '' }}</td>
+                <td>${{ "%.2f"|format(material.selling_price) }}</td>
+                <td>${{ "%.2f"|format(material.total_price) }}</td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="6" style="text-align: center;">No materials added yet</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+        <tfoot>
+            <tr>
+                <td colspan="5" style="text-align: right;">Materials Total:</td>
+                <td>${{ "%.2f"|format(sum(m.total_price for m in estimate.materials)) }}</td>
+            </tr>
+        </tfoot>
+    </table>
+    
+    <h2 class="section-header">Labor</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Description</th>
+                <th>Hours</th>
+                <th>Hourly Rate</th>
+                <th>Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for labor in estimate.labor_items %}
+            <tr>
+                <td>{{ labor.name }}</td>
+                <td>{{ labor.description or '' }}</td>
+                <td>{{ labor.hours }}</td>
+                <td>${{ "%.2f"|format(labor.selling_price) }}/hr</td>
+                <td>${{ "%.2f"|format(labor.total_price) }}</td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="5" style="text-align: center;">No labor items added yet</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+        <tfoot>
+            <tr>
+                <td colspan="4" style="text-align: right;">Labor Total:</td>
+                <td>${{ "%.2f"|format(sum(l.total_price for l in estimate.labor_items)) }}</td>
+            </tr>
+        </tfoot>
+    </table>
+    
+    <h2 class="section-header">Estimate Summary</h2>
+    <table class="summary-table">
+        <tbody>
+            <tr>
+                <td style="text-align: right;"><strong>Materials Total:</strong></td>
+                <td>${{ "%.2f"|format(sum(m.total_price for m in estimate.materials)) }}</td>
+            </tr>
+            <tr>
+                <td style="text-align: right;"><strong>Labor Total:</strong></td>
+                <td>${{ "%.2f"|format(sum(l.total_price for l in estimate.labor_items)) }}</td>
+            </tr>
+            <tr>
+                <td style="text-align: right;"><strong>Subtotal:</strong></td>
+                <td>${{ "%.2f"|format(estimate.subtotal) }}</td>
+            </tr>
+            <tr>
+                <td style="text-align: right;"><strong>Tax ({{ "%.1f"|format(estimate.tax) }}%):</strong></td>
+                <td>${{ "%.2f"|format(estimate.subtotal * (estimate.tax / 100)) }}</td>
+            </tr>
+            <tr class="total-row">
+                <td style="text-align: right;"><strong>Total:</strong></td>
+                <td>${{ "%.2f"|format(estimate.total) }}</td>
+            </tr>
+        </tbody>
+    </table>
+    
+    <div style="margin-top: 50px; padding-top: 20px; border-top: 1px solid #ddd;">
+        <p><strong>Terms and Conditions:</strong></p>
+        <p>This estimate is valid for {{ (estimate.valid_until - estimate.created_at).days if estimate.valid_until else 30 }} days from the date of issue.</p>
+    </div>
+</body>
+</html>

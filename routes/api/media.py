@@ -37,25 +37,46 @@ class MediaListResponse(BaseModel):
     page: int = 1
     limit: int = 100
 
-@router.get("/api/media", response_model=MediaListResponse)
+@router.get("/api/media", 
+         response_model=MediaListResponse, 
+         summary="List Media Items",
+         description="Retrieve a paginated list of media items with optional filtering",
+         responses={
+             200: {"description": "Media items retrieved successfully", "model": MediaListResponse},
+             400: {"description": "Invalid request parameters"},
+             401: {"description": "Unauthorized - requires proper authentication"},
+             403: {"description": "Forbidden - insufficient permissions to access media"},
+             500: {"description": "Internal server error"}
+         })
 async def get_media_list(
     request: Request,
-    tenant_id: Optional[str] = Query(None, description="Filter by tenant ID"),
-    sharing_level: Optional[str] = Query(None, description="Filter by sharing level"),
-    page: int = Query(1, description="Page number"),
-    limit: int = Query(100, description="Items per page")
+    tenant_id: Optional[str] = Query(None, description="Filter media items by tenant UUID"),
+    sharing_level: Optional[str] = Query(None, description="Filter by sharing level (private, tenant, public)"),
+    page: int = Query(1, ge=1, description="Page number for pagination (starts at 1)"),
+    limit: int = Query(100, ge=1, le=500, description="Number of items per page (max 500)")
 ):
     """
-    Get a list of media items.
+    Retrieve a paginated list of media items with optional filtering.
     
-    Args:
-        tenant_id: Optional tenant ID to filter by
-        sharing_level: Optional sharing level to filter by
-        page: Page number (default: 1)
-        limit: Items per page (default: 100)
-        
-    Returns:
-        List of media items
+    This endpoint returns a list of media assets available in the system, with
+    pagination support and filtering options. Media items can include images, documents,
+    videos, and other file types used throughout the e-commerce platform.
+    
+    The available filters are:
+    - **tenant_id**: Limit results to media belonging to a specific tenant
+    - **sharing_level**: Filter by visibility level (private, tenant, public)
+    
+    Pagination parameters:
+    - **page**: Page number (starting from 1)
+    - **limit**: Number of items per page (1-500, default 100)
+    
+    Results are sorted by creation date (newest first). Each media item includes
+    metadata such as size, mime type, and URLs for direct access. The response
+    includes pagination information and the total count of matching items.
+    
+    Media with "public" sharing level are accessible to all users, while tenant-specific
+    media requires appropriate permissions. System administrators can access all media
+    regardless of sharing level.
     """
     filters = {}
     if sharing_level:
@@ -86,16 +107,44 @@ async def get_media_list(
         limit=limit
     )
 
-@router.get("/api/media/{id}")
-async def get_media_item(request: Request, id: str):
+@router.get("/api/media/{id}", 
+         response_model=MediaItem,
+         summary="Get Media Item by ID",
+         description="Retrieve detailed information about a specific media item",
+         responses={
+             200: {"description": "Media item retrieved successfully", "model": MediaItem},
+             400: {"description": "Invalid media ID format"},
+             401: {"description": "Unauthorized - requires proper authentication"},
+             403: {"description": "Forbidden - insufficient permissions to access this media item"},
+             404: {"description": "Media item not found"},
+             500: {"description": "Internal server error"}
+         })
+async def get_media_item(
+    request: Request, 
+    id: str
+):
     """
-    Get a media item by ID.
+    Retrieve detailed information about a specific media item.
     
-    Args:
-        id: The ID of the media item
-        
-    Returns:
-        The media item
+    This endpoint returns comprehensive details about a single media item, including
+    its metadata and access URL. Media items are assets such as images, documents,
+    videos, and other files used throughout the e-commerce platform.
+    
+    - **id**: The unique identifier of the media item to retrieve
+    
+    The response includes:
+    - Full metadata (name, size, MIME type, creation date)
+    - Direct URL for accessing the media content
+    - Tenant ownership information
+    - Sharing level indicating access permissions
+    
+    Access to media items is controlled by their sharing level:
+    - Public media can be accessed by anyone
+    - Tenant-specific media requires tenant-level access permissions
+    - Private media is restricted to specific users with appropriate permissions
+    
+    If the requested media item doesn't exist or the user lacks permission to access it,
+    an appropriate error response is returned.
     """
     item = media_service.get(id)
     
