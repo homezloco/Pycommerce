@@ -313,31 +313,42 @@ class OrderNoteResponse(OrderNoteCreate):
         }
 
 # API Routes
-@router.get("/", response_model=OrdersResponse, summary="List Orders")
+@router.get("/", 
+         response_model=OrdersResponse, 
+         summary="List Orders",
+         description="Retrieve orders for a tenant with comprehensive filtering options",
+         responses={
+             200: {"description": "Orders retrieved successfully", "model": OrdersResponse},
+             400: {"description": "Invalid request parameters"},
+             401: {"description": "Unauthorized - requires proper authentication"},
+             404: {"description": "Tenant not found"},
+             500: {"description": "Internal server error"}
+         })
 async def list_orders(
-    tenant: str = Query(..., description="Tenant slug"),
-    status: Optional[str] = Query(None, description="Filter by order status"),
-    order_type: Optional[str] = Query(None, description="Filter by order type"),
+    tenant: str = Query(..., description="Tenant slug identifier"),
+    status: Optional[str] = Query(None, description="Filter by order status (PENDING, PROCESSING, SHIPPED, DELIVERED, COMPLETED)"),
+    order_type: Optional[str] = Query(None, description="Filter by order type (STANDARD, RUSH, CUSTOM)"),
     start_date: Optional[str] = Query(None, description="Filter by start date (YYYY-MM-DD)"),
     end_date: Optional[str] = Query(None, description="Filter by end date (YYYY-MM-DD)"),
-    customer_email: Optional[str] = Query(None, description="Filter by customer email")
+    customer_email: Optional[str] = Query(None, description="Filter by customer email address")
 ):
     """
-    Get orders for a tenant with optional filtering.
+    Retrieve orders for a tenant with comprehensive filtering options.
     
-    Args:
-        tenant: The tenant slug
-        status: Filter orders by status (PENDING, PROCESSING, SHIPPED, DELIVERED, COMPLETED)
-        order_type: Filter orders by type (STANDARD, RUSH, CUSTOM)
-        start_date: Filter orders created on or after this date
-        end_date: Filter orders created on or before this date
-        customer_email: Filter orders by customer email
-        
-    Returns:
-        A list of orders matching the filters
-        
-    Raises:
-        404: If the tenant is not found
+    This endpoint returns orders for a specific tenant with support for multiple filters.
+    You can filter orders by status, type, date range, and customer email. The API returns 
+    a paginated list of orders matching the criteria, along with count information
+    and a summary of the applied filters.
+    
+    - **tenant**: Required tenant slug identifier (string)
+    - **status**: Optional order status to filter by (PENDING, PROCESSING, SHIPPED, DELIVERED, COMPLETED)
+    - **order_type**: Optional order type to filter by (STANDARD, RUSH, CUSTOM)
+    - **start_date**: Optional date to filter orders created on or after (YYYY-MM-DD format)
+    - **end_date**: Optional date to filter orders created on or before (YYYY-MM-DD format)
+    - **customer_email**: Optional customer email to filter orders by
+    
+    Returns a structured response containing matching orders, tenant identifier, 
+    total count, and applied filters. If the tenant does not exist, a 404 error is returned.
     """
     tenant_manager = TenantManager()
     order_manager = OrderManager()
@@ -431,21 +442,31 @@ async def list_orders(
         "filters": filters
     }
 
-@router.get("/{order_id}", response_model=OrderResponse, summary="Get Order by ID")
+@router.get("/{order_id}", 
+         response_model=OrderResponse, 
+         summary="Get Order by ID",
+         description="Retrieve detailed information about a specific order by its unique ID",
+         responses={
+             200: {"description": "Order retrieved successfully", "model": OrderResponse},
+             400: {"description": "Invalid order ID format"},
+             401: {"description": "Unauthorized - requires proper authentication"},
+             404: {"description": "Order not found"},
+             500: {"description": "Internal server error"}
+         })
 async def get_order(
-    order_id: str = Path(..., description="The ID of the order to retrieve")
+    order_id: str = Path(..., description="The unique UUID of the order to retrieve")
 ):
     """
-    Get a single order by ID.
+    Retrieve detailed information about a specific order by its unique ID.
     
-    Args:
-        order_id: The unique identifier of the order
-        
-    Returns:
-        The order details
-        
-    Raises:
-        404: If the order is not found
+    This endpoint returns comprehensive details about a specific order, including its items,
+    customer information, shipping details, costs, and current status. The order ID should 
+    be provided as a UUID string.
+    
+    - **order_id**: The unique identifier of the order (UUID format)
+    
+    Returns the order details if found, including all line items, pricing information,
+    shipping details, and customer information. If the order does not exist, a 404 error is returned.
     """
     order_manager = OrderManager()
     order = order_manager.get_order_by_id(order_id)
@@ -510,22 +531,44 @@ async def get_order(
         "updated_at": order.updated_at
     }
 
-@router.post("/", response_model=OrderResponse, summary="Create Order")
+@router.post("/", 
+         response_model=OrderResponse, 
+         summary="Create Order",
+         description="Create a new order in the system with complete customer and product details",
+         responses={
+             201: {"description": "Order created successfully", "model": OrderResponse},
+             400: {"description": "Invalid request format or product not found"},
+             401: {"description": "Unauthorized - requires proper authentication"},
+             404: {"description": "Tenant not found"},
+             422: {"description": "Validation error - invalid data format"},
+             500: {"description": "Internal server error"}
+         },
+         status_code=201)
 async def create_order(
-    order: OrderCreate = Body(..., description="The order to create")
+    order: OrderCreate = Body(..., description="The complete order details including customer information and line items")
 ):
     """
-    Create a new order.
+    Create a new order in the system with complete customer and product details.
     
-    Args:
-        order: The order details
-        
-    Returns:
-        The created order with its ID
-        
-    Raises:
-        404: If the tenant is not found
-        400: If any product in the order items does not exist
+    This endpoint creates a new order with the provided details, including customer information,
+    shipping preferences, and product line items. Each order must be associated with a valid
+    tenant and contain valid product references. The system will automatically generate an
+    order number and calculate relevant totals.
+    
+    - **order**: Complete order details including:
+      - **tenant_id**: ID of the tenant this order belongs to (required)
+      - **customer**: Customer information including name, contact details, and shipping address (required)
+      - **items**: List of order line items with product references, quantities, and prices (required)
+      - **status**: Order status (default: PENDING)
+      - **order_type**: Type of order (default: STANDARD)
+      - **shipping_method**: Selected shipping method (optional)
+      - **shipping_cost**: Cost of shipping (default: 0.0)
+      - **tax_amount**: Tax applied to the order (default: 0.0)
+      - **notes**: Additional order notes or instructions (optional)
+    
+    Returns the created order with full details including order ID, order number, and calculated totals.
+    Returns a 400 error if any referenced product does not exist.
+    Returns a 404 error if the specified tenant does not exist.
     """
     tenant_manager = TenantManager()
     order_manager = OrderManager()
@@ -587,23 +630,39 @@ async def create_order(
         logger.error(f"Error creating order: {e}")
         raise HTTPException(status_code=500, detail=f"Error creating order: {str(e)}")
 
-@router.put("/{order_id}", response_model=OrderResponse, summary="Update Order")
+@router.put("/{order_id}", 
+         response_model=OrderResponse, 
+         summary="Update Order",
+         description="Update an existing order's information",
+         responses={
+             200: {"description": "Order updated successfully", "model": OrderResponse},
+             400: {"description": "Invalid order ID format or request body"},
+             401: {"description": "Unauthorized - requires proper authentication"},
+             404: {"description": "Order not found"},
+             422: {"description": "Validation error - invalid data format"},
+             500: {"description": "Internal server error"}
+         })
 async def update_order(
-    order_id: str = Path(..., description="The ID of the order to update"),
-    order_update: OrderUpdate = Body(..., description="The order updates")
+    order_id: str = Path(..., description="The unique UUID of the order to update"),
+    order_update: OrderUpdate = Body(..., description="The order fields to update (partial updates supported)")
 ):
     """
-    Update an existing order.
+    Update an existing order's information.
     
-    Args:
-        order_id: The unique identifier of the order
-        order_update: The fields to update
-        
-    Returns:
-        The updated order
-        
-    Raises:
-        404: If the order is not found
+    This endpoint allows for partial updates to order information. Only the fields
+    provided in the request body will be updated; other fields will remain unchanged.
+    This is useful for updating order status, shipping details, or adding notes as the
+    order progresses through fulfillment.
+    
+    - **order_id**: The unique identifier of the order to update (UUID format)
+    - **order_update**: The fields to update, which can include:
+      - **status**: New order status (e.g., PENDING, PROCESSING, SHIPPED, DELIVERED)
+      - **shipping_method**: New shipping method (e.g., express, standard)
+      - **shipping_cost**: Updated shipping cost
+      - **notes**: Additional notes or instructions for the order
+    
+    Returns the complete updated order with all fields.
+    Returns a 404 error if no order exists with the provided ID.
     """
     order_manager = OrderManager()
     
@@ -629,23 +688,37 @@ async def update_order(
     # Return updated order
     return await get_order(order_id)
 
-@router.post("/{order_id}/notes", response_model=OrderNoteResponse, summary="Add Order Note")
+@router.post("/{order_id}/notes", 
+         response_model=OrderNoteResponse, 
+         summary="Add Order Note",
+         description="Add a note to an existing order for tracking important information",
+         responses={
+             201: {"description": "Note added successfully", "model": OrderNoteResponse},
+             400: {"description": "Invalid order ID format"},
+             401: {"description": "Unauthorized - requires proper authentication"},
+             404: {"description": "Order not found"},
+             422: {"description": "Validation error - invalid note format"},
+             500: {"description": "Internal server error"}
+         },
+         status_code=201)
 async def add_order_note(
-    order_id: str = Path(..., description="The ID of the order to add a note to"),
-    note: OrderNoteCreate = Body(..., description="The note content")
+    order_id: str = Path(..., description="The unique UUID of the order to add a note to"),
+    note: OrderNoteCreate = Body(..., description="The note content to add to the order")
 ):
     """
-    Add a note to an existing order.
+    Add a note to an existing order for tracking important information.
     
-    Args:
-        order_id: The unique identifier of the order
-        note: The note content
-        
-    Returns:
-        The created note
-        
-    Raises:
-        404: If the order is not found
+    This endpoint allows adding notes to an order for tracking customer communications,
+    special requests, fulfillment details, or other important information. Notes are
+    stored with timestamps for audit and reference purposes, and can be retrieved
+    separately from the main order data.
+    
+    - **order_id**: The unique identifier of the order to add a note to (UUID format)
+    - **note**: The note details:
+      - **content**: The text content of the note (required)
+    
+    Returns the created note with its ID and creation timestamp.
+    Returns a 404 error if no order exists with the provided ID.
     """
     order_manager = OrderManager()
     
@@ -664,21 +737,33 @@ async def add_order_note(
         "created_at": new_note.created_at
     }
 
-@router.get("/{order_id}/notes", response_model=List[OrderNoteResponse], summary="Get Order Notes")
+@router.get("/{order_id}/notes", 
+         response_model=List[OrderNoteResponse], 
+         summary="Get Order Notes",
+         description="Retrieve all notes associated with a specific order",
+         responses={
+             200: {"description": "Notes retrieved successfully", "model": List[OrderNoteResponse]},
+             400: {"description": "Invalid order ID format"},
+             401: {"description": "Unauthorized - requires proper authentication"},
+             404: {"description": "Order not found"},
+             500: {"description": "Internal server error"}
+         })
 async def get_order_notes(
-    order_id: str = Path(..., description="The ID of the order to get notes for")
+    order_id: str = Path(..., description="The unique UUID of the order to get notes for")
 ):
     """
-    Get all notes for an order.
+    Retrieve all notes associated with a specific order.
     
-    Args:
-        order_id: The unique identifier of the order
-        
-    Returns:
-        A list of order notes
-        
-    Raises:
-        404: If the order is not found
+    This endpoint returns all notes that have been added to an order, sorted by creation
+    date from newest to oldest. Order notes are used for tracking customer communications,
+    fulfillment details, internal comments, and other important information related to
+    the order processing workflow.
+    
+    - **order_id**: The unique identifier of the order (UUID format)
+    
+    Returns a list of all notes associated with the order, each including its content
+    and creation timestamp. Returns an empty list if the order exists but has no notes.
+    Returns a 404 error if no order exists with the provided ID.
     """
     order_manager = OrderManager()
     

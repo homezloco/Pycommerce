@@ -102,18 +102,29 @@ class TenantUpdate(BaseModel):
         }
 
 # API Routes
-@router.get("/", response_model=TenantsResponse, summary="List All Tenants")
+@router.get("/", response_model=TenantsResponse, 
+         summary="List All Tenants",
+         description="Retrieves a complete list of all tenants with pagination support",
+         responses={
+             200: {"description": "List of tenants retrieved successfully", "model": TenantsResponse},
+             401: {"description": "Unauthorized"},
+             500: {"description": "Internal server error"}
+         })
 async def list_tenants(
     active_only: bool = Query(False, description="Only return active tenants")
 ):
     """
-    Get a list of all tenants.
+    Retrieve a complete list of all tenants in the system.
     
-    Args:
-        active_only: If True, only return active tenants
-        
-    Returns:
-        A list of tenants with their details
+    This endpoint returns all tenants registered in the system. By default, it returns
+    both active and inactive tenants. Use the active_only parameter to filter results
+    to only active tenants. This endpoint requires admin permissions in a production
+    environment.
+    
+    - **active_only**: Filter results to only include active tenants (default: false)
+    
+    Returns a list of tenants with their complete details and a count of the total results.
+    Each tenant includes its unique ID, name, slug, domain (if set), and active status.
     """
     tenant_manager = TenantManager()
     tenants = tenant_manager.get_all_tenants()
@@ -135,21 +146,29 @@ async def list_tenants(
         "count": len(tenants)
     }
 
-@router.get("/{tenant_id}", response_model=TenantResponse, summary="Get Tenant by ID")
+@router.get("/{tenant_id}", response_model=TenantResponse, 
+         summary="Get Tenant by ID",
+         description="Retrieves detailed information about a specific tenant",
+         responses={
+             200: {"description": "Tenant details retrieved successfully", "model": TenantResponse},
+             400: {"description": "Invalid tenant ID format"},
+             404: {"description": "Tenant not found"},
+             500: {"description": "Internal server error"}
+         })
 async def get_tenant(
     tenant_id: str = Path(..., description="The ID of the tenant to retrieve")
 ):
     """
-    Get a single tenant by ID.
+    Retrieve detailed information about a specific tenant by its unique ID.
     
-    Args:
-        tenant_id: The unique identifier of the tenant
-        
-    Returns:
-        The tenant details
-        
-    Raises:
-        404: If the tenant is not found
+    This endpoint returns comprehensive details about a specific tenant, including its name,
+    slug, domain configuration, and active status. The tenant ID should be provided as a 
+    UUID string. This endpoint requires appropriate permissions in a production environment.
+    
+    - **tenant_id**: The unique identifier of the tenant (UUID format)
+    
+    Returns the tenant details if found, including its ID, name, slug, domain (if configured),
+    and active status. If the tenant does not exist, a 404 error is returned.
     """
     tenant_manager = TenantManager()
     tenant = tenant_manager.get_tenant_by_id(tenant_id)
@@ -165,21 +184,29 @@ async def get_tenant(
         "active": tenant.active,
     }
 
-@router.get("/by-slug/{slug}", response_model=TenantResponse, summary="Get Tenant by Slug")
+@router.get("/by-slug/{slug}", response_model=TenantResponse, 
+         summary="Get Tenant by Slug",
+         description="Retrieves tenant information using the URL-friendly slug identifier",
+         responses={
+             200: {"description": "Tenant details retrieved successfully", "model": TenantResponse},
+             404: {"description": "Tenant not found"},
+             500: {"description": "Internal server error"}
+         })
 async def get_tenant_by_slug(
-    slug: str = Path(..., description="The slug of the tenant to retrieve")
+    slug: str = Path(..., description="The URL slug of the tenant to retrieve")
 ):
     """
-    Get a single tenant by slug.
+    Retrieve tenant information using its URL-friendly slug identifier.
     
-    Args:
-        slug: The unique slug of the tenant
-        
-    Returns:
-        The tenant details
-        
-    Raises:
-        404: If the tenant is not found
+    This endpoint retrieves comprehensive tenant details by looking up the tenant's
+    unique slug. The slug is the URL-friendly identifier used in routes and
+    domain configurations. This method is particularly useful for storefront operations
+    and tenant identification in multi-tenant environments.
+    
+    - **slug**: The unique slug identifier for the tenant (URL-friendly string)
+    
+    Returns the tenant details if found, including its ID, name, slug, domain (if configured),
+    and active status. If no tenant exists with the provided slug, a 404 error is returned.
     """
     tenant_manager = TenantManager()
     tenant = tenant_manager.get_tenant_by_slug(slug)
@@ -195,21 +222,35 @@ async def get_tenant_by_slug(
         "active": tenant.active,
     }
 
-@router.post("/", response_model=TenantResponse, summary="Create Tenant")
+@router.post("/", response_model=TenantResponse, 
+         summary="Create Tenant",
+         description="Creates a new tenant in the multi-tenant environment",
+         status_code=201,
+         responses={
+             201: {"description": "Tenant created successfully", "model": TenantResponse},
+             400: {"description": "Invalid request or tenant with same slug already exists"},
+             401: {"description": "Unauthorized - requires admin privileges"},
+             500: {"description": "Internal server error"}
+         })
 async def create_tenant(
-    tenant: TenantCreate = Body(..., description="The tenant to create")
+    tenant: TenantCreate = Body(..., description="The tenant data including name, slug, domain, and active status")
 ):
     """
-    Create a new tenant.
+    Create a new tenant in the multi-tenant environment.
     
-    Args:
-        tenant: The tenant details
-        
-    Returns:
-        The created tenant with its ID
-        
-    Raises:
-        400: If a tenant with the same slug already exists
+    This endpoint creates a new tenant (store) with the provided details. Each tenant 
+    represents a separate store with its own products, orders, settings, and domain 
+    configuration. The tenant slug must be unique and URL-friendly as it may be used 
+    in route paths and subdomain names.
+    
+    - **tenant**: Complete tenant details including:
+      - **name**: Display name for the tenant/store (required)
+      - **slug**: URL-friendly unique identifier (required, lowercase letters, numbers, and hyphens only)
+      - **domain**: Custom domain name for the tenant (optional)
+      - **active**: Whether the tenant is active and accessible (default: true)
+    
+    Returns the created tenant with all fields including the generated UUID.
+    Returns a 400 error if a tenant with the same slug already exists or if the data is invalid.
     """
     tenant_manager = TenantManager()
     
@@ -234,23 +275,36 @@ async def create_tenant(
         "active": new_tenant.active,
     }
 
-@router.put("/{tenant_id}", response_model=TenantResponse, summary="Update Tenant")
+@router.put("/{tenant_id}", response_model=TenantResponse, 
+         summary="Update Tenant",
+         description="Updates an existing tenant's information",
+         responses={
+             200: {"description": "Tenant updated successfully", "model": TenantResponse},
+             400: {"description": "Invalid tenant ID format or invalid data"},
+             401: {"description": "Unauthorized - requires admin privileges"},
+             404: {"description": "Tenant not found"},
+             500: {"description": "Internal server error"}
+         })
 async def update_tenant(
     tenant_id: str = Path(..., description="The ID of the tenant to update"),
-    tenant_update: TenantUpdate = Body(..., description="The tenant updates")
+    tenant_update: TenantUpdate = Body(..., description="The tenant fields to update (partial updates supported)")
 ):
     """
-    Update an existing tenant.
+    Update an existing tenant's information.
     
-    Args:
-        tenant_id: The unique identifier of the tenant
-        tenant_update: The fields to update
-        
-    Returns:
-        The updated tenant
-        
-    Raises:
-        404: If the tenant is not found
+    This endpoint allows for partial updates to tenant information. Only the fields
+    provided in the request body will be updated; other fields will remain unchanged.
+    The tenant slug cannot be modified after creation to maintain URL consistency and
+    prevent breaking existing links.
+    
+    - **tenant_id**: The unique identifier of the tenant to update (UUID format)
+    - **tenant_update**: The fields to update, which can include:
+      - **name**: New display name for the tenant/store (optional)
+      - **domain**: New custom domain configuration (optional)
+      - **active**: Whether the tenant should be active and accessible (optional)
+    
+    Returns the updated tenant with all fields.
+    Returns a 404 error if no tenant exists with the provided ID.
     """
     tenant_manager = TenantManager()
     
@@ -279,21 +333,31 @@ async def update_tenant(
         "active": updated_tenant.active,
     }
 
-@router.delete("/{tenant_id}", response_model=Dict[str, Any], summary="Delete Tenant")
+@router.delete("/{tenant_id}", 
+         summary="Delete Tenant",
+         description="Permanently removes a tenant and all associated data",
+         responses={
+             200: {"description": "Tenant deleted successfully", "content": {"application/json": {"example": {"success": True, "message": "Tenant Example Store deleted successfully"}}}},
+             400: {"description": "Invalid tenant ID format"},
+             401: {"description": "Unauthorized - requires admin privileges"},
+             404: {"description": "Tenant not found"},
+             500: {"description": "Internal server error"}
+         })
 async def delete_tenant(
     tenant_id: str = Path(..., description="The ID of the tenant to delete")
 ):
     """
-    Delete a tenant.
+    Permanently delete a tenant and all its associated data.
     
-    Args:
-        tenant_id: The unique identifier of the tenant
-        
-    Returns:
-        A confirmation message
-        
-    Raises:
-        404: If the tenant is not found
+    This endpoint permanently removes a tenant and all of its associated data from the system,
+    including products, orders, pages, media, and settings. This operation cannot be undone.
+    This is a destructive action that requires appropriate authorization in a production
+    environment.
+    
+    - **tenant_id**: The unique identifier of the tenant to delete (UUID format)
+    
+    Returns a success message if the tenant was deleted successfully.
+    Returns a 404 error if no tenant exists with the provided ID.
     """
     tenant_manager = TenantManager()
     

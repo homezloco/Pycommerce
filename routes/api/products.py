@@ -136,29 +136,38 @@ class ProductUpdate(BaseModel):
         }
 
 # API Routes
-@router.get("/", response_model=ProductsResponse, summary="List Products")
+@router.get("/", response_model=ProductsResponse, 
+         summary="List Products",
+         description="Retrieves a list of products for a specific tenant with filtering options",
+         responses={
+             200: {"description": "List of products retrieved successfully", "model": ProductsResponse},
+             400: {"description": "Invalid filter parameters"},
+             404: {"description": "Tenant not found"},
+             500: {"description": "Internal server error"}
+         })
 async def list_products(
-    tenant: str = Query(..., description="Tenant slug"),
-    category: Optional[str] = Query(None, description="Filter by category"),
-    min_price: Optional[float] = Query(None, description="Minimum price"),
-    max_price: Optional[float] = Query(None, description="Maximum price"),
-    in_stock: Optional[bool] = Query(None, description="Filter by stock availability")
+    tenant: str = Query(..., description="Tenant slug identifier"),
+    category: Optional[str] = Query(None, description="Filter products by category name"),
+    min_price: Optional[float] = Query(None, description="Filter products with price greater than or equal to this value"),
+    max_price: Optional[float] = Query(None, description="Filter products with price less than or equal to this value"),
+    in_stock: Optional[bool] = Query(None, description="When true, only show products with stock > 0")
 ):
     """
-    Get products for a tenant with optional filtering.
+    Retrieve products for a tenant with comprehensive filtering options.
     
-    Args:
-        tenant: The tenant slug
-        category: Filter products by category
-        min_price: Filter products by minimum price
-        max_price: Filter products by maximum price
-        in_stock: Filter products that are in stock
-        
-    Returns:
-        A list of products matching the filters
-        
-    Raises:
-        404: If the tenant is not found
+    This endpoint returns products for a specific tenant with support for multiple filters.
+    You can filter products by category, price range, and stock availability. The API returns 
+    a paginated list of products matching the criteria, along with count information
+    and a summary of the applied filters.
+    
+    - **tenant**: Required tenant slug identifier (string)
+    - **category**: Optional category name to filter products by (string)
+    - **min_price**: Optional minimum price threshold (number)
+    - **max_price**: Optional maximum price threshold (number)
+    - **in_stock**: Optional filter to show only products with available stock (boolean)
+    
+    Returns a structured response containing matching products, tenant identifier, 
+    total count, and applied filters. If the tenant does not exist, a 404 error is returned.
     """
     tenant_manager = TenantManager()
     product_manager = ProductManager()
@@ -203,21 +212,29 @@ async def list_products(
         "filters": filters
     }
 
-@router.get("/{product_id}", response_model=ProductResponse, summary="Get Product by ID")
+@router.get("/{product_id}", response_model=ProductResponse, 
+         summary="Get Product by ID",
+         description="Retrieves detailed information about a specific product",
+         responses={
+             200: {"description": "Product details retrieved successfully", "model": ProductResponse},
+             400: {"description": "Invalid product ID format"},
+             404: {"description": "Product not found"},
+             500: {"description": "Internal server error"}
+         })
 async def get_product(
-    product_id: str = Path(..., description="The ID of the product to retrieve")
+    product_id: str = Path(..., description="The unique UUID of the product to retrieve")
 ):
     """
-    Get a single product by ID.
+    Retrieve detailed information about a specific product by its unique ID.
     
-    Args:
-        product_id: The unique identifier of the product
-        
-    Returns:
-        The product details
-        
-    Raises:
-        404: If the product is not found
+    This endpoint returns comprehensive details about a specific product, including its name,
+    description, price, SKU, stock level, and associated categories. The product ID should 
+    be provided as a UUID string.
+    
+    - **product_id**: The unique identifier of the product (UUID format)
+    
+    Returns the product details if found, including associated tenant information.
+    If the product does not exist or has been deleted, a 404 error is returned.
     """
     product_manager = ProductManager()
     product = product_manager.get_product_by_id(product_id)
@@ -236,22 +253,39 @@ async def get_product(
         "tenant_id": str(product.tenant_id),
     }
 
-@router.post("/", response_model=ProductResponse, summary="Create Product")
+@router.post("/", response_model=ProductResponse, 
+         summary="Create Product",
+         description="Creates a new product in the specified tenant's catalog",
+         status_code=201,
+         responses={
+             201: {"description": "Product created successfully", "model": ProductResponse},
+             400: {"description": "Invalid request or product with same SKU already exists for this tenant"},
+             401: {"description": "Unauthorized - requires proper authentication"},
+             404: {"description": "Tenant not found"},
+             500: {"description": "Internal server error"}
+         })
 async def create_product(
-    product: ProductCreate = Body(..., description="The product to create")
+    product: ProductCreate = Body(..., description="The complete product details to create")
 ):
     """
-    Create a new product.
+    Create a new product in the inventory.
     
-    Args:
-        product: The product details
-        
-    Returns:
-        The created product with its ID
-        
-    Raises:
-        404: If the tenant is not found
-        400: If a product with the same SKU already exists for this tenant
+    This endpoint creates a new product in the specified tenant's catalog with the provided details. 
+    Each product must have a unique SKU within its tenant. The product will be immediately available 
+    for purchase if stock is greater than zero.
+    
+    - **product**: Complete product details including:
+      - **name**: Product display name (required)
+      - **description**: Detailed product description (optional)
+      - **price**: Product price in the store's currency (required)
+      - **sku**: Stock keeping unit - must be unique per tenant (required)
+      - **stock**: Available inventory quantity (default: 0)
+      - **categories**: List of category names for the product (optional)
+      - **tenant_id**: ID of the tenant this product belongs to (required)
+    
+    Returns the created product with all fields including the generated UUID.
+    Returns a 400 error if a product with the same SKU already exists for this tenant.
+    Returns a 404 error if the specified tenant does not exist.
     """
     tenant_manager = TenantManager()
     product_manager = ProductManager()
@@ -283,23 +317,37 @@ async def create_product(
         "tenant_id": str(new_product.tenant_id),
     }
 
-@router.put("/{product_id}", response_model=ProductResponse, summary="Update Product")
+@router.put("/{product_id}", response_model=ProductResponse, 
+         summary="Update Product",
+         description="Updates an existing product's information",
+         responses={
+             200: {"description": "Product updated successfully", "model": ProductResponse},
+             400: {"description": "Invalid product ID format or invalid data"},
+             401: {"description": "Unauthorized - requires proper authentication"},
+             404: {"description": "Product not found"},
+             500: {"description": "Internal server error"}
+         })
 async def update_product(
-    product_id: str = Path(..., description="The ID of the product to update"),
-    product_update: ProductUpdate = Body(..., description="The product updates")
+    product_id: str = Path(..., description="The unique UUID of the product to update"),
+    product_update: ProductUpdate = Body(..., description="The product fields to update (partial updates supported)")
 ):
     """
-    Update an existing product.
+    Update an existing product's information.
     
-    Args:
-        product_id: The unique identifier of the product
-        product_update: The fields to update
-        
-    Returns:
-        The updated product
-        
-    Raises:
-        404: If the product is not found
+    This endpoint allows for partial updates to product information. Only the fields
+    provided in the request body will be updated; other fields will remain unchanged.
+    The product's SKU and tenant association cannot be modified after creation.
+    
+    - **product_id**: The unique identifier of the product to update (UUID format)
+    - **product_update**: The fields to update, which can include:
+      - **name**: New product display name (optional)
+      - **description**: New product description (optional)
+      - **price**: New product price (optional)
+      - **stock**: Updated inventory quantity (optional)
+      - **categories**: New list of category associations (optional)
+    
+    Returns the complete updated product with all fields.
+    Returns a 404 error if no product exists with the provided ID.
     """
     product_manager = ProductManager()
     
@@ -335,21 +383,31 @@ async def update_product(
         "tenant_id": str(updated_product.tenant_id),
     }
 
-@router.delete("/{product_id}", response_model=Dict[str, Any], summary="Delete Product")
+@router.delete("/{product_id}", 
+         summary="Delete Product",
+         description="Permanently removes a product from the catalog",
+         responses={
+             200: {"description": "Product deleted successfully", "content": {"application/json": {"example": {"success": True, "message": "Product Example Product deleted successfully"}}}},
+             400: {"description": "Invalid product ID format"},
+             401: {"description": "Unauthorized - requires proper authentication"},
+             404: {"description": "Product not found"},
+             500: {"description": "Internal server error"}
+         })
 async def delete_product(
-    product_id: str = Path(..., description="The ID of the product to delete")
+    product_id: str = Path(..., description="The unique UUID of the product to delete")
 ):
     """
-    Delete a product.
+    Permanently delete a product from the catalog.
     
-    Args:
-        product_id: The unique identifier of the product
-        
-    Returns:
-        A confirmation message
-        
-    Raises:
-        404: If the product is not found
+    This endpoint permanently removes a product from the database. This will affect
+    the product's availability for purchase and will remove it from all category listings.
+    However, the product will still be preserved in historical orders. This operation 
+    cannot be undone.
+    
+    - **product_id**: The unique identifier of the product to delete (UUID format)
+    
+    Returns a success message if the product was deleted successfully.
+    Returns a 404 error if no product exists with the provided ID.
     """
     product_manager = ProductManager()
     
