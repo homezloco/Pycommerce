@@ -5,11 +5,23 @@ This module defines the FastAPI routes for product operations.
 """
 
 import logging
-from typing import List, Optional, Dict
+from typing import List, Optional, Dict, Any
 from uuid import UUID
 from fastapi import APIRouter, HTTPException, Query, Depends, Request
 
 from pycommerce.models.product import Product, ProductManager
+# Import enhanced query optimizer functions
+try:
+    from pycommerce.services.enhanced_query_optimizer import (
+        get_products_by_tenant, 
+        get_product_with_details,
+        invalidate_product_cache
+    )
+    ENHANCED_OPTIMIZER_AVAILABLE = True
+except ImportError:
+    logger = logging.getLogger("pycommerce.api.products")
+    logger.warning("Enhanced query optimizer not available, using standard methods")
+    ENHANCED_OPTIMIZER_AVAILABLE = False
 
 router = APIRouter()
 logger = logging.getLogger("pycommerce.api.products")
@@ -120,6 +132,8 @@ async def list_products(
     min_price: Optional[float] = None,
     max_price: Optional[float] = None,
     in_stock: Optional[bool] = None,
+    limit: int = Query(100, description="Maximum number of products to return"),
+    offset: int = Query(0, description="Pagination offset"),
     tenant_id: str = Depends(get_tenant_id)
 ):
     """
@@ -131,20 +145,38 @@ async def list_products(
         min_price: Filter by minimum price
         max_price: Filter by maximum price
         in_stock: Filter by stock availability
+        limit: Maximum number of products to return (for pagination)
+        offset: Pagination offset
         tenant_id: The tenant ID
         
     Returns:
         List of products matching the filters
     """
     try:
-        product_manager = get_product_manager(tenant_id)
-        products = product_manager.list(
-            category=category,
-            min_price=min_price,
-            max_price=max_price,
-            in_stock=in_stock
-        )
-        return products
+        # Use enhanced query optimizer if available
+        if ENHANCED_OPTIMIZER_AVAILABLE:
+            logger.info(f"Using enhanced query optimizer for tenant {tenant_id}")
+            result = get_products_by_tenant(
+                tenant_id=tenant_id,
+                category=category,
+                min_price=min_price,
+                max_price=max_price,
+                in_stock=in_stock,
+                limit=limit,
+                offset=offset
+            )
+            return result.get("products", [])
+        else:
+            # Fall back to standard method
+            logger.info(f"Using standard query method for tenant {tenant_id}")
+            product_manager = get_product_manager(tenant_id)
+            products = product_manager.list(
+                category=category,
+                min_price=min_price,
+                max_price=max_price,
+                in_stock=in_stock
+            )
+            return products
     except Exception as e:
         logger.error(f"Error listing products for tenant {tenant_id}: {str(e)}")
         raise HTTPException(
@@ -199,8 +231,24 @@ async def get_product(
         HTTPException: If the product is not found
     """
     try:
-        product_manager = get_product_manager(tenant_id)
-        return product_manager.get(product_id)
+        # Use enhanced query optimizer if available
+        if ENHANCED_OPTIMIZER_AVAILABLE:
+            logger.info(f"Using enhanced query optimizer to get product {product_id}")
+            product = get_product_with_details(product_id)
+            if product is None:
+                raise HTTPException(
+                    status_code=404,
+                    detail=f"Product not found: {product_id}"
+                )
+            return product
+        else:
+            # Fall back to standard method
+            logger.info(f"Using standard query method to get product {product_id}")
+            product_manager = get_product_manager(tenant_id)
+            return product_manager.get(product_id)
+    except HTTPException as e:
+        # Re-raise HTTP exceptions
+        raise
     except Exception as e:
         logger.error(f"Error getting product {product_id} for tenant {tenant_id}: {str(e)}")
         raise HTTPException(

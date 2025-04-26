@@ -434,6 +434,173 @@ def invalidate_template_cache():
     clear_cache_for_prefix("get_all_page_templates")
 
 
+# ----- Product API Optimizations -----
+
+@cached_query(timeout=180)  # 3 minutes cache
+def get_products_by_tenant(
+    tenant_id: str,
+    category: Optional[str] = None,
+    min_price: Optional[float] = None,
+    max_price: Optional[float] = None,
+    in_stock: Optional[bool] = None,
+    limit: int = 100,
+    offset: int = 0
+) -> Dict[str, Any]:
+    """
+    Get products for a tenant with optional filtering in an optimized query.
+    
+    This function uses efficient filtering and pagination with eager loading of
+    product relationships to minimize database queries.
+    
+    Args:
+        tenant_id: The tenant ID
+        category: Optional category name to filter by
+        min_price: Optional minimum price filter
+        max_price: Optional maximum price filter
+        in_stock: Optional stock availability filter
+        limit: Maximum number of products to return
+        offset: Pagination offset
+        
+    Returns:
+        Dictionary with products list, total count, and filter information
+    """
+    try:
+        with get_session() as session:
+            # Start building the query
+            query = session.query(Product).filter(Product.tenant_id == tenant_id)
+            
+            # Apply filters
+            filters = {}
+            
+            if category:
+                filters['category'] = category
+                # Find category and filter products by it
+                category_obj = session.query(Category).filter(
+                    Category.name == category,
+                    Category.tenant_id == tenant_id
+                ).first()
+                
+                if category_obj:
+                    # Join with Category and filter
+                    query = query.join(Product.categories).filter(Category.id == category_obj.id)
+                else:
+                    # No matching category found, return empty result
+                    return {
+                        "products": [],
+                        "count": 0,
+                        "tenant": tenant_id,
+                        "filters": filters,
+                        "limit": limit,
+                        "offset": offset
+                    }
+            
+            if min_price is not None:
+                filters['min_price'] = min_price
+                query = query.filter(Product.price >= min_price)
+                
+            if max_price is not None:
+                filters['max_price'] = max_price
+                query = query.filter(Product.price <= max_price)
+                
+            if in_stock is not None:
+                filters['in_stock'] = in_stock
+                query = query.filter(Product.stock > 0 if in_stock else Product.stock == 0)
+            
+            # Get total count for pagination
+            total_count = query.count()
+            
+            # Apply pagination and eager load relationships
+            query = (
+                query
+                .options(selectinload(Product.categories))
+                .order_by(Product.name)
+                .limit(limit)
+                .offset(offset)
+            )
+            
+            # Execute query and format results
+            products = query.all()
+            result_products = []
+            
+            for product in products:
+                product_dict = {
+                    "id": str(product.id),
+                    "name": product.name,
+                    "description": product.description,
+                    "price": product.price,
+                    "sku": product.sku,
+                    "stock": product.stock,
+                    "tenant_id": product.tenant_id,
+                    "categories": [category.name for category in product.categories],
+                    "created_at": product.created_at.isoformat() if product.created_at else None,
+                    "updated_at": product.updated_at.isoformat() if product.updated_at else None
+                }
+                result_products.append(product_dict)
+            
+            return {
+                "products": result_products,
+                "count": total_count,
+                "tenant": tenant_id,
+                "filters": filters,
+                "limit": limit,
+                "offset": offset
+            }
+    except Exception as e:
+        logger.error(f"Error in get_products_by_tenant: {e}")
+        return {
+            "products": [],
+            "count": 0,
+            "tenant": tenant_id,
+            "filters": {},
+            "limit": limit,
+            "offset": offset,
+            "error": str(e)
+        }
+
+@cached_query(timeout=300)  # 5 minutes cache
+def get_product_with_details(product_id: str) -> Dict[str, Any]:
+    """
+    Get a product with all its details including categories in a single optimized query.
+    
+    Args:
+        product_id: The ID of the product to retrieve
+        
+    Returns:
+        Dictionary containing the product with all its details
+    """
+    try:
+        with get_session() as session:
+            # Build query with eager loading of relationships
+            query = (
+                session.query(Product)
+                .options(selectinload(Product.categories))
+                .filter(Product.id == product_id)
+            )
+            
+            product = query.first()
+            if not product:
+                logger.warning(f"Product not found with ID: {product_id}")
+                return None
+                
+            # Convert to dictionary for JSON serialization
+            result = {
+                "id": str(product.id),
+                "name": product.name,
+                "description": product.description,
+                "price": product.price,
+                "sku": product.sku,
+                "stock": product.stock,
+                "tenant_id": product.tenant_id,
+                "categories": [category.name for category in product.categories],
+                "created_at": product.created_at.isoformat() if product.created_at else None,
+                "updated_at": product.updated_at.isoformat() if product.updated_at else None
+            }
+            
+            return result
+    except Exception as e:
+        logger.error(f"Error in get_product_with_details: {e}")
+        return None
+
 def invalidate_product_cache(tenant_id: Optional[str] = None, product_id: Optional[str] = None):
     """
     Invalidate product cache.
@@ -446,10 +613,15 @@ def invalidate_product_cache(tenant_id: Optional[str] = None, product_id: Option
     if tenant_id is not None:
         # Clear cache for specific tenant
         clear_cache_for_prefix(f"get_products_with_categories:{tenant_id}")
+        clear_cache_for_prefix(f"get_products_by_tenant:{tenant_id}")
     elif product_id is not None:
         # This would need a reverse lookup mechanism to find all queries that included this product
         # For now, we clear all product queries to be safe
         clear_cache_for_prefix("get_products_with_categories")
+        clear_cache_for_prefix("get_products_by_tenant")
+        clear_cache_for_prefix(f"get_product_with_details:{product_id}")
     else:
         # Clear all product cache if no specific ID provided
         clear_cache_for_prefix("get_products_with_categories")
+        clear_cache_for_prefix("get_products_by_tenant")
+        clear_cache_for_prefix("get_product_with_details")
