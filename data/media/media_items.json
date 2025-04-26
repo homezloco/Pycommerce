@@ -100,5 +100,24 @@
       "size": "1024x1024",
       "quality": "standard"
     }
+  },
+  {
+    "id": "4e446b0f-a855-4c35-9ad9-dcc2e49efabe",
+    "name": "AI Image (Failed): logo for test ",
+    "url": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDI0IiBoZWlnaHQ9IjEwMjQiIHZpZXdCb3g9IjAgMCAxMDI0IDEwMjQiPgogICAgICAgICAgICA8cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjBmMGYwIi8+CiAgICAgICAgICAgIDx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwsIHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMzYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiM2NjY2NjYiPgogICAgICAgICAgICAgICAgSW1hZ2UgZ2VuZXJhdGlvbiBmYWlsZWQKICAgICAgICAgICAgPC90ZXh0PgogICAgICAgICAgICA8dGV4dCB4PSI1MCUiIHk9IjU4JSIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjI0IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSIjOTk5OTk5Ij4KICAgICAgICAgICAgICAgIFByb21wdDogbG9nbyBmb3IgdGVzdCAuLi4KICAgICAgICAgICAgPC90ZXh0PgogICAgICAgIDwvc3ZnPg==",
+    "mime_type": "image/svg+xml",
+    "size": 526,
+    "tenant_id": "0a38d2a1-00fe-47ea-a6d2-f1595048aab0",
+    "sharing_level": "tenant",
+    "created_at": "2025-04-26T01:37:02.112878",
+    "updated_at": "2025-04-26T01:37:02.112878",
+    "metadata": {
+      "generated_by": "dalle",
+      "status": "failed",
+      "prompt": "logo for test ",
+      "generated_at": "2025-04-26T01:37:02.112837",
+      "ai_generated": false,
+      "is_fallback": true
+    }
   }
 ]

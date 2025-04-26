@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """Script to create advanced pages for all tenants using the new templates.
 
 This script creates blog, FAQ, services, and portfolio pages for all tenants
@@ -7,101 +8,85 @@ It ensures each tenant has a full set of pages based on the available templates.
 
 import logging
 import sys
-from typing import Dict, Any, List, Optional, Tuple
+from typing import Dict, Any, List, Optional
 
-from app import app
-from pycommerce.models.tenant import Tenant, TenantManager
+from pycommerce.core.db import SessionLocal
+from pycommerce.models.tenant import Tenant
 from pycommerce.models.page_builder import (
-    Page, PageManager, PageSection, PageSectionManager, 
+    Page, PageTemplate, PageManager, PageSection, PageSectionManager, 
     ContentBlock, ContentBlockManager, PageTemplateManager
 )
+from pycommerce.sdk import AppTenantManager
 
-# Set up logging
+# Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-def get_tenant_by_slug(tenant_manager: TenantManager, slug: str) -> Optional[Tenant]:
+def get_tenant_by_slug(tenant_manager: AppTenantManager, slug: str) -> Optional[Dict[str, Any]]:
     """Get a tenant by its slug."""
-    tenants = tenant_manager.list_tenants()
-    for tenant in tenants:
-        if tenant.slug == slug:
-            return tenant
-    return None
-
-
-def get_template_by_name(template_manager: PageTemplateManager, name: str) -> Optional[Any]:
-    """Get a template by its name."""
-    templates = template_manager.list_templates()
-    for template in templates:
-        if template.name == name:
-            return template
-    return None
+    return tenant_manager.get_by_slug(slug)
 
 
 def create_page_from_template(
     tenant_id: str,
     title: str,
     slug: str,
-    template: Any,
+    template: PageTemplate,
     page_manager: PageManager,
     section_manager: PageSectionManager,
     block_manager: ContentBlockManager
 ) -> Optional[Page]:
     """Create a new page from a template."""
-    # Check if page with this slug already exists for this tenant
-    existing_pages = page_manager.list_pages_by_tenant(tenant_id)
-    for page in existing_pages:
-        if page.slug == slug:
-            logger.info(f"Page with slug '{slug}' already exists for tenant {tenant_id}")
+    session = SessionLocal()
+    try:
+        # Check if page with this slug already exists for this tenant
+        existing_pages = page_manager.list_pages(tenant_id=tenant_id)
+        for page in existing_pages:
+            if page.slug == slug:
+                logger.info(f"Page with slug '{slug}' already exists for tenant {tenant_id}")
+                return None
+        
+        # Create the page
+        page = page_manager.create({
+            "tenant_id": tenant_id,
+            "title": title,
+            "slug": slug,
+            "published": True,
+            "meta_description": f"{title} - {template.description}"
+        })
+        
+        if not page:
+            logger.error(f"Failed to create page '{title}' for tenant {tenant_id}")
             return None
-    
-    # Create the page
-    page = page_manager.create_page(
-        tenant_id=tenant_id,
-        title=title,
-        slug=slug,
-        published=True,
-        meta_description=f"{title} - {template.description}"
-    )
-    
-    if not page:
-        logger.error(f"Failed to create page '{title}' for tenant {tenant_id}")
-        return None
-    
-    # Create sections and blocks from template
-    for section_data in template.sections:
-        section = section_manager.create_section(
-            page_id=page.id,
-            name=section_data.get("name"),
-            order=section_data.get("order"),
-            settings=section_data.get("settings", {})
-        )
         
-        if not section:
-            logger.error(f"Failed to create section {section_data.get('name')} for page {page.id}")
-            continue
-        
-        # Create blocks for this section
-        for block_data in section_data.get("blocks", []):
-            block = block_manager.create_block(
-                section_id=section.id,
-                block_type=block_data.get("type"),
-                content=block_data.get("content"),
-                order=block_data.get("order"),
-                settings=block_data.get("settings", {})
-            )
+        # Create sections and blocks from template
+        sections = template.template_data.get("sections", [])
+        for i, section_data in enumerate(sections):
+            section = section_manager.create({
+                "page_id": page.id,
+                "name": section_data.get("section_type", f"section_{i+1}"),
+                "order": i + 1,
+                "settings": section_data.get("settings", {})
+            })
             
-            if not block:
-                logger.error(f"Failed to create block {block_data.get('type')} for section {section.id}")
-    
-    logger.info(f"Successfully created page '{title}' with slug '{slug}' for tenant {tenant_id}")
-    return page
+            if not section:
+                logger.error(f"Failed to create section {section_data.get('name')} for page {page.id}")
+                continue
+        
+        logger.info(f"Successfully created page '{title}' with slug '{slug}' for tenant {tenant_id}")
+        return page
+    except Exception as e:
+        logger.error(f"Error creating page from template: {str(e)}")
+        session.rollback()
+        return None
+    finally:
+        session.close()
 
 
 def create_tenant_pages(
-    tenant: Tenant,
-    templates: Dict[str, Any],
+    tenant: Dict[str, Any],
+    templates: Dict[str, PageTemplate],
     page_manager: PageManager,
     section_manager: PageSectionManager,
     block_manager: ContentBlockManager
@@ -112,7 +97,7 @@ def create_tenant_pages(
     # Blog page
     if "Blog Page" in templates:
         page = create_page_from_template(
-            tenant_id=tenant.id,
+            tenant_id=tenant["id"],
             title="Blog",
             slug="blog",
             template=templates["Blog Page"],
@@ -126,7 +111,7 @@ def create_tenant_pages(
     # FAQ page
     if "FAQ Page" in templates:
         page = create_page_from_template(
-            tenant_id=tenant.id,
+            tenant_id=tenant["id"],
             title="Frequently Asked Questions",
             slug="faq",
             template=templates["FAQ Page"],
@@ -140,7 +125,7 @@ def create_tenant_pages(
     # Services page
     if "Services Page" in templates:
         page = create_page_from_template(
-            tenant_id=tenant.id,
+            tenant_id=tenant["id"],
             title="Our Services",
             slug="services",
             template=templates["Services Page"],
@@ -154,7 +139,7 @@ def create_tenant_pages(
     # Portfolio page
     if "Portfolio Page" in templates:
         page = create_page_from_template(
-            tenant_id=tenant.id,
+            tenant_id=tenant["id"],
             title="Portfolio",
             slug="portfolio",
             template=templates["Portfolio Page"],
@@ -165,19 +150,20 @@ def create_tenant_pages(
         if page:
             created_pages.append(page)
     
-    logger.info(f"Created {len(created_pages)} pages for tenant '{tenant.name}'")
+    logger.info(f"Created {len(created_pages)} pages for tenant '{tenant['name']}'")
     return created_pages
 
 
 def create_advanced_pages_for_all_tenants():
     """Create advanced pages for all tenants."""
-    with app.app_context():
+    session = SessionLocal()
+    try:
         # Initialize managers
-        tenant_manager = TenantManager()
-        page_manager = PageManager()
-        section_manager = PageSectionManager()
-        block_manager = ContentBlockManager()
-        template_manager = PageTemplateManager()
+        tenant_manager = AppTenantManager()
+        page_manager = PageManager(session)
+        section_manager = PageSectionManager(session)
+        block_manager = ContentBlockManager(session)
+        template_manager = PageTemplateManager(session)
         
         # Get all templates
         all_templates = template_manager.list_templates()
@@ -202,11 +188,13 @@ def create_advanced_pages_for_all_tenants():
             logger.error("No tenants found")
             return
         
+        logger.info(f"Found {len(tenants)} tenants")
+        
         total_pages_created = 0
         
         # Create pages for each tenant
         for tenant in tenants:
-            logger.info(f"Creating advanced pages for tenant: {tenant.name} (ID: {tenant.id})")
+            logger.info(f"Creating advanced pages for tenant: {tenant['name']} (ID: {tenant['id']})")
             pages = create_tenant_pages(
                 tenant=tenant,
                 templates=templates_by_name,
@@ -217,6 +205,12 @@ def create_advanced_pages_for_all_tenants():
             total_pages_created += len(pages)
         
         logger.info(f"Total pages created: {total_pages_created}")
+        
+    except Exception as e:
+        logger.error(f"Error creating advanced pages: {str(e)}")
+        session.rollback()
+    finally:
+        session.close()
 
 
 if __name__ == "__main__":
