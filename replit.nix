@@ -1,5 +1,9 @@
 {pkgs}: {
   deps = [
+    pkgs.gdk-pixbuf
+    pkgs.cairo
+    pkgs.pango
+    pkgs.fontconfig
     pkgs.lsof
     pkgs.zlib
     pkgs.tk
