@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Order #{{ order.order_number }}</title>
+    <style>
+        @page {
+            margin: 2cm;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            color: #333;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 10px;
+        }
+        .header h1 {
+            color: #4e73df;
+            margin-bottom: 5px;
+        }
+        .info-section {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 30px;
+        }
+        .info-box {
+            width: 30%;
+        }
+        .info-box h2 {
+            font-size: 16px;
+            color: #4e73df;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 5px;
+            margin-bottom: 10px;
+        }
+        .info-item {
+            margin-bottom: 5px;
+        }
+        .info-label {
+            font-weight: bold;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        table th, table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        table th {
+            background-color: #f8f9fc;
+            color: #4e73df;
+            font-weight: bold;
+        }
+        table tfoot {
+            font-weight: bold;
+        }
+        .section-header {
+            color: #4e73df;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 5px;
+            margin: 20px 0 10px 0;
+        }
+        .summary-table {
+            width: 50%;
+            margin-left: auto;
+        }
+        .total-row {
+            background-color: #eaecf4;
+            font-weight: bold;
+        }
+        .notes {
+            margin-bottom: 20px;
+            padding: 10px;
+            background-color: #f8f9fc;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .shipping-info {
+            background-color: #f8f9fc;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 10px;
+            margin-bottom: 20px;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 3px;
+            font-size: 12px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        .status-pending {
+            background-color: #f6c23e;
+            color: #fff;
+        }
+        .status-processing {
+            background-color: #36b9cc;
+            color: #fff;
+        }
+        .status-shipped {
+            background-color: #1cc88a;
+            color: #fff;
+        }
+        .status-delivered {
+            background-color: #1cc88a;
+            color: #fff;
+        }
+        .status-cancelled {
+            background-color: #e74a3b;
+            color: #fff;
+        }
+        .status-refunded {
+            background-color: #858796;
+            color: #fff;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Order #{{ order.order_number }}</h1>
+        <p>{{ order.created_at.strftime('%B %d, %Y') }}</p>
+    </div>
+    
+    <div class="info-section">
+        <div class="info-box">
+            <h2>Order Information</h2>
+            <div class="info-item">
+                <span class="info-label">Status:</span> 
+                <span class="status-badge status-{{ order.status.lower() }}">{{ order.status }}</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Order Date:</span> {{ order.created_at.strftime('%B %d, %Y') }}
+            </div>
+            {% if order.payment_method %}
+            <div class="info-item">
+                <span class="info-label">Payment Method:</span> {{ order.payment_method }}
+            </div>
+            {% endif %}
+        </div>
+        
+        <div class="info-box">
+            <h2>Customer Information</h2>
+            <div class="info-item">
+                <span class="info-label">Name:</span> {{ order.customer_name or 'N/A' }}
+            </div>
+            <div class="info-item">
+                <span class="info-label">Email:</span> {{ order.customer_email or 'N/A' }}
+            </div>
+            <div class="info-item">
+                <span class="info-label">Phone:</span> {{ order.customer_phone or 'N/A' }}
+            </div>
+        </div>
+        
+        <div class="info-box">
+            <h2>Shipping Information</h2>
+            <div class="info-item">
+                <span class="info-label">Address:</span> {{ order.shipping_address or 'N/A' }}
+            </div>
+            <div class="info-item">
+                <span class="info-label">City:</span> {{ order.shipping_city or 'N/A' }}
+            </div>
+            <div class="info-item">
+                <span class="info-label">State/Province:</span> {{ order.shipping_state or 'N/A' }}
+            </div>
+            <div class="info-item">
+                <span class="info-label">Postal Code:</span> {{ order.shipping_postal_code or 'N/A' }}
+            </div>
+            <div class="info-item">
+                <span class="info-label">Country:</span> {{ order.shipping_country or 'N/A' }}
+            </div>
+        </div>
+    </div>
+    
+    {% if order.notes %}
+    <div class="notes">
+        <h2>Order Notes</h2>
+        <ul>
+        {% for note in order.notes %}
+            <li>{{ note.content }} ({{ note.created_at.strftime('%B %d, %Y') }})</li>
+        {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+    
+    <h2 class="section-header">Order Items</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Product</th>
+                <th>SKU</th>
+                <th>Quantity</th>
+                <th>Unit Price</th>
+                <th>Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in order.items %}
+            <tr>
+                <td>{{ item.product_name }}</td>
+                <td>{{ item.product_sku or 'N/A' }}</td>
+                <td>{{ item.quantity }}</td>
+                <td>${{ "%.2f"|format(item.unit_price) }}</td>
+                <td>${{ "%.2f"|format(item.quantity * item.unit_price) }}</td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="5" style="text-align: center;">No items in this order</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+        <tfoot>
+            <tr>
+                <td colspan="4" style="text-align: right;">Subtotal:</td>
+                <td>${{ "%.2f"|format(order.subtotal) }}</td>
+            </tr>
+        </tfoot>
+    </table>
+    
+    {% if order.shipments %}
+    <h2 class="section-header">Shipment Information</h2>
+    {% for shipment in order.shipments %}
+    <div class="shipping-info">
+        <h3>Shipment #{{ shipment.tracking_number }}</h3>
+        <div class="info-item">
+            <span class="info-label">Carrier:</span> {{ shipment.carrier or 'N/A' }}
+        </div>
+        <div class="info-item">
+            <span class="info-label">Tracking Number:</span> {{ shipment.tracking_number or 'N/A' }}
+        </div>
+        <div class="info-item">
+            <span class="info-label">Date Shipped:</span> {{ shipment.created_at.strftime('%B %d, %Y') }}
+        </div>
+    </div>
+    {% endfor %}
+    {% endif %}
+    
+    <h2 class="section-header">Order Summary</h2>
+    <table class="summary-table">
+        <tbody>
+            <tr>
+                <td style="text-align: right;"><strong>Subtotal:</strong></td>
+                <td>${{ "%.2f"|format(order.subtotal) }}</td>
+            </tr>
+            {% if order.tax %}
+            <tr>
+                <td style="text-align: right;"><strong>Tax:</strong></td>
+                <td>${{ "%.2f"|format(order.tax) }}</td>
+            </tr>
+            {% endif %}
+            {% if order.shipping_cost %}
+            <tr>
+                <td style="text-align: right;"><strong>Shipping:</strong></td>
+                <td>${{ "%.2f"|format(order.shipping_cost) }}</td>
+            </tr>
+            {% endif %}
+            {% if order.discount %}
+            <tr>
+                <td style="text-align: right;"><strong>Discount:</strong></td>
+                <td>-${{ "%.2f"|format(order.discount) }}</td>
+            </tr>
+            {% endif %}
+            <tr class="total-row">
+                <td style="text-align: right;"><strong>Total:</strong></td>
+                <td>${{ "%.2f"|format(order.total) }}</td>
+            </tr>
+        </tbody>
+    </table>
+    
+    <div style="margin-top: 50px; padding-top: 20px; border-top: 1px solid #ddd;">
+        <p><strong>Thank you for your business!</strong></p>
+        <p>If you have any questions about this order, please contact our customer support team.</p>
+    </div>
+</body>
+</html>

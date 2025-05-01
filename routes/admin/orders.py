@@ -4,12 +4,15 @@ Admin routes for order management.
 This module contains all the routes for managing orders in the admin interface.
 """
 import logging
+import os
+from io import BytesIO
 from typing import Optional, List, Dict, Any
 from uuid import UUID
 from datetime import datetime
 
 from fastapi import APIRouter, Depends, Form, HTTPException, Request
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, StreamingResponse
+from weasyprint import HTML, CSS
 
 # Template setup will be passed from main app
 templates = None
@@ -906,6 +909,83 @@ def _get_order_type_string(order):
 
     # Default to STANDARD if anything goes wrong
     return "STANDARD"
+
+@router.get("/orders/{order_id}/export-pdf")
+async def export_order_pdf(
+    request: Request,
+    order_id: str
+):
+    """Export an order as a PDF file."""
+    # Get tenant from session
+    selected_tenant_slug = request.session.get("selected_tenant")
+    # If no tenant is selected, redirect to dashboard with message
+    if not selected_tenant_slug:
+        return RedirectResponse(
+            url="/admin/dashboard?status_message=Please+select+a+store+first&status_type=warning", 
+            status_code=303
+        )
+
+    # Get tenant object
+    tenant = tenant_manager.get_by_slug(selected_tenant_slug)
+    if not tenant:
+        return RedirectResponse(
+            url="/admin/dashboard?status_message=Store+not+found&status_type=error", 
+            status_code=303
+        )
+
+    try:
+        # Get order data with all related information
+        order_data = get_order_with_items_and_notes(order_id)
+        if not order_data or not order_data.get("order"):
+            return RedirectResponse(
+                url=f"/admin/orders?status_message=Order+not+found&status_type=error", 
+                status_code=303
+            )
+        
+        # Get the order and ensure it belongs to the selected tenant
+        order = order_data.get("order")
+        if str(order.get("tenant_id")) != str(tenant.id):
+            return RedirectResponse(
+                url=f"/admin/orders?status_message=Order+not+found+for+this+store&status_type=error", 
+                status_code=303
+            )
+        
+        # Set up the order object for the template
+        order_obj = order
+        order_obj["items"] = order_data.get("items", [])
+        order_obj["notes"] = order_data.get("notes", [])
+        
+        # If order has shipments, get them
+        from pycommerce.models.shipment import ShipmentManager
+        shipment_manager = ShipmentManager()
+        order_obj["shipments"] = shipment_manager.get_for_order(order_id)
+        
+        # Render the order template to HTML
+        html_content = templates.get_template("admin/orders/pdf_template.html").render({
+            "order": order_obj,
+            "request": request
+        })
+        
+        # Use WeasyPrint to convert HTML to PDF
+        pdf_buffer = BytesIO()
+        HTML(string=html_content).write_pdf(pdf_buffer)
+        pdf_buffer.seek(0)
+        
+        # Create a response with the PDF
+        filename = f"order_{order_obj.get('order_number', order_id)}.pdf"
+        return StreamingResponse(
+            pdf_buffer, 
+            media_type="application/pdf",
+            headers={"Content-Disposition": f"attachment; filename={filename}"}
+        )
+    
+    except Exception as e:
+        logger.error(f"Error generating PDF for order {order_id}: {str(e)}")
+        return RedirectResponse(
+            url=f"/admin/orders/{order_id}?status_message=Error+generating+PDF:+{str(e)}&status_type=error", 
+            status_code=303
+        )
+
 
 def setup_routes(app_templates):
     """
