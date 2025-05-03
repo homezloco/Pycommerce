@@ -1268,7 +1268,23 @@ async def page_preview(
                 
                 # Sections and blocks are already in the page_data from the optimized query
                 if 'sections' in page_data and page_data['sections']:
-                    sections_with_blocks = page_data['sections']
+                    # Need to transform the data to match the expected structure in the template
+                    # The template expects section_data.section.property but optimizer provides section_data.property
+                    transformed_sections = []
+                    for section in page_data['sections']:
+                        # Transform to match the template's expected structure
+                        transformed_section = {
+                            "section": {
+                                "id": section["id"],
+                                "section_type": section["section_type"],
+                                "position": section["position"],
+                                "settings": section["settings"]
+                            },
+                            "blocks": section["blocks"]
+                        }
+                        transformed_sections.append(transformed_section)
+                    
+                    sections_with_blocks = transformed_sections
                     logger.info(f"Page preview loaded with enhanced optimizer: {len(sections_with_blocks)} sections")
             
         except (ImportError, Exception) as e:
