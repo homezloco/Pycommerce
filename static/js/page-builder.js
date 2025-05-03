@@ -548,86 +548,94 @@ function savePage() {
 /**
  * Setup the real-time preview panel
  */
+/**
+ * Setup the real-time preview panel
+ */
 function setupPreviewPanel() {
-    // Create preview toggle button
-    const previewToggleBtn = document.createElement('button');
-    previewToggleBtn.className = 'preview-toggle-btn';
-    previewToggleBtn.innerHTML = '<i class="fas fa-eye"></i> Live Preview';
-    previewToggleBtn.addEventListener('click', togglePreviewPanel);
-    document.body.appendChild(previewToggleBtn);
+    // Get the toggle preview button and attach event listener
+    const togglePreviewBtn = document.getElementById('togglePreviewBtn');
+    const livePreviewPanel = document.getElementById('livePreviewPanel');
+    const closePreviewBtn = document.getElementById('closePreviewBtn');
     
-    // Create the preview panel
-    const previewPanel = document.createElement('div');
-    previewPanel.className = 'preview-panel';
-    previewPanel.innerHTML = `
-        <div class="preview-header">
-            <div class="preview-title">
-                <i class="fas fa-eye"></i> Live Preview
-            </div>
-            <div class="preview-actions">
-                <button class="btn btn-sm btn-outline-secondary close-preview-btn">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-        </div>
-        <div class="preview-device-selector">
-            <button class="preview-device-btn active" data-device="desktop" title="Desktop view">
-                <i class="fas fa-desktop"></i>
-            </button>
-            <button class="preview-device-btn" data-device="tablet" title="Tablet view">
-                <i class="fas fa-tablet-alt"></i>
-            </button>
-            <button class="preview-device-btn" data-device="mobile" title="Mobile view">
-                <i class="fas fa-mobile-alt"></i>
-            </button>
-        </div>
-        <div class="preview-content">
-            <iframe id="previewFrame" class="preview-iframe"></iframe>
-        </div>
-    `;
-    
-    document.body.appendChild(previewPanel);
-    
-    // Setup event handlers
-    document.querySelector('.close-preview-btn').addEventListener('click', togglePreviewPanel);
-    document.querySelectorAll('.preview-device-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-            // Remove active class from all buttons
-            document.querySelectorAll('.preview-device-btn').forEach(b => b.classList.remove('active'));
-            // Add active class to clicked button
-            this.classList.add('active');
-            // Change iframe width based on device
-            const iframe = document.getElementById('previewFrame');
-            const device = this.getAttribute('data-device');
-            
-            switch(device) {
-                case 'desktop':
-                    iframe.style.width = '100%';
-                    break;
-                case 'tablet':
-                    iframe.style.width = '768px';
-                    break;
-                case 'mobile':
-                    iframe.style.width = '375px';
-                    break;
-            }
+    if (togglePreviewBtn && livePreviewPanel) {
+        togglePreviewBtn.addEventListener('click', function() {
+            togglePreviewPanel();
         });
-    });
-    
-    // Initial load of preview
-    updatePreview();
+        
+        // Close button handler
+        if (closePreviewBtn) {
+            closePreviewBtn.addEventListener('click', function() {
+                togglePreviewPanel(false);
+            });
+        }
+        
+        // Setup device switcher functionality
+        setupDeviceSwitcher();
+        
+        // Load preview when panel is first shown
+        updatePreview();
+    } else {
+        console.warn('Preview panel elements not found');
+    }
 }
 
 /**
  * Toggle the preview panel visibility
+ * @param {boolean|undefined} show - Force show or hide. If undefined, toggles current state.
  */
-function togglePreviewPanel() {
-    const panel = document.querySelector('.preview-panel');
-    panel.classList.toggle('active');
+function togglePreviewPanel(show) {
+    const panel = document.getElementById('livePreviewPanel');
+    const editorCanvas = document.querySelector('.editor-canvas');
     
-    if (panel.classList.contains('active')) {
-        updatePreview();
+    if (!panel) return;
+    
+    if (typeof show === 'undefined') {
+        // Toggle current state
+        const isVisible = panel.style.display !== 'none';
+        show = !isVisible;
     }
+    
+    if (show) {
+        panel.style.display = 'flex';
+        editorCanvas.classList.add('with-preview');
+        updatePreview();
+    } else {
+        panel.style.display = 'none';
+        editorCanvas.classList.remove('with-preview');
+    }
+    
+    // Update toggle button appearance
+    const toggleBtn = document.getElementById('togglePreviewBtn');
+    if (toggleBtn) {
+        if (show) {
+            toggleBtn.classList.add('active');
+        } else {
+            toggleBtn.classList.remove('active');
+        }
+    }
+}
+
+/**
+ * Setup device switcher in preview panel
+ */
+function setupDeviceSwitcher() {
+    const deviceButtons = document.querySelectorAll('.preview-device-options button[data-device]');
+    const previewViewport = document.querySelector('.preview-viewport');
+    
+    if (!deviceButtons.length || !previewViewport) return;
+    
+    deviceButtons.forEach(btn => {
+        btn.addEventListener('click', function() {
+            // Remove active class from all buttons
+            deviceButtons.forEach(b => b.classList.remove('active'));
+            
+            // Add active class to clicked button
+            this.classList.add('active');
+            
+            // Update viewport class based on device
+            previewViewport.className = 'preview-viewport ' + this.dataset.device;
+        });
+    });
 }
 
 /**
