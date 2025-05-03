@@ -560,6 +560,7 @@ body.dark-mode .page-editor-wrapper {
   border: 10px solid #333;
   border-radius: 20px;
   overflow: hidden;
+  transition: all 0.3s ease;
 }
 
 .preview-viewport.mobile .preview-content {
@@ -568,6 +569,29 @@ body.dark-mode .page-editor-wrapper {
   border: 15px solid #333;
   border-radius: 30px;
   overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+/* Animation for device switching */
+.preview-viewport.device-changing {
+  opacity: 0.7;
+  transform: scale(0.98);
+}
+
+.preview-viewport .device-badge {
+  opacity: 0.7;
+  transition: opacity 0.3s ease;
+}
+
+.preview-viewport:hover .device-badge {
+  opacity: 0.3;
+}
+
+/* Add a subtle grid background to the preview viewport */
+.preview-viewport {
+  background-image: linear-gradient(rgba(200, 200, 200, 0.05) 1px, transparent 1px),
+                    linear-gradient(90deg, rgba(200, 200, 200, 0.05) 1px, transparent 1px);
+  background-size: 20px 20px;
 }
 
 .preview-content {

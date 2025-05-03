@@ -586,8 +586,9 @@ function setupPreviewPanel() {
 function togglePreviewPanel(show) {
     const panel = document.getElementById('livePreviewPanel');
     const editorCanvas = document.querySelector('.editor-canvas');
+    const toggleBtn = document.getElementById('togglePreviewBtn');
     
-    if (!panel) return;
+    if (!panel || !editorCanvas) return;
     
     if (typeof show === 'undefined') {
         // Toggle current state
@@ -596,21 +597,61 @@ function togglePreviewPanel(show) {
     }
     
     if (show) {
+        // Show preview panel with smooth animation
         panel.style.display = 'flex';
+        panel.classList.add('fade-in');
+        
+        // Adjust editor canvas layout for split view
         editorCanvas.classList.add('with-preview');
-        updatePreview();
-    } else {
-        panel.style.display = 'none';
-        editorCanvas.classList.remove('with-preview');
-    }
-    
-    // Update toggle button appearance
-    const toggleBtn = document.getElementById('togglePreviewBtn');
-    if (toggleBtn) {
-        if (show) {
+        
+        // Create flex layout container if it doesn't exist
+        const editorWrapper = document.querySelector('.editor-layout');
+        if (!editorWrapper) {
+            // If .editor-layout doesn't exist, we need to wrap the canvas and preview panel
+            const newWrapper = document.createElement('div');
+            newWrapper.className = 'editor-layout';
+            newWrapper.style.display = 'flex';
+            
+            // Get the parent of the editor canvas
+            const canvasParent = editorCanvas.parentNode;
+            
+            // Insert the wrapper before the canvas in the DOM
+            canvasParent.insertBefore(newWrapper, editorCanvas);
+            
+            // Move the canvas and preview panel into the wrapper
+            newWrapper.appendChild(editorCanvas);
+            newWrapper.appendChild(panel);
+        }
+        
+        // Update toggle button appearance and text
+        if (toggleBtn) {
             toggleBtn.classList.add('active');
-        } else {
+            toggleBtn.innerHTML = '<i class="fas fa-eye-slash me-1"></i> Hide Preview';
+            toggleBtn.setAttribute('data-tooltip', 'Hide live preview');
+        }
+        
+        // Update the preview content
+        updatePreview();
+        
+        // Show notification to user
+        showNotification('Live preview enabled. Changes will update in real-time.', 'info', 3000);
+    } else {
+        // Hide preview panel with smooth animation
+        panel.classList.remove('fade-in');
+        
+        // Use setTimeout to allow animation to complete before hiding
+        setTimeout(() => {
+            panel.style.display = 'none';
+        }, 200);
+        
+        // Restore editor canvas to full width
+        editorCanvas.classList.remove('with-preview');
+        
+        // Update toggle button appearance and text
+        if (toggleBtn) {
             toggleBtn.classList.remove('active');
+            toggleBtn.innerHTML = '<i class="fas fa-eye me-1"></i> Live Preview';
+            toggleBtn.setAttribute('data-tooltip', 'Show live preview');
         }
     }
 }
@@ -624,8 +665,21 @@ function setupDeviceSwitcher() {
     
     if (!deviceButtons.length || !previewViewport) return;
     
+    // Device dimensions for reference (width x height)
+    const deviceSizes = {
+        desktop: { width: '100%', height: '100%', name: 'Desktop' },
+        tablet: { width: '768px', height: '1024px', name: 'Tablet' },
+        mobile: { width: '375px', height: '667px', name: 'Mobile' }
+    };
+    
     deviceButtons.forEach(btn => {
         btn.addEventListener('click', function() {
+            // Get the device type
+            const deviceType = this.dataset.device;
+            
+            // Skip if already active
+            if (this.classList.contains('active')) return;
+            
             // Remove active class from all buttons
             deviceButtons.forEach(b => b.classList.remove('active'));
             
@@ -633,9 +687,66 @@ function setupDeviceSwitcher() {
             this.classList.add('active');
             
             // Update viewport class based on device
-            previewViewport.className = 'preview-viewport ' + this.dataset.device;
+            previewViewport.className = 'preview-viewport ' + deviceType;
+            
+            // Show notification about device change
+            const deviceInfo = deviceSizes[deviceType];
+            if (deviceInfo) {
+                showNotification(`Switched to ${deviceInfo.name} preview`, 'info', 2000);
+            }
+            
+            // Add smooth transition
+            previewViewport.style.transition = 'all 0.3s ease';
+            
+            // Create a quick animation effect to show the change
+            previewViewport.classList.add('device-changing');
+            setTimeout(() => {
+                previewViewport.classList.remove('device-changing');
+            }, 300);
+            
+            // Update preview after device change
+            setTimeout(() => {
+                // Force preview refresh to adjust to new dimensions
+                updatePreview();
+            }, 400);
         });
+        
+        // Add tooltips to device buttons
+        const deviceType = btn.dataset.device;
+        if (deviceSizes[deviceType]) {
+            const info = deviceSizes[deviceType];
+            btn.setAttribute('title', `${info.name} view (${info.width !== '100%' ? info.width : 'Full width'})`);
+        }
     });
+    
+    // Add a small badge to show current device mode
+    const viewport = document.querySelector('.preview-viewport');
+    if (viewport) {
+        const deviceBadge = document.createElement('div');
+        deviceBadge.className = 'device-badge';
+        deviceBadge.style.position = 'absolute';
+        deviceBadge.style.top = '5px';
+        deviceBadge.style.right = '10px';
+        deviceBadge.style.fontSize = '12px';
+        deviceBadge.style.color = '#666';
+        deviceBadge.style.background = 'rgba(255,255,255,0.7)';
+        deviceBadge.style.padding = '2px 8px';
+        deviceBadge.style.borderRadius = '4px';
+        deviceBadge.style.zIndex = '10';
+        deviceBadge.textContent = 'Desktop';
+        
+        viewport.appendChild(deviceBadge);
+        
+        // Update badge when device changes
+        deviceButtons.forEach(btn => {
+            btn.addEventListener('click', function() {
+                const deviceType = this.dataset.device;
+                if (deviceSizes[deviceType]) {
+                    deviceBadge.textContent = deviceSizes[deviceType].name;
+                }
+            });
+        });
+    }
 }
 
 /**
