@@ -465,10 +465,18 @@
           <i class="fas fa-edit me-1"></i> Layout Editor
         </div>
         <div class="canvas-actions">
-          <button class="btn btn-shopify-secondary me-2" id="previewPageBtn">
+          <div class="btn-group me-2">
+            <button class="btn btn-shopify-secondary" id="undoActionBtn" title="Undo last action" data-tooltip="Undo last action">
+              <i class="fas fa-undo"></i>
+            </button>
+            <button class="btn btn-shopify-secondary" id="redoActionBtn" title="Redo last action" data-tooltip="Redo last action">
+              <i class="fas fa-redo"></i>
+            </button>
+          </div>
+          <button class="btn btn-shopify-secondary me-2" id="previewPageBtn" data-tooltip="Preview page in new window">
             <i class="fas fa-eye me-1"></i> Preview
           </button>
-          <button class="btn btn-shopify-primary" id="savePageBtn">
+          <button class="btn btn-shopify-primary" id="savePageBtn" data-tooltip="Save all changes">
             <i class="fas fa-save me-1"></i> Save Page
           </button>
         </div>
