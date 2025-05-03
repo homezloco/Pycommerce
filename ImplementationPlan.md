@@ -128,6 +128,7 @@ With its multi-tenant design, PyCommerce enables businesses to host multiple sto
 - ✅ **Estimate Management**: Created estimate creation and management system with the ability to track materials and labor costs separately
 - ✅ **Estimate-to-Order Conversion**: Implemented workflow for converting estimates to orders with full preservation of cost data for profit tracking
 - ✅ **PDF Export for Estimates**: Implemented WeasyPrint integration for professional PDF generation of estimates with complete materials, labor, and cost data
+- ✅ **PDF Export for Orders**: Extended PDF export functionality to orders with detailed order information, item breakdown, and shipping details
 - ✅ **Profit Visualization**: Added color-coded profit metrics display in order and estimate detail views
 - ✅ **Stripe Checkout API**: Redesigned Stripe checkout flow to use JSON API approach with client-side fetch requests instead of form submission, resolving content decoding issues and providing a more robust checkout experience
 - ✅ **Page Builder Enhancement**: Created four complete advanced templates (Blog, FAQ, Services, Portfolio) and set up four functional test stores (Demo Store 1, Tech Gadgets, Outdoor Adventure, Fashion Boutique) with fully working page builder functionality and advanced pages
@@ -212,6 +213,7 @@ With its multi-tenant design, PyCommerce enables businesses to host multiple sto
    - ✅ Cost and profit tracking for materials and labor
    - ✅ Estimate management and conversion to orders
    - ✅ PDF export for estimates with detailed materials and labor breakdown
+   - ✅ PDF export for orders with product details, shipping information, and order summary
    - ✅ Color-coded profit visualization
 
 ### Phase 4: Tenant Management and Scaling (Partially Completed)
@@ -329,7 +331,8 @@ With its multi-tenant design, PyCommerce enables businesses to host multiple sto
   - Media optimization and processing
   - Secure access controls
   - WeasyPrint for PDF generation and export
-  - Professional document templates for estimates and invoices
+  - Professional document templates for estimates, orders, and invoices
+  - Responsive PDF layouts with proper styling and branding
 
 ### Frontend Technologies
 - **Templates**: 
