@@ -149,6 +149,15 @@ function initPageBuilder() {
     // Add hints and tooltips
     enhanceUIWithHints();
     
+    // Initialize AI block generator
+    initAIBlockGenerator();
+    
+    // Initialize collaborative editing indicators
+    initCollaborativeEditing();
+    
+    // Initialize block templates system
+    initBlockTemplates();
+    
     // Register change events for real-time updates
     registerChangeEvents();
     
@@ -1020,11 +1029,15 @@ function setupDeviceSwitcher() {
 /**
  * Update the preview content
  */
+/**
+ * Update the live preview with smooth transitions
+ * Enhanced with loading animation and error handling
+ */
 function updatePreview() {
     const previewFrame = document.getElementById('previewFrame');
     if (!previewFrame) return;
     
-    // Show loading indicator with PyCommerce branding
+    // Show loading indicator with PyCommerce branding and improved animation
     previewFrame.srcdoc = `
         <html>
         <head>
@@ -1038,18 +1051,40 @@ function updatePreview() {
                     margin: 0;
                     background-color: #f8f9fa;
                     color: #212b36;
+                    transition: opacity 0.3s ease;
                 }
                 .loading {
                     display: flex;
                     flex-direction: column;
                     align-items: center;
                     text-align: center;
+                    animation: fadeIn 0.5s ease;
+                }
+                @keyframes fadeIn {
+                    from { opacity: 0; transform: translateY(10px); }
+                    to { opacity: 1; transform: translateY(0); }
                 }
                 .logo {
                     margin-bottom: 20px;
                     color: #5c6ac4;
                     font-size: 24px;
                     font-weight: bold;
+                    position: relative;
+                }
+                .logo::after {
+                    content: '';
+                    position: absolute;
+                    bottom: -5px;
+                    left: 0;
+                    width: 100%;
+                    height: 2px;
+                    background: linear-gradient(90deg, #5c6ac4, #8e9fef);
+                    transform: scaleX(0);
+                    transform-origin: left;
+                    animation: lineGrow 1.5s ease-out forwards;
+                }
+                @keyframes lineGrow {
+                    to { transform: scaleX(1); }
                 }
                 .spinner {
                     border: 4px solid rgba(92, 106, 196, 0.1);
@@ -1555,4 +1590,1057 @@ function showNotification(message, type = 'info', duration = 5000) {
             notification.remove();
         }, 300);
     }, duration);
+}
+
+/**
+ * Initialize AI block generator functionality
+ */
+function initAIBlockGenerator() {
+    // Add AI generate button to each section
+    document.querySelectorAll('.section-controls').forEach(controls => {
+        const sectionId = controls.closest('.page-section').getAttribute('data-section-id');
+        
+        // Only add if it doesn't already exist
+        if (!controls.querySelector('.ai-generate-btn')) {
+            const aiButton = document.createElement('button');
+            aiButton.className = 'btn btn-sm btn-outline-primary me-2 ai-generate-btn';
+            aiButton.setAttribute('type', 'button');
+            aiButton.setAttribute('data-section-id', sectionId);
+            aiButton.innerHTML = '<i class="fas fa-magic me-1"></i> AI Generate';
+            aiButton.title = 'Generate content with AI';
+            
+            // Insert before other buttons
+            const firstButton = controls.querySelector('button');
+            if (firstButton) {
+                controls.insertBefore(aiButton, firstButton);
+            } else {
+                controls.appendChild(aiButton);
+            }
+            
+            // Add click event listener
+            aiButton.addEventListener('click', function() {
+                showAIGeneratorDialog(sectionId);
+            });
+        }
+    });
+}
+
+/**
+ * Show AI content generator dialog
+ */
+function showAIGeneratorDialog(sectionId) {
+    // Make sure any existing dialog is removed
+    const existingDialog = document.getElementById('aiGeneratorDialog');
+    if (existingDialog) {
+        existingDialog.remove();
+    }
+    
+    // Create dialog
+    const dialog = document.createElement('div');
+    dialog.id = 'aiGeneratorDialog';
+    dialog.className = 'modal fade';
+    dialog.setAttribute('tabindex', '-1');
+    dialog.setAttribute('aria-labelledby', 'aiGeneratorDialogLabel');
+    dialog.setAttribute('aria-hidden', 'true');
+    
+    dialog.innerHTML = `
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="aiGeneratorDialogLabel">
+                        <i class="fas fa-magic me-2"></i> AI Content Generator
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="aiPrompt" class="form-label">Describe what content you'd like to generate:</label>
+                        <textarea class="form-control" id="aiPrompt" rows="3" 
+                            placeholder="Example: 'Write a product description for a premium coffee maker'" autofocus></textarea>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Content type:</label>
+                        <div class="btn-group w-100" role="group">
+                            <input type="radio" class="btn-check" name="contentType" id="contentTypeText" value="text" checked>
+                            <label class="btn btn-outline-secondary" for="contentTypeText">Text</label>
+                            
+                            <input type="radio" class="btn-check" name="contentType" id="contentTypeHeading" value="heading">
+                            <label class="btn btn-outline-secondary" for="contentTypeHeading">Heading</label>
+                            
+                            <input type="radio" class="btn-check" name="contentType" id="contentTypeImage" value="image">
+                            <label class="btn btn-outline-secondary" for="contentTypeImage">Image</label>
+                            
+                            <input type="radio" class="btn-check" name="contentType" id="contentTypeButton" value="button">
+                            <label class="btn btn-outline-secondary" for="contentTypeButton">Button</label>
+                        </div>
+                    </div>
+                    
+                    <div id="aiGeneratorOptions" class="mb-3">
+                        <!-- Options will be dynamically filled based on content type -->
+                    </div>
+                    
+                    <div id="aiGeneratorResult" class="d-none">
+                        <div class="alert alert-success">
+                            <h6 class="mb-3"><i class="fas fa-check-circle me-2"></i> Generated Content:</h6>
+                            <div id="generatedPreview" class="border p-3 rounded bg-light"></div>
+                        </div>
+                    </div>
+                    
+                    <div id="aiGeneratorLoading" class="text-center d-none">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="mt-2">Generating content with AI...</p>
+                    </div>
+                    
+                    <div id="aiGeneratorError" class="alert alert-danger d-none">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <span id="aiGeneratorErrorMessage">An error occurred</span>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" id="generateBtn" class="btn btn-primary">
+                        <i class="fas fa-magic me-1"></i> Generate
+                    </button>
+                    <button type="button" id="insertContentBtn" class="btn btn-success d-none">
+                        <i class="fas fa-plus me-1"></i> Insert Content
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Add to document
+    document.body.appendChild(dialog);
+    
+    // Initialize the Bootstrap modal
+    const modalElement = document.getElementById('aiGeneratorDialog');
+    const modal = new bootstrap.Modal(modalElement);
+    modal.show();
+    
+    // Handle content type change
+    const contentTypeRadios = document.getElementsByName('contentType');
+    contentTypeRadios.forEach(radio => {
+        radio.addEventListener('change', updateAIGeneratorOptions);
+    });
+    
+    // Initial options setup
+    updateAIGeneratorOptions();
+    
+    // Generate button click handler
+    const generateBtn = document.getElementById('generateBtn');
+    generateBtn.addEventListener('click', function() {
+        generateAIContent(sectionId);
+    });
+    
+    // Insert content button click handler
+    const insertContentBtn = document.getElementById('insertContentBtn');
+    insertContentBtn.addEventListener('click', function() {
+        insertAIGeneratedContent(sectionId);
+        modal.hide();
+    });
+}
+
+/**
+ * Update AI generator options based on selected content type
+ */
+function updateAIGeneratorOptions() {
+    const contentType = document.querySelector('input[name="contentType"]:checked').value;
+    const optionsContainer = document.getElementById('aiGeneratorOptions');
+    
+    // Clear current options
+    optionsContainer.innerHTML = '';
+    
+    // Add relevant options based on content type
+    switch (contentType) {
+        case 'text':
+            optionsContainer.innerHTML = `
+                <div class="mb-3">
+                    <label class="form-label">Text style:</label>
+                    <select class="form-select" id="textStyle">
+                        <option value="paragraph">Paragraph</option>
+                        <option value="features">Feature list</option>
+                        <option value="steps">Step-by-step guide</option>
+                        <option value="quote">Testimonial quote</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Tone:</label>
+                    <select class="form-select" id="textTone">
+                        <option value="professional">Professional</option>
+                        <option value="friendly">Friendly</option>
+                        <option value="enthusiastic">Enthusiastic</option>
+                        <option value="informative">Informative</option>
+                    </select>
+                </div>
+            `;
+            break;
+            
+        case 'heading':
+            optionsContainer.innerHTML = `
+                <div class="mb-3">
+                    <label class="form-label">Heading type:</label>
+                    <select class="form-select" id="headingType">
+                        <option value="h1">Heading 1 (Main title)</option>
+                        <option value="h2">Heading 2 (Section title)</option>
+                        <option value="h3">Heading 3 (Subsection title)</option>
+                    </select>
+                </div>
+            `;
+            break;
+            
+        case 'image':
+            optionsContainer.innerHTML = `
+                <div class="mb-3">
+                    <label class="form-label">Image style:</label>
+                    <select class="form-select" id="imageStyle">
+                        <option value="realistic">Realistic</option>
+                        <option value="illustration">Illustration</option>
+                        <option value="abstract">Abstract</option>
+                    </select>
+                </div>
+                <div class="form-text text-muted mb-3">
+                    <i class="fas fa-info-circle me-1"></i>
+                    Images will be generated using AI and stored in your media library.
+                </div>
+            `;
+            break;
+            
+        case 'button':
+            optionsContainer.innerHTML = `
+                <div class="mb-3">
+                    <label class="form-label">Button purpose:</label>
+                    <select class="form-select" id="buttonPurpose">
+                        <option value="cta">Call to Action</option>
+                        <option value="learn">Learn More</option>
+                        <option value="shop">Shop Now</option>
+                        <option value="signup">Sign Up</option>
+                    </select>
+                </div>
+            `;
+            break;
+    }
+}
+
+/**
+ * Generate content using AI
+ */
+function generateAIContent(sectionId) {
+    const prompt = document.getElementById('aiPrompt').value.trim();
+    if (!prompt) {
+        showNotification('Please enter a description of the content you want to generate', 'warning');
+        return;
+    }
+    
+    // Show loading state
+    document.getElementById('aiGeneratorLoading').classList.remove('d-none');
+    document.getElementById('aiGeneratorResult').classList.add('d-none');
+    document.getElementById('aiGeneratorError').classList.add('d-none');
+    document.getElementById('generateBtn').disabled = true;
+    
+    // Get content type and options
+    const contentType = document.querySelector('input[name="contentType"]:checked').value;
+    
+    // Prepare request data
+    const requestData = {
+        prompt: prompt,
+        content_type: contentType,
+        section_id: sectionId,
+        options: {}
+    };
+    
+    // Add options based on content type
+    switch (contentType) {
+        case 'text':
+            requestData.options.style = document.getElementById('textStyle').value;
+            requestData.options.tone = document.getElementById('textTone').value;
+            break;
+        case 'heading':
+            requestData.options.type = document.getElementById('headingType').value;
+            break;
+        case 'image':
+            requestData.options.style = document.getElementById('imageStyle').value;
+            break;
+        case 'button':
+            requestData.options.purpose = document.getElementById('buttonPurpose').value;
+            break;
+    }
+    
+    // Call API to generate content
+    fetch('/admin/api/pages/ai/generate', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestData)
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        // Hide loading state
+        document.getElementById('aiGeneratorLoading').classList.add('d-none');
+        document.getElementById('generateBtn').disabled = false;
+        
+        if (data.error) {
+            // Show error
+            document.getElementById('aiGeneratorError').classList.remove('d-none');
+            document.getElementById('aiGeneratorErrorMessage').textContent = data.error;
+        } else {
+            // Show result
+            document.getElementById('aiGeneratorResult').classList.remove('d-none');
+            document.getElementById('insertContentBtn').classList.remove('d-none');
+            
+            // Store generated content for later use
+            window.aiGeneratedContent = data.content;
+            
+            // Display preview of generated content
+            const previewContainer = document.getElementById('generatedPreview');
+            
+            switch (contentType) {
+                case 'text':
+                    previewContainer.innerHTML = data.content.html;
+                    break;
+                case 'heading':
+                    previewContainer.innerHTML = `<${data.content.tag} class="preview-heading">${data.content.text}</${data.content.tag}>`;
+                    break;
+                case 'image':
+                    previewContainer.innerHTML = `
+                        <img src="${data.content.url}" alt="${data.content.alt}" 
+                            class="img-fluid rounded preview-image" style="max-height: 200px;">
+                        <p class="mt-2 text-muted small">${data.content.alt}</p>
+                    `;
+                    break;
+                case 'button':
+                    previewContainer.innerHTML = `
+                        <button type="button" class="btn btn-${data.content.style} preview-button">
+                            ${data.content.text}
+                        </button>
+                        <p class="mt-2 text-muted small">Links to: ${data.content.url}</p>
+                    `;
+                    break;
+            }
+        }
+    })
+    .catch(error => {
+        // Handle error
+        document.getElementById('aiGeneratorLoading').classList.add('d-none');
+        document.getElementById('aiGeneratorError').classList.remove('d-none');
+        document.getElementById('aiGeneratorErrorMessage').textContent = error.message;
+        document.getElementById('generateBtn').disabled = false;
+        console.error('Error generating AI content:', error);
+    });
+}
+
+/**
+ * Insert AI generated content into section
+ */
+function insertAIGeneratedContent(sectionId) {
+    if (!window.aiGeneratedContent) {
+        showNotification('No content has been generated yet', 'warning');
+        return;
+    }
+    
+    const contentType = document.querySelector('input[name="contentType"]:checked').value;
+    
+    // Create a block based on the generated content
+    let blockType;
+    let blockContent;
+    let blockSettings;
+    
+    switch (contentType) {
+        case 'text':
+            blockType = 'text';
+            blockContent = {
+                html: window.aiGeneratedContent.html
+            };
+            blockSettings = {
+                width: 'full',
+                alignment: 'left'
+            };
+            break;
+        case 'heading':
+            blockType = 'text';
+            blockContent = {
+                html: `<${window.aiGeneratedContent.tag}>${window.aiGeneratedContent.text}</${window.aiGeneratedContent.tag}>`
+            };
+            blockSettings = {
+                width: 'full',
+                alignment: 'center'
+            };
+            break;
+        case 'image':
+            blockType = 'image';
+            blockContent = {
+                url: window.aiGeneratedContent.url,
+                alt: window.aiGeneratedContent.alt
+            };
+            blockSettings = {
+                width: 'full',
+                alignment: 'center'
+            };
+            break;
+        case 'button':
+            blockType = 'button';
+            blockContent = {
+                text: window.aiGeneratedContent.text,
+                url: window.aiGeneratedContent.url,
+                style: window.aiGeneratedContent.style
+            };
+            blockSettings = {
+                alignment: 'center',
+                size: 'medium'
+            };
+            break;
+    }
+    
+    // Create block data
+    const blockData = {
+        section_id: sectionId,
+        block_type: blockType,
+        position: getNextBlockPosition(sectionId),
+        content: blockContent,
+        settings: blockSettings,
+        source: 'ai-generated'
+    };
+    
+    // Call API to create block
+    fetch('/admin/api/pages/blocks', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(blockData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.id) {
+            showNotification('AI-generated content added successfully', 'success');
+            // Refresh the page to show the new block
+            location.reload();
+        } else {
+            showNotification('Error adding AI-generated content', 'danger');
+        }
+    })
+    .catch(error => {
+        console.error('Error adding AI-generated content:', error);
+        showNotification('Error: ' + error.message, 'danger');
+    });
+}
+
+/**
+ * Initialize collaborative editing indicators
+ */
+function initCollaborativeEditing() {
+    // Create collaborative editing status indicator
+    const statusContainer = document.createElement('div');
+    statusContainer.id = 'collaborativeStatusContainer';
+    statusContainer.className = 'collaborative-status-container position-fixed bottom-0 start-0 m-3 d-flex align-items-center p-2 rounded shadow-sm bg-white';
+    statusContainer.innerHTML = `
+        <div class="status-indicator online me-2" title="Connected"></div>
+        <div class="status-text">
+            <small class="d-block">Collaborative editing</small>
+            <span class="editor-status">Just you editing</span>
+        </div>
+    `;
+    document.body.appendChild(statusContainer);
+    
+    // Add some CSS for the indicators
+    const style = document.createElement('style');
+    style.textContent = `
+        .collaborative-status-container {
+            z-index: 1040;
+            font-size: 0.85rem;
+        }
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+        .status-indicator.online {
+            background-color: #28a745;
+            box-shadow: 0 0 0 2px rgba(40, 167, 69, 0.2);
+        }
+        .status-indicator.offline {
+            background-color: #dc3545;
+            box-shadow: 0 0 0 2px rgba(220, 53, 69, 0.2);
+        }
+        .status-indicator.busy {
+            background-color: #fd7e14;
+            box-shadow: 0 0 0 2px rgba(253, 126, 20, 0.2);
+        }
+    `;
+    document.head.appendChild(style);
+    
+    // Poll for other active editors every 30 seconds
+    pollForActiveEditors();
+    setInterval(pollForActiveEditors, 30000);
+    
+    // Send heartbeat every 15 seconds to show we're actively editing
+    sendEditorHeartbeat();
+    setInterval(sendEditorHeartbeat, 15000);
+    
+    // Track changes for collaborative editing
+    trackPageChanges();
+}
+
+/**
+ * Poll server for other active editors on this page
+ */
+function pollForActiveEditors() {
+    const pageId = document.getElementById('pageId').value;
+    if (!pageId) return;
+    
+    fetch(`/admin/api/pages/${pageId}/active-editors`)
+        .then(response => response.json())
+        .then(data => {
+            updateEditorStatus(data);
+        })
+        .catch(error => {
+            console.warn('Failed to check for active editors:', error);
+            // Show offline status
+            const statusIndicator = document.querySelector('.status-indicator');
+            if (statusIndicator) {
+                statusIndicator.className = 'status-indicator offline me-2';
+                statusIndicator.title = 'Disconnected';
+            }
+            
+            const editorStatus = document.querySelector('.editor-status');
+            if (editorStatus) {
+                editorStatus.textContent = 'Disconnected';
+            }
+        });
+}
+
+/**
+ * Send heartbeat to show we're actively editing
+ */
+function sendEditorHeartbeat() {
+    const pageId = document.getElementById('pageId').value;
+    if (!pageId) return;
+    
+    fetch(`/admin/api/pages/${pageId}/heartbeat`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            page_id: pageId,
+            timestamp: new Date().toISOString()
+        })
+    })
+    .catch(error => {
+        console.warn('Failed to send editor heartbeat:', error);
+    });
+}
+
+/**
+ * Update editor status display based on server response
+ */
+function updateEditorStatus(data) {
+    const statusIndicator = document.querySelector('.status-indicator');
+    const editorStatus = document.querySelector('.editor-status');
+    
+    if (!statusIndicator || !editorStatus) return;
+    
+    if (data.online) {
+        statusIndicator.className = 'status-indicator online me-2';
+        statusIndicator.title = 'Connected';
+        
+        if (data.active_editors && data.active_editors.length > 1) {
+            // Multiple editors active
+            if (data.active_editors.length === 2) {
+                // Show the other person's name
+                const otherEditor = data.active_editors.find(editor => editor.id !== data.current_user_id);
+                editorStatus.textContent = `You and ${otherEditor ? otherEditor.name : 'another user'} editing`;
+            } else {
+                // Show count of other editors
+                editorStatus.textContent = `You and ${data.active_editors.length - 1} others editing`;
+            }
+            
+            // Change indicator to "busy" state
+            statusIndicator.className = 'status-indicator busy me-2';
+        } else {
+            // Just us editing
+            editorStatus.textContent = 'Just you editing';
+        }
+    } else {
+        // Offline status
+        statusIndicator.className = 'status-indicator offline me-2';
+        statusIndicator.title = 'Disconnected';
+        editorStatus.textContent = 'Disconnected';
+    }
+}
+
+/**
+ * Track page changes for collaborative editing
+ */
+function trackPageChanges() {
+    let lastChange = Date.now();
+    
+    // Update last change time when content is modified
+    document.addEventListener('contentChanged', () => { lastChange = Date.now(); });
+    document.addEventListener('sectionsReordered', () => { lastChange = Date.now(); });
+    document.addEventListener('blocksReordered', () => { lastChange = Date.now(); });
+    document.addEventListener('textEditorChanged', () => { lastChange = Date.now(); });
+    document.addEventListener('sectionSettingsChanged', () => { lastChange = Date.now(); });
+    document.addEventListener('blockSettingsChanged', () => { lastChange = Date.now(); });
+    
+    // On form inputs
+    document.querySelectorAll('input, textarea, select').forEach(el => {
+        el.addEventListener('change', () => { lastChange = Date.now(); });
+        el.addEventListener('input', () => { lastChange = Date.now(); });
+    });
+    
+    // Include last change time with heartbeats
+    const originalSendHeartbeat = window.sendEditorHeartbeat;
+    window.sendEditorHeartbeat = function() {
+        const pageId = document.getElementById('pageId').value;
+        if (!pageId) return;
+        
+        fetch(`/admin/api/pages/${pageId}/heartbeat`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                page_id: pageId,
+                timestamp: new Date().toISOString(),
+                last_change: lastChange
+            })
+        })
+        .catch(error => {
+            console.warn('Failed to send editor heartbeat:', error);
+        });
+    };
+}
+
+/**
+ * Initialize block templates system
+ */
+function initBlockTemplates() {
+    // Add template button to all block type selectors
+    document.querySelectorAll('.block-actions').forEach(container => {
+        const sectionId = container.closest('.page-section').getAttribute('data-section-id');
+        
+        // Find the add block button
+        const addBlockBtn = container.querySelector('.add-block-btn');
+        if (!addBlockBtn) return;
+        
+        // Add template button next to it
+        if (!container.querySelector('.use-template-btn')) {
+            const templateBtn = document.createElement('button');
+            templateBtn.className = 'btn btn-secondary use-template-btn ms-2';
+            templateBtn.setAttribute('type', 'button');
+            templateBtn.setAttribute('data-section-id', sectionId);
+            templateBtn.innerHTML = '<i class="fas fa-copy me-1"></i> Use Template';
+            
+            // Add after add block button
+            addBlockBtn.insertAdjacentElement('afterend', templateBtn);
+            
+            // Add click event
+            templateBtn.addEventListener('click', function() {
+                showBlockTemplatesDialog(sectionId);
+            });
+        }
+    });
+    
+    // Add "Save as Template" button to all content blocks
+    document.querySelectorAll('.block-controls').forEach(controls => {
+        if (!controls.querySelector('.save-template-btn')) {
+            const blockId = controls.closest('.content-block').getAttribute('data-block-id');
+            
+            // Create save template button
+            const saveBtn = document.createElement('button');
+            saveBtn.className = 'btn btn-sm btn-outline-secondary save-template-btn';
+            saveBtn.setAttribute('type', 'button');
+            saveBtn.setAttribute('data-block-id', blockId);
+            saveBtn.setAttribute('title', 'Save as reusable block template');
+            saveBtn.innerHTML = '<i class="fas fa-save"></i>';
+            
+            // Add to controls
+            controls.appendChild(saveBtn);
+            
+            // Add click event
+            saveBtn.addEventListener('click', function(e) {
+                e.stopPropagation(); // Prevent block selection
+                saveBlockAsTemplate(blockId);
+            });
+        }
+    });
+}
+
+/**
+ * Show block templates dialog
+ */
+function showBlockTemplatesDialog(sectionId) {
+    // Create the modal if it doesn't exist
+    if (!document.getElementById('blockTemplatesDialog')) {
+        const dialog = document.createElement('div');
+        dialog.id = 'blockTemplatesDialog';
+        dialog.className = 'modal fade';
+        dialog.setAttribute('tabindex', '-1');
+        dialog.innerHTML = `
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                            <i class="fas fa-copy me-2"></i> Block Templates
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <div class="list-group" id="templatesList">
+                                    <div class="text-center p-5">
+                                        <div class="spinner-border text-primary" role="status">
+                                            <span class="visually-hidden">Loading...</span>
+                                        </div>
+                                        <p class="mt-3">Loading templates...</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-8">
+                                <div id="templatePreview" class="border rounded p-3 bg-light">
+                                    <p class="text-muted text-center p-5">
+                                        <i class="fas fa-mouse-pointer mb-3 d-block" style="font-size: 24px;"></i>
+                                        Select a template to preview it
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="templatesError" class="alert alert-danger d-none">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            <span id="templatesErrorMessage">An error occurred</span>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="button" id="useTemplateBtn" class="btn btn-primary" disabled>
+                            <i class="fas fa-plus me-1"></i> Use Template
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(dialog);
+    }
+    
+    // Initialize modal
+    const modal = new bootstrap.Modal(document.getElementById('blockTemplatesDialog'));
+    modal.show();
+    
+    // Load templates
+    loadBlockTemplates(sectionId);
+    
+    // Use template button handler
+    const useTemplateBtn = document.getElementById('useTemplateBtn');
+    useTemplateBtn.onclick = function() {
+        useSelectedTemplate(sectionId);
+        modal.hide();
+    };
+}
+
+/**
+ * Load block templates from the server
+ */
+function loadBlockTemplates(sectionId) {
+    const templatesList = document.getElementById('templatesList');
+    
+    // Call API to get templates
+    fetch('/admin/api/pages/block-templates')
+        .then(response => response.json())
+        .then(data => {
+            if (data.templates && data.templates.length > 0) {
+                // Clear loading state
+                templatesList.innerHTML = '';
+                
+                // Add templates to list
+                data.templates.forEach((template, index) => {
+                    const templateItem = document.createElement('a');
+                    templateItem.className = 'list-group-item list-group-item-action';
+                    templateItem.setAttribute('href', '#');
+                    templateItem.setAttribute('data-template-id', template.id);
+                    
+                    let icon = 'puzzle-piece';
+                    if (template.block_type === 'text') icon = 'align-left';
+                    if (template.block_type === 'image') icon = 'image';
+                    if (template.block_type === 'button') icon = 'link';
+                    
+                    templateItem.innerHTML = `
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">
+                                <i class="fas fa-${icon} me-2"></i>
+                                ${template.name}
+                            </h6>
+                            <small class="text-muted">${template.block_type}</small>
+                        </div>
+                        <small class="text-truncate d-block">${template.description || 'No description'}</small>
+                    `;
+                    
+                    // Handle click
+                    templateItem.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        
+                        // Update active selection
+                        document.querySelectorAll('.list-group-item').forEach(item => {
+                            item.classList.remove('active');
+                        });
+                        templateItem.classList.add('active');
+                        
+                        // Update preview
+                        previewTemplate(template);
+                        
+                        // Enable use button
+                        document.getElementById('useTemplateBtn').disabled = false;
+                        
+                        // Store selected template
+                        window.selectedTemplate = template;
+                    });
+                    
+                    templatesList.appendChild(templateItem);
+                    
+                    // Select first template by default
+                    if (index === 0) {
+                        templateItem.click();
+                    }
+                });
+            } else {
+                // No templates
+                templatesList.innerHTML = `
+                    <div class="text-center p-4">
+                        <i class="fas fa-info-circle mb-3 d-block" style="font-size: 24px;"></i>
+                        <p>No templates found.</p>
+                        <p class="text-muted small">Save a block as a template to reuse it across your site.</p>
+                    </div>
+                `;
+                
+                // Disable use button
+                document.getElementById('useTemplateBtn').disabled = true;
+            }
+        })
+        .catch(error => {
+            // Show error
+            templatesList.innerHTML = `
+                <div class="text-center p-4">
+                    <i class="fas fa-exclamation-triangle mb-3 d-block" style="font-size: 24px;"></i>
+                    <p>Failed to load templates.</p>
+                    <button class="btn btn-sm btn-outline-primary" onclick="loadBlockTemplates('${sectionId}')">
+                        <i class="fas fa-sync me-1"></i> Retry
+                    </button>
+                </div>
+            `;
+            
+            // Log error
+            console.error('Error loading block templates:', error);
+            
+            // Disable use button
+            document.getElementById('useTemplateBtn').disabled = true;
+        });
+}
+
+/**
+ * Preview template in the dialog
+ */
+function previewTemplate(template) {
+    const previewContainer = document.getElementById('templatePreview');
+    
+    // Simple preview based on block type
+    switch (template.block_type) {
+        case 'text':
+            previewContainer.innerHTML = template.content.html || '<p>No content</p>';
+            break;
+        case 'image':
+            previewContainer.innerHTML = `
+                <img src="${template.content.url || ''}" alt="${template.content.alt || 'Template image'}" 
+                    class="img-fluid rounded">
+            `;
+            break;
+        case 'button':
+            previewContainer.innerHTML = `
+                <div class="text-center">
+                    <button type="button" class="btn btn-${template.content.style || 'primary'}">
+                        ${template.content.text || 'Button'}
+                    </button>
+                </div>
+            `;
+            break;
+        default:
+            previewContainer.innerHTML = `
+                <div class="text-center p-4">
+                    <i class="fas fa-puzzle-piece mb-3 d-block" style="font-size: 24px;"></i>
+                    <p>Preview not available for this template type.</p>
+                </div>
+            `;
+    }
+}
+
+/**
+ * Use the selected template
+ */
+function useSelectedTemplate(sectionId) {
+    if (!window.selectedTemplate) {
+        showNotification('No template selected', 'warning');
+        return;
+    }
+    
+    // Create block from template
+    const blockData = {
+        section_id: sectionId,
+        block_type: window.selectedTemplate.block_type,
+        position: getNextBlockPosition(sectionId),
+        content: window.selectedTemplate.content,
+        settings: window.selectedTemplate.settings,
+        template_id: window.selectedTemplate.id
+    };
+    
+    // Call API to create block
+    fetch('/admin/api/pages/blocks', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(blockData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.id) {
+            showNotification('Block template added successfully', 'success');
+            // Refresh the page to show the new block
+            location.reload();
+        } else {
+            showNotification('Error adding block template', 'danger');
+        }
+    })
+    .catch(error => {
+        console.error('Error adding block template:', error);
+        showNotification('Error: ' + error.message, 'danger');
+    });
+}
+
+/**
+ * Save block as a template
+ */
+function saveBlockAsTemplate(blockId) {
+    // Create the modal if it doesn't exist
+    if (!document.getElementById('saveTemplateDialog')) {
+        const dialog = document.createElement('div');
+        dialog.id = 'saveTemplateDialog';
+        dialog.className = 'modal fade';
+        dialog.setAttribute('tabindex', '-1');
+        dialog.innerHTML = `
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                            <i class="fas fa-save me-2"></i> Save as Template
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="templateName" class="form-label">Template Name</label>
+                            <input type="text" class="form-control" id="templateName" required
+                                placeholder="e.g., Feature Card, Product Highlight, etc.">
+                        </div>
+                        <div class="mb-3">
+                            <label for="templateDescription" class="form-label">Description (optional)</label>
+                            <textarea class="form-control" id="templateDescription" rows="2"
+                                placeholder="Describe this template"></textarea>
+                        </div>
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" id="templateGlobal" checked>
+                            <label class="form-check-label" for="templateGlobal">
+                                Make available to all pages
+                            </label>
+                        </div>
+                        <div id="saveTemplateError" class="alert alert-danger d-none">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            <span id="saveTemplateErrorMessage">An error occurred</span>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="button" id="saveTemplateBtn" class="btn btn-primary">
+                            <i class="fas fa-save me-1"></i> Save Template
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(dialog);
+    }
+    
+    // Store block ID for later use
+    window.templateBlockId = blockId;
+    
+    // Initialize modal
+    const modal = new bootstrap.Modal(document.getElementById('saveTemplateDialog'));
+    modal.show();
+    
+    // Save button handler
+    const saveTemplateBtn = document.getElementById('saveTemplateBtn');
+    saveTemplateBtn.onclick = function() {
+        // Get template details
+        const name = document.getElementById('templateName').value.trim();
+        if (!name) {
+            showNotification('Please enter a template name', 'warning');
+            return;
+        }
+        
+        const description = document.getElementById('templateDescription').value.trim();
+        const isGlobal = document.getElementById('templateGlobal').checked;
+        
+        // Show loading state
+        saveTemplateBtn.disabled = true;
+        saveTemplateBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Saving...';
+        
+        // Call API to save template
+        fetch('/admin/api/pages/block-templates', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                block_id: blockId,
+                name: name,
+                description: description,
+                is_global: isGlobal
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            // Hide loading state
+            saveTemplateBtn.disabled = false;
+            saveTemplateBtn.innerHTML = '<i class="fas fa-save me-1"></i> Save Template';
+            
+            if (data.success) {
+                // Show success and close modal
+                showNotification('Block saved as a template successfully', 'success');
+                modal.hide();
+            } else {
+                // Show error
+                document.getElementById('saveTemplateError').classList.remove('d-none');
+                document.getElementById('saveTemplateErrorMessage').textContent = data.error || 'Failed to save template';
+            }
+        })
+        .catch(error => {
+            // Show error
+            saveTemplateBtn.disabled = false;
+            saveTemplateBtn.innerHTML = '<i class="fas fa-save me-1"></i> Save Template';
+            
+            document.getElementById('saveTemplateError').classList.remove('d-none');
+            document.getElementById('saveTemplateErrorMessage').textContent = error.message;
+            
+            console.error('Error saving block template:', error);
+        });
+    };
 }

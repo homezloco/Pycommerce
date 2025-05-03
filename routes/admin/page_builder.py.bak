@@ -241,19 +241,12 @@ def setup_routes(jinja_templates: Jinja2Templates = None):
     # Import AI content routes
     from routes.admin.ai_content import setup_routes as setup_ai_content_routes
 
-    # Import page builder API routes
-    from routes.admin.page_builder_api import setup_routes as setup_page_builder_api_routes
-
     # Setup AI content routes
     ai_content_router = setup_ai_content_routes(templates)
 
-    # Setup page builder API routes
-    page_builder_api_router = setup_page_builder_api_routes()
-
-    # Include both routers in the app
+    # Include AI content router
     from web_app import app
     app.include_router(ai_content_router)
-    app.include_router(page_builder_api_router)
 
     # Ensure the router is properly configured and returned
     return router
