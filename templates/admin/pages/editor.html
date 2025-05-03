@@ -3,10 +3,18 @@
 {% block title %}Page Editor - PyCommerce Admin{% endblock %}
 
 {% block head_extra %}
+<!-- Mobile viewport optimization -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+
 <!-- Add required scripts and styles -->
 <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
 <script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.14.0/Sortable.min.js"></script>
+
+<!-- Add Font Awesome for mobile-friendly icons -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 
 <!-- Add our custom page editor styles -->
 <link href="/static/css/page-editor.css" rel="stylesheet">
@@ -51,6 +59,69 @@
       console.log("Quill.js loaded dynamically");
     };
     document.head.appendChild(script);
+  }
+  
+  // Detect mobile devices
+  function isMobileDevice() {
+    return (window.innerWidth <= 992 || 
+            navigator.userAgent.match(/Android/i) || 
+            navigator.userAgent.match(/iPhone|iPad|iPod/i));
+  }
+  
+  // Add mobile class to body if on mobile device
+  document.addEventListener('DOMContentLoaded', function() {
+    if (isMobileDevice()) {
+      document.body.classList.add('mobile-device');
+      console.log('Mobile device detected, adding special handling');
+      
+      // Add special mobile touch handlers after a slight delay
+      setTimeout(function() {
+        initMobileTouchHandlers();
+      }, 500);
+    }
+  });
+  
+  // Special handling for mobile devices
+  function initMobileTouchHandlers() {
+    // Add touch-friendly class to elements that need larger tap targets
+    const touchTargets = document.querySelectorAll('.block-controls button, .section-controls button');
+    touchTargets.forEach(btn => {
+      btn.classList.add('touch-friendly');
+    });
+    
+    // Improve scrolling behavior on mobile
+    document.querySelectorAll('input, textarea, select').forEach(input => {
+      input.addEventListener('focus', function() {
+        // Prevent auto zoom on inputs
+        document.querySelector('meta[name=viewport]').setAttribute('content', 
+          'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no');
+      });
+      
+      input.addEventListener('blur', function() {
+        // Allow zooming after input blur
+        document.querySelector('meta[name=viewport]').setAttribute('content', 
+          'width=device-width, initial-scale=1.0, maximum-scale=5.0');
+      });
+    });
+    
+    // If on very small screens, simplify the UI
+    if (window.innerWidth < 576) {
+      simplifyUIForSmallScreens();
+    }
+  }
+  
+  // Simplify the UI for very small screens
+  function simplifyUIForSmallScreens() {
+    // Replace long button text with icons
+    document.querySelectorAll('.btn').forEach(btn => {
+      if (btn.innerHTML.includes('Preview')) {
+        btn.innerHTML = '<i class="fas fa-eye"></i>';
+        btn.classList.add('btn-icon-only');
+      } else if (btn.innerHTML.includes('Save')) {
+        btn.innerHTML = '<i class="fas fa-save"></i>';
+        btn.classList.add('btn-icon-only');
+      }
+    });
   }
 </script>
 <style>
@@ -474,8 +545,8 @@
             </button>
           </div>
           <div class="btn-group me-2">
-            <button class="btn btn-shopify-secondary" id="togglePreviewBtn" data-tooltip="Toggle live preview">
-              <i class="fas fa-eye me-1"></i> Live Preview
+            <button class="btn btn-shopify-secondary mobile-adaptive-btn" id="togglePreviewBtn" data-tooltip="Toggle live preview">
+              <i class="fas fa-eye me-1"></i> <span class="btn-text">Live Preview</span>
             </button>
           </div>
           <button class="btn btn-shopify-secondary me-2" id="previewPageBtn" data-tooltip="Preview page in new window">
@@ -491,29 +562,53 @@
         <div id="livePreviewPanel" class="live-preview-panel" style="display: none;">
           <div class="preview-header">
             <div class="preview-title">
-              <i class="fas fa-eye me-1"></i> Live Preview
+              <i class="fas fa-eye me-1"></i> <span class="preview-title-text">Live Preview</span>
             </div>
             <div class="preview-device-options">
               <div class="btn-group btn-group-sm">
-                <button class="btn btn-outline-secondary active" data-device="desktop" title="Desktop view">
+                <button class="btn btn-outline-secondary active touch-friendly" data-device="desktop" title="Desktop view" aria-label="Desktop view">
                   <i class="fas fa-desktop"></i>
+                  <span class="device-label">Desktop</span>
                 </button>
-                <button class="btn btn-outline-secondary" data-device="tablet" title="Tablet view">
+                <button class="btn btn-outline-secondary touch-friendly" data-device="tablet" title="Tablet view" aria-label="Tablet view">
                   <i class="fas fa-tablet-alt"></i>
+                  <span class="device-label">Tablet</span>
                 </button>
-                <button class="btn btn-outline-secondary" data-device="mobile" title="Mobile view">
+                <button class="btn btn-outline-secondary touch-friendly" data-device="mobile" title="Mobile view" aria-label="Mobile view">
                   <i class="fas fa-mobile-alt"></i>
+                  <span class="device-label">Mobile</span>
                 </button>
               </div>
             </div>
-            <button class="btn btn-sm btn-outline-secondary" id="closePreviewBtn">
+            <button class="btn btn-sm btn-outline-secondary touch-friendly" id="closePreviewBtn" aria-label="Close preview">
               <i class="fas fa-times"></i>
             </button>
           </div>
           <div class="preview-viewport desktop">
             <div class="preview-content">
-              <iframe id="previewFrame" frameborder="0"></iframe>
+              <iframe id="previewFrame" frameborder="0" title="Page preview"></iframe>
             </div>
+            <div class="preview-loading-indicator">
+              <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+              </div>
+              <p>Loading preview...</p>
+            </div>
+            <div class="preview-error-container" style="display: none;">
+              <div class="alert alert-danger">
+                <i class="fas fa-exclamation-circle me-2"></i>
+                <span class="preview-error-message">Error loading preview</span>
+              </div>
+              <button class="btn btn-sm btn-primary retry-preview-btn">
+                <i class="fas fa-redo me-1"></i> Retry
+              </button>
+            </div>
+          </div>
+          <!-- Mobile-specific fullscreen toggle -->
+          <div class="mobile-preview-controls">
+            <button class="btn btn-sm btn-outline-secondary toggle-fullscreen-btn" aria-label="Toggle fullscreen preview">
+              <i class="fas fa-expand-alt"></i>
+            </button>
           </div>
         </div>
         

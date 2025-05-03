@@ -8,6 +8,26 @@
 document.addEventListener('DOMContentLoaded', function() {
     console.log("Enhanced Page Builder initializing...");
     
+    // Detect mobile devices
+    const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    
+    // Set a global flag for mobile detection
+    window.isMobileDevice = isMobileDevice;
+    
+    // Add mobile class to body if on a mobile device
+    if (isMobileDevice) {
+        document.body.classList.add('mobile-device');
+        console.log("Mobile device detected, adding mobile optimizations");
+    }
+    
+    // Add meta viewport tag if not present
+    if (!document.querySelector('meta[name="viewport"]')) {
+        const metaViewport = document.createElement('meta');
+        metaViewport.name = 'viewport';
+        metaViewport.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no';
+        document.head.appendChild(metaViewport);
+    }
+    
     // Load required libraries
     loadDependencies([
         {
@@ -25,6 +45,12 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Add theme toggle button to the page
     addThemeToggle();
+    
+    // Listen for orientation changes
+    window.addEventListener('orientationchange', handleOrientationChange);
+    
+    // Also listen for resize which handles orientation changes on some devices
+    window.addEventListener('resize', debounce(handleResizeEvent, 250));
 });
 
 /**
@@ -128,6 +154,16 @@ function initPageBuilder() {
     
     // Add improved drag-and-drop effects
     enhanceDragDropExperience();
+    
+    // Setup mobile-specific preview controls
+    setupMobilePreviewControls();
+    
+    // Add window resize and orientation change listeners
+    window.addEventListener('resize', debounce(handleResizeEvent, 250));
+    window.addEventListener('orientationchange', handleOrientationChange);
+    
+    // Initial check for device size and orientation
+    handleResizeEvent();
     
     console.log("Page builder initialization complete!");
     showNotification("Page Builder loaded successfully", "success", 3000);
@@ -596,10 +632,36 @@ function togglePreviewPanel(show) {
         show = !isVisible;
     }
     
+    // Check if device is mobile
+    const isMobile = window.innerWidth < 992;
+    const isSmallMobile = window.innerWidth < 576;
+    
+    // Store the current state for analytics
+    window.previewPanelVisible = show;
+    
+    // Add enhanced mobile behavior
+    if (isMobile) {
+        document.body.classList.toggle('preview-active', show);
+        // On mobile, we might want different behavior - could slide in from bottom instead
+        if (isSmallMobile && show) {
+            // For very small screens, maybe show a fullscreen overlay preview
+            panel.classList.add('mobile-fullscreen-preview');
+            document.body.classList.add('no-scroll'); // Prevent body scrolling
+        }
+    }
+    
     if (show) {
         // Show preview panel with smooth animation
         panel.style.display = 'flex';
         panel.classList.add('fade-in');
+        
+        // For touch devices, ensure the preview is scrollable with momentum scrolling
+        if ('ontouchstart' in window) {
+            const previewContent = panel.querySelector('.preview-content');
+            if (previewContent) {
+                previewContent.style.webkitOverflowScrolling = 'touch';
+            }
+        }
         
         // Adjust editor canvas layout for split view
         editorCanvas.classList.add('with-preview');
@@ -610,7 +672,17 @@ function togglePreviewPanel(show) {
             // If .editor-layout doesn't exist, we need to wrap the canvas and preview panel
             const newWrapper = document.createElement('div');
             newWrapper.className = 'editor-layout';
+            
+            // On mobile, add specific class for vertical layout
+            if (isMobile) {
+                newWrapper.classList.add('mobile-vertical-layout');
+            }
             newWrapper.style.display = 'flex';
+            
+            // On mobile, we'll want column direction
+            if (isMobile) {
+                newWrapper.style.flexDirection = 'column';
+            }
             
             // Get the parent of the editor canvas
             const canvasParent = editorCanvas.parentNode;
@@ -621,17 +693,41 @@ function togglePreviewPanel(show) {
             // Move the canvas and preview panel into the wrapper
             newWrapper.appendChild(editorCanvas);
             newWrapper.appendChild(panel);
+        } else {
+            // Update direction based on screen size
+            editorWrapper.style.flexDirection = isMobile ? 'column' : 'row';
         }
         
         // Update toggle button appearance and text
         if (toggleBtn) {
             toggleBtn.classList.add('active');
-            toggleBtn.innerHTML = '<i class="fas fa-eye-slash me-1"></i> Hide Preview';
-            toggleBtn.setAttribute('data-tooltip', 'Hide live preview');
+            
+            // Different text for mobile vs desktop
+            if (isMobile) {
+                toggleBtn.innerHTML = '<i class="fas fa-eye-slash me-1"></i>';
+                // On really small screens just show icon
+                if (window.innerWidth < 576) {
+                    toggleBtn.setAttribute('data-tooltip', 'Hide preview');
+                } else {
+                    toggleBtn.innerHTML = '<i class="fas fa-eye-slash me-1"></i> Hide';
+                    toggleBtn.setAttribute('data-tooltip', 'Hide preview');
+                }
+            } else {
+                toggleBtn.innerHTML = '<i class="fas fa-eye-slash me-1"></i> Hide Preview';
+                toggleBtn.setAttribute('data-tooltip', 'Hide live preview');
+            }
         }
         
         // Update the preview content
         updatePreview();
+        
+        // Scroll to preview panel on mobile
+        if (isMobile) {
+            setTimeout(() => {
+                // Smooth scroll to preview panel
+                panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 300);
+        }
         
         // Show notification to user
         showNotification('Live preview enabled. Changes will update in real-time.', 'info', 3000);
@@ -650,9 +746,41 @@ function togglePreviewPanel(show) {
         // Update toggle button appearance and text
         if (toggleBtn) {
             toggleBtn.classList.remove('active');
-            toggleBtn.innerHTML = '<i class="fas fa-eye me-1"></i> Live Preview';
-            toggleBtn.setAttribute('data-tooltip', 'Show live preview');
+            
+            // Different text for mobile vs desktop
+            if (isMobile) {
+                if (window.innerWidth < 576) {
+                    toggleBtn.innerHTML = '<i class="fas fa-eye me-1"></i>';
+                    toggleBtn.setAttribute('data-tooltip', 'Show preview');
+                } else {
+                    toggleBtn.innerHTML = '<i class="fas fa-eye me-1"></i> View';
+                    toggleBtn.setAttribute('data-tooltip', 'Show preview');
+                }
+            } else {
+                toggleBtn.innerHTML = '<i class="fas fa-eye me-1"></i> Live Preview';
+                toggleBtn.setAttribute('data-tooltip', 'Show live preview');
+            }
         }
+        
+        // Scroll back to editor on mobile
+        if (isMobile) {
+            setTimeout(() => {
+                // Smooth scroll to editor
+                editorCanvas.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 100);
+        }
+    }
+    
+    // Add event listener for window resize to adjust layout
+    if (!window.previewResizeHandlerAdded) {
+        window.addEventListener('resize', function() {
+            const wrapper = document.querySelector('.editor-layout');
+            if (wrapper) {
+                const isMobileNow = window.innerWidth < 992;
+                wrapper.style.flexDirection = isMobileNow ? 'column' : 'row';
+            }
+        });
+        window.previewResizeHandlerAdded = true;
     }
 }
 
@@ -662,6 +790,7 @@ function togglePreviewPanel(show) {
 function setupDeviceSwitcher() {
     const deviceButtons = document.querySelectorAll('.preview-device-options button[data-device]');
     const previewViewport = document.querySelector('.preview-viewport');
+    const previewPanel = document.getElementById('livePreviewPanel');
     
     if (!deviceButtons.length || !previewViewport) return;
     
@@ -671,6 +800,79 @@ function setupDeviceSwitcher() {
         tablet: { width: '768px', height: '1024px', name: 'Tablet' },
         mobile: { width: '375px', height: '667px', name: 'Mobile' }
     };
+    
+    // Check if we're on a mobile device
+    const isMobile = window.innerWidth < 992;
+    const isSmallMobile = window.innerWidth < 576;
+    
+    // Create a more compact device switcher for mobile if needed
+    if (isMobile && !document.querySelector('.mobile-device-switcher')) {
+        const deviceOptions = document.querySelector('.preview-device-options');
+        
+        if (deviceOptions) {
+            // Make the device switcher more compact for mobile
+            deviceOptions.classList.add('mobile-friendly');
+            
+            // Change button styles for better mobile display
+            deviceButtons.forEach(btn => {
+                // For very small screens, just use icons
+                if (isSmallMobile) {
+                    const deviceType = btn.dataset.device;
+                    let icon = '';
+                    
+                    switch(deviceType) {
+                        case 'desktop':
+                            icon = '<i class="fas fa-desktop"></i>';
+                            break;
+                        case 'tablet':
+                            icon = '<i class="fas fa-tablet-alt"></i>';
+                            break;
+                        case 'mobile':
+                            icon = '<i class="fas fa-mobile-alt"></i>';
+                            break;
+                    }
+                    
+                    btn.innerHTML = icon;
+                    btn.classList.add('btn-sm');
+                }
+            });
+            
+            // Add touch-friendly styling
+            const style = document.createElement('style');
+            style.textContent = `
+                .preview-device-options.mobile-friendly {
+                    display: flex;
+                    justify-content: center;
+                    padding: 8px 0;
+                    background: rgba(255,255,255,0.9);
+                    border-radius: 50px;
+                    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+                    position: sticky;
+                    bottom: 10px;
+                    z-index: 100;
+                    margin-top: 10px;
+                }
+                
+                .preview-device-options.mobile-friendly button {
+                    min-width: ${isSmallMobile ? '40px' : '80px'};
+                    margin: 0 5px;
+                }
+                
+                /* Make active state more visible on mobile */
+                .preview-device-options.mobile-friendly button.active {
+                    transform: scale(1.05);
+                    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+                }
+                
+                @media (prefers-color-scheme: dark) {
+                    .preview-device-options.mobile-friendly {
+                        background: rgba(40,40,40,0.9);
+                    }
+                }
+            `;
+            document.head.appendChild(style);
+        }
+    }
     
     deviceButtons.forEach(btn => {
         btn.addEventListener('click', function() {
@@ -704,7 +906,25 @@ function setupDeviceSwitcher() {
                 previewViewport.classList.remove('device-changing');
             }, 300);
             
-            // Update preview after device change
+            // Set a data attribute for CSS to use
+            if (previewPanel) {
+                previewPanel.setAttribute('data-device-mode', deviceType);
+            }
+            
+            // On mobile, adjust content positioning
+            if (isMobile && deviceType !== 'desktop') {
+                // Center the preview content on mobile views
+                const previewContent = document.querySelector('.preview-content');
+                if (previewContent) {
+                    previewContent.style.margin = '0 auto';
+                }
+                
+                // Make sure the viewport height is sufficient
+                previewViewport.style.minHeight = 
+                    deviceType === 'tablet' ? '1050px' : '700px';
+            }
+            
+            // Update preview after device change with a delay to allow animations to complete
             setTimeout(() => {
                 // Force preview refresh to adjust to new dimensions
                 updatePreview();
@@ -716,37 +936,85 @@ function setupDeviceSwitcher() {
         if (deviceSizes[deviceType]) {
             const info = deviceSizes[deviceType];
             btn.setAttribute('title', `${info.name} view (${info.width !== '100%' ? info.width : 'Full width'})`);
+            
+            // Add aria-label for accessibility
+            btn.setAttribute('aria-label', `${info.name} view`);
         }
     });
     
     // Add a small badge to show current device mode
     const viewport = document.querySelector('.preview-viewport');
     if (viewport) {
-        const deviceBadge = document.createElement('div');
-        deviceBadge.className = 'device-badge';
-        deviceBadge.style.position = 'absolute';
-        deviceBadge.style.top = '5px';
-        deviceBadge.style.right = '10px';
-        deviceBadge.style.fontSize = '12px';
-        deviceBadge.style.color = '#666';
-        deviceBadge.style.background = 'rgba(255,255,255,0.7)';
-        deviceBadge.style.padding = '2px 8px';
-        deviceBadge.style.borderRadius = '4px';
-        deviceBadge.style.zIndex = '10';
-        deviceBadge.textContent = 'Desktop';
+        // Create the badge only if it doesn't exist
+        if (!document.querySelector('.device-badge')) {
+            const deviceBadge = document.createElement('div');
+            deviceBadge.className = 'device-badge';
+            deviceBadge.style.position = 'absolute';
+            deviceBadge.style.top = '5px';
+            deviceBadge.style.right = '10px';
+            deviceBadge.style.fontSize = '12px';
+            deviceBadge.style.color = '#666';
+            deviceBadge.style.background = 'rgba(255,255,255,0.7)';
+            deviceBadge.style.padding = '2px 8px';
+            deviceBadge.style.borderRadius = '4px';
+            deviceBadge.style.zIndex = '10';
+            deviceBadge.textContent = 'Desktop';
+            
+            viewport.appendChild(deviceBadge);
+        }
         
-        viewport.appendChild(deviceBadge);
+        const deviceBadge = document.querySelector('.device-badge');
         
         // Update badge when device changes
         deviceButtons.forEach(btn => {
             btn.addEventListener('click', function() {
                 const deviceType = this.dataset.device;
-                if (deviceSizes[deviceType]) {
+                if (deviceSizes[deviceType] && deviceBadge) {
                     deviceBadge.textContent = deviceSizes[deviceType].name;
+                    
+                    // Add appropriate icon for the device badge
+                    let icon = '';
+                    switch(deviceType) {
+                        case 'desktop':
+                            icon = '🖥️ ';
+                            break;
+                        case 'tablet':
+                            icon = '📱 ';
+                            break;
+                        case 'mobile':
+                            icon = '📱 ';
+                            break;
+                    }
+                    
+                    // Only add icons on larger screens to save space on mobile
+                    if (!isSmallMobile) {
+                        deviceBadge.textContent = icon + deviceSizes[deviceType].name;
+                    }
                 }
             });
         });
     }
+    
+    // Set the default device based on screen size
+    if (isMobile) {
+        // On mobile devices, start with mobile preview
+        const mobileButton = document.querySelector('button[data-device="mobile"]');
+        if (mobileButton && !mobileButton.classList.contains('active')) {
+            mobileButton.click();
+        }
+    }
+    
+    // Listen for orientation changes on mobile
+    window.addEventListener('orientationchange', function() {
+        // Allow time for the orientation change to complete
+        setTimeout(() => {
+            // Readjust preview based on new orientation
+            const activeDevice = document.querySelector('.preview-device-options button.active');
+            if (activeDevice) {
+                activeDevice.click();
+            }
+        }, 300);
+    });
 }
 
 /**
@@ -1077,6 +1345,165 @@ function enhanceDragDropExperience() {
             });
         });
     }
+}
+
+/**
+ * Show a notification message
+ */
+/**
+ * Debounce function to limit the rate at which a function can fire
+ * @param {Function} func The function to debounce
+ * @param {number} wait Wait time in milliseconds
+ * @returns {Function} Debounced function
+ */
+function debounce(func, wait) {
+    let timeout;
+    return function(...args) {
+        const context = this;
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func.apply(context, args), wait);
+    };
+}
+
+/**
+ * Handle device orientation changes
+ */
+function handleOrientationChange() {
+    console.log("Orientation changed");
+    
+    // Get current orientation
+    const isLandscape = window.matchMedia("(orientation: landscape)").matches;
+    const isPortrait = window.matchMedia("(orientation: portrait)").matches;
+    
+    // Update the body class to reflect orientation
+    document.body.classList.toggle('landscape', isLandscape);
+    document.body.classList.toggle('portrait', isPortrait);
+    
+    // Update layout for preview panel
+    adjustLayoutForOrientation(isLandscape);
+    
+    // Show a notification about orientation change
+    if (isLandscape) {
+        showNotification("Switched to landscape view", "info", 2000);
+    } else {
+        showNotification("Switched to portrait view", "info", 2000);
+    }
+}
+
+/**
+ * Handle resize events (including orientation changes on some devices)
+ */
+function handleResizeEvent() {
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+    const isLandscape = width > height;
+    
+    // Update layout for the new dimensions
+    adjustLayoutForOrientation(isLandscape);
+    
+    // Update device class on body
+    document.body.classList.toggle('small-device', width < 576);
+    document.body.classList.toggle('medium-device', width >= 576 && width < 992);
+    document.body.classList.toggle('large-device', width >= 992);
+}
+
+/**
+ * Adjust UI layout based on orientation
+ * @param {boolean} isLandscape Whether device is in landscape orientation
+ */
+function adjustLayoutForOrientation(isLandscape) {
+    const isMobile = window.innerWidth < 992;
+    
+    if (!isMobile) return; // Only adjust for mobile devices
+    
+    const editorLayout = document.querySelector('.editor-layout');
+    const previewPanel = document.getElementById('livePreviewPanel');
+    
+    if (editorLayout) {
+        editorLayout.style.flexDirection = isLandscape ? 'row' : 'column';
+    }
+    
+    if (previewPanel && previewPanel.style.display !== 'none') {
+        // For landscape on mobile, we might want side-by-side
+        if (isLandscape) {
+            previewPanel.classList.add('landscape-view');
+            previewPanel.classList.remove('portrait-view');
+        } else {
+            previewPanel.classList.add('portrait-view');
+            previewPanel.classList.remove('landscape-view');
+        }
+    }
+}
+
+/**
+ * Toggle fullscreen preview mode for mobile devices
+ */
+function toggleFullscreenPreview() {
+    const panel = document.getElementById('livePreviewPanel');
+    const fullscreenBtn = document.querySelector('.toggle-fullscreen-btn');
+    
+    if (!panel || !fullscreenBtn) return;
+    
+    const isFullscreen = panel.classList.contains('fullscreen');
+    
+    if (isFullscreen) {
+        // Exit fullscreen
+        panel.classList.remove('fullscreen');
+        document.documentElement.classList.remove('preview-fullscreen');
+        fullscreenBtn.innerHTML = '<i class="fas fa-expand-alt"></i>';
+        fullscreenBtn.setAttribute('aria-label', 'Enter fullscreen preview');
+        
+        // Restore normal view
+        setTimeout(() => {
+            if (window.storedScrollPosition) {
+                window.scrollTo({
+                    top: window.storedScrollPosition,
+                    behavior: 'instant'
+                });
+                window.storedScrollPosition = null;
+            }
+        }, 50);
+    } else {
+        // Enter fullscreen
+        // Store current scroll position
+        window.storedScrollPosition = window.scrollY;
+        
+        panel.classList.add('fullscreen');
+        document.documentElement.classList.add('preview-fullscreen');
+        fullscreenBtn.innerHTML = '<i class="fas fa-compress-alt"></i>';
+        fullscreenBtn.setAttribute('aria-label', 'Exit fullscreen preview');
+        
+        // Scroll to top when in fullscreen
+        window.scrollTo({
+            top: 0,
+            behavior: 'instant'
+        });
+    }
+    
+    // Update device preview on transition end
+    panel.addEventListener('transitionend', function updateAfterTransition() {
+        updatePreview();
+        panel.removeEventListener('transitionend', updateAfterTransition);
+    });
+}
+
+/**
+ * Set up mobile-specific preview controls
+ */
+function setupMobilePreviewControls() {
+    const fullscreenBtn = document.querySelector('.toggle-fullscreen-btn');
+    if (!fullscreenBtn) return;
+    
+    // Clear any existing event listeners
+    fullscreenBtn.replaceWith(fullscreenBtn.cloneNode(true));
+    
+    // Get fresh reference after replace
+    const newFullscreenBtn = document.querySelector('.toggle-fullscreen-btn');
+    
+    // Add event listener
+    newFullscreenBtn.addEventListener('click', toggleFullscreenPreview);
+    
+    console.log("Mobile preview controls initialized");
 }
 
 /**
