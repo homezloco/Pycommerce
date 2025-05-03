@@ -248,7 +248,14 @@ function initSectionManager() {
 
 function createSection(sectionType) {
     // Get page ID from the page
-    const pageId = document.getElementById('pageId').value;
+    const pageIdElement = document.getElementById('pageId');
+    if (!pageIdElement) {
+        console.error("Page ID element not found");
+        showNotification('Error: Page ID not found', 'danger');
+        return;
+    }
+    
+    const pageId = pageIdElement.value;
     
     // Create section data
     const sectionData = {
@@ -2093,7 +2100,12 @@ function initCollaborativeEditing() {
  * Poll server for other active editors on this page
  */
 function pollForActiveEditors() {
-    const pageId = document.getElementById('pageId').value;
+    const pageIdElement = document.getElementById('pageId');
+    if (!pageIdElement) {
+        console.warn("Page ID element not found for collaborative editing");
+        return;
+    }
+    const pageId = pageIdElement.value;
     if (!pageId) return;
     
     fetch(`/admin/api/pages/${pageId}/active-editors`)
@@ -2121,7 +2133,12 @@ function pollForActiveEditors() {
  * Send heartbeat to show we're actively editing
  */
 function sendEditorHeartbeat() {
-    const pageId = document.getElementById('pageId').value;
+    const pageIdElement = document.getElementById('pageId');
+    if (!pageIdElement) {
+        console.warn("Page ID element not found for editor heartbeat");
+        return;
+    }
+    const pageId = pageIdElement.value;
     if (!pageId) return;
     
     fetch(`/admin/api/pages/${pageId}/heartbeat`, {
@@ -2200,7 +2217,12 @@ function trackPageChanges() {
     // Include last change time with heartbeats
     const originalSendHeartbeat = window.sendEditorHeartbeat;
     window.sendEditorHeartbeat = function() {
-        const pageId = document.getElementById('pageId').value;
+        const pageIdElement = document.getElementById('pageId');
+        if (!pageIdElement) {
+            console.warn("Page ID element not found for trackPageChanges");
+            return;
+        }
+        const pageId = pageIdElement.value;
         if (!pageId) return;
         
         fetch(`/admin/api/pages/${pageId}/heartbeat`, {

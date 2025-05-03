@@ -1171,30 +1171,52 @@ function ensureSortableLoaded(callback) {
   }
   
   function loadCategories() {
-    // Get the current tenant from the URL or directly from the page data
-    const urlParams = new URLSearchParams(window.location.search);
-    let tenant = urlParams.get('tenant');
+    // First try to get the tenant ID from the hidden field
+    let tenant = '';
+    const tenantIdElement = document.getElementById('tenantId');
     
-    // If not in URL, try to get from session storage or use a default tenant
-    if (!tenant) {
-      tenant = sessionStorage.getItem('selected_tenant') || 'tech';
+    if (tenantIdElement && tenantIdElement.value) {
+      tenant = tenantIdElement.value;
+      console.log('Using tenant ID from page data:', tenant);
+    } else {
+      // Fallback to URL params or session storage
+      const urlParams = new URLSearchParams(window.location.search);
+      tenant = urlParams.get('tenant');
+      
+      // If not in URL, try to get from session storage or use a default tenant
+      if (!tenant) {
+        tenant = sessionStorage.getItem('selected_tenant') || 'tech';
+        console.log('Using fallback tenant from session or default:', tenant);
+      }
     }
     
     console.log('Loading categories for tenant:', tenant);
     
-    // Fetch categories from the API - try both endpoints
+    // Fetch categories from the API - try multiple endpoints with better error handling
     fetch(`/api/categories?tenant=${tenant}`)
       .then(response => {
         if (!response.ok) {
-          // If first endpoint fails, try the admin API endpoint
-          console.log('Trying admin categories endpoint...');
+          console.log('First endpoint failed, trying admin categories endpoint...');
           return fetch(`/admin/api/categories?tenant=${tenant}`);
+        }
+        return response;
+      })
+      .catch(error => {
+        // Network error on first attempt, try the admin endpoint
+        console.warn('Network error on first attempt:', error);
+        return fetch(`/admin/api/categories?tenant=${tenant}`);
+      })
+      .then(response => {
+        if (!response.ok) {
+          // Try one more endpoint as a last resort
+          console.log('Second endpoint failed, trying admin tenant-categories endpoint...');
+          return fetch(`/admin/api/tenants/${tenant}/categories`);
         }
         return response;
       })
       .then(response => {
         if (!response.ok) {
-          throw new Error('Error fetching categories');
+          throw new Error(`Error fetching categories: ${response.status} ${response.statusText}`);
         }
         return response.json();
       })
@@ -1218,29 +1240,97 @@ function ensureSortableLoaded(callback) {
           categorySelect.appendChild(newDefaultOption);
         }
         
+        // Log what we received for debugging
+        console.log('Data received from API:', data);
+        
+        // Handle different data structures from different API endpoints
+        let categories = [];
+        
+        // Check for categories directly in the data
+        if (Array.isArray(data)) {
+          console.log('Data is an array, using directly');
+          categories = data;
+        } 
+        // Check for categories in a nested property
+        else if (data.categories && Array.isArray(data.categories)) {
+          console.log('Using categories from data.categories');
+          categories = data.categories;
+        } 
+        // Check for results property (from another endpoint)
+        else if (data.results && Array.isArray(data.results)) {
+          console.log('Using categories from data.results');
+          categories = data.results;
+        }
+        // Check for items property (from another endpoint)
+        else if (data.items && Array.isArray(data.items)) {
+          console.log('Using categories from data.items');
+          categories = data.items;
+        }
+        // Try to find any array property as last resort
+        else {
+          for (const key in data) {
+            if (Array.isArray(data[key])) {
+              console.log(`Found array in data.${key}, using it`);
+              categories = data[key];
+              break;
+            }
+          }
+        }
+        
         // Add categories to the dropdown
-        if (data.categories && data.categories.length > 0) {
-          data.categories.forEach(category => {
+        if (categories && categories.length > 0) {
+          categories.forEach(category => {
             const option = document.createElement('option');
-            option.value = category.id;
-            option.textContent = category.name;
+            // Handle different category object structures
+            option.value = category.id || category.category_id || category._id || '';
+            option.textContent = category.name || category.category_name || category.title || '';
             categorySelect.appendChild(option);
           });
-          console.log(`Added ${data.categories.length} categories to dropdown`);
+          console.log(`Added ${categories.length} categories to dropdown`);
         } else {
           console.log('No categories found for tenant', tenant);
         }
       })
       .catch(error => {
         console.error('Error fetching categories:', error);
-        // Still provide some default categories as fallback
+        // Still provide some default categories as fallback based on tenant type
         const categorySelect = document.getElementById('productCategory');
         if (categorySelect) {
-          const categories = [
-            { id: 'electronics', name: 'Electronics' },
-            { id: 'clothing', name: 'Clothing' },
-            { id: 'accessories', name: 'Accessories' }
-          ];
+          let categories = [];
+          
+          // Try to determine tenant type from the tenant id/name to show more relevant categories
+          if (tenant.includes('tech') || tenant.includes('gadget')) {
+            categories = [
+              { id: 'electronics', name: 'Electronics' },
+              { id: 'computers', name: 'Computers' },
+              { id: 'accessories', name: 'Tech Accessories' },
+              { id: 'software', name: 'Software' }
+            ];
+          } else if (tenant.includes('fashion') || tenant.includes('clothes') || tenant.includes('boutique')) {
+            categories = [
+              { id: 'clothing', name: 'Clothing' },
+              { id: 'accessories', name: 'Fashion Accessories' },
+              { id: 'shoes', name: 'Shoes' },
+              { id: 'jewelry', name: 'Jewelry' }
+            ];
+          } else if (tenant.includes('outdoor') || tenant.includes('adventure')) {
+            categories = [
+              { id: 'gear', name: 'Outdoor Gear' },
+              { id: 'clothing', name: 'Outdoor Clothing' },
+              { id: 'equipment', name: 'Equipment' },
+              { id: 'camping', name: 'Camping' }
+            ];
+          } else {
+            // Generic categories for any store
+            categories = [
+              { id: 'bestsellers', name: 'Best Sellers' },
+              { id: 'new', name: 'New Arrivals' },
+              { id: 'featured', name: 'Featured Products' },
+              { id: 'sale', name: 'Sale Items' }
+            ];
+          }
+          
+          console.log(`Adding fallback categories for tenant type: ${tenant}`);
           
           categories.forEach(category => {
             const option = document.createElement('option');
