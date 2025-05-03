@@ -645,7 +645,7 @@ function updatePreview() {
     const previewFrame = document.getElementById('previewFrame');
     if (!previewFrame) return;
     
-    // Show loading indicator
+    // Show loading indicator with PyCommerce branding
     previewFrame.srcdoc = `
         <html>
         <head>
@@ -658,15 +658,22 @@ function updatePreview() {
                     height: 100vh;
                     margin: 0;
                     background-color: #f8f9fa;
+                    color: #212b36;
                 }
                 .loading {
                     display: flex;
                     flex-direction: column;
                     align-items: center;
+                    text-align: center;
+                }
+                .logo {
+                    margin-bottom: 20px;
                     color: #5c6ac4;
+                    font-size: 24px;
+                    font-weight: bold;
                 }
                 .spinner {
-                    border: 4px solid rgba(0, 0, 0, 0.1);
+                    border: 4px solid rgba(92, 106, 196, 0.1);
                     border-radius: 50%;
                     border-top: 4px solid #5c6ac4;
                     width: 40px;
@@ -674,16 +681,37 @@ function updatePreview() {
                     margin-bottom: 20px;
                     animation: spin 1s linear infinite;
                 }
+                .message {
+                    font-size: 16px;
+                    margin-bottom: 10px;
+                }
+                .sub-message {
+                    font-size: 14px;
+                    color: #637381;
+                    max-width: 400px;
+                }
                 @keyframes spin {
                     0% { transform: rotate(0deg); }
                     100% { transform: rotate(360deg); }
+                }
+                /* Dark mode support */
+                @media (prefers-color-scheme: dark) {
+                    body {
+                        background-color: #1e2233;
+                        color: #e6e9f0;
+                    }
+                    .sub-message {
+                        color: #919eab;
+                    }
                 }
             </style>
         </head>
         <body>
             <div class="loading">
+                <div class="logo">PyCommerce</div>
                 <div class="spinner"></div>
-                <p>Loading preview...</p>
+                <p class="message">Generating Real-Time Preview</p>
+                <p class="sub-message">Changes you make in the editor will appear here immediately</p>
             </div>
         </body>
         </html>
@@ -691,6 +719,11 @@ function updatePreview() {
     
     // Get page ID
     const pageId = document.getElementById('pageId').value;
+    if (!pageId) {
+        console.error('Page ID not found');
+        showPreviewError('Page ID not found', 'Make sure you are editing a saved page.');
+        return;
+    }
     
     // Fetch preview URL
     const previewUrl = `/admin/pages/preview/${pageId}`;
@@ -699,10 +732,116 @@ function updatePreview() {
     const timestamp = new Date().getTime();
     const cacheUrl = `${previewUrl}?t=${timestamp}`;
     
-    // Load preview in iframe
+    // Load preview in iframe with error handling
     setTimeout(() => {
+        // Set up error handler for the iframe
+        previewFrame.onerror = function() {
+            showPreviewError('Failed to load preview', 'There was an error generating the preview. Please try again.');
+        };
+        
+        // Handle iframe load event
+        previewFrame.onload = function() {
+            // Check if the iframe loaded successfully
+            try {
+                // Access iframe content to see if it loaded properly
+                const iframeContent = previewFrame.contentWindow.document.body.innerHTML;
+                
+                // If the content contains an error message (this is application specific)
+                if (iframeContent.includes('Error:') || iframeContent.includes('Server Error')) {
+                    showPreviewError('Preview Error', 'The page encountered an error during rendering.');
+                }
+            } catch (e) {
+                // If we can't access the iframe content, it might be due to CORS or other issues
+                console.warn('Cannot access iframe content:', e);
+            }
+        };
+        
+        // Set the source to load the preview
         previewFrame.src = cacheUrl;
-    }, 500);
+    }, 300);
+}
+
+/**
+ * Show an error message in the preview frame
+ */
+function showPreviewError(title, message) {
+    const previewFrame = document.getElementById('previewFrame');
+    if (!previewFrame) return;
+    
+    previewFrame.srcdoc = `
+        <html>
+        <head>
+            <style>
+                body {
+                    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    height: 100vh;
+                    margin: 0;
+                    background-color: #fff;
+                    color: #212b36;
+                }
+                .error-container {
+                    text-align: center;
+                    max-width: 500px;
+                    padding: 40px 20px;
+                }
+                .error-icon {
+                    font-size: 48px;
+                    color: #de3618;
+                    margin-bottom: 20px;
+                }
+                .error-title {
+                    font-size: 24px;
+                    font-weight: 600;
+                    margin-bottom: 10px;
+                    color: #212b36;
+                }
+                .error-message {
+                    font-size: 16px;
+                    line-height: 1.5;
+                    color: #637381;
+                    margin-bottom: 30px;
+                }
+                .retry-button {
+                    display: inline-block;
+                    padding: 10px 20px;
+                    background-color: #5c6ac4;
+                    color: white;
+                    border-radius: 4px;
+                    font-weight: 500;
+                    cursor: pointer;
+                    text-decoration: none;
+                }
+                .retry-button:hover {
+                    background-color: #4959bd;
+                }
+                /* Dark mode support */
+                @media (prefers-color-scheme: dark) {
+                    body {
+                        background-color: #1e2233;
+                        color: #e6e9f0;
+                    }
+                    .error-title {
+                        color: #e6e9f0;
+                    }
+                    .error-message {
+                        color: #919eab;
+                    }
+                }
+            </style>
+        </head>
+        <body>
+            <div class="error-container">
+                <div class="error-icon">⚠️</div>
+                <h1 class="error-title">${title}</h1>
+                <p class="error-message">${message}</p>
+                <a class="retry-button" onclick="window.parent.updatePreview()">Retry</a>
+            </div>
+        </body>
+        </html>
+    `;
 }
 
 /**
@@ -726,6 +865,45 @@ function registerChangeEvents() {
         console.log('Blocks reordered, updating preview...');
         updatePreview();
     });
+    
+    // Listen for text editor changes
+    document.addEventListener('textEditorChanged', function(e) {
+        console.log('Text editor content changed, updating preview...');
+        updatePreview();
+    });
+    
+    // Listen for section settings changes
+    document.addEventListener('sectionSettingsChanged', function(e) {
+        console.log('Section settings changed, updating preview...');
+        updatePreview();
+    });
+    
+    // Listen for block settings changes
+    document.addEventListener('blockSettingsChanged', function(e) {
+        console.log('Block settings changed, updating preview...');
+        updatePreview();
+    });
+    
+    // Add debounced input listeners to form fields
+    const pageSettingsForm = document.getElementById('pageSettingsForm');
+    if (pageSettingsForm) {
+        const formInputs = pageSettingsForm.querySelectorAll('input, textarea, select');
+        
+        let debounceTimer;
+        formInputs.forEach(input => {
+            input.addEventListener('input', function() {
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(function() {
+                    console.log('Page settings changed, updating preview...');
+                    // Only update preview if it's visible
+                    const previewPanel = document.getElementById('livePreviewPanel');
+                    if (previewPanel && previewPanel.style.display !== 'none') {
+                        updatePreview();
+                    }
+                }, 1000); // 1 second debounce
+            });
+        });
+    }
 }
 
 /**
