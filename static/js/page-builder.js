@@ -20,9 +20,6 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log("Mobile device detected, adding mobile optimizations");
     }
     
-    // Initialize split view functionality
-    initSplitView();
-    
     // Add meta viewport tag if not present
     if (!document.querySelector('meta[name="viewport"]')) {
         const metaViewport = document.createElement('meta');
@@ -169,6 +166,9 @@ function initPageBuilder() {
     
     // Setup mobile-specific preview controls
     setupMobilePreviewControls();
+    
+    // Initialize split view functionality
+    initSplitView();
     
     // Add window resize and orientation change listeners
     window.addEventListener('resize', debounce(handleResizeEvent, 250));
@@ -607,19 +607,35 @@ function savePage() {
  * Setup the real-time preview panel
  */
 function setupPreviewPanel() {
+    console.log("Setting up preview panel");
     // Get the toggle preview button and attach event listener
     const togglePreviewBtn = document.getElementById('togglePreviewBtn');
     const livePreviewPanel = document.getElementById('livePreviewPanel');
     const closePreviewBtn = document.getElementById('closePreviewBtn');
+    const splitViewToggle = document.getElementById('splitViewToggle');
     
     if (togglePreviewBtn && livePreviewPanel) {
         togglePreviewBtn.addEventListener('click', function() {
+            // If in split view mode, use that instead
+            const editorLayout = document.querySelector('.editor-layout');
+            if (editorLayout && editorLayout.classList.contains('split-view')) {
+                console.log("Already in split view mode, not toggling standard preview");
+                return;
+            }
+            
             togglePreviewPanel();
         });
         
         // Close button handler
         if (closePreviewBtn) {
             closePreviewBtn.addEventListener('click', function() {
+                // If in split view mode, exit it
+                const editorLayout = document.querySelector('.editor-layout');
+                if (editorLayout && editorLayout.classList.contains('split-view') && splitViewToggle) {
+                    splitViewToggle.click();
+                    return;
+                }
+                
                 togglePreviewPanel(false);
             });
         }
@@ -2678,10 +2694,18 @@ function saveBlockAsTemplate(blockId) {
  * Allows for side-by-side editing and preview with resizable panels
  */
 function initSplitView() {
+    console.log("Initializing split view functionality");
+    
     const splitViewToggle = document.getElementById('splitViewToggle');
     const editorLayout = document.querySelector('.editor-layout');
     const livePreviewPanel = document.getElementById('livePreviewPanel');
     const splitViewResizer = document.getElementById('splitViewResizer');
+    
+    // Log all elements to see what's missing
+    console.log("Split view toggle element:", splitViewToggle);
+    console.log("Editor layout element:", editorLayout);
+    console.log("Live preview panel element:", livePreviewPanel);
+    console.log("Split view resizer element:", splitViewResizer);
     
     // Check if we have all required elements
     if (!splitViewToggle || !editorLayout || !livePreviewPanel || !splitViewResizer) {
@@ -2793,8 +2817,12 @@ function initSplitView() {
  * Updates the preview panel with current content
  */
 function updateLivePreview() {
+    console.log("Updating live preview");
     const previewFrame = document.getElementById('previewFrame');
-    if (!previewFrame) return;
+    if (!previewFrame) {
+        console.error("Preview frame not found");
+        return;
+    }
     
     // Show loading indicator
     const loadingIndicator = document.querySelector('.preview-loading-indicator');
@@ -2812,18 +2840,30 @@ function updateLivePreview() {
     const pageId = pageIdElement.value;
     const previewUrl = `/admin/pages/${pageId}/preview?timestamp=${Date.now()}`;
     
+    console.log("Loading preview from:", previewUrl);
+    
     // Update the iframe source
     previewFrame.src = previewUrl;
+    
+    // Check if live preview panel is visible and in split view mode
+    const livePreviewPanel = document.getElementById('livePreviewPanel');
+    const editorLayout = document.querySelector('.editor-layout');
+    
+    if (livePreviewPanel && editorLayout && editorLayout.classList.contains('split-view')) {
+        livePreviewPanel.style.display = 'flex';
+    }
     
     // Hide loading indicator when iframe loads
     previewFrame.onload = function() {
         if (loadingIndicator) {
             loadingIndicator.style.display = 'none';
         }
+        console.log("Preview loaded successfully");
     };
     
     // Handle errors
     previewFrame.onerror = function() {
+        console.error("Error loading preview");
         if (loadingIndicator) {
             loadingIndicator.style.display = 'none';
         }
