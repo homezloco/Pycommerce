@@ -168,7 +168,9 @@ function initPageBuilder() {
     setupMobilePreviewControls();
     
     // Initialize split view functionality
+    console.log("Calling initSplitView from initPageBuilder");
     initSplitView();
+    console.log("Split view initialization complete");
     
     // Add window resize and orientation change listeners
     window.addEventListener('resize', debounce(handleResizeEvent, 250));
@@ -2696,121 +2698,199 @@ function saveBlockAsTemplate(blockId) {
 function initSplitView() {
     console.log("Initializing split view functionality");
     
-    const splitViewToggle = document.getElementById('splitViewToggle');
-    const editorLayout = document.querySelector('.editor-layout');
-    const livePreviewPanel = document.getElementById('livePreviewPanel');
-    const splitViewResizer = document.getElementById('splitViewResizer');
-    
-    // Log all elements to see what's missing
-    console.log("Split view toggle element:", splitViewToggle);
-    console.log("Editor layout element:", editorLayout);
-    console.log("Live preview panel element:", livePreviewPanel);
-    console.log("Split view resizer element:", splitViewResizer);
-    
-    // Check if we have all required elements
-    if (!splitViewToggle || !editorLayout || !livePreviewPanel || !splitViewResizer) {
-        console.warn("Split view elements not found, skipping initialization");
-        return;
-    }
-    
-    // Toggle split view mode
-    splitViewToggle.addEventListener('click', function() {
-        const isInSplitView = editorLayout.classList.contains('split-view');
+    // Function to set up split view
+    function setupSplitView() {
+        console.log("Setting up split view");
         
-        if (isInSplitView) {
-            // Exit split view
-            editorLayout.classList.remove('split-view');
-            livePreviewPanel.style.display = 'none';
-            splitViewResizer.style.display = 'none';
-            
-            // Update button text
-            splitViewToggle.querySelector('.split-text').textContent = 'Split View';
-            splitViewToggle.title = 'Enable split view mode';
-            
-            // Save preference
-            localStorage.setItem('pageBuilderSplitView', 'false');
-        } else {
-            // Enter split view
-            editorLayout.classList.add('split-view');
-            livePreviewPanel.style.display = 'flex';
-            splitViewResizer.style.display = 'block';
-            
-            // Update button text
-            splitViewToggle.querySelector('.split-text').textContent = 'Exit Split View';
-            splitViewToggle.title = 'Exit split view mode';
-            
-            // Save preference
-            localStorage.setItem('pageBuilderSplitView', 'true');
-            
-            // Force preview update
-            updateLivePreview();
+        // Get required elements
+        const splitViewToggle = document.getElementById('splitViewToggle');
+        const editorCanvas = document.querySelector('.editor-canvas');
+        const previewPanel = document.getElementById('livePreviewPanel');
+        const resizer = document.getElementById('splitViewResizer');
+        
+        // Log all elements to see what's missing
+        console.log("Split view toggle element:", splitViewToggle);
+        console.log("Editor canvas element:", editorCanvas);
+        console.log("Preview panel element:", previewPanel);
+        console.log("Resizer element:", resizer);
+        
+        // Function to check if all required elements exist
+        function elementsExist() {
+            return splitViewToggle && editorCanvas && previewPanel && resizer;
         }
-    });
-    
-    // Set up the resizer functionality
-    let isResizing = false;
-    let startX, startWidth, previewStartWidth;
-    
-    splitViewResizer.addEventListener('mousedown', function(e) {
-        isResizing = true;
-        startX = e.clientX;
         
-        // Get the current width of panels
-        const canvasArea = document.querySelector('.editor-canvas');
-        startWidth = canvasArea.offsetWidth;
-        previewStartWidth = livePreviewPanel.offsetWidth;
+        // If any elements are missing, wait and try again
+        if (!elementsExist()) {
+            console.warn("Some split view elements are missing, will retry in 500ms");
+            setTimeout(setupSplitView, 500);
+            return;
+        }
         
-        // Add resizing class
-        splitViewResizer.classList.add('dragging');
+        // Create editor layout if it doesn't exist
+        let editorLayout = document.querySelector('.editor-layout');
+        if (!editorLayout) {
+            console.log("Creating editor layout element");
+            editorLayout = document.createElement('div');
+            editorLayout.className = 'editor-layout';
+            
+            // Insert it into the DOM
+            const parent = editorCanvas.parentNode;
+            parent.insertBefore(editorLayout, editorCanvas);
+            
+            // Move elements into the layout
+            editorLayout.appendChild(editorCanvas);
+            document.body.appendChild(previewPanel);
+        }
         
-        // Add event listeners
-        document.addEventListener('mousemove', handleMouseMove);
-        document.addEventListener('mouseup', handleMouseUp);
+        // Make sure preview panel is in the proper place in the DOM
+        if (previewPanel.parentNode !== editorLayout) {
+            console.log("Moving preview panel to editor layout");
+            editorLayout.appendChild(previewPanel);
+        }
         
-        // Prevent text selection during resize
-        e.preventDefault();
-    });
-    
-    function handleMouseMove(e) {
-        if (!isResizing) return;
+        // Make sure resizer is in the proper place in the DOM
+        if (resizer.parentNode !== editorLayout) {
+            console.log("Moving resizer to editor layout");
+            editorLayout.appendChild(resizer);
+        }
         
-        // Calculate how far the mouse has moved
-        const movementX = e.clientX - startX;
+        // Set up split view toggle functionality
+        console.log("Setting up split view toggle click handler");
         
-        // Calculate new widths
-        const containerWidth = editorLayout.offsetWidth;
-        let newCanvasWidth = startWidth + movementX;
-        let newPreviewWidth = previewStartWidth - movementX;
+        // Remove any existing event listeners to avoid duplicates
+        splitViewToggle.removeEventListener('click', toggleSplitView);
         
-        // Enforce minimum widths (20% of container)
-        const minWidth = containerWidth * 0.2;
-        if (newCanvasWidth < minWidth) newCanvasWidth = minWidth;
-        if (newPreviewWidth < minWidth) newPreviewWidth = minWidth;
+        // Add new event listener
+        splitViewToggle.addEventListener('click', toggleSplitView);
         
-        // Calculate percentages
-        const canvasPercent = (newCanvasWidth / containerWidth) * 100;
-        const previewPercent = (newPreviewWidth / containerWidth) * 100;
+        // Toggle split view function
+        function toggleSplitView() {
+            console.log("Toggle split view clicked");
+            const isInSplitView = editorLayout.classList.contains('split-view');
+            
+            if (isInSplitView) {
+                console.log("Exiting split view mode");
+                // Exit split view
+                editorLayout.classList.remove('split-view');
+                previewPanel.style.display = 'none';
+                resizer.style.display = 'none';
+                
+                // Update button text
+                if (splitViewToggle.querySelector('.split-text')) {
+                    splitViewToggle.querySelector('.split-text').textContent = 'Split View';
+                }
+                splitViewToggle.title = 'Enable split view mode';
+                
+                // Reset width of editor canvas
+                editorCanvas.style.width = '';
+                
+                // Save preference
+                localStorage.setItem('pageBuilderSplitView', 'false');
+            } else {
+                console.log("Entering split view mode");
+                // Enter split view
+                editorLayout.classList.add('split-view');
+                previewPanel.style.display = 'flex';
+                resizer.style.display = 'block';
+                
+                // Set initial widths
+                editorCanvas.style.width = '50%';
+                previewPanel.style.width = '50%';
+                
+                // Update button text
+                if (splitViewToggle.querySelector('.split-text')) {
+                    splitViewToggle.querySelector('.split-text').textContent = 'Exit Split View';
+                }
+                splitViewToggle.title = 'Exit split view mode';
+                
+                // Save preference
+                localStorage.setItem('pageBuilderSplitView', 'true');
+                
+                // Force preview update
+                updateLivePreview();
+            }
+        }
         
-        // Apply new widths
-        document.querySelector('.editor-canvas').style.width = `${canvasPercent}%`;
-        livePreviewPanel.style.width = `${previewPercent}%`;
+        // Set up the resizer functionality
+        let isResizing = false;
+        let startX, startEditorWidth, startPreviewWidth;
+        
+        // Remove existing event listeners
+        resizer.removeEventListener('mousedown', handleResizerMouseDown);
+        
+        // Add new event listener
+        resizer.addEventListener('mousedown', handleResizerMouseDown);
+        
+        function handleResizerMouseDown(e) {
+            console.log("Resizer mouse down");
+            isResizing = true;
+            startX = e.clientX;
+            
+            // Get current widths
+            startEditorWidth = editorCanvas.offsetWidth;
+            startPreviewWidth = previewPanel.offsetWidth;
+            
+            // Add visual feedback
+            resizer.classList.add('dragging');
+            
+            // Add document-level event listeners
+            document.addEventListener('mousemove', handleResizerMouseMove);
+            document.addEventListener('mouseup', handleResizerMouseUp);
+            
+            // Prevent default to avoid text selection
+            e.preventDefault();
+        }
+        
+        function handleResizerMouseMove(e) {
+            if (!isResizing) return;
+            
+            // Calculate how far mouse has moved
+            const deltaX = e.clientX - startX;
+            
+            // Calculate total available width
+            const totalWidth = editorLayout.offsetWidth;
+            
+            // Calculate new widths with constrains
+            let newEditorWidth = startEditorWidth + deltaX;
+            let newPreviewWidth = startPreviewWidth - deltaX;
+            
+            // Enforce minimum widths (20% of total)
+            const minWidth = totalWidth * 0.2;
+            if (newEditorWidth < minWidth) newEditorWidth = minWidth;
+            if (newPreviewWidth < minWidth) newPreviewWidth = minWidth;
+            
+            // Convert to percentages
+            const editorPercent = (newEditorWidth / totalWidth) * 100;
+            const previewPercent = (newPreviewWidth / totalWidth) * 100;
+            
+            // Apply new widths
+            editorCanvas.style.width = `${editorPercent}%`;
+            previewPanel.style.width = `${previewPercent}%`;
+        }
+        
+        function handleResizerMouseUp() {
+            console.log("Resizer mouse up");
+            isResizing = false;
+            resizer.classList.remove('dragging');
+            
+            // Remove document-level event listeners
+            document.removeEventListener('mousemove', handleResizerMouseMove);
+            document.removeEventListener('mouseup', handleResizerMouseUp);
+        }
+        
+        // Check saved preference
+        const savedPreference = localStorage.getItem('pageBuilderSplitView');
+        if (savedPreference === 'true') {
+            console.log("Initializing with saved preference: split view enabled");
+            // Use setTimeout to ensure DOM is ready
+            setTimeout(() => {
+                toggleSplitView();
+            }, 100);
+        }
     }
     
-    function handleMouseUp() {
-        isResizing = false;
-        splitViewResizer.classList.remove('dragging');
-        
-        // Remove event listeners
-        document.removeEventListener('mousemove', handleMouseMove);
-        document.removeEventListener('mouseup', handleMouseUp);
-    }
-    
-    // Initialize based on saved preference
-    const savedPreference = localStorage.getItem('pageBuilderSplitView');
-    if (savedPreference === 'true') {
-        // Simulate click to enable split view
-        splitViewToggle.click();
-    }
+    // Start setup
+    setupSplitView();
 }
 
 /**
