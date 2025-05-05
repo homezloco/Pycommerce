@@ -559,15 +559,115 @@
       </div>
       <div class="editor-layout">
         <!-- Split view toggle button -->
-        <button id="splitViewToggle" class="split-view-toggle" title="Toggle Split View">
+        <button id="splitViewToggle" class="split-view-toggle" title="Toggle Split View" onclick="toggleSplitView()">
           <i class="fas fa-columns"></i> <span class="split-text">Split View</span>
         </button>
         
+        <script>
+          // Direct split view implementation that doesn't rely on page-builder.js
+          function toggleSplitView() {
+            console.log("Split view toggle clicked (inline)");
+            const editorLayout = document.querySelector('.editor-layout');
+            const livePreviewPanel = document.getElementById('livePreviewPanel');
+            const splitViewResizer = document.getElementById('splitViewResizer');
+            const editorCanvas = document.querySelector('.page-container');
+            const splitViewToggle = document.getElementById('splitViewToggle');
+            
+            const isInSplitView = editorLayout.classList.contains('split-view');
+            
+            if (isInSplitView) {
+              // Exit split view
+              editorLayout.classList.remove('split-view');
+              livePreviewPanel.style.display = 'none';
+              splitViewResizer.style.display = 'none';
+              editorCanvas.style.width = '100%';
+              
+              // Update button text
+              splitViewToggle.querySelector('.split-text').textContent = 'Split View';
+            } else {
+              // Enter split view
+              editorLayout.classList.add('split-view');
+              livePreviewPanel.style.display = 'flex';
+              splitViewResizer.style.display = 'block';
+              
+              // Set initial widths
+              editorCanvas.style.width = '50%';
+              livePreviewPanel.style.width = '50%';
+              
+              // Update button text
+              splitViewToggle.querySelector('.split-text').textContent = 'Exit Split View';
+              
+              // Load the preview
+              const previewFrame = document.getElementById('previewFrame');
+              // Find the page ID from the form or URL
+              let pageId = '';
+              const pageIdInput = document.getElementById('pageId');
+              if (pageIdInput) {
+                pageId = pageIdInput.value;
+              } else {
+                // Extract from URL as fallback
+                const urlPath = window.location.pathname;
+                const editPathMatch = urlPath.match(/\/admin\/pages\/edit\/([^\/]+)/);
+                if (editPathMatch && editPathMatch[1]) {
+                  pageId = editPathMatch[1];
+                }
+              }
+              console.log("Loading preview for page ID:", pageId);
+              previewFrame.src = `/admin/pages/${pageId}/preview?timestamp=${Date.now()}`;
+            }
+          }
+          
+          // Set up resizer functionality
+          document.addEventListener('DOMContentLoaded', function() {
+            const splitViewResizer = document.getElementById('splitViewResizer');
+            if (splitViewResizer) {
+              splitViewResizer.addEventListener('mousedown', startResize);
+            }
+            
+            function startResize(e) {
+              e.preventDefault();
+              const editorLayout = document.querySelector('.editor-layout');
+              const editorCanvas = document.querySelector('.page-container');
+              const livePreviewPanel = document.getElementById('livePreviewPanel');
+              
+              const startX = e.clientX;
+              const startEditorWidth = editorCanvas.offsetWidth;
+              const startPreviewWidth = livePreviewPanel.offsetWidth;
+              
+              document.addEventListener('mousemove', resize);
+              document.addEventListener('mouseup', stopResize);
+              
+              function resize(e) {
+                const deltaX = e.clientX - startX;
+                const totalWidth = editorLayout.offsetWidth;
+                
+                let newEditorWidth = startEditorWidth + deltaX;
+                let newPreviewWidth = startPreviewWidth - deltaX;
+                
+                const minWidth = totalWidth * 0.2;
+                if (newEditorWidth < minWidth) newEditorWidth = minWidth;
+                if (newPreviewWidth < minWidth) newPreviewWidth = minWidth;
+                
+                const editorPercent = (newEditorWidth / totalWidth) * 100;
+                const previewPercent = (newPreviewWidth / totalWidth) * 100;
+                
+                editorCanvas.style.width = `${editorPercent}%`;
+                livePreviewPanel.style.width = `${previewPercent}%`;
+              }
+              
+              function stopResize() {
+                document.removeEventListener('mousemove', resize);
+                document.removeEventListener('mouseup', stopResize);
+              }
+            }
+          });
+        </script>
+        
         <!-- Live Preview Panel (hidden by default) -->
         <div id="livePreviewPanel" class="live-preview-panel" style="display: none;">
-        
-        <!-- Split view resizer (hidden by default) -->
-        <div id="splitViewResizer" class="split-view-resizer" style="display: none;"></div>
+          
+          <!-- Split view resizer (hidden by default) -->
+          <div id="splitViewResizer" class="split-view-resizer" style="display: none;"></div>
           <div class="preview-header">
             <div class="preview-title">
               <i class="fas fa-eye me-1"></i> <span class="preview-title-text">Live Preview</span>

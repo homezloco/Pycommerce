@@ -512,51 +512,66 @@ body.dark-mode .page-editor-wrapper {
 
 /* Split view styles */
 .editor-layout.split-view {
-  display: flex;
-  flex-direction: row;
-  width: 100%;
+  display: flex !important;
+  flex-direction: row !important;
+  width: 100% !important;
+  height: 100% !important;
+  position: relative !important;
+  overflow: hidden !important;
+  flex-wrap: nowrap !important;
 }
 
-.editor-layout.split-view .editor-canvas {
-  width: 50%;
-  flex-shrink: 0;
-  transition: width 0.3s ease;
+.editor-layout.split-view .page-container {
+  width: 50% !important;
+  flex-shrink: 0 !important;
+  transition: width 0.3s ease !important;
+  overflow: auto !important;
+  position: relative !important;
 }
 
 .editor-layout.split-view .live-preview-panel {
-  width: 50%;
-  flex-shrink: 0;
-  transition: width 0.3s ease;
+  width: 50% !important;
+  flex-shrink: 0 !important;
+  transition: width 0.3s ease !important;
+  border-left: 1px solid var(--editor-divider) !important;
+  background-color: var(--editor-background) !important;
+  overflow: hidden !important;
+  display: flex !important;
+  flex-direction: column !important;
 }
 
 .editor-layout.split-view .split-view-resizer {
-  width: 6px;
-  background-color: var(--editor-divider);
-  cursor: col-resize;
-  transition: background-color 0.2s ease;
-  position: relative;
-  z-index: 100;
+  width: 6px !important;
+  background-color: var(--editor-divider) !important;
+  cursor: col-resize !important;
+  transition: background-color 0.2s ease !important;
+  position: absolute !important;
+  top: 0 !important;
+  bottom: 0 !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  z-index: 100 !important;
 }
 
 .editor-layout.split-view .split-view-resizer:hover,
 .editor-layout.split-view .split-view-resizer.dragging {
-  background-color: var(--editor-resizer);
+  background-color: var(--editor-primary) !important;
 }
 
 .editor-layout.split-view .split-view-resizer::after {
-  content: '⋮';
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  font-size: 24px;
-  color: var(--editor-text);
-  opacity: 0.3;
-  pointer-events: none;
+  content: '⋮' !important;
+  position: absolute !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  font-size: 24px !important;
+  color: var(--editor-text) !important;
+  opacity: 0.3 !important;
+  pointer-events: none !important;
 }
 
 .editor-layout.split-view .split-view-resizer:hover::after {
-  opacity: 0.7;
+  opacity: 0.7 !important;
 }
 
 .split-view-toggle {
