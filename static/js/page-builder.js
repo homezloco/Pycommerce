@@ -20,6 +20,9 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log("Mobile device detected, adding mobile optimizations");
     }
     
+    // Initialize split view functionality
+    initSplitView();
+    
     // Add meta viewport tag if not present
     if (!document.querySelector('meta[name="viewport"]')) {
         const metaViewport = document.createElement('meta');
@@ -681,6 +684,9 @@ function togglePreviewPanel(show) {
         
         // Adjust editor canvas layout for split view
         editorCanvas.classList.add('with-preview');
+        
+        // Update the preview content
+        updateLivePreview();
         
         // Create flex layout container if it doesn't exist
         const editorWrapper = document.querySelector('.editor-layout');
@@ -2664,5 +2670,167 @@ function saveBlockAsTemplate(blockId) {
             
             console.error('Error saving block template:', error);
         });
+    };
+}
+
+/**
+ * Initialize split view functionality for the page builder
+ * Allows for side-by-side editing and preview with resizable panels
+ */
+function initSplitView() {
+    const splitViewToggle = document.getElementById('splitViewToggle');
+    const editorLayout = document.querySelector('.editor-layout');
+    const livePreviewPanel = document.getElementById('livePreviewPanel');
+    const splitViewResizer = document.getElementById('splitViewResizer');
+    
+    // Check if we have all required elements
+    if (!splitViewToggle || !editorLayout || !livePreviewPanel || !splitViewResizer) {
+        console.warn("Split view elements not found, skipping initialization");
+        return;
+    }
+    
+    // Toggle split view mode
+    splitViewToggle.addEventListener('click', function() {
+        const isInSplitView = editorLayout.classList.contains('split-view');
+        
+        if (isInSplitView) {
+            // Exit split view
+            editorLayout.classList.remove('split-view');
+            livePreviewPanel.style.display = 'none';
+            splitViewResizer.style.display = 'none';
+            
+            // Update button text
+            splitViewToggle.querySelector('.split-text').textContent = 'Split View';
+            splitViewToggle.title = 'Enable split view mode';
+            
+            // Save preference
+            localStorage.setItem('pageBuilderSplitView', 'false');
+        } else {
+            // Enter split view
+            editorLayout.classList.add('split-view');
+            livePreviewPanel.style.display = 'flex';
+            splitViewResizer.style.display = 'block';
+            
+            // Update button text
+            splitViewToggle.querySelector('.split-text').textContent = 'Exit Split View';
+            splitViewToggle.title = 'Exit split view mode';
+            
+            // Save preference
+            localStorage.setItem('pageBuilderSplitView', 'true');
+            
+            // Force preview update
+            updateLivePreview();
+        }
+    });
+    
+    // Set up the resizer functionality
+    let isResizing = false;
+    let startX, startWidth, previewStartWidth;
+    
+    splitViewResizer.addEventListener('mousedown', function(e) {
+        isResizing = true;
+        startX = e.clientX;
+        
+        // Get the current width of panels
+        const canvasArea = document.querySelector('.editor-canvas');
+        startWidth = canvasArea.offsetWidth;
+        previewStartWidth = livePreviewPanel.offsetWidth;
+        
+        // Add resizing class
+        splitViewResizer.classList.add('dragging');
+        
+        // Add event listeners
+        document.addEventListener('mousemove', handleMouseMove);
+        document.addEventListener('mouseup', handleMouseUp);
+        
+        // Prevent text selection during resize
+        e.preventDefault();
+    });
+    
+    function handleMouseMove(e) {
+        if (!isResizing) return;
+        
+        // Calculate how far the mouse has moved
+        const movementX = e.clientX - startX;
+        
+        // Calculate new widths
+        const containerWidth = editorLayout.offsetWidth;
+        let newCanvasWidth = startWidth + movementX;
+        let newPreviewWidth = previewStartWidth - movementX;
+        
+        // Enforce minimum widths (20% of container)
+        const minWidth = containerWidth * 0.2;
+        if (newCanvasWidth < minWidth) newCanvasWidth = minWidth;
+        if (newPreviewWidth < minWidth) newPreviewWidth = minWidth;
+        
+        // Calculate percentages
+        const canvasPercent = (newCanvasWidth / containerWidth) * 100;
+        const previewPercent = (newPreviewWidth / containerWidth) * 100;
+        
+        // Apply new widths
+        document.querySelector('.editor-canvas').style.width = `${canvasPercent}%`;
+        livePreviewPanel.style.width = `${previewPercent}%`;
+    }
+    
+    function handleMouseUp() {
+        isResizing = false;
+        splitViewResizer.classList.remove('dragging');
+        
+        // Remove event listeners
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', handleMouseUp);
+    }
+    
+    // Initialize based on saved preference
+    const savedPreference = localStorage.getItem('pageBuilderSplitView');
+    if (savedPreference === 'true') {
+        // Simulate click to enable split view
+        splitViewToggle.click();
+    }
+}
+
+/**
+ * Updates the preview panel with current content
+ */
+function updateLivePreview() {
+    const previewFrame = document.getElementById('previewFrame');
+    if (!previewFrame) return;
+    
+    // Show loading indicator
+    const loadingIndicator = document.querySelector('.preview-loading-indicator');
+    if (loadingIndicator) {
+        loadingIndicator.style.display = 'block';
+    }
+    
+    // Get the current preview URL
+    const pageIdElement = document.getElementById('pageId');
+    if (!pageIdElement) {
+        console.error("Page ID element not found");
+        return;
+    }
+    
+    const pageId = pageIdElement.value;
+    const previewUrl = `/admin/pages/${pageId}/preview?timestamp=${Date.now()}`;
+    
+    // Update the iframe source
+    previewFrame.src = previewUrl;
+    
+    // Hide loading indicator when iframe loads
+    previewFrame.onload = function() {
+        if (loadingIndicator) {
+            loadingIndicator.style.display = 'none';
+        }
+    };
+    
+    // Handle errors
+    previewFrame.onerror = function() {
+        if (loadingIndicator) {
+            loadingIndicator.style.display = 'none';
+        }
+        
+        const errorContainer = document.querySelector('.preview-error-container');
+        if (errorContainer) {
+            errorContainer.style.display = 'block';
+        }
     };
 }

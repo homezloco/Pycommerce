@@ -558,8 +558,16 @@
         </div>
       </div>
       <div class="editor-layout">
+        <!-- Split view toggle button -->
+        <button id="splitViewToggle" class="split-view-toggle" title="Toggle Split View">
+          <i class="fas fa-columns"></i> <span class="split-text">Split View</span>
+        </button>
+        
         <!-- Live Preview Panel (hidden by default) -->
         <div id="livePreviewPanel" class="live-preview-panel" style="display: none;">
+        
+        <!-- Split view resizer (hidden by default) -->
+        <div id="splitViewResizer" class="split-view-resizer" style="display: none;"></div>
           <div class="preview-header">
             <div class="preview-title">
               <i class="fas fa-eye me-1"></i> <span class="preview-title-text">Live Preview</span>
