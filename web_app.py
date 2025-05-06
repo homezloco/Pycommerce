@@ -47,6 +47,7 @@ try:
     from routes.admin.inventory import setup_routes as setup_inventory_routes
     from routes.admin.analytics import setup_routes as setup_analytics_routes
     from routes.admin.page_builder import setup_routes as setup_page_builder_routes
+    from routes.admin.api import setup_routes as setup_admin_api_routes
     from routes.admin.store_settings import setup_routes as setup_store_settings_routes
     from routes.admin.marketing import setup_routes as setup_marketing_routes
     from routes.admin.users import setup_routes as setup_users_routes
@@ -144,6 +145,11 @@ try:
     
     security_router = setup_security_routes(templates) # Initialize security routes
     app.include_router(security_router)
+    
+    # Add admin API routes
+    admin_api_router = setup_admin_api_routes()
+    app.include_router(admin_api_router)
+    logger.info("Admin API routes registered successfully")
     
     # Simple plugins routes already registered above
     
