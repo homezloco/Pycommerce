@@ -64,11 +64,12 @@ def wait_for_fastapi(max_retries=10, delay=1):
         time.sleep(delay)
     return False
 
-# Start FastAPI server
-start_thread = threading.Thread(target=start_fastapi_server)
-start_thread.daemon = True
-start_thread.start()
-time.sleep(2)  # Give it a moment to start
+# Disable automatic FastAPI server start - let asgi_wsgi_app.py handle this instead
+# start_thread = threading.Thread(target=start_fastapi_server)
+# start_thread.daemon = True
+# start_thread.start()
+# time.sleep(2)  # Give it a moment to start
+logger.info("Automatic FastAPI server start disabled - delegating to asgi_wsgi_app.py")
 
 @app.route('/health')
 def health():
@@ -114,14 +115,10 @@ def proxy(path):
         )
         return response
     except requests.exceptions.ConnectionError:
-        # If the FastAPI server is not running, try to start it
-        if not is_fastapi_running():
-            logger.warning("FastAPI server is not running. Attempting to restart...")
-            if start_fastapi_server() and wait_for_fastapi():
-                return proxy(path)  # Retry the request
-            else:
-                return jsonify({"error": "FastAPI server is not available"}), 503
-        return jsonify({"error": "Failed to connect to FastAPI server"}), 503
+        # Don't try to restart the server, just report the error
+        # Server startup is now handled by asgi_wsgi_app.py
+        logger.warning("FastAPI server is not available or not running.")
+        return jsonify({"error": "FastAPI server is not available. Server is managed by asgi_wsgi_app.py"}), 503
     except Exception as e:
         logger.error(f"Error proxying request: {e}")
         return jsonify({"error": str(e)}), 500

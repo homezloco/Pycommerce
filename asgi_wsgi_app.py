@@ -24,8 +24,10 @@ from io import BytesIO
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Create a ProcessPoolExecutor for handling ASGI requests
-UVICORN_PORT = 8001  # Changed from 8000 to avoid port conflicts
+# Force port 8001 to be consistent across all components
+# This avoids issues with different components using different ports
+os.environ['UVICORN_PORT'] = '8001'
+UVICORN_PORT = 8001
 UVICORN_HOST = "127.0.0.1"
 UVICORN_SERVER = f"http://{UVICORN_HOST}:{UVICORN_PORT}"
 
@@ -34,6 +36,14 @@ uvicorn_process = None
 
 # Flag to track if a server start is in progress
 _server_start_in_progress = False
+
+# Flag to disable server start completely if environment variable is set
+# This allows for complete manual control of the uvicorn server
+DISABLE_AUTO_START = os.environ.get('DISABLE_UVICORN_AUTO_START', '').lower() in ('true', '1', 'yes')
+
+# If disabled, log a message
+if DISABLE_AUTO_START:
+    logger.warning("Automatic uvicorn server start is DISABLED by environment variable")
 
 # No longer need special handling for category page requests
 # After fixing CategoryManager with proper Flask app_context handling
@@ -260,6 +270,18 @@ def proxy_to_uvicorn(environ, start_response):
         health_check = False
         
     if not health_check:
+        # Check if automatic server start is disabled
+        if DISABLE_AUTO_START:
+            logger.warning("Automatic server start is disabled by environment variable")
+            start_response('503 Service Unavailable', [('Content-Type', 'text/html')])
+            return [b'''
+            <html><body>
+                <h1>Service Unavailable</h1>
+                <p>The FastAPI server is not running and automatic start is disabled.</p>
+                <p>Please start the server manually or enable automatic start.</p>
+            </body></html>
+            ''']
+            
         # Only try to start the server if it's not already trying to start
         # This avoids repeated restart attempts that can cause conflicts
         if not _server_start_in_progress:
