@@ -1109,88 +1109,262 @@ function ensureSortableLoaded(callback) {
 <script>
   // Define global functions that are called directly from HTML elements
   function loadProducts(selectedProductId) {
-    // Get the current tenant from the URL or directly from the page data
-    const urlParams = new URLSearchParams(window.location.search);
-    let tenant = urlParams.get('tenant');
+    // Store attempted fetch sources for debugging
+    const attempts = {
+      mainApi: false,
+      adminApi: false,
+      storeApi: false,
+      allProductsApi: false
+    };
     
-    // Try to get the current tenant from the page data if not in URL
-    if (!tenant) {
-      // Extract tenant slug from page data (if available)
-      const pagePathParts = window.location.pathname.split('/');
-      const pageIdIndex = pagePathParts.indexOf('editor') + 1;
-      
-      if (pageIdIndex > 0 && pageIdIndex < pagePathParts.length) {
-        // Get tenant slug from document
-        const tenantElement = document.querySelector('.tenant-name');
-        if (tenantElement) {
-          // Extract tenant slug from the element text or data attribute
-          const tenantName = tenantElement.textContent.trim();
-          // Convert to slug format (lowercase, hyphens)
-          tenant = tenantName.toLowerCase().replace(/\s+/g, '-');
-        }
-      }
-      
-      // If still no tenant, try to get from session storage or use one of the tenants with products
-      if (!tenant) {
-        tenant = sessionStorage.getItem('selected_tenant') || 'tech'; // Use 'tech' which has products
-      }
-      
-      console.log('Using derived tenant slug:', tenant);
+    // Get product select element
+    const productSelect = document.getElementById('blockProductId');
+    if (!productSelect) {
+      console.error('Product select element not found');
+      return;
     }
     
-    console.log('Loading products for tenant:', tenant);
+    // Show loading state
+    productSelect.innerHTML = '<option value="">Loading products...</option>';
+    productSelect.disabled = true;
     
-    // Fetch products from the API
-    fetch(`/admin/api/products?tenant=${tenant}`)
-      .then(response => {
-        if (!response.ok) {
-          console.error('API response not OK:', response.status, response.statusText);
-          throw new Error('Error fetching products');
+    // Determine the tenant through multiple methods
+    getTenantId().then(tenantInfo => {
+      const { id, slug } = tenantInfo;
+      console.log('Tenant information:', tenantInfo);
+      
+      // Start the fetch process with fallbacks
+      fetchProductsWithFallbacks(slug);
+    }).catch(error => {
+      console.error('Error determining tenant:', error);
+      // Use default tenant as fallback
+      fetchProductsWithFallbacks('default');
+    });
+    
+    // Determine tenant information using multiple approaches
+    async function getTenantId() {
+      // First try: URL parameters
+      const urlParams = new URLSearchParams(window.location.search);
+      let tenantSlug = urlParams.get('tenant');
+      
+      if (tenantSlug) {
+        return { slug: tenantSlug };
+      }
+      
+      // Second try: Page form or hidden elements
+      const tenantIdField = document.querySelector('input[name="tenant_id"]');
+      if (tenantIdField && tenantIdField.value) {
+        try {
+          // Try to get tenant information from server
+          const response = await fetch(`/admin/api/tenants/${tenantIdField.value}`);
+          if (response.ok) {
+            const data = await response.json();
+            if (data && data.slug) {
+              return { id: tenantIdField.value, slug: data.slug };
+            }
+          }
+        } catch (error) {
+          console.warn('Could not get tenant info from API:', error);
         }
-        return response.json();
-      })
-      .then(data => {
-        // Populate the select dropdown
-        const productSelect = document.getElementById('blockProductId');
+      }
+      
+      // Third try: Tenant element on page
+      const tenantElement = document.querySelector('.tenant-name');
+      if (tenantElement) {
+        const tenantName = tenantElement.textContent.trim();
+        const slug = tenantName.toLowerCase().replace(/\s+/g, '-');
+        return { slug };
+      }
+      
+      // Fourth try: Extract from URL path
+      const pagePath = window.location.pathname;
+      const storeMatch = pagePath.match(/\/store\/([^\/]+)/);
+      const adminMatch = pagePath.match(/\/admin\/tenant\/([^\/]+)/);
+      
+      if (storeMatch && storeMatch[1]) {
+        return { slug: storeMatch[1] };
+      } else if (adminMatch && adminMatch[1]) {
+        return { slug: adminMatch[1] };
+      }
+      
+      // Fifth try: Session storage
+      const storedTenant = sessionStorage.getItem('selected_tenant');
+      if (storedTenant) {
+        return { slug: storedTenant };
+      }
+      
+      // Last resort - common store slugs
+      const commonTenants = ['default', 'demo1', 'tech', 'fashion', 'outdoor'];
+      // Try each common tenant to see if it has products
+      for (const tenant of commonTenants) {
+        try {
+          const response = await fetch(`/admin/api/tenant-check?slug=${tenant}`);
+          if (response.ok) {
+            return { slug: tenant };
+          }
+        } catch (error) {
+          console.warn(`Failed to check tenant: ${tenant}`);
+        }
+      }
+      
+      // Final fallback
+      return { slug: 'default' };
+    }
+    
+    // Primary function to fetch products with multiple fallbacks
+    function fetchProductsWithFallbacks(tenantSlug) {
+      console.log('Loading products for tenant:', tenantSlug);
+      
+      // Try main API first
+      attempts.mainApi = true;
+      fetch(`/admin/api/products?tenant=${tenantSlug}`)
+        .then(response => {
+          if (!response.ok) {
+            throw new Error(`Main API response not OK: ${response.status}`);
+          }
+          return response.json();
+        })
+        .then(data => {
+          console.log('Products loaded from main API:', data);
+          processProductData(data);
+        })
+        .catch(error => {
+          console.error('Error fetching from main API:', error);
+          tryAdminApi(tenantSlug);
+        });
+    }
+    
+    // Second attempt - alternative admin API endpoint
+    function tryAdminApi(tenantSlug) {
+      attempts.adminApi = true;
+      fetch(`/api/products?tenant=${tenantSlug}`)
+        .then(response => {
+          if (!response.ok) {
+            throw new Error(`Admin API response not OK: ${response.status}`);
+          }
+          return response.json();
+        })
+        .then(data => {
+          console.log('Products loaded from API endpoint:', data);
+          processProductData(data);
+        })
+        .catch(error => {
+          console.error('Error fetching from API endpoint:', error);
+          tryStoreApi(tenantSlug);
+        });
+    }
+    
+    // Third attempt - store-specific API
+    function tryStoreApi(tenantSlug) {
+      attempts.storeApi = true;
+      fetch(`/store/${tenantSlug}/api/products`)
+        .then(response => {
+          if (!response.ok) {
+            throw new Error(`Store API response not OK: ${response.status}`);
+          }
+          return response.json();
+        })
+        .then(data => {
+          console.log('Products loaded from store API:', data);
+          processProductData(data);
+        })
+        .catch(error => {
+          console.error('Error fetching from store API:', error);
+          tryAllProductsApi();
+        });
+    }
+    
+    // Final attempt - all products endpoint
+    function tryAllProductsApi() {
+      attempts.allProductsApi = true;
+      fetch(`/admin/api/products/all`)
+        .then(response => {
+          if (!response.ok) {
+            throw new Error(`All products API response not OK: ${response.status}`);
+          }
+          return response.json();
+        })
+        .then(data => {
+          console.log('Products loaded from all products API:', data);
+          processProductData(data);
+        })
+        .catch(error => {
+          console.error('All product API attempts failed:', error);
+          console.error('Attempt summary:', attempts);
+          
+          // Create error state in dropdown
+          productSelect.innerHTML = '<option value="">Error loading products</option>';
+          productSelect.disabled = false;
+        });
+    }
+    
+    // Process product data from any source
+    function processProductData(data) {
+      let products = [];
+      
+      // Handle different API response formats
+      if (Array.isArray(data)) {
+        products = data;
+      } else if (data.products && Array.isArray(data.products)) {
+        products = data.products;
+      } else if (data.items && Array.isArray(data.items)) {
+        products = data.items;
+      } else if (data.data && Array.isArray(data.data)) {
+        products = data.data;
+      } else if (data.results && Array.isArray(data.results)) {
+        products = data.results;
+      } else {
+        console.warn('Unexpected API response format:', data);
         
-        // Clear existing options
-        productSelect.innerHTML = '';
-        
-        // Add a default option
-        const defaultOption = document.createElement('option');
-        defaultOption.value = '';
-        defaultOption.textContent = '-- Select a product --';
-        productSelect.appendChild(defaultOption);
-        
-        // Check if we have products
-        if (data.products && data.products.length > 0) {
-          // Add product options
-          data.products.forEach(product => {
+        // Last attempt to find any array in the response
+        const findArrays = Object.values(data).filter(val => Array.isArray(val));
+        if (findArrays.length > 0) {
+          // Use the largest array found
+          products = findArrays.sort((a, b) => b.length - a.length)[0];
+        } else {
+          products = [];
+        }
+      }
+      
+      // Clear existing options
+      productSelect.innerHTML = '';
+      productSelect.disabled = false;
+      
+      // Add a default option
+      const defaultOption = document.createElement('option');
+      defaultOption.value = '';
+      defaultOption.textContent = '-- Select a product --';
+      productSelect.appendChild(defaultOption);
+      
+      // If we have products, populate the dropdown
+      if (products && products.length > 0) {
+        // Add product options
+        products.forEach(product => {
+          // Handle different product formats
+          const id = product.id || product._id || product.product_id;
+          const name = product.name || product.title || product.product_name || 'Unnamed Product';
+          
+          if (id) {
             const option = document.createElement('option');
-            option.value = product.id;
-            option.textContent = product.name;
-            if (product.id === selectedProductId) {
+            option.value = id;
+            option.textContent = name;
+            if (id === selectedProductId) {
               option.selected = true;
             }
             productSelect.appendChild(option);
-          });
-          
-          // Mark as loaded
-          productSelect.setAttribute('data-products-loaded', 'true');
-        } else {
-          // No products found
-          const noProductsOption = document.createElement('option');
-          noProductsOption.value = '';
-          noProductsOption.textContent = 'No products available for this tenant';
-          productSelect.appendChild(noProductsOption);
-        }
-      })
-      .catch(error => {
-        console.error('Error fetching products:', error);
-        // Add an error message to the select
-        const productSelect = document.getElementById('blockProductId');
-        productSelect.innerHTML = '<option value="">Error loading products</option>';
-      });
+          }
+        });
+        
+        // Mark as loaded
+        productSelect.setAttribute('data-products-loaded', 'true');
+      } else {
+        // No products found
+        const noProductsOption = document.createElement('option');
+        noProductsOption.value = '';
+        noProductsOption.textContent = 'No products available';
+        productSelect.appendChild(noProductsOption);
+      }
+    }
   }
   
   function editSection(sectionId, sectionType) {
@@ -1279,175 +1453,263 @@ function ensureSortableLoaded(callback) {
   }
   
   function loadCategories() {
-    // First try to get the tenant ID from the hidden field
-    let tenant = '';
-    const tenantIdElement = document.getElementById('tenantId');
+    // Store attempted fetch sources for debugging
+    const attempts = {
+      apiEndpoint: false,
+      adminApiEndpoint: false,
+      tenantSpecificEndpoint: false,
+      allCategoriesEndpoint: false
+    };
     
-    if (tenantIdElement && tenantIdElement.value) {
-      tenant = tenantIdElement.value;
-      console.log('Using tenant ID from page data:', tenant);
+    // Get category select element
+    const categorySelect = document.getElementById('productCategory');
+    if (!categorySelect) {
+      console.error('Category select element not found');
+      return;
+    }
+    
+    // Show loading state
+    categorySelect.innerHTML = '<option value="">Loading categories...</option>';
+    categorySelect.disabled = true;
+    
+    // Determine the tenant through multiple methods using the same function we defined for products
+    // This ensures consistent tenant detection between the two functions
+    if (typeof getTenantId === 'function') {
+      getTenantId().then(tenantInfo => {
+        const { id, slug } = tenantInfo;
+        console.log('Tenant information for categories:', tenantInfo);
+        
+        // Start the fetch process with fallbacks
+        fetchCategoriesWithFallbacks(slug);
+      }).catch(error => {
+        console.error('Error determining tenant for categories:', error);
+        // Use default tenant as fallback
+        fetchCategoriesWithFallbacks('default');
+      });
     } else {
+      // Fallback if getTenantId isn't defined yet (shouldn't happen since we defined loadProducts first)
+      console.warn('getTenantId function not available, using legacy tenant detection');
+      legacyGetTenant().then(tenant => {
+        fetchCategoriesWithFallbacks(tenant);
+      });
+    }
+    
+    // Legacy tenant detection method
+    async function legacyGetTenant() {
+      // First try to get the tenant ID from the hidden field
+      const tenantIdElement = document.getElementById('tenantId');
+      
+      if (tenantIdElement && tenantIdElement.value) {
+        return tenantIdElement.value;
+      }
+      
       // Fallback to URL params or session storage
       const urlParams = new URLSearchParams(window.location.search);
-      tenant = urlParams.get('tenant');
+      const tenant = urlParams.get('tenant');
       
       // If not in URL, try to get from session storage or use a default tenant
       if (!tenant) {
-        tenant = sessionStorage.getItem('selected_tenant') || 'tech';
-        console.log('Using fallback tenant from session or default:', tenant);
+        const storedTenant = sessionStorage.getItem('selected_tenant');
+        if (storedTenant) {
+          return storedTenant;
+        }
+        
+        // Try to determine tenant from URL path
+        const pagePath = window.location.pathname;
+        const storeMatch = pagePath.match(/\/store\/([^\/]+)/);
+        const adminMatch = pagePath.match(/\/admin\/tenant\/([^\/]+)/);
+        
+        if (storeMatch && storeMatch[1]) {
+          return storeMatch[1];
+        } else if (adminMatch && adminMatch[1]) {
+          return adminMatch[1];
+        }
+        
+        // Final fallback
+        return 'default';
       }
+      
+      return tenant;
     }
     
-    console.log('Loading categories for tenant:', tenant);
+    // Primary function to fetch categories with multiple fallbacks
+    function fetchCategoriesWithFallbacks(tenantSlug) {
+      console.log('Loading categories for tenant:', tenantSlug);
+      
+      // Try main API first
+      attempts.apiEndpoint = true;
+      fetch(`/api/categories?tenant=${tenantSlug}`)
+        .then(response => {
+          if (!response.ok) {
+            throw new Error(`API endpoint response not OK: ${response.status}`);
+          }
+          return response.json();
+        })
+        .then(data => {
+          console.log('Categories loaded from main API:', data);
+          processCategoryData(data);
+        })
+        .catch(error => {
+          console.error('Error fetching from main API endpoint:', error);
+          tryAdminEndpoint(tenantSlug);
+        });
+    }
     
-    // Fetch categories from the API - try multiple endpoints with better error handling
-    fetch(`/api/categories?tenant=${tenant}`)
-      .then(response => {
-        if (!response.ok) {
-          console.log('First endpoint failed, trying admin categories endpoint...');
-          return fetch(`/admin/api/categories?tenant=${tenant}`);
-        }
-        return response;
-      })
-      .catch(error => {
-        // Network error on first attempt, try the admin endpoint
-        console.warn('Network error on first attempt:', error);
-        return fetch(`/admin/api/categories?tenant=${tenant}`);
-      })
-      .then(response => {
-        if (!response.ok) {
-          // Try one more endpoint as a last resort
-          console.log('Second endpoint failed, trying admin tenant-categories endpoint...');
-          return fetch(`/admin/api/tenants/${tenant}/categories`);
-        }
-        return response;
-      })
-      .then(response => {
-        if (!response.ok) {
-          throw new Error(`Error fetching categories: ${response.status} ${response.statusText}`);
-        }
-        return response.json();
-      })
-      .then(data => {
-        // Populate the select dropdown
-        const categorySelect = document.getElementById('productCategory');
-        if (!categorySelect) {
-          console.error('Could not find productCategory select element');
-          return;
-        }
-        
-        // Keep the default "All Categories" option
-        const defaultOption = categorySelect.querySelector('option[value=""]');
-        categorySelect.innerHTML = '';
-        if (defaultOption) {
-          categorySelect.appendChild(defaultOption);
-        } else {
-          const newDefaultOption = document.createElement('option');
-          newDefaultOption.value = '';
-          newDefaultOption.textContent = 'All Categories';
-          categorySelect.appendChild(newDefaultOption);
-        }
-        
-        // Log what we received for debugging
-        console.log('Data received from API:', data);
-        
-        // Handle different data structures from different API endpoints
-        let categories = [];
-        
-        // Check for categories directly in the data
-        if (Array.isArray(data)) {
-          console.log('Data is an array, using directly');
-          categories = data;
-        } 
-        // Check for categories in a nested property
-        else if (data.categories && Array.isArray(data.categories)) {
-          console.log('Using categories from data.categories');
-          categories = data.categories;
-        } 
-        // Check for results property (from another endpoint)
-        else if (data.results && Array.isArray(data.results)) {
-          console.log('Using categories from data.results');
-          categories = data.results;
-        }
-        // Check for items property (from another endpoint)
-        else if (data.items && Array.isArray(data.items)) {
-          console.log('Using categories from data.items');
-          categories = data.items;
-        }
-        // Try to find any array property as last resort
-        else {
-          for (const key in data) {
-            if (Array.isArray(data[key])) {
-              console.log(`Found array in data.${key}, using it`);
-              categories = data[key];
-              break;
-            }
+    // Second attempt - admin API endpoint
+    function tryAdminEndpoint(tenantSlug) {
+      attempts.adminApiEndpoint = true;
+      fetch(`/admin/api/categories?tenant=${tenantSlug}`)
+        .then(response => {
+          if (!response.ok) {
+            throw new Error(`Admin API response not OK: ${response.status}`);
           }
-        }
-        
-        // Add categories to the dropdown
-        if (categories && categories.length > 0) {
-          categories.forEach(category => {
-            const option = document.createElement('option');
-            // Handle different category object structures
-            option.value = category.id || category.category_id || category._id || '';
-            option.textContent = category.name || category.category_name || category.title || '';
-            categorySelect.appendChild(option);
-          });
-          console.log(`Added ${categories.length} categories to dropdown`);
-        } else {
-          console.log('No categories found for tenant', tenant);
-        }
-      })
-      .catch(error => {
-        console.error('Error fetching categories:', error);
-        // Still provide some default categories as fallback based on tenant type
-        const categorySelect = document.getElementById('productCategory');
-        if (categorySelect) {
-          let categories = [];
-          
-          // Try to determine tenant type from the tenant id/name to show more relevant categories
-          if (tenant.includes('tech') || tenant.includes('gadget')) {
-            categories = [
-              { id: 'electronics', name: 'Electronics' },
-              { id: 'computers', name: 'Computers' },
-              { id: 'accessories', name: 'Tech Accessories' },
-              { id: 'software', name: 'Software' }
-            ];
-          } else if (tenant.includes('fashion') || tenant.includes('clothes') || tenant.includes('boutique')) {
-            categories = [
-              { id: 'clothing', name: 'Clothing' },
-              { id: 'accessories', name: 'Fashion Accessories' },
-              { id: 'shoes', name: 'Shoes' },
-              { id: 'jewelry', name: 'Jewelry' }
-            ];
-          } else if (tenant.includes('outdoor') || tenant.includes('adventure')) {
-            categories = [
-              { id: 'gear', name: 'Outdoor Gear' },
-              { id: 'clothing', name: 'Outdoor Clothing' },
-              { id: 'equipment', name: 'Equipment' },
-              { id: 'camping', name: 'Camping' }
-            ];
-          } else {
-            // Generic categories for any store
-            categories = [
-              { id: 'bestsellers', name: 'Best Sellers' },
-              { id: 'new', name: 'New Arrivals' },
-              { id: 'featured', name: 'Featured Products' },
-              { id: 'sale', name: 'Sale Items' }
-            ];
+          return response.json();
+        })
+        .then(data => {
+          console.log('Categories loaded from admin API:', data);
+          processCategoryData(data);
+        })
+        .catch(error => {
+          console.error('Error fetching from admin API endpoint:', error);
+          tryTenantSpecificEndpoint(tenantSlug);
+        });
+    }
+    
+    // Third attempt - tenant-specific endpoint
+    function tryTenantSpecificEndpoint(tenantSlug) {
+      attempts.tenantSpecificEndpoint = true;
+      fetch(`/admin/api/tenants/${tenantSlug}/categories`)
+        .then(response => {
+          if (!response.ok) {
+            throw new Error(`Tenant-specific API response not OK: ${response.status}`);
           }
+          return response.json();
+        })
+        .then(data => {
+          console.log('Categories loaded from tenant-specific API:', data);
+          processCategoryData(data);
+        })
+        .catch(error => {
+          console.error('Error fetching from tenant-specific endpoint:', error);
+          tryAllCategoriesEndpoint();
+        });
+    }
+    
+    // Final attempt - all categories endpoint
+    function tryAllCategoriesEndpoint() {
+      attempts.allCategoriesEndpoint = true;
+      fetch(`/admin/api/categories/all`)
+        .then(response => {
+          if (!response.ok) {
+            throw new Error(`All categories API response not OK: ${response.status}`);
+          }
+          return response.json();
+        })
+        .then(data => {
+          console.log('Categories loaded from all categories API:', data);
+          processCategoryData(data);
+        })
+        .catch(error => {
+          console.error('All category API attempts failed:', error);
+          console.error('Attempt summary:', attempts);
           
-          console.log(`Adding fallback categories for tenant type: ${tenant}`);
+          // Create error state and enable the dropdown
+          categorySelect.innerHTML = '<option value="">Error loading categories</option>';
+          categorySelect.disabled = false;
           
-          categories.forEach(category => {
-            const option = document.createElement('option');
-            option.value = category.id;
-            option.textContent = category.name;
-            categorySelect.appendChild(option);
-          });
+          // Try to fetch category info from the API
+          tryFetchingFromAPI();
+        });
+    }
+    
+    // Last resort - attempt to fetch from direct API endpoint
+    function tryFetchingFromAPI() {
+      fetch(`/api/store-info/categories`)
+        .then(response => {
+          if (!response.ok) {
+            throw new Error('Store info API failed');
+          }
+          return response.json();
+        })
+        .then(data => {
+          console.log('Categories loaded from store info API:', data);
+          processCategoryData(data);
+        })
+        .catch(error => {
+          console.error('Final category API attempt failed:', error);
+          // Provide "All Categories" as a default option
+          categorySelect.innerHTML = '<option value="">All Categories</option>';
+          categorySelect.disabled = false;
+        });
+    }
+    
+    // Process category data from any source
+    function processCategoryData(data) {
+      let categories = [];
+      
+      // Handle different API response formats
+      if (Array.isArray(data)) {
+        categories = data;
+      } else if (data.categories && Array.isArray(data.categories)) {
+        categories = data.categories;
+      } else if (data.items && Array.isArray(data.items)) {
+        categories = data.items;
+      } else if (data.results && Array.isArray(data.results)) {
+        categories = data.results;
+      } else if (data.data && Array.isArray(data.data)) {
+        categories = data.data;
+      } else {
+        console.warn('Unexpected API response format:', data);
+        
+        // Last attempt to find any array in the response
+        const findArrays = Object.values(data).filter(val => Array.isArray(val));
+        if (findArrays.length > 0) {
+          // Use the largest array found
+          categories = findArrays.sort((a, b) => b.length - a.length)[0];
+        } else {
+          categories = [];
         }
-      });
+      }
+      
+      // Clear existing options
+      categorySelect.innerHTML = '';
+      categorySelect.disabled = false;
+      
+      // Add a default "All Categories" option
+      const defaultOption = document.createElement('option');
+      defaultOption.value = '';
+      defaultOption.textContent = 'All Categories';
+      categorySelect.appendChild(defaultOption);
+      
+      // Add categories to the dropdown
+      if (categories && categories.length > 0) {
+        categories.forEach(category => {
+          // Handle different category object structures
+          const id = category.id || category.category_id || category._id || '';
+          const name = category.name || category.category_name || category.title || '';
+          
+          if (id && name) {
+            const option = document.createElement('option');
+            option.value = id;
+            option.textContent = name;
+            categorySelect.appendChild(option);
+          }
+        });
+        
+        console.log(`Added ${categories.length} categories to dropdown`);
+      } else {
+        console.log('No categories found');
+        
+        // Add "No categories available" option if there's only the default option
+        if (categorySelect.options.length <= 1) {
+          const noDataOption = document.createElement('option');
+          noDataOption.value = '';
+          noDataOption.textContent = 'No categories available';
+          noDataOption.disabled = true;
+          categorySelect.appendChild(noDataOption);
+        }
+      }
+    }
   }
   
   function deleteSection(sectionId) {
