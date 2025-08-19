@@ -168,6 +168,12 @@ scripts/output/
 *.temp.py
 *.backup.py
 
+# Cache and package directories
+.cache/
+.uv/
+uv.lock
+*.egg-info/
+
 # Security and environment files
 .env
 .env.local

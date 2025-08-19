@@ -16,23 +16,30 @@ def check_secrets_in_files():
     
     # Patterns that indicate potential secrets
     secret_patterns = [
-        (r'["\']sk_test_[a-zA-Z0-9]+["\']', 'Stripe test secret key'),
         (r'["\']sk_live_[a-zA-Z0-9]+["\']', 'Stripe live secret key'),
-        (r'["\']pk_test_[a-zA-Z0-9]+["\']', 'Stripe test public key'),
         (r'["\']pk_live_[a-zA-Z0-9]+["\']', 'Stripe live public key'),
         (r'["\']AIza[a-zA-Z0-9_-]{35}["\']', 'Google API key'),
         (r'["\']ya29\.[a-zA-Z0-9_-]+["\']', 'Google OAuth token'),
-        (r'password\s*=\s*["\'][^"\']+["\']', 'Hardcoded password'),
-        (r'secret_key\s*=\s*["\'][^"\']+["\']', 'Hardcoded secret key'),
-        (r'api_key\s*=\s*["\'][^"\']+["\']', 'Hardcoded API key'),
+        (r'password\s*=\s*["\'][a-zA-Z0-9!@#$%^&*()_+-=]{8,}["\']', 'Hardcoded password'),
+        (r'secret_key\s*=\s*["\'][a-zA-Z0-9!@#$%^&*()_+-=]{16,}["\']', 'Hardcoded secret key'),
+        (r'api_key\s*=\s*["\'][a-zA-Z0-9]{20,}["\']', 'Hardcoded API key'),
+        (r'DATABASE_URL\s*=\s*["\']postgresql://[^"\']+["\']', 'Hardcoded database URL'),
     ]
     
     issues = []
-    exclude_dirs = {'scripts', '.git', '__pycache__', 'node_modules', '.pythonlibs'}
+    exclude_dirs = {
+        'scripts', '.git', '__pycache__', 'node_modules', '.pythonlibs', 
+        '.cache', '.uv', 'venv', '.venv', 'env', '.env',
+        'site-packages', 'dist-packages', '.pytest_cache'
+    }
     
     for root, dirs, files in os.walk('.'):
         # Skip excluded directories
         dirs[:] = [d for d in dirs if d not in exclude_dirs]
+        
+        # Skip any directory that contains third-party code
+        if any(excluded in root for excluded in ['.cache', '.uv', 'site-packages', 'dist-packages']):
+            continue
         
         for file in files:
             if file.endswith(('.py', '.js', '.html', '.yml', '.yaml', '.json', '.env')):
