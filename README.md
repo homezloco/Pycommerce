@@ -67,12 +67,12 @@ A comprehensive, multi-tenant e-commerce platform built with FastAPI, Flask, and
 
 4. **Initialize the database**
    ```bash
-   python initialize_db.py
+   python scripts/setup/initialize_db.py
    ```
 
 5. **Generate sample data (optional)**
    ```bash
-   python generate_sample_data.py
+   python scripts/demo/generate_sample_data.py
    ```
 
 6. **Run the application**

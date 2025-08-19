@@ -161,3 +161,9 @@ Thumbs.db
 
 # Attached assets folder
 attached_assets/
+
+# Scripts output and temporary files
+scripts/output/
+*.debug
+*.temp.py
+*.backup.py
