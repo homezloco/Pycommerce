@@ -1,0 +1,129 @@
+# PyCommerce Project Plan
+
+This plan supersedes `ImplementationPlan.md` and reflects the current codebase direction and user preferences.
+
+## Objectives
+
+- Deliver a modular, multi-tenant ecommerce SDK with FastAPI backend and React frontend samples.
+- Provide plugin-based extensibility (payments, shipping, AI content).
+- Ship robust fallbacks for APIs, databases, auth, payment, security, deployment, monitoring, logging, UX, and performance.
+- Maintain high developer ergonomics (WSL-first workflow, CI, tests, docs).
+
+## Scope (MVP v0.1.0)
+
+- SDK managers and models for Products, Carts, Orders, Users, Tenants.
+- FastAPI REST API with multi-tenant support and JWT auth.
+- Payment plugins: Stripe, PayPal (sandbox modes), with clear fallbacks.
+- AI routes for content generation (OpenAI) with safe timeouts and opt-out.
+- Documentation, CI, packaging, and example usage.
+
+## Architecture Overview
+
+- Core: `pycommerce/core/base.py`, `pycommerce/core/db.py`, `pycommerce/core/plugin.py`.
+- API: `api/routes/` for domain routers (products, cart, checkout, payments, users, ai).
+- Plugins: `plugins/payment/*` implementing `PaymentPlugin`.
+- Packaging: `pyproject.toml`, `pycommerce/__init__.py` re-exports.
+- Multi-tenancy: header/subdomain tenant resolution; DB isolation; UUID PKs.
+
+## Milestones & Deliverables
+
+### M0: Groundwork and Docs (Now → 2 days)
+- README overhaul (install, quickstart, env, run on WSL, multi-tenancy, routes, plugins, fallbacks).
+- ARCHITECTURE.md (high-level and component interactions).
+- LICENSE (MIT or Apache-2.0) and `pyproject.toml` classifiers.
+- CHANGELOG.md (start v0.1.0).
+- .env.example (DATABASE_URL, OPENAI_API_KEY, STRIPE_SECRET_KEY, PAYPAL_CLIENT_ID/SECRET).
+
+### M1: Quality and CI (2 → 5 days)
+- GitHub Actions: lint (ruff/flake8), typing (mypy), tests (pytest), build package, secret scan.
+- Issue/PR templates under `.github/`.
+- Logging configuration (structured logs, JSON option, correlation ids).
+- Security checks: dependency audit, basic SAST.
+
+### M2: Testing (5 → 10 days)
+- pytest setup; fixtures; TestClient for FastAPI.
+- Unit tests: ProductManager, CartManager, OrderManager, UserManager, TenantManager.
+- API tests: products, cart, checkout, payments (mock providers), users, ai (skip without key).
+- Auth tests: JWT flows, permission checks, dependency overrides.
+
+### M3: Hardening & Fallbacks (10 → 15 days)
+- Payments: timeouts, retries/backoff, error mapping; sandbox/live toggles; idempotency keys.
+- AI: timeouts, rate limiting hook, graceful disable without OPENAI_API_KEY.
+- DB: Alembic migrations validated; rollback on failures; SQLite fallback documented.
+- Observability: OTEL/Prometheus hooks with no-op fallback; request/tenant metrics.
+
+### M4: DevOps & Examples (optional, 15 → 20 days)
+- Dockerfile + docker-compose (FastAPI + Postgres) with WSL notes.
+- React sample app demonstrating products/cart/checkout and auth.
+- Release workflow to PyPI (optional) and tagged releases.
+
+## Environments & Configuration
+
+- Required env vars:
+  - `DATABASE_URL` (fallback: SQLite file)
+  - `OPENAI_API_KEY` (optional; AI routes disabled if missing)
+  - `STRIPE_SECRET_KEY` (optional; Stripe plugin disabled without it)
+  - `PAYPAL_CLIENT_ID`, `PAYPAL_CLIENT_SECRET` (optional; PayPal plugin disabled without them)
+- WSL-first commands and scripts; avoid PowerShell-only steps; ensure POSIX scripts provided.
+
+## Security & Compliance
+
+- JWT tokens with short expiry; rotate secrets; validate claims.
+- Secret management via env; no secrets committed.
+- PCI: delegate to Stripe/PayPal (tokenized), never store PANs.
+- Dependency pinning and audits; CI secret scanning and SAST.
+
+## Observability & Logging
+
+- Structured logs with request id, tenant id, user id.
+- Error logging with actionable messages; no sensitive data.
+- Metrics: latency, error rate, per-route and per-tenant counts.
+
+## Testing Strategy
+
+- Unit tests for all managers and validation logic.
+- API contract tests (OpenAPI schema check may be added).
+- Plugin tests using httpx mocking; no real network in CI.
+- Performance smoke for critical endpoints.
+
+## Deployment & Releases
+
+- Local: Uvicorn + SQLite/Postgres via compose.
+- Cloud: Containerized; health checks; readiness/liveness probes.
+- Versioning: SemVer; CHANGELOG; GitHub Releases.
+
+## Risks & Fallbacks
+
+- External APIs: guard with timeouts/backoff; surface clear, typed errors; togglable features when misconfigured.
+- DB unavailability: degrade to read-only where feasible; fail fast with clear guidance.
+- Auth failures: anonymous read-only mode optional for public catalog endpoints.
+- Plugin isolation: defensive input validation, exception boundaries.
+
+## Documentation Plan
+
+- Keep README and ARCHITECTURE in sync with changes.
+- Docs for each route in `api/routes/` including examples and error shapes.
+- Plugin author guide and example skeleton.
+
+## Acceptance Criteria for v0.1.0
+
+- All core routes functional with tenant isolation and JWT auth.
+- Stripe and PayPal plugins operate in sandbox with documented env and fallbacks.
+- Tests cover critical paths; CI green; docs present (README/ARCHITECTURE/CHANGELOG/LICENSE).
+- .env.example available; local run instructions verified on WSL.
+
+## Ownership & Governance
+
+- Code owners for core, routes, plugins, and docs to be assigned.
+- PR reviews required; CI must pass; small, focused PRs.
+
+## Current Gaps (from repo audit)
+
+- Missing: LICENSE, CHANGELOG, .env.example, CI, tests, Docker/devops, GitHub templates; README is minimal.
+- pyproject missing license/classifiers/long_description.
+
+## Next Actions
+
+1) Confirm license (MIT or Apache-2.0).
+2) Implement M0 deliverables (docs + metadata + env example).
+3) Set up CI and pytest skeleton (M1/M2).
