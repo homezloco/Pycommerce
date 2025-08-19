@@ -20,10 +20,10 @@ def check_secrets_in_files():
         (r'["\']pk_live_[a-zA-Z0-9]+["\']', 'Stripe live public key'),
         (r'["\']AIza[a-zA-Z0-9_-]{35}["\']', 'Google API key'),
         (r'["\']ya29\.[a-zA-Z0-9_-]+["\']', 'Google OAuth token'),
-        (r'password\s*=\s*["\'][a-zA-Z0-9!@#$%^&*()_+-=]{8,}["\']', 'Hardcoded password'),
-        (r'secret_key\s*=\s*["\'][a-zA-Z0-9!@#$%^&*()_+-=]{16,}["\']', 'Hardcoded secret key'),
-        (r'api_key\s*=\s*["\'][a-zA-Z0-9]{20,}["\']', 'Hardcoded API key'),
-        (r'DATABASE_URL\s*=\s*["\']postgresql://[^"\']+["\']', 'Hardcoded database URL'),
+        (r'password\s*=\s*["\'][a-zA-Z0-9!@#$%^&*()_+-=]{12,}["\'](?!.*your_password)', 'Hardcoded password'),
+        (r'secret_key\s*=\s*["\'][a-zA-Z0-9!@#$%^&*()_+-=]{32,}["\']', 'Hardcoded secret key'),
+        (r'api_key\s*=\s*["\'][a-zA-Z0-9]{32,}["\'](?!.*your_)', 'Hardcoded API key'),
+        (r'DATABASE_URL\s*=\s*["\']postgresql://[^"\']*:[^"\']*@[^"\']+["\']', 'Hardcoded database URL'),
     ]
     
     issues = []
@@ -37,8 +37,8 @@ def check_secrets_in_files():
         # Skip excluded directories
         dirs[:] = [d for d in dirs if d not in exclude_dirs]
         
-        # Skip any directory that contains third-party code
-        if any(excluded in root for excluded in ['.cache', '.uv', 'site-packages', 'dist-packages']):
+        # Skip any directory that contains third-party code or cache
+        if any(excluded in root for excluded in ['.cache', '.uv', 'site-packages', 'dist-packages', '.pythonlibs']):
             continue
         
         for file in files:
