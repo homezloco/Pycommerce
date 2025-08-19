@@ -1,0 +1,39 @@
+
+{
+  "name": "pycommerce",
+  "version": "0.1.0",
+  "description": "Multi-tenant ecommerce platform with FastAPI backend and customizable storefront",
+  "main": "static/js/page-builder.js",
+  "scripts": {
+    "dev": "echo 'Frontend assets are served statically'",
+    "build": "echo 'No build process required for static assets'",
+    "test": "echo 'No frontend tests configured'"
+  },
+  "keywords": [
+    "ecommerce",
+    "multi-tenant",
+    "fastapi",
+    "flask",
+    "page-builder"
+  ],
+  "author": "PyCommerce Team",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/bootstrap": "^5.2.0",
+    "@types/jquery": "^3.5.0"
+  },
+  "dependencies": {
+    "bootstrap": "^5.3.0",
+    "jquery": "^3.7.0",
+    "quill": "^1.3.7",
+    "@fortawesome/fontawesome-free": "^6.4.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-username/pycommerce.git"
+  },
+  "bugs": {
+    "url": "https://github.com/your-username/pycommerce/issues"
+  },
+  "homepage": "https://github.com/your-username/pycommerce#readme"
+}
