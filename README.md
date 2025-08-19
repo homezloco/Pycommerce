@@ -1,51 +1,54 @@
 
 # PyCommerce - Multi-Tenant E-commerce Platform
 
+[![PyCommerce CI](https://github.com/yourusername/pycommerce/actions/workflows/django.yml/badge.svg)](https://github.com/yourusername/pycommerce/actions/workflows/django.yml)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-green.svg)](https://fastapi.tiangolo.com/)
-[![Flask](https://img.shields.io/badge/Flask-3.1+-red.svg)](https://flask.palletsprojects.com/)
 
-PyCommerce is a powerful, multi-tenant e-commerce platform built with Python, featuring a plugin-based architecture and comprehensive admin dashboard. It supports multiple stores, advanced product management, AI-powered content generation, and extensive customization options.
+A comprehensive, multi-tenant e-commerce platform built with FastAPI, Flask, and modern web technologies. PyCommerce provides a complete solution for building and managing online stores with advanced features like AI integration, payment processing, inventory management, and customizable storefronts.
 
-## 🌟 Features
+## 🚀 Features
 
-### Core E-commerce Functionality
-- **Multi-tenant Architecture**: Support for multiple independent stores
-- **Product Management**: Categories, variants, inventory tracking, and media management
-- **Order Processing**: Complete order lifecycle with status tracking and fulfillment
-- **Shopping Cart & Checkout**: Seamless customer experience with multiple payment options
-- **Customer Management**: User accounts, order history, and customer analytics
+### Core E-commerce
+- **Multi-tenant architecture** - Support multiple stores in one installation
+- **Product catalog** - Categories, variants, inventory tracking
+- **Shopping cart & checkout** - Session-based cart with persistent storage
+- **Order management** - Complete order lifecycle with status tracking
+- **User accounts** - Customer registration and authentication
+- **Admin dashboard** - Comprehensive management interface
 
 ### Advanced Features
-- **AI Integration**: Content generation with OpenAI, Google Gemini, DeepSeek, and OpenRouter
-- **Page Builder**: Drag-and-drop interface for creating custom store pages
-- **Payment Processing**: Stripe and PayPal integration with secure checkout
-- **Shipping Management**: Multiple shipping methods and rate calculation
-- **Analytics & Reporting**: Sales trends, inventory reports, and market analysis
-- **Media Management**: AI-generated content and multi-level sharing
-- **Email System**: Automated notifications and marketing campaigns
-- **Theme Customization**: Dynamic CSS styling and custom domain support
+- **Payment processing** - Stripe and PayPal integration
+- **Shipping calculations** - Multiple shipping options and rate calculation
+- **AI integration** - OpenAI, Google Gemini, Anthropic support
+- **Media management** - Image uploads with AI generation
+- **Page builder** - Drag-and-drop page creation
+- **Email notifications** - Order confirmations and updates
+- **Market analysis** - Demand forecasting and trend analysis
+- **Estimates system** - Quote generation with PDF export
+- **Return management** - Return request processing
+- **Analytics** - Sales reporting and customer insights
 
-### Developer-Friendly
-- **Plugin Architecture**: Extensible system for custom functionality
-- **API-First Design**: Comprehensive REST API with OpenAPI documentation
-- **Database Support**: PostgreSQL with SQLAlchemy ORM
-- **Authentication**: JWT-based authentication with role management
-- **GDPR Compliance**: Built-in privacy and data protection tools
+### Technical Features
+- **RESTful API** - FastAPI-based with automatic documentation
+- **Database flexibility** - PostgreSQL with SQLAlchemy ORM
+- **Plugin system** - Extensible architecture
+- **Theme customization** - Customizable storefront themes
+- **Security** - GDPR compliance tools, fraud detection
+- **Performance** - Query optimization and caching
 
-## 🚀 Quick Start
+## 🛠️ Installation
 
 ### Prerequisites
-- Python 3.11 or higher
+- Python 3.10 or higher
 - PostgreSQL database
 - Git
 
-### Installation
+### Quick Start
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/your-username/pycommerce.git
+   git clone https://github.com/yourusername/pycommerce.git
    cd pycommerce
    ```
 
@@ -57,9 +60,9 @@ PyCommerce is a powerful, multi-tenant e-commerce platform built with Python, fe
 3. **Set up environment variables**
    ```bash
    export DATABASE_URL="postgresql://user:password@localhost:5432/pycommerce"
-   export SECRET_KEY="your-secret-key"
-   export STRIPE_SECRET_KEY="your-stripe-key"  # Optional
-   export OPENAI_API_KEY="your-openai-key"    # Optional
+   export SECRET_KEY="your-secret-key-here"
+   export STRIPE_PUBLISHABLE_KEY="pk_test_..."
+   export STRIPE_SECRET_KEY="sk_test_..."
    ```
 
 4. **Initialize the database**
@@ -67,220 +70,199 @@ PyCommerce is a powerful, multi-tenant e-commerce platform built with Python, fe
    python initialize_db.py
    ```
 
-5. **Start the application**
+5. **Generate sample data (optional)**
+   ```bash
+   python generate_sample_data.py
+   ```
+
+6. **Run the application**
    ```bash
    python main.py
    ```
 
 The application will be available at `http://localhost:5000`
 
-### Demo Data (Optional)
+### Docker Installation (Coming Soon)
 ```bash
-python create_demo_data.py
+docker run -d \
+  --name pycommerce \
+  -p 5000:5000 \
+  -e DATABASE_URL="your_db_url" \
+  -e SECRET_KEY="your_secret" \
+  pycommerce:latest
 ```
 
-## 📚 Documentation
+## 📖 Documentation
 
-- **[API Documentation](docs/api_reference.md)** - Complete API reference
-- **[Plugin Development](docs/plugin_development.md)** - Creating custom plugins
-- **[Deployment Guide](docs/deployment.md)** - Production deployment instructions
-- **[Configuration](docs/configuration.md)** - Environment and settings configuration
-
-### Interactive API Docs
-- Swagger UI: `http://localhost:5000/api/docs`
-- ReDoc: `http://localhost:5000/api/redoc`
-
-## 🏗️ Architecture
-
-PyCommerce follows a modular architecture:
-
-```
-pycommerce/
-├── api/           # FastAPI routes and schemas
-├── core/          # Core functionality and database
-├── models/        # SQLAlchemy models
-├── plugins/       # Payment, shipping, and AI plugins
-├── services/      # Business logic services
-└── utils/         # Utility functions
-
-routes/
-├── admin/         # Admin dashboard routes
-├── api/           # API endpoints
-└── storefront/    # Customer-facing routes
-
-templates/         # Jinja2 templates
-static/           # CSS, JavaScript, and media files
-```
-
-## 🔌 Plugin System
-
-PyCommerce supports extensible plugins for:
-
-- **Payment Processors**: Stripe, PayPal, and custom gateways
-- **Shipping Methods**: Standard, express, and custom calculators  
-- **AI Providers**: OpenAI, Google Gemini, DeepSeek, OpenRouter
-- **Analytics**: Custom reporting and data analysis tools
-
-### Creating a Plugin
-
-```python
-from pycommerce.core.plugin import Plugin
-
-class CustomPaymentPlugin(Plugin):
-    name = "custom_payment"
-    version = "1.0.0"
-    
-    def process_payment(self, amount, currency, **kwargs):
-        # Implementation here
-        pass
-```
-
-## 🌐 Multi-Tenant Support
-
-Each tenant operates independently with:
-- Separate databases or schema isolation
-- Custom domain support
-- Individual theme customization
-- Isolated user management
-- Independent plugin configurations
-
-## 🛡️ Security Features
-
-- JWT-based authentication
-- Role-based access control (RBAC)
-- CSRF protection
-- SQL injection prevention
-- XSS protection
-- GDPR compliance tools
-- Audit logging
-
-## 📊 Analytics & Reporting
-
-- Real-time sales dashboards
-- Inventory tracking and alerts
-- Customer behavior analysis
-- Market trend analysis
-- Performance metrics
-- Custom report generation
-
-## 🎨 Customization
-
-### Theme System
-- Dynamic CSS customization
-- Custom page layouts
-- Responsive design templates
-- Brand customization
-
-### Page Builder
-- Drag-and-drop interface
-- Pre-built components
-- Custom HTML/CSS support
-- Mobile-responsive design
+- [Installation Guide](docs/installation.md)
+- [API Reference](docs/api_reference.md)
+- [Features Overview](docs/features.md)
+- [Payment Integration](docs/payment_integration.md)
+- [Website Customization](docs/website_customization.md)
+- [Deployment Guide](docs/deployment.md)
 
 ## 🔧 Configuration
 
 ### Environment Variables
-```bash
-# Database
-DATABASE_URL=postgresql://user:pass@localhost:5432/pycommerce
 
-# Security
-SECRET_KEY=your-secret-key-here
-JWT_SECRET_KEY=your-jwt-secret
+| Variable | Description | Required |
+|----------|-------------|----------|
+| `DATABASE_URL` | PostgreSQL connection string | Yes |
+| `SECRET_KEY` | Flask/FastAPI secret key | Yes |
+| `STRIPE_PUBLISHABLE_KEY` | Stripe public key | No |
+| `STRIPE_SECRET_KEY` | Stripe secret key | No |
+| `PAYPAL_CLIENT_ID` | PayPal client ID | No |
+| `PAYPAL_CLIENT_SECRET` | PayPal client secret | No |
+| `OPENAI_API_KEY` | OpenAI API key for AI features | No |
+| `SENDGRID_API_KEY` | SendGrid for email notifications | No |
 
-# Payment Processors
-STRIPE_SECRET_KEY=sk_test_...
-STRIPE_PUBLISHABLE_KEY=pk_test_...
-PAYPAL_CLIENT_ID=your-paypal-client-id
-PAYPAL_CLIENT_SECRET=your-paypal-secret
+### Database Setup
 
-# AI Services
-OPENAI_API_KEY=sk-...
-GOOGLE_AI_API_KEY=your-google-key
+PyCommerce uses PostgreSQL as the primary database. You can use any PostgreSQL provider:
 
-# Email
-SENDGRID_API_KEY=your-sendgrid-key
-MAIL_SERVER=smtp.gmail.com
+- **Local PostgreSQL**: Install PostgreSQL locally
+- **Cloud providers**: Neon, Supabase, AWS RDS, etc.
+- **Development**: SQLite support for development
+
+## 🏗️ Architecture
+
+PyCommerce uses a hybrid architecture combining FastAPI for the API layer and Flask for the admin interface:
+
+```
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   Frontend      │    │   Flask Admin   │    │   FastAPI API   │
+│   (Templates)   │◄──►│   Interface     │◄──►│   Backend       │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+                                │                       │
+                                ▼                       ▼
+                        ┌─────────────────────────────────────┐
+                        │          PostgreSQL Database        │
+                        └─────────────────────────────────────┘
+```
+
+### Key Components
+
+- **FastAPI App** (`web_app.py`) - Main API server
+- **Flask Adapter** (`main.py`) - Admin interface and proxy
+- **Models** (`pycommerce/models/`) - SQLAlchemy database models
+- **Routes** (`routes/`) - API and admin route handlers
+- **Services** (`pycommerce/services/`) - Business logic
+- **Plugins** (`pycommerce/plugins/`) - Payment, shipping, AI integrations
+
+## 🔌 Plugins
+
+PyCommerce features an extensible plugin system:
+
+### Payment Plugins
+- **Stripe** - Credit card processing
+- **PayPal** - PayPal payments
+
+### Shipping Plugins
+- **Standard Shipping** - Flat rate and weight-based shipping
+
+### AI Plugins
+- **OpenAI** - GPT-4 integration
+- **Google Gemini** - Google's AI model
+- **Anthropic** - Claude AI integration
+
+### Creating Custom Plugins
+
+```python
+from pycommerce.core.plugin import BasePlugin
+
+class MyCustomPlugin(BasePlugin):
+    name = "my_custom_plugin"
+    version = "1.0.0"
+    
+    def initialize(self):
+        # Plugin initialization logic
+        pass
 ```
 
 ## 🧪 Testing
 
+Run the test suite:
 ```bash
-# Run all tests
-python -m pytest
+python run_tests.py
+```
 
-# Run with coverage
-python -m pytest --cov=pycommerce
-
-# Run specific test file
-python -m pytest tests/test_products.py
+For development with auto-reload:
+```bash
+export DEBUG=True
+python main.py
 ```
 
 ## 🚀 Deployment
 
-### Docker (Recommended)
-```bash
-docker build -t pycommerce .
-docker run -p 5000:5000 pycommerce
-```
+### Production Deployment
 
-### Traditional Deployment
-```bash
-# Install production dependencies
-pip install gunicorn
+1. **Using Gunicorn**
+   ```bash
+   gunicorn --bind 0.0.0.0:5000 --workers 4 main:app
+   ```
 
-# Run with Gunicorn
-gunicorn --bind 0.0.0.0:5000 main:app
-```
+2. **Environment Configuration**
+   ```bash
+   export FLASK_ENV=production
+   export DEBUG=False
+   export DATABASE_URL="postgresql://..."
+   ```
 
 ### Replit Deployment
-PyCommerce is optimized for deployment on Replit with automatic configuration.
+
+PyCommerce is optimized for Replit deployment:
+
+1. Fork this repository on Replit
+2. Set environment variables in Replit Secrets
+3. Click "Run" to start the application
 
 ## 🤝 Contributing
 
-We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
+We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
 ### Development Setup
+
 1. Fork the repository
-2. Create a feature branch: `git checkout -b feature-name`
-3. Make your changes and add tests
-4. Run the test suite: `python -m pytest`
+2. Create a feature branch
+3. Make your changes
+4. Add tests if applicable
 5. Submit a pull request
 
-### Code Style
-- Follow PEP 8 guidelines
-- Use type hints where possible
-- Add docstrings to all functions and classes
-- Write comprehensive tests for new features
+### Reporting Issues
 
-## 📝 License
+Please use the [GitHub issue tracker](https://github.com/yourusername/pycommerce/issues) to report bugs or request features.
+
+## 📋 Roadmap
+
+- [ ] Docker containerization
+- [ ] Kubernetes deployment charts
+- [ ] Mobile app API
+- [ ] Advanced analytics dashboard
+- [ ] Multi-language support
+- [ ] Advanced SEO tools
+- [ ] Marketplace features
+- [ ] Subscription products
+- [ ] Advanced inventory management
+- [ ] Integration with popular CMSs
+
+## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 🆘 Support
-
-- **Documentation**: [docs/index.md](docs/index.md)
-- **Issues**: [GitHub Issues](https://github.com/your-username/pycommerce/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/your-username/pycommerce/discussions)
-
 ## 🙏 Acknowledgments
 
-- FastAPI for the excellent web framework
-- Flask for admin interface capabilities
-- SQLAlchemy for robust ORM functionality
-- Bootstrap for responsive UI components
-- All our contributors and users
+- Built with [FastAPI](https://fastapi.tiangolo.com/) and [Flask](https://flask.palletsprojects.com/)
+- Database management with [SQLAlchemy](https://www.sqlalchemy.org/)
+- Payment processing by [Stripe](https://stripe.com/) and [PayPal](https://paypal.com/)
+- AI integration with [OpenAI](https://openai.com/), [Google Gemini](https://gemini.google.com/), and [Anthropic](https://anthropic.com/)
 
-## 📈 Roadmap
+## 📞 Support
 
-- [ ] Mobile app support
-- [ ] Advanced SEO tools
-- [ ] Social media integration
-- [ ] Marketplace functionality
-- [ ] Advanced analytics dashboard
-- [ ] Internationalization (i18n)
-- [ ] Enhanced plugin marketplace
+- 📧 Email: support@pycommerce.dev
+- 💬 Discussions: [GitHub Discussions](https://github.com/yourusername/pycommerce/discussions)
+- 🐛 Bug Reports: [GitHub Issues](https://github.com/yourusername/pycommerce/issues)
+- 📖 Documentation: [docs/](docs/)
 
 ---
 
-**PyCommerce** - Empowering businesses with flexible, scalable e-commerce solutions.
+Made with ❤️ by the PyCommerce team
