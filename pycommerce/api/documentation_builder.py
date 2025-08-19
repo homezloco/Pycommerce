@@ -56,7 +56,7 @@ try:
     token_data = get_auth_token(
         api_url="https://example.com",
         username="admin@example.com",
-        password="YOUR_PASSWORD"
+        password="your_password_here"
     )
 
     # Extract token for future requests
@@ -193,7 +193,7 @@ async function authenticate() {
     const tokenData = await getAuthToken(
       'https://example.com',
       'admin@example.com',
-      'YOUR_PASSWORD'
+      'your_password_here'
     );
 
     // Extract token for future requests
@@ -327,7 +327,7 @@ curl -X POST "https://example.com/api/auth/login" \\
   -H "Accept: application/json" \\
   -d '{
     "username": "admin@example.com",
-    "password": "YOUR_PASSWORD"
+    "password": "your_password_here"
   }'
 
 # Example success response:
@@ -582,7 +582,7 @@ def generate_postman_collection(base_url: str) -> Dict[str, Any]:
                                 "mode": "raw",
                                 "raw": json.dumps({
                                     "username": "admin@example.com",
-                                    "password": "YOUR_PASSWORD"
+                                    "password": "your_password_here"
                                 }, indent=2)
                             }
                         },
