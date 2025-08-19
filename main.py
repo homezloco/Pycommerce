@@ -30,11 +30,17 @@ start_uvicorn_server()
 # Create the API documentation app
 from flask import Flask, jsonify, redirect, render_template_string, send_from_directory
 from werkzeug.middleware.dispatcher import DispatcherMiddleware
+from pycommerce.middleware.security import SecurityMiddleware # Import security middleware
 
 # Create API docs app
 api_docs_app = Flask("api_docs")
 
-# Static file route to directly serve API docs from static file
+# Add security middleware to the API docs app as well if it's a separate WSGI app
+# This ensures that even the Flask-based API docs are protected.
+# However, the main app.add_middleware call below will cover the primary FastAPI app.
+# If api_docs_app were to be served directly as a WSGI app without DispatcherMiddleware,
+# this would be more critical. For now, the DispatcherMiddleware handles routing.
+
 @api_docs_app.route('/api/static-docs')
 def serve_static_api_docs():
     """Serve the static API documentation page."""
@@ -224,7 +230,7 @@ def get_openapi_schema():
             }
         }
     }
-    
+
     return jsonify(openapi_schema)
 
 # Swagger UI

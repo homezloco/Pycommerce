@@ -36,21 +36,21 @@ SECURITY_SETTINGS = {
     "account_lockout": True,
     "lockout_threshold": 5,
     "session_timeout": 30,
-    
+
     # Access Control
     "admin_access": "ip_restricted",
     "allowed_ips": "127.0.0.1, 192.168.1.0/24",
     "api_access": "key_only",
     "api_rate_limiting": True,
     "rate_limit": 60,
-    
+
     # Basic Security
     "csrf_protection": True,
     "xss_protection": True,
     "sql_injection_protection": True,
     "https_only": True,
     "security_headers": True,
-    
+
     # GDPR / Data Privacy
     "privacy_policy_version": "1.2",
     "privacy_policy_last_updated": "2025-03-15",
@@ -59,7 +59,7 @@ SECURITY_SETTINGS = {
     "data_export_enabled": True,
     "right_to_be_forgotten_enabled": True,
     "data_breach_notification": True,
-    
+
     # Fraud Detection
     "order_screening_enabled": True,
     "ip_reputation_checking": True,
@@ -67,27 +67,27 @@ SECURITY_SETTINGS = {
     "device_fingerprinting": True,
     "address_verification": True,
     "transaction_threshold_alert": 1000, # alert on transactions over this amount
-    
+
     # Payment Security
     "pci_dss_compliant": True,
     "payment_tokenization": True,
     "credit_card_bin_filtering": True,
     "chargeback_management": True,
     "payment_fraud_monitoring": True,
-    
+
     # Customer Account Security
     "account_takeover_protection": True,
     "suspicious_login_alerts": True,
     "password_breach_detection": True,
     "new_device_notification": True,
     "account_activity_notification": True,
-    
+
     # Inventory Security
     "inventory_manipulation_protection": True,
     "price_tampering_detection": True,
     "cart_abandonment_monitoring": True,
     "inventory_alert_threshold": 5, # Alert when stock drops below this level
-    
+
     # Security Health Monitoring
     "automated_security_scanning": True,
     "vulnerability_assessment_freq": "monthly", # monthly, quarterly, bi-annual, annual
@@ -185,11 +185,29 @@ ROLES = [
     }
 ]
 
+def _validate_security_field(field_name: str, value: str) -> bool:
+    """Validate security-specific field values."""
+    import re
+
+    if field_name == 'allowed_ips':
+        # Validate IP addresses (simple validation)
+        ips = [ip.strip() for ip in value.split(',')]
+        ip_pattern = r'^(\d{1,3}\.){3}\d{1,3}(/\d{1,2})?$'
+        return all(re.match(ip_pattern, ip) or ip == 'localhost' for ip in ips if ip)
+
+    elif field_name == 'report_distribution':
+        # Validate email addresses
+        emails = [email.strip() for email in value.split(',')]
+        email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+        return all(re.match(email_pattern, email) for email in emails if email)
+
+    return True
+
 def setup_routes(template_instance):
     """Set up security routes with the given template instance."""
     global templates
     templates = template_instance
-    
+
     @router.get("/security", response_class=HTMLResponse)
     async def security_settings(
         request: Request,
@@ -206,7 +224,7 @@ def setup_routes(template_instance):
                 "now": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             }
         )
-        
+
     @router.get("/security/gdpr", response_class=HTMLResponse)
     async def gdpr_settings(
         request: Request,
@@ -222,7 +240,7 @@ def setup_routes(template_instance):
                 "now": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             }
         )
-        
+
     @router.get("/security/fraud-detection", response_class=HTMLResponse)
     async def fraud_detection_settings(
         request: Request,
@@ -238,7 +256,7 @@ def setup_routes(template_instance):
                 "now": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             }
         )
-        
+
     @router.get("/security/payment-security", response_class=HTMLResponse)
     async def payment_security_settings(
         request: Request,
@@ -254,7 +272,7 @@ def setup_routes(template_instance):
                 "now": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             }
         )
-        
+
     @router.get("/security/account-security", response_class=HTMLResponse)
     async def account_security_settings(
         request: Request,
@@ -270,7 +288,7 @@ def setup_routes(template_instance):
                 "now": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             }
         )
-        
+
     @router.get("/security/inventory-security", response_class=HTMLResponse)
     async def inventory_security_settings(
         request: Request,
@@ -286,7 +304,7 @@ def setup_routes(template_instance):
                 "now": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             }
         )
-        
+
     @router.get("/security/health-monitoring", response_class=HTMLResponse)
     async def security_health_monitoring(
         request: Request,
@@ -302,7 +320,7 @@ def setup_routes(template_instance):
                 "now": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             }
         )
-    
+
     @router.post("/security/save", response_class=JSONResponse)
     async def save_security_settings(
         request: Request,
@@ -311,7 +329,7 @@ def setup_routes(template_instance):
         """Save security settings."""
         try:
             form_data = await request.form()
-            
+
             # Update security settings (in a real app, this would update the database)
             for key, value in form_data.items():
                 if key in SECURITY_SETTINGS:
@@ -321,8 +339,15 @@ def setup_routes(template_instance):
                     elif value == "":
                         SECURITY_SETTINGS[key] = False
                     else:
-                        SECURITY_SETTINGS[key] = value
-            
+                        # Validate the field before saving
+                        if _validate_security_field(key, str(value)):
+                            SECURITY_SETTINGS[key] = value
+                        else:
+                            return JSONResponse(
+                                content={"success": False, "message": f"Invalid value for {key}"},
+                                status_code=400
+                            )
+
             # Log the security settings change
             new_event = {
                 "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
@@ -333,7 +358,7 @@ def setup_routes(template_instance):
                 "status": "success"
             }
             SECURITY_EVENTS.insert(0, new_event)
-            
+
             return JSONResponse(content={"success": True, "message": "Security settings saved successfully"})
         except Exception as e:
             logger.error(f"Error saving security settings: {str(e)}")
@@ -341,7 +366,7 @@ def setup_routes(template_instance):
                 content={"success": False, "message": f"Error saving security settings: {str(e)}"},
                 status_code=500
             )
-    
+
     @router.get("/roles", response_class=HTMLResponse)
     async def roles_management(
         request: Request,
@@ -356,7 +381,7 @@ def setup_routes(template_instance):
                 "roles": ROLES
             }
         )
-    
+
     @router.post("/roles/create", response_class=JSONResponse)
     async def create_role(
         request: Request,
@@ -376,9 +401,9 @@ def setup_routes(template_instance):
                 "permissions": permissions,
                 "created_at": datetime.now().strftime("%Y-%m-%d")
             }
-            
+
             ROLES.append(new_role)
-            
+
             # Log the role creation
             new_event = {
                 "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
@@ -389,7 +414,7 @@ def setup_routes(template_instance):
                 "status": "success"
             }
             SECURITY_EVENTS.insert(0, new_event)
-            
+
             return JSONResponse(content={"success": True, "message": f"Role '{name}' created successfully"})
         except Exception as e:
             logger.error(f"Error creating role: {str(e)}")
@@ -397,7 +422,7 @@ def setup_routes(template_instance):
                 content={"success": False, "message": f"Error creating role: {str(e)}"},
                 status_code=500
             )
-    
+
     @router.get("/permissions", response_class=HTMLResponse)
     async def permissions_management(
         request: Request,
@@ -411,7 +436,7 @@ def setup_routes(template_instance):
                 "active_page": "permissions"
             }
         )
-    
+
     @router.post("/permissions/create", response_class=JSONResponse)
     async def create_permission(
         request: Request,
@@ -425,7 +450,7 @@ def setup_routes(template_instance):
         """Create a new permission."""
         try:
             # In a real app, this would create a new permission in the database
-            
+
             # Log the permission creation
             new_event = {
                 "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
@@ -436,7 +461,7 @@ def setup_routes(template_instance):
                 "status": "success"
             }
             SECURITY_EVENTS.insert(0, new_event)
-            
+
             return JSONResponse(content={"success": True, "message": f"Permission '{name}' created successfully"})
         except Exception as e:
             logger.error(f"Error creating permission: {str(e)}")
@@ -444,7 +469,7 @@ def setup_routes(template_instance):
                 content={"success": False, "message": f"Error creating permission: {str(e)}"},
                 status_code=500
             )
-    
+
     @router.get("/audit-logs", response_class=HTMLResponse)
     async def audit_logs(
         request: Request,
@@ -459,5 +484,5 @@ def setup_routes(template_instance):
                 "security_events": SECURITY_EVENTS
             }
         )
-    
+
     return router
