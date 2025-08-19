@@ -25,29 +25,29 @@ import requests
 def get_auth_token(api_url, username, password):
     """
     Get authentication token from the PyCommerce API.
-    
+
     Args:
         api_url: Base API URL (e.g., https://api.example.com)
         username: User email or username
         password: User password
-        
+
     Returns:
         Dict containing the authentication token and expiry
     """
     auth_url = f"{api_url}/api/auth/login"
-    
+
     # Set up the request data
     data = {
         "username": username,
         "password": password
     }
-    
+
     # Make the request
     response = requests.post(auth_url, json=data)
-    
+
     # Check for success
     response.raise_for_status()
-    
+
     # Return the token data
     return response.json()
 
@@ -58,7 +58,7 @@ try:
         username="admin@example.com",
         password="your_password_here"
     )
-    
+
     # Extract token for future requests
     token = token_data["access_token"]
     print(f"Successfully authenticated. Token expires in {token_data['expires_in']} seconds")
@@ -70,11 +70,11 @@ import requests
 
 class PyCommerceClient:
     """Client for interacting with the PyCommerce API in multi-tenant mode."""
-    
+
     def __init__(self, api_url, token=None, tenant_id=None):
         """
         Initialize the client with authentication and tenant information.
-        
+
         Args:
             api_url: Base API URL (e.g., https://api.example.com)
             token: JWT authentication token (optional)
@@ -83,35 +83,35 @@ class PyCommerceClient:
         self.api_url = api_url.rstrip('/')
         self.token = token
         self.tenant_id = tenant_id
-        
+
     def _get_headers(self):
         """Build headers with authentication and tenant information."""
         headers = {"Accept": "application/json"}
-        
+
         if self.token:
             headers["Authorization"] = f"Bearer {self.token}"
-            
+
         if self.tenant_id:
             headers["X-Tenant-ID"] = self.tenant_id
-            
+
         return headers
-    
+
     def list_products(self, category=None, min_price=None, max_price=None, limit=100, offset=0):
         """
         Get products with optional filtering.
-        
+
         Args:
             category: Filter by category (optional)
             min_price: Minimum price filter (optional)
             max_price: Maximum price filter (optional)
             limit: Maximum number of products to return (default 100)
             offset: Pagination offset (default 0)
-            
+
         Returns:
             List of product objects
         """
         url = f"{self.api_url}/api/products"
-        
+
         # Build query parameters
         params = {"limit": limit, "offset": offset}
         if category:
@@ -120,13 +120,13 @@ class PyCommerceClient:
             params["min_price"] = min_price
         if max_price is not None:
             params["max_price"] = max_price
-        
+
         # Make the request
         response = requests.get(url, params=params, headers=self._get_headers())
-        
+
         # Check for success
         response.raise_for_status()
-        
+
         # Return the data
         return response.json()
 
@@ -160,13 +160,13 @@ except requests.exceptions.HTTPError as e:
  */
 async function getAuthToken(apiUrl, username, password) {
   const authUrl = `${apiUrl}/api/auth/login`;
-  
+
   // Set up the request data
   const data = {
     username,
     password
   };
-  
+
   // Make the request
   const response = await fetch(authUrl, {
     method: 'POST',
@@ -176,13 +176,13 @@ async function getAuthToken(apiUrl, username, password) {
     },
     body: JSON.stringify(data)
   });
-  
+
   // Check for success
   if (!response.ok) {
     const error = await response.json();
     throw new Error(error.detail || `Authentication failed: ${response.status}`);
   }
-  
+
   // Return the token data
   return response.json();
 }
@@ -195,11 +195,11 @@ async function authenticate() {
       'admin@example.com',
       'your_password_here'
     );
-    
+
     // Extract token for future requests
     const token = tokenData.access_token;
     console.log(`Successfully authenticated. Token expires in ${tokenData.expires_in} seconds`);
-    
+
     return token;
   } catch (error) {
     console.error(`Authentication failed: ${error.message}`);
@@ -226,7 +226,7 @@ class PyCommerceClient {
     this.token = token;
     this.tenantId = tenantId;
   }
-  
+
   /**
    * Build headers with authentication and tenant information.
    * 
@@ -236,18 +236,18 @@ class PyCommerceClient {
     const headers = {
       'Accept': 'application/json'
     };
-    
+
     if (this.token) {
       headers['Authorization'] = `Bearer ${this.token}`;
     }
-    
+
     if (this.tenantId) {
       headers['X-Tenant-ID'] = this.tenantId;
     }
-    
+
     return headers;
   }
-  
+
   /**
    * Get products with optional filtering.
    * 
@@ -267,27 +267,27 @@ class PyCommerceClient {
     offset = 0
   } = {}) {
     const url = `${this.apiUrl}/api/products`;
-    
+
     // Build query parameters
     const params = new URLSearchParams();
     params.append('limit', limit);
     params.append('offset', offset);
-    
+
     if (category) params.append('category', category);
     if (minPrice !== null) params.append('min_price', minPrice);
     if (maxPrice !== null) params.append('max_price', maxPrice);
-    
+
     // Make the request
     const response = await fetch(`${url}?${params.toString()}`, {
       headers: this._getHeaders()
     });
-    
+
     // Check for success
     if (!response.ok) {
       const error = await response.json();
       throw new Error(error.detail || `API error: ${response.status}`);
     }
-    
+
     // Return the data
     return response.json();
   }
@@ -300,14 +300,14 @@ async function getProductsForTenant() {
     'your_jwt_token',
     'tenant-123'
   );
-  
+
   try {
     // Get electronics products under $100
     const products = await client.listProducts({
       category: 'electronics',
       maxPrice: 100.0
     });
-    
+
     console.log(`Found ${products.length} products`);
     return products;
   } catch (error) {
@@ -372,11 +372,11 @@ curl -X POST "https://example.com/api/products" \\
 def get_code_example(language: str, section: str) -> str:
     """
     Get a code example for a specific language and section.
-    
+
     Args:
         language: Programming language (python, javascript, curl)
         section: Section identifier (authentication, multi_tenant, etc.)
-        
+
     Returns:
         Code example as a string
     """
@@ -389,7 +389,7 @@ def get_code_example(language: str, section: str) -> str:
 def get_schema_documentation() -> Dict[str, Any]:
     """
     Get comprehensive schema documentation with descriptions.
-    
+
     Returns:
         Dictionary containing schema documentation
     """
@@ -550,10 +550,10 @@ def get_schema_documentation() -> Dict[str, Any]:
 def generate_postman_collection(base_url: str) -> Dict[str, Any]:
     """
     Generate a Postman collection for the API.
-    
+
     Args:
         base_url: Base URL for the API (e.g., https://example.com)
-        
+
     Returns:
         Dictionary containing Postman collection
     """
@@ -582,7 +582,7 @@ def generate_postman_collection(base_url: str) -> Dict[str, Any]:
                                 "mode": "raw",
                                 "raw": json.dumps({
                                     "username": "admin@example.com",
-                                    "password": "your_password"
+                                    "password": "your_password_here"
                                 }, indent=2)
                             }
                         },
@@ -807,16 +807,16 @@ def generate_postman_collection(base_url: str) -> Dict[str, Any]:
             }
         ]
     }
-    
+
     return collection
 
 def generate_openapi_extension(app_description: str) -> Dict[str, Any]:
     """
     Generate OpenAPI extension with enhanced documentation.
-    
+
     Args:
         app_description: Description of the API application
-        
+
     Returns:
         Dictionary containing OpenAPI extension
     """
@@ -846,7 +846,7 @@ def generate_openapi_extension(app_description: str) -> Dict[str, Any]:
                     ```json
                     {
                       "username": "admin@example.com",
-                      "password": "your_password"
+                      "password": "your_password_here"
                     }
                     ```
 
